@@ -537,548 +537,19 @@ function showLevelUp(lvl){
 const EX_GIF = id => `https://static.exercisedb.dev/media/${id}.gif`;
 
 // Built-in curated exercise DB with instructions + muscle info + variations
-const BUILTIN_EX = {
-  // ── CHEST ──
-  'bench press':{muscle:'Chest',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Pectoralis Major','Anterior Deltoid','Triceps'],
-    tips:['Keep shoulder blades retracted','Lower bar to lower chest','Plant feet flat'],
-    instructions:['Lie on bench, grip bar slightly wider than shoulder width','Unrack and hold above chest with arms straight','Lower slowly to your lower chest in 3 seconds','Drive bar up explosively, fully extending arms','Repeat for desired reps'],
-    variations:['Incline Bench Press','Decline Bench Press','Dumbbell Bench Press','Close Grip Bench Press','Paused Bench Press']},
-  'push up':{muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Pectoralis Major','Anterior Deltoid','Triceps'],
-    tips:['Keep body in straight line','Elbows at 45° not flared','Lower chest to floor'],
-    instructions:['Start in plank with hands slightly wider than shoulders','Keep core tight, body straight from head to heels','Lower chest toward floor by bending elbows','Push through palms back to start','Keep hips level throughout'],
-    variations:['Wide Push Up','Diamond Push Up','Decline Push Up','Archer Push Up','Clap Push Up']},
-  'incline bench press':{muscle:'Chest',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Upper Pectoralis Major','Anterior Deltoid','Triceps'],
-    tips:['Set bench to 30-45°','Keep arch in lower back','Control the eccentric'],
-    instructions:['Set bench to 30-45° incline','Grip bar wider than shoulder width','Lower bar to upper chest','Drive up to lockout'],
-    variations:['Incline Dumbbell Press','Low Incline Bench Press','Incline Cable Fly']},
-  // ── TRICEPS ──
-  'tricep overhead extension':{muscle:'Triceps',equipment:'Dumbbell',difficulty:'Beginner',
-    muscles:['Triceps Brachii Long Head','Triceps Medial Head'],
-    tips:['Keep elbows close to head','Full stretch at bottom','Lock out at top'],
-    instructions:['Stand or sit holding one dumbbell with both hands','Raise it overhead, arms fully extended','Lower slowly behind head by bending elbows','Keep upper arms stationary throughout','Extend back to start squeezing triceps'],
-    variations:['Tricep Overhead Extension Machine','Cable Overhead Tricep Extension','EZ Bar Overhead Extension','Single Arm Overhead Extension','Seated Overhead Extension']},
-  'tricep overhead extension machine':{muscle:'Triceps',equipment:'Machine',difficulty:'Beginner',
-    muscles:['Triceps Brachii Long Head','Triceps Lateral Head'],
-    tips:['Adjust seat so elbows align with pivot','Keep elbows in pad','Full range of motion'],
-    instructions:['Adjust seat height so upper arms are parallel to floor','Grip handles overhead with elbows on pad','Extend arms fully downward, squeezing triceps','Slowly return to starting position controlling the weight','Avoid letting weight slam at top'],
-    variations:['Tricep Overhead Extension','Cable Overhead Tricep Extension','Rope Pushdown']},
-  'tricep pushdown':{muscle:'Triceps',equipment:'Cable',difficulty:'Beginner',
-    muscles:['Triceps Brachii Lateral Head','Triceps Medial Head'],
-    tips:['Keep elbows at sides','Full lockout at bottom','Lean slightly forward'],
-    instructions:['Stand at cable machine, grip bar or rope at chest height','Keep elbows tucked at sides throughout','Push bar/rope down to full arm extension','Squeeze triceps hard at bottom','Slowly return under control'],
-    variations:['Rope Pushdown','Reverse Grip Pushdown','Single Arm Pushdown','V-Bar Pushdown']},
-  'skull crusher':{muscle:'Triceps',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Triceps Brachii','All Three Heads'],
-    tips:['Lower to forehead or behind','Keep upper arms vertical','Use controlled weight'],
-    instructions:['Lie on bench, hold EZ bar above chest with arms extended','Keep upper arms perpendicular to floor','Lower bar toward forehead by bending elbows','Stop before touching head, then extend back up','Control the negative portion carefully'],
-    variations:['Dumbbell Skull Crusher','Cable Skull Crusher','Single Arm Skull Crusher']},
-  // ── BICEPS ──
-  'bicep curl':{muscle:'Biceps',equipment:'Dumbbell',difficulty:'Beginner',
-    muscles:['Biceps Brachii','Brachialis','Brachioradialis'],
-    tips:['Keep elbows at sides','Supinate wrist at top','Control the negative'],
-    instructions:['Stand holding dumbbells at sides, palms forward','Keep upper arms still, curl weights toward shoulders','Supinate (rotate) wrists as you curl up','Squeeze biceps at top for 1 second','Lower slowly in 3 seconds'],
-    variations:['Hammer Curl','Preacher Curl','Concentration Curl','Cable Curl','EZ Bar Curl','Incline Curl']},
-  'hammer curl':{muscle:'Biceps',equipment:'Dumbbell',difficulty:'Beginner',
-    muscles:['Brachialis','Brachioradialis','Biceps Brachii'],
-    tips:['Neutral grip throughout','No swinging','Alternate or simultaneous'],
-    instructions:['Hold dumbbells with neutral grip (palms facing each other)','Keep elbows at sides and upper arms still','Curl dumbbell toward shoulder keeping neutral grip','Squeeze at top, lower under control','Can be done alternating or simultaneously'],
-    variations:['Rope Hammer Curl','Cross Body Hammer Curl','Incline Hammer Curl']},
-  // ── BACK ──
-  'deadlift':{muscle:'Back',equipment:'Barbell',difficulty:'Advanced',
-    muscles:['Erector Spinae','Glutes','Hamstrings','Lats','Traps'],
-    tips:['Neutral spine throughout','Bar stays over mid-foot','Drive floor away'],
-    instructions:['Stand with feet hip-width, bar over mid-foot','Hinge at hips and bend knees to grip bar shoulder-width','Take breath, brace core hard, neutral spine','Drive through heels pushing floor away, keep bar close','Lock hips out at top, then hinge back down with control'],
-    variations:['Romanian Deadlift','Sumo Deadlift','Trap Bar Deadlift','Single Leg Deadlift','Deficit Deadlift']},
-  'pull up':{muscle:'Back',equipment:'Bodyweight',difficulty:'Intermediate',
-    muscles:['Latissimus Dorsi','Biceps','Rear Deltoid','Rhomboids'],
-    tips:['Full dead hang to start','Drive elbows to hips','Chin over bar'],
-    instructions:['Hang from bar with overhand grip slightly wider than shoulders','Engage lats by depressing shoulder blades','Pull yourself up driving elbows toward hips','Get chin above bar','Lower slowly to dead hang and repeat'],
-    variations:['Chin Up','Wide Grip Pull Up','Neutral Grip Pull Up','Weighted Pull Up','Band Assisted Pull Up']},
-  'lat pulldown':{muscle:'Back',equipment:'Cable Machine',difficulty:'Beginner',
-    muscles:['Latissimus Dorsi','Biceps','Rear Deltoid'],
-    tips:['Lean back slightly','Pull to upper chest','Squeeze lats at bottom'],
-    instructions:['Sit at machine, thighs under pad, grip bar wide','Lean torso back slightly at 20-30°','Pull bar down to upper chest driving elbows down','Squeeze lats at bottom, hold 1 second','Slowly return bar to full extension'],
-    variations:['Close Grip Pulldown','Single Arm Pulldown','Reverse Grip Pulldown','Behind Neck Pulldown (avoid)']},
-  'bent over row':{muscle:'Back',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Latissimus Dorsi','Rhomboids','Rear Deltoid','Biceps'],
-    tips:['Hinge at hip 45°','Pull to lower chest/belly','Squeeze shoulder blades'],
-    instructions:['Stand holding bar, hinge to 45° at hips','Brace core, neutral spine','Pull bar to lower chest/upper stomach','Squeeze shoulder blades together at top','Lower under control, repeat'],
-    variations:['Dumbbell Row','T-Bar Row','Cable Row','Pendlay Row','Meadows Row']},
-  // ── SHOULDERS ──
-  'overhead press':{muscle:'Shoulders',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Anterior Deltoid','Medial Deltoid','Triceps','Upper Traps'],
-    tips:['Press in slight arc','Tuck ribs, squeeze glutes','Head through at top'],
-    instructions:['Stand with bar at shoulder height, grip shoulder-width','Brace core and squeeze glutes','Press bar overhead in a slight arc forward','At top, push head through and shrug slightly','Lower under control to front rack position'],
-    variations:['Dumbbell Shoulder Press','Arnold Press','Seated Press','Landmine Press','Push Press']},
-  'lateral raise':{muscle:'Shoulders',equipment:'Dumbbell',difficulty:'Beginner',
-    muscles:['Medial Deltoid','Supraspinatus'],
-    tips:['Slight forward lean','Lead with elbows','Stop at shoulder height'],
-    instructions:['Stand holding dumbbells at sides, slight bend in elbow','Raise arms to sides leading with elbows not hands','Stop when arms are parallel to floor (shoulder height)','Pause 1 second at top','Lower slowly in 3 seconds'],
-    variations:['Cable Lateral Raise','Machine Lateral Raise','Leaning Lateral Raise','Partial Lateral Raise']},
-  // ── LEGS ──
-  'squat':{muscle:'Legs',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Quadriceps','Glutes','Hamstrings','Erector Spinae'],
-    tips:['Knees track over toes','Keep chest up','Full depth if possible'],
-    instructions:['Bar on upper traps, feet shoulder-width, toes slightly out','Brace core, take big breath','Break at hips and knees simultaneously, descend','Squat to parallel or below (if mobility allows)','Drive through heels, push knees out, stand tall'],
-    variations:['Front Squat','Goblet Squat','Bulgarian Split Squat','Box Squat','Pause Squat','Hack Squat']},
-  'leg press':{muscle:'Legs',equipment:'Machine',difficulty:'Beginner',
-    muscles:['Quadriceps','Glutes','Hamstrings'],
-    tips:['Keep lower back on pad','Feet shoulder-width','Don\'t lock knees out'],
-    instructions:['Sit in machine, feet shoulder-width on platform','Lower safety handles','Lower platform by bending knees toward chest','Stop before lower back lifts off pad','Drive through heels to extend legs (don\'t lock out)'],
-    variations:['High Foot Leg Press','Single Leg Press','Narrow Foot Leg Press']},
-  'romanian deadlift':{muscle:'Legs',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Hamstrings','Glutes','Erector Spinae'],
-    tips:['Soft bend in knees','Push hips back not down','Feel stretch in hamstrings'],
-    instructions:['Stand holding bar at hips, slight knee bend','Push hips back while lowering bar along legs','Lower until you feel strong hamstring stretch','Keep back flat throughout, no rounding','Drive hips forward to return to standing'],
-    variations:['Single Leg RDL','Dumbbell RDL','Sumo RDL','Cable RDL']},
-  'lunge':{muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Quadriceps','Glutes','Hamstrings'],
-    tips:['Knee tracks over toes','Don\'t let front knee collapse','Upright torso'],
-    instructions:['Stand tall, hands on hips or weights at sides','Step forward with one leg, dropping back knee toward floor','Front thigh should be parallel to floor at bottom','Push through front heel to return to start','Alternate legs for reps'],
-    variations:['Reverse Lunge','Walking Lunge','Bulgarian Split Squat','Lateral Lunge','Curtsy Lunge']},
-  // ── CORE ──
-  'plank':{muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Transverse Abdominis','Rectus Abdominis','Obliques','Glutes'],
-    tips:['Keep hips level, not sagging','Squeeze glutes','Breathe normally'],
-    instructions:['Start in forearm plank: elbows under shoulders','Body in straight line from head to heels','Squeeze glutes, core braced, don\'t hold breath','Hold for target time, keep hips level','Focus on quality not just duration'],
-    variations:['Side Plank','RKC Plank','Plank with Shoulder Tap','Pike Plank','Weighted Plank']},
-  'crunch':{muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Rectus Abdominis','Obliques'],
-    tips:['Don\'t pull neck','Exhale on way up','Focus on ab contraction'],
-    instructions:['Lie on back, knees bent, feet flat, hands behind head','Brace core, press lower back into floor','Curl shoulders off ground using abs only','Peak contraction at top, exhale','Lower slowly, keep tension in abs'],
-    variations:['Bicycle Crunch','Cable Crunch','Decline Crunch','Reverse Crunch']},
-  // ── CHEST ADDITIONAL ──
-  'chest dip':{muscle:'Chest',equipment:'Parallel Bars',difficulty:'Intermediate',
-    muscles:['Pectoralis Major','Triceps','Anterior Deltoid'],
-    variations:['Ring Dip','Weighted Dip','Bench Dip'],
-    tips:['Lean forward 30° to target chest','Full ROM: 90° elbow bend minimum','Control the descent — 2-3s eccentric'],
-    instructions:['Grip parallel bars, arms straight','Lean torso forward slightly','Lower until elbows 90°','Push back up explosively']},
-  'cable fly':{muscle:'Chest',equipment:'Cable Machine',difficulty:'Beginner',
-    muscles:['Pectoralis Major','Anterior Deltoid'],
-    variations:['Dumbbell Fly','Pec Deck','Low Cable Fly'],
-    tips:['Slight bend in elbows throughout','Squeeze chest at peak contraction','Control negative phase'],
-    instructions:['Set cables at shoulder height','Stand in middle, step forward','Bring hands together in arc','Squeeze and return slowly']},
-  'dumbbell press':{muscle:'Chest',equipment:'Dumbbells',difficulty:'Beginner',
-    muscles:['Pectoralis Major','Triceps','Anterior Deltoid'],
-    variations:['Incline Dumbbell Press','Decline Press','Bench Press'],
-    tips:['Dumbbells allow greater ROM than barbell','Touch dumbbells at top for full contraction','Keep wrists stacked over elbows'],
-    instructions:['Lie flat, dumbbells at chest','Press up until arms nearly straight','Lower slowly to chest level','Repeat with control']},
-  // ── BACK ADDITIONAL ──
-  'cable row':{muscle:'Back',equipment:'Cable Machine',difficulty:'Beginner',
-    muscles:['Latissimus Dorsi','Rhomboids','Biceps'],
-    variations:['Dumbbell Row','Machine Row','Barbell Row'],
-    tips:['Keep back straight — no rounding','Pull to navel, not chest','Full stretch at start of each rep'],
-    instructions:['Sit at cable row machine','Grip handle, sit upright','Pull handle to abdomen','Squeeze shoulder blades together, return']},
-  'face pull':{muscle:'Back',equipment:'Cable Machine',difficulty:'Beginner',
-    muscles:['Rear Deltoid','Rhomboids','Rotator Cuff'],
-    variations:['Band Pull Apart','Reverse Fly','Prone Y-Raise'],
-    tips:['Pull to face level — not neck','External rotate at end position','Great for shoulder health'],
-    instructions:['Set cable at head height','Grip rope with both hands','Pull toward face, elbows high','Externally rotate at end, hold 1s']},
-  'hyperextension':{muscle:'Back',equipment:'Roman Chair',difficulty:'Beginner',
-    muscles:['Erector Spinae','Glutes','Hamstrings'],
-    variations:['Good Morning','Back Extension','45° Hyperextension'],
-    tips:['Stop at body parallel — no hyperextension','Round back slightly for spinal flexion variant','Add weight plate when bodyweight is easy'],
-    instructions:['Position hips on pad, feet secured','Cross arms or hold plate','Hinge forward, back rounds slightly','Raise torso to parallel with floor']},
-  'shrug':{muscle:'Back',equipment:'Dumbbells',difficulty:'Beginner',
-    muscles:['Upper Trapezius'],
-    variations:['Barbell Shrug','Behind-back Shrug','Machine Shrug'],
-    tips:['Do NOT roll shoulders — straight up and down','2s hold at top for max contraction','Heavy weight, lower reps works best'],
-    instructions:['Hold dumbbells at sides','Shrug shoulders straight up','Hold 1-2 seconds at top','Lower slowly and repeat']},
-  // ── SHOULDERS ADDITIONAL ──
-  'arnold press':{muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Intermediate',
-    muscles:['Anterior Deltoid','Lateral Deltoid','Triceps'],
-    variations:['Dumbbell Press','Barbell Press','Cable Press'],
-    tips:['Start with palms facing you','Rotate as you press up','Covers more deltoid heads than standard press'],
-    instructions:['Hold dumbbells at chin, palms in','Press up while rotating palms out','Full extension at top','Reverse the rotation coming down']},
-  'upright row':{muscle:'Shoulders',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Lateral Deltoid','Trapezius','Biceps'],
-    variations:['Cable Upright Row','Dumbbell Upright Row','Face Pull'],
-    tips:['Wide grip reduces impingement risk','Elbows lead the movement','Stop at chin height — not nose'],
-    instructions:['Hold barbell, overhand grip shoulder-width','Pull bar straight up, elbows high','Bar reaches chin level','Lower with control']},
-  'front raise':{muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Beginner',
-    muscles:['Anterior Deltoid'],
-    variations:['Cable Front Raise','Barbell Front Raise','Plate Front Raise'],
-    tips:['Slight bend in elbow','Stop at shoulder height','Slow eccentric for best results'],
-    instructions:['Hold dumbbells in front of thighs','Raise both arms to shoulder height','Pause briefly at top','Lower slowly']},
-  // ── ARMS ADDITIONAL ──
-  'preacher curl':{muscle:'Biceps',equipment:'EZ Bar',difficulty:'Beginner',
-    muscles:['Biceps Brachii Short Head'],
-    variations:['Machine Preacher Curl','Dumbbell Preacher Curl','Concentration Curl'],
-    tips:['Prevents cheating with body swing','Focus on the stretch at bottom','EZ bar reduces wrist strain'],
-    instructions:['Rest upper arms on preacher pad','Grip EZ bar, arms nearly extended','Curl weight up to chin','Lower slowly until nearly straight']},
-  'concentration curl':{muscle:'Biceps',equipment:'Dumbbells',difficulty:'Beginner',
-    muscles:['Biceps Brachii'],
-    variations:['Preacher Curl','Cable Curl','Spider Curl'],
-    tips:['Rest elbow on inner thigh for stability','Supinate fully at top','Peak contraction: squeeze hard'],
-    instructions:['Sit on bench, lean forward','Rest elbow on inner thigh','Curl dumbbell toward shoulder','Squeeze at top, lower slowly']},
-  'tricep dip':{muscle:'Triceps',equipment:'Bench',difficulty:'Beginner',
-    muscles:['Triceps Brachii','Anterior Deltoid','Pectoralis Major'],
-    variations:['Parallel Bar Dip','Weighted Dip','Ring Dip'],
-    tips:['Keep body close to bench — no flaring out','Depth: 90° elbow minimum','Elevate feet for more difficulty'],
-    instructions:['Hands on bench edge, feet forward','Lower body until elbows 90°','Press back up to starting position','Keep back close to bench throughout']},
-  'close grip bench press':{muscle:'Triceps',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Triceps Brachii','Pectoralis Major','Anterior Deltoid'],
-    variations:['Diamond Push Up','Tricep Pushdown','Overhead Extension'],
-    tips:['Grip shoulder-width — not too narrow','Keep elbows tucked to sides','Lower to lower chest'],
-    instructions:['Lie on bench, grip bar shoulder-width','Lower bar to lower chest','Elbows stay close to body','Press up to lockout']},
-  // ── LEGS ADDITIONAL ──
-  'hip thrust':{muscle:'Glutes',equipment:'Barbell',difficulty:'Intermediate',
-    muscles:['Gluteus Maximus','Hamstrings'],
-    variations:['Bodyweight Hip Thrust','Single Leg Hip Thrust','Romanian Deadlift'],
-    tips:['Bar padded across hip crease','Drive through heels at top','Full hip extension — squeeze glutes hard'],
-    instructions:['Sit against bench, bar on hips','Plant feet hip-width, knees 90°','Drive hips up to parallel','Squeeze glutes at top, hold 1s']},
-  'leg curl':{muscle:'Hamstrings',equipment:'Machine',difficulty:'Beginner',
-    muscles:['Biceps Femoris','Semitendinosus'],
-    variations:['Romanian Deadlift','Nordic Curl','Stiff Leg Deadlift'],
-    tips:['Full ROM: complete extension at bottom','Toes slightly pointed out for inner ham','Slow eccentric for hypertrophy'],
-    instructions:['Lie prone on leg curl machine','Pad rests just above heels','Curl weight toward glutes','Lower slowly to full extension']},
-  'leg extension':{muscle:'Quads',equipment:'Machine',difficulty:'Beginner',
-    muscles:['Quadriceps'],
-    variations:['Squat','Leg Press','Sissy Squat'],
-    tips:['Full lockout at top for max quad activation','Control the descent — do not let weight crash','Not recommended for those with knee issues'],
-    instructions:['Sit in machine, pad above ankles','Extend legs to straight','Squeeze quads at lockout','Lower slowly with control']},
-  'calf raise':{muscle:'Calves',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Gastrocnemius','Soleus'],
-    variations:['Seated Calf Raise','Donkey Calf Raise','Leg Press Calf Raise'],
-    tips:['Full ROM: full stretch at bottom is key','Slow on the way down','Pause at top for 1-2s'],
-    instructions:['Stand on edge of step, heels hanging','Rise up on toes as high as possible','Lower below step level for full stretch','Repeat for high reps (15-25)']},
-  'sumo deadlift':{muscle:'Legs',equipment:'Barbell',difficulty:'Advanced',
-    muscles:['Gluteus Maximus','Adductors','Quads','Hamstrings'],
-    variations:['Conventional Deadlift','Romanian Deadlift','Trap Bar Deadlift'],
-    tips:['Wide stance, toes pointed 45° out','Grip inside legs — arms straight','Shorter ROM but more hip and inner thigh'],
-    instructions:['Wide stance, toes out 45°','Grip bar inside legs','Chest up, hips low','Drive floor away, lock hips and knees together']},
-  'Bulgarian split squat':{muscle:'Legs',equipment:'Dumbbells',difficulty:'Intermediate',
-    muscles:['Quadriceps','Gluteus Maximus','Hamstrings'],
-    variations:['Lunge','Single Leg Squat','Rear Foot Elevated Split Squat'],
-    tips:['Rear foot elevated on bench','Front foot far enough forward for vertical shin','Keep torso upright'],
-    instructions:['Stand facing away from bench','Place rear foot on bench','Lower back knee toward floor','Front leg does the work — press up']},
-  // ── CORE ADDITIONAL ──
-  'hanging leg raise':{muscle:'Core',equipment:'Pull-up Bar',difficulty:'Intermediate',
-    muscles:['Rectus Abdominis','Hip Flexors','Obliques'],
-    variations:['Knee Raise','Captain Chair','Ab Wheel'],
-    tips:['Posterior pelvic tilt at top for more ab activation','Avoid swinging — controlled movement','Full hang to full raise'],
-    instructions:['Hang from pull-up bar, arms straight','Raise knees (or straight legs) to waist','Continue to parallel or higher','Lower slowly under control']},
-  'cable crunch':{muscle:'Core',equipment:'Cable Machine',difficulty:'Beginner',
-    muscles:['Rectus Abdominis'],
-    variations:['Crunch','Decline Sit-up','Ab Wheel'],
-    tips:['Pull with abs — not arms or neck','Round spine fully at bottom','Heavier weight = more hypertrophy for abs'],
-    instructions:['Kneel below cable pulley','Hold rope at sides of face','Crunch down, elbows to thighs','Hold contraction, return slowly']},
-  'russian twist':{muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',
-    muscles:['Obliques','Rectus Abdominis'],
-    variations:['Cable Woodchop','Pallof Press','Side Plank'],
-    tips:['Lift feet for harder version','Rotate from torso — not arms','Add weight plate or medicine ball'],
-    instructions:['Sit, knees bent, lean back 45°','Lift feet if advanced','Rotate torso side to side','Touch floor beside hips each rep']},
-  // ── CARDIO ──
-  'running':{muscle:'Cardio',equipment:'None',difficulty:'Beginner',
-    muscles:['Quads','Hamstrings','Calves','Glutes','Core'],
-    variations:['Treadmill Run','Interval Sprint','Jogging','Hill Run'],
-    tips:['Land midfoot — not heel strike','Keep cadence 170-180 steps/min','Breathing: inhale 2 steps, exhale 2 steps'],
-    instructions:['Warm up with 5min walk','Run at conversational pace','Increase pace after warmup','Cool down and stretch calves/hamstrings']},
-  'jumping jacks':{muscle:'Cardio',equipment:'None',difficulty:'Beginner',
-    muscles:['Full Body'],
-    variations:['Star Jumps','Seal Jacks','Half Jacks'],
-    tips:['Land softly on toes','Keep core engaged throughout','Great warm-up exercise'],
-    instructions:['Stand feet together, arms at sides','Jump: spread feet wide, raise arms overhead','Jump back to starting position','Maintain rhythm, 30-60 reps']},
-  'burpee':{muscle:'Cardio',equipment:'None',difficulty:'Intermediate',
-    muscles:['Full Body','Chest','Core','Quads','Shoulders'],
-    variations:['Half Burpee','Burpee Pull-up','Box Jump Burpee'],
-    tips:['Hands under shoulders in plank','Jump feet together after pushup','Maximum calorie burn: 8-15 per minute'],
-    instructions:['Stand upright','Squat down, place hands on floor','Jump feet back to plank position','Do push-up, jump feet in, jump up with hands overhead']},
-  'mountain climber':{muscle:'Cardio',equipment:'None',difficulty:'Beginner',
-    muscles:['Core','Shoulders','Hip Flexors'],
-    variations:['Cross-body Mountain Climber','Slow Mountain Climber','Sliding Mountain Climber'],
-    tips:['Keep hips level — no hiking up','Fast for cardio, slow for core','Brace abs like a plank'],
-    instructions:['Start in push-up position','Drive one knee toward chest','Switch legs rapidly','Maintain flat back throughout']},
-  'jump rope':{muscle:'Cardio',equipment:'Jump Rope',difficulty:'Beginner',
-    muscles:['Calves','Shoulders','Core'],
-    variations:['Double Under','Speed Rope','Weighted Jump Rope'],
-    tips:['Jump only 1-2 inches off ground','Wrists do the rotation — not arms','30s on, 30s off for beginners'],
-    instructions:['Hold rope at hip height','Swing over head and jump','Land softly on balls of feet','Build up to continuous 2min sets']},
-  // ── INDIAN / BODYWEIGHT ──
-  'surya namaskar':{muscle:'Full Body',equipment:'None',difficulty:'Beginner',
-    muscles:['Full Body','Core','Shoulders','Hamstrings'],
-    variations:['Power Sun Salutation','Ashtanga','Slow Flow'],
-    tips:['12 postures in one sequence','Focus on breath synchronization','One round = 2 sequences (each side)'],
-    instructions:['Mountain pose: stand tall','Raise arms overhead (inhale)','Forward fold (exhale)','Step back to plank, lower (chaturanga)','Upward dog (inhale)','Downward dog (exhale)','Step forward, rise back up']},
-  'yoga':{muscle:'Flexibility',equipment:'Yoga Mat',difficulty:'Beginner',
-    muscles:['Full Body Flexibility','Core','Balance'],
-    variations:['Power Yoga','Yin Yoga','Vinyasa','Hatha'],
-    tips:['Never force a stretch','Breathe into tight spots','Consistency beats intensity in yoga'],
-    instructions:['Start with child pose to center','Move through chosen sequence','Hold each pose 30-60s','End with savasana (5min rest)']},
 
-};
 
-let exSearchResults=[];
-let exSelectedEx=null;
-let exLoading=false;
-let exQuery='';
-let exMuscleFilter='All';
 
 const MUSCLE_FILTERS=['All','Chest','Triceps','Biceps','Back','Shoulders','Legs','Core','Cardio'];
 
-async function searchExercises(query){
-  if(!query||query.trim().length<2) return;
-  query=query.trim();
-  exLoading=true;exQuery=query;exSearchResults=[];exSelectedEx=null;
-  renderScreens();
-  const q=query.toLowerCase();
-  // 1. Built-in local results FIRST (instant, always works)
-  const localResults=Object.entries(BUILTIN_EX)
-    .filter(([k,v])=>{
-      return k.toLowerCase().includes(q)||
-        (v.muscle||'').toLowerCase().includes(q)||
-        (v.muscles||[]).some(m=>m.toLowerCase().includes(q))||
-        (v.variations||[]).some(vr=>vr.toLowerCase().includes(q));
-    })
-    .map(([k,v])=>({...v,name:k,id:'local_'+k,
-      gifUrl:getLocalGif(k),isLocal:true}));
-  if(localResults.length){
-    exSearchResults=[...localResults];
-    exLoading=false;
-    renderScreens();
-  }
-  // 2. Try wger.de (free, CORS-open, works from file://)
-  if(exSearchResults.length<3){
-    try{
-      const ctrl=new AbortController();
-      const tid=setTimeout(()=>ctrl.abort(),5000);
-      const res=await safeFetch(
-      `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(q)}&language=english&format=json`,
-        {signal:ctrl.signal}
-      );
-      clearTimeout(tid);
-      if(res.ok){
-        const data=await res.json();
-        const suggs=(data.suggestions||[]).slice(0,8);
-        const wgerR=suggs.map(s=>({
-          name:s.value||s.data?.name||q,
-          id:'wger_'+(s.data?.id||Math.random()),
-          muscle:s.data?.category||'General',muscles:[],
-          equipment:'',difficulty:'Intermediate',
-          instructions:[],
-          gifUrl:null,
-          isLocal:false
-        }));
-        if(wgerR.length>0){
-          const seen=new Set(exSearchResults.map(e=>e.name.toLowerCase()));
-          exSearchResults=[...exSearchResults,...wgerR.filter(r=>!seen.has(r.name.toLowerCase()))];
-        }
-      }
-    }catch(e){console.log('wger:',e.message);}
-  }
-  // 3. Fallback to wger if still no results
-  if(exSearchResults.length===0){
-    try{
-      const ctrl2=new AbortController();
-      const tid2=setTimeout(()=>ctrl2.abort(),5000);
-      const r2=await safeFetch(
-      `https://wger.de/api/v2/exercise/search/?term=${encodeURIComponent(q)}&language=english&format=json`,
-        {signal:ctrl2.signal}
-      );
-      clearTimeout(tid2);
-      if(r2.ok){
-        const d2=await r2.json();
-        const suggs=(d2.suggestions||[]).slice(0,6);
-        const wgerR=suggs.map(s=>({
-          name:s.value||s.data?.name||q,
-          id:'wger_'+(s.data?.id||Math.random()),
-          muscle:s.data?.category||'General',
-          muscles:[],equipment:'',difficulty:'Intermediate',
-          instructions:[],gifUrl:null,isLocal:false
-        }));
-        exSearchResults=[...exSearchResults,...wgerR];
-      }
-    }catch(e){console.log('wger:',e.message);}
-  }
-  exLoading=false;
-  renderScreens();
-}
+
 // Local GIF fallback using publicly available sources (no auth needed)
-function getLocalGif(exerciseName){
-  const GIFS={
-    'bench press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+LmJ7YW5pbWF0aW9uOnAgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB7MCUsMTAwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTE4cHgpfX08L3N0eWxlPjxyZWN0IHg9IjI1IiB5PSI4OCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMCIgcng9IjQiIGZpbGw9IiMyYTMwNTAiLz48cmVjdCB4PSIzOCIgeT0iOTgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMWUyMzM1Ii8+PHJlY3QgeD0iMTk0IiB5PSI5OCIgd2lkdGg9IjgiIGhlaWdodD0iMTgiIGZpbGw9IiMxZTIzMzUiLz48cmVjdCB4PSI1NSIgeT0iNzYiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTMiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIiBvcGFjaXR5PSIuOSIvPjxjaXJjbGUgY3g9IjE4NiIgY3k9IjcyIiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGcgY2xhc3M9ImIiPjxyZWN0IHg9IjE4IiB5PSI0OCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNTEiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjIxNiIgY3k9IjUxIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48bGluZSB4MT0iODAiIHkxPSI3NiIgeDI9IjUyIiB5Mj0iNTUiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU1IiB5MT0iNzYiIHgyPSIxODMiIHkyPSI1NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTIyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzhhOTRiOCI+QmVuY2ggUHJlc3M8L3RleHQ+PC9zdmc+',
-    'incline bench press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+LmJ7YW5pbWF0aW9uOnAgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB7MCUsMTAwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTE4cHgpfX08L3N0eWxlPjxyZWN0IHg9IjI1IiB5PSI4OCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMCIgcng9IjQiIGZpbGw9IiMyYTMwNTAiLz48cmVjdCB4PSIzOCIgeT0iOTgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMWUyMzM1Ii8+PHJlY3QgeD0iMTk0IiB5PSI5OCIgd2lkdGg9IjgiIGhlaWdodD0iMTgiIGZpbGw9IiMxZTIzMzUiLz48cmVjdCB4PSI1NSIgeT0iNzYiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTMiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIiBvcGFjaXR5PSIuOSIvPjxjaXJjbGUgY3g9IjE4NiIgY3k9IjcyIiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGcgY2xhc3M9ImIiPjxyZWN0IHg9IjE4IiB5PSI0OCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNTEiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjIxNiIgY3k9IjUxIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48bGluZSB4MT0iODAiIHkxPSI3NiIgeDI9IjUyIiB5Mj0iNTUiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU1IiB5MT0iNzYiIHgyPSIxODMiIHkyPSI1NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTIyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzhhOTRiOCI+QmVuY2ggUHJlc3M8L3RleHQ+PC9zdmc+',
-    'dumbbell press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+LmJ7YW5pbWF0aW9uOnAgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB7MCUsMTAwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTE4cHgpfX08L3N0eWxlPjxyZWN0IHg9IjI1IiB5PSI4OCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMCIgcng9IjQiIGZpbGw9IiMyYTMwNTAiLz48cmVjdCB4PSIzOCIgeT0iOTgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMWUyMzM1Ii8+PHJlY3QgeD0iMTk0IiB5PSI5OCIgd2lkdGg9IjgiIGhlaWdodD0iMTgiIGZpbGw9IiMxZTIzMzUiLz48cmVjdCB4PSI1NSIgeT0iNzYiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTMiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIiBvcGFjaXR5PSIuOSIvPjxjaXJjbGUgY3g9IjE4NiIgY3k9IjcyIiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGcgY2xhc3M9ImIiPjxyZWN0IHg9IjE4IiB5PSI0OCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNTEiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjIxNiIgY3k9IjUxIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48bGluZSB4MT0iODAiIHkxPSI3NiIgeDI9IjUyIiB5Mj0iNTUiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU1IiB5MT0iNzYiIHgyPSIxODMiIHkyPSI1NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTIyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzhhOTRiOCI+QmVuY2ggUHJlc3M8L3RleHQ+PC9zdmc+',
-    'chest dip':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+LmJ7YW5pbWF0aW9uOnAgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB7MCUsMTAwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTE4cHgpfX08L3N0eWxlPjxyZWN0IHg9IjI1IiB5PSI4OCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMCIgcng9IjQiIGZpbGw9IiMyYTMwNTAiLz48cmVjdCB4PSIzOCIgeT0iOTgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMWUyMzM1Ii8+PHJlY3QgeD0iMTk0IiB5PSI5OCIgd2lkdGg9IjgiIGhlaWdodD0iMTgiIGZpbGw9IiMxZTIzMzUiLz48cmVjdCB4PSI1NSIgeT0iNzYiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTMiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIiBvcGFjaXR5PSIuOSIvPjxjaXJjbGUgY3g9IjE4NiIgY3k9IjcyIiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGcgY2xhc3M9ImIiPjxyZWN0IHg9IjE4IiB5PSI0OCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNTEiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjIxNiIgY3k9IjUxIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48bGluZSB4MT0iODAiIHkxPSI3NiIgeDI9IjUyIiB5Mj0iNTUiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU1IiB5MT0iNzYiIHgyPSIxODMiIHkyPSI1NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTIyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzhhOTRiOCI+QmVuY2ggUHJlc3M8L3RleHQ+PC9zdmc+',
-    'cable fly':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+LmJ7YW5pbWF0aW9uOnAgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB7MCUsMTAwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnRyYW5zbGF0ZVkoLTE4cHgpfX08L3N0eWxlPjxyZWN0IHg9IjI1IiB5PSI4OCIgd2lkdGg9IjE5MCIgaGVpZ2h0PSIxMCIgcng9IjQiIGZpbGw9IiMyYTMwNTAiLz48cmVjdCB4PSIzOCIgeT0iOTgiIHdpZHRoPSI4IiBoZWlnaHQ9IjE4IiBmaWxsPSIjMWUyMzM1Ii8+PHJlY3QgeD0iMTk0IiB5PSI5OCIgd2lkdGg9IjgiIGhlaWdodD0iMTgiIGZpbGw9IiMxZTIzMzUiLz48cmVjdCB4PSI1NSIgeT0iNzYiIHdpZHRoPSIxMjAiIGhlaWdodD0iMTMiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIiBvcGFjaXR5PSIuOSIvPjxjaXJjbGUgY3g9IjE4NiIgY3k9IjcyIiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGcgY2xhc3M9ImIiPjxyZWN0IHg9IjE4IiB5PSI0OCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI0IiBjeT0iNTEiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjIxNiIgY3k9IjUxIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48bGluZSB4MT0iODAiIHkxPSI3NiIgeDI9IjUyIiB5Mj0iNTUiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU1IiB5MT0iNzYiIHgyPSIxODMiIHkyPSI1NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTIyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiIgZmlsbD0iIzhhOTRiOCI+QmVuY2ggUHJlc3M8L3RleHQ+PC9zdmc+',
-    'push up':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LnB1e2FuaW1hdGlvbjpwdXAgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHB1cHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMTRweCl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxnIGNsYXNzPSJwdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggODBweCI+PHJlY3QgeD0iNzAiIHk9IjcyIiB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEzIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE3OCIgY3k9IjY4IiByPSI5IiBmaWxsPSIjZjVhNjIzIi8+PGxpbmUgeDE9IjcwIiB5MT0iNzgiIHgyPSI0OCIgeTI9Ijc4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjQ4IiB5MT0iNzgiIHgyPSI0NCIgeTI9IjEwMCIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNzAiIHkxPSI4NSIgeDI9IjE2OCIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzAiIHkxPSI4NSIgeDI9IjEyOCIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3OCIgeT0iMTIwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+UHVzaCBVcDwvdGV4dD48L3N2Zz4=',
-    'squat':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnNxe2FuaW1hdGlvbjpzcXQgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHNxdHswJSwxMDAle3RyYW5zZm9ybTpzY2FsZVkoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWSguNzIpIHRyYW5zbGF0ZVkoMTRweCl9fTwvc3R5bGU+PHJlY3QgeD0iNjgiIHk9IjgiIHdpZHRoPSIxMDQiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjExIiByPSIxMCIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIxODIiIGN5PSIxMSIgcj0iMTAiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGcgY2xhc3M9InNxIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMjBweCA4MHB4Ij48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNiIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDAiIHk9IjM3IiB3aWR0aD0iNDAiIGhlaWdodD0iNDIiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwMCIgeTE9Ijc5IiB4Mj0iNzQiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iNzkiIHgyPSIxNjYiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzQiIHkxPSIxMTIiIHgyPSI2OCIgeTI9IjEzNCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjYiIHkxPSIxMTIiIHgyPSIxNzIiIHkyPSIxMzQiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODUiIHk9IjE0MyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJhcmJlbGwgU3F1YXQ8L3RleHQ+PC9zdmc+',
-    'sumo deadlift':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnNxe2FuaW1hdGlvbjpzcXQgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHNxdHswJSwxMDAle3RyYW5zZm9ybTpzY2FsZVkoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWSguNzIpIHRyYW5zbGF0ZVkoMTRweCl9fTwvc3R5bGU+PHJlY3QgeD0iNjgiIHk9IjgiIHdpZHRoPSIxMDQiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjExIiByPSIxMCIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIxODIiIGN5PSIxMSIgcj0iMTAiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGcgY2xhc3M9InNxIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMjBweCA4MHB4Ij48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNiIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDAiIHk9IjM3IiB3aWR0aD0iNDAiIGhlaWdodD0iNDIiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwMCIgeTE9Ijc5IiB4Mj0iNzQiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iNzkiIHgyPSIxNjYiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzQiIHkxPSIxMTIiIHgyPSI2OCIgeTI9IjEzNCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjYiIHkxPSIxMTIiIHgyPSIxNzIiIHkyPSIxMzQiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODUiIHk9IjE0MyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJhcmJlbGwgU3F1YXQ8L3RleHQ+PC9zdmc+',
-    'leg press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnNxe2FuaW1hdGlvbjpzcXQgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHNxdHswJSwxMDAle3RyYW5zZm9ybTpzY2FsZVkoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWSguNzIpIHRyYW5zbGF0ZVkoMTRweCl9fTwvc3R5bGU+PHJlY3QgeD0iNjgiIHk9IjgiIHdpZHRoPSIxMDQiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjExIiByPSIxMCIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIxODIiIGN5PSIxMSIgcj0iMTAiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGcgY2xhc3M9InNxIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMjBweCA4MHB4Ij48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNiIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDAiIHk9IjM3IiB3aWR0aD0iNDAiIGhlaWdodD0iNDIiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwMCIgeTE9Ijc5IiB4Mj0iNzQiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iNzkiIHgyPSIxNjYiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzQiIHkxPSIxMTIiIHgyPSI2OCIgeTI9IjEzNCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjYiIHkxPSIxMTIiIHgyPSIxNzIiIHkyPSIxMzQiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODUiIHk9IjE0MyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJhcmJlbGwgU3F1YXQ8L3RleHQ+PC9zdmc+',
-    'leg extension':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnNxe2FuaW1hdGlvbjpzcXQgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHNxdHswJSwxMDAle3RyYW5zZm9ybTpzY2FsZVkoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWSguNzIpIHRyYW5zbGF0ZVkoMTRweCl9fTwvc3R5bGU+PHJlY3QgeD0iNjgiIHk9IjgiIHdpZHRoPSIxMDQiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjExIiByPSIxMCIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIxODIiIGN5PSIxMSIgcj0iMTAiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGcgY2xhc3M9InNxIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMjBweCA4MHB4Ij48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNiIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDAiIHk9IjM3IiB3aWR0aD0iNDAiIGhlaWdodD0iNDIiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwMCIgeTE9Ijc5IiB4Mj0iNzQiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iNzkiIHgyPSIxNjYiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzQiIHkxPSIxMTIiIHgyPSI2OCIgeTI9IjEzNCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjYiIHkxPSIxMTIiIHgyPSIxNzIiIHkyPSIxMzQiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODUiIHk9IjE0MyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJhcmJlbGwgU3F1YXQ8L3RleHQ+PC9zdmc+',
-    'goblet squat':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnNxe2FuaW1hdGlvbjpzcXQgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHNxdHswJSwxMDAle3RyYW5zZm9ybTpzY2FsZVkoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWSguNzIpIHRyYW5zbGF0ZVkoMTRweCl9fTwvc3R5bGU+PHJlY3QgeD0iNjgiIHk9IjgiIHdpZHRoPSIxMDQiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48Y2lyY2xlIGN4PSI1OCIgY3k9IjExIiByPSIxMCIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIxODIiIGN5PSIxMSIgcj0iMTAiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGcgY2xhc3M9InNxIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMjBweCA4MHB4Ij48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyNiIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDAiIHk9IjM3IiB3aWR0aD0iNDAiIGhlaWdodD0iNDIiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwMCIgeTE9Ijc5IiB4Mj0iNzQiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iNzkiIHgyPSIxNjYiIHkyPSIxMTIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI4IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzQiIHkxPSIxMTIiIHgyPSI2OCIgeTI9IjEzNCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjYiIHkxPSIxMTIiIHgyPSIxNzIiIHkyPSIxMzQiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODUiIHk9IjE0MyIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJhcmJlbGwgU3F1YXQ8L3RleHQ+PC9zdmc+',
-    'deadlift':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LmRse2FuaW1hdGlvbjpkbGkgMS44cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGRsaXswJXt0cmFuc2Zvcm06cm90YXRlKDM4ZGVnKSB0cmFuc2xhdGVZKDVweCl9NjAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKSB0cmFuc2xhdGVZKDApfX08L3N0eWxlPjxnIGNsYXNzPSJkbCIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTVweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjgiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzOSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQ4IiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDgiIHkxPSI1MiIgeDI9IjkwIiB5Mj0iODIiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTMyIiB5MT0iNTIiIHgyPSIxNTAiIHkyPSI4MiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48bGluZSB4MT0iMTAwIiB5MT0iMTMwIiB4Mj0iMTQwIiB5Mj0iMTMwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMjIiIHk9IjEyOCIgd2lkdGg9IjE5NiIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMTMyIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIyMTIiIGN5PSIxMzIiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjx0ZXh0IHg9IjgzIiB5PSIxNDgiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5EZWFkbGlmdDwvdGV4dD48L3N2Zz4=',
-    'romanian deadlift':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LmRse2FuaW1hdGlvbjpkbGkgMS44cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGRsaXswJXt0cmFuc2Zvcm06cm90YXRlKDM4ZGVnKSB0cmFuc2xhdGVZKDVweCl9NjAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKSB0cmFuc2xhdGVZKDApfX08L3N0eWxlPjxnIGNsYXNzPSJkbCIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTVweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjgiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzOSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQ4IiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDgiIHkxPSI1MiIgeDI9IjkwIiB5Mj0iODIiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTMyIiB5MT0iNTIiIHgyPSIxNTAiIHkyPSI4MiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48bGluZSB4MT0iMTAwIiB5MT0iMTMwIiB4Mj0iMTQwIiB5Mj0iMTMwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMjIiIHk9IjEyOCIgd2lkdGg9IjE5NiIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMTMyIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIyMTIiIGN5PSIxMzIiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjx0ZXh0IHg9IjgzIiB5PSIxNDgiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5EZWFkbGlmdDwvdGV4dD48L3N2Zz4=',
-    'stiff leg deadlift':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LmRse2FuaW1hdGlvbjpkbGkgMS44cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGRsaXswJXt0cmFuc2Zvcm06cm90YXRlKDM4ZGVnKSB0cmFuc2xhdGVZKDVweCl9NjAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKSB0cmFuc2xhdGVZKDApfX08L3N0eWxlPjxnIGNsYXNzPSJkbCIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTVweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjgiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzOSIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQ4IiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDgiIHkxPSI1MiIgeDI9IjkwIiB5Mj0iODIiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTMyIiB5MT0iNTIiIHgyPSIxNTAiIHkyPSI4MiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48bGluZSB4MT0iMTAwIiB5MT0iMTMwIiB4Mj0iMTQwIiB5Mj0iMTMwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMjIiIHk9IjEyOCIgd2lkdGg9IjE5NiIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjI4IiBjeT0iMTMyIiByPSIxMSIgZmlsbD0iI2ZmNWE1YSIgb3BhY2l0eT0iLjgiLz48Y2lyY2xlIGN4PSIyMTIiIGN5PSIxMzIiIHI9IjExIiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjx0ZXh0IHg9IjgzIiB5PSIxNDgiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5EZWFkbGlmdDwvdGV4dD48L3N2Zz4=',
-    'pull up':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnB1cHthbmltYXRpb246cHVsbCAxLjZzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgcHVsbHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMzBweCl9fTwvc3R5bGU+PHJlY3QgeD0iMTgiIHk9IjgiIHdpZHRoPSIyMDQiIGhlaWdodD0iOSIgcng9IjQiIGZpbGw9IiNlMmU4ZjgiLz48ZyBjbGFzcz0icHVwIj48bGluZSB4MT0iOTIiIHkxPSIxNyIgeDI9IjkyIiB5Mj0iNDAiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQ4IiB5MT0iMTciIHgyPSIxNDgiIHkyPSI0MCIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjUwIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjEwNCIgeT0iNjEiIHdpZHRoPSIzMiIgaGVpZ2h0PSI0MiIgcng9IjYiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTA0IiB5MT0iODIiIHgyPSI4MiIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI4MiIgeDI9IjE1OCIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4MiIgeTE9IjEwNSIgeDI9Ijc4IiB5Mj0iMTMwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1OCIgeTE9IjEwNSIgeDI9IjE2MiIgeTI9IjEzMCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3OCIgeT0iMTUyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+UHVsbCBVcDwvdGV4dD48L3N2Zz4=',
-    'chin up':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnB1cHthbmltYXRpb246cHVsbCAxLjZzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgcHVsbHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMzBweCl9fTwvc3R5bGU+PHJlY3QgeD0iMTgiIHk9IjgiIHdpZHRoPSIyMDQiIGhlaWdodD0iOSIgcng9IjQiIGZpbGw9IiNlMmU4ZjgiLz48ZyBjbGFzcz0icHVwIj48bGluZSB4MT0iOTIiIHkxPSIxNyIgeDI9IjkyIiB5Mj0iNDAiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQ4IiB5MT0iMTciIHgyPSIxNDgiIHkyPSI0MCIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxjaXJjbGUgY3g9IjEyMCIgY3k9IjUwIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjEwNCIgeT0iNjEiIHdpZHRoPSIzMiIgaGVpZ2h0PSI0MiIgcng9IjYiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTA0IiB5MT0iODIiIHgyPSI4MiIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI4MiIgeDI9IjE1OCIgeTI9IjEwNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4MiIgeTE9IjEwNSIgeDI9Ijc4IiB5Mj0iMTMwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1OCIgeTE9IjEwNSIgeDI9IjE2MiIgeTI9IjEzMCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3OCIgeT0iMTUyIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+UHVsbCBVcDwvdGV4dD48L3N2Zz4=',
-    'lat pulldown':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+Lmxwe2FuaW1hdGlvbjpscGQgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxwZHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgyMnB4KX19PC9zdHlsZT48cmVjdCB4PSIxOCIgeT0iOCIgd2lkdGg9IjIwNCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iIzJhMzA1MCIvPjxsaW5lIHgxPSIxMjAiIHkxPSIxNSIgeDI9IjEyMCIgeTI9IjMwIiBzdHJva2U9IiM4ODgiIHN0cm9rZS13aWR0aD0iMyIvPjxjaXJjbGUgY3g9IjExOCIgY3k9IjQwIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjEwMiIgeT0iNTEiIHdpZHRoPSIzMiIgaGVpZ2h0PSI0MCIgcng9IjYiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTAyIiB5MT0iNjgiIHgyPSI3OCIgeTI9Ijg4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNCIgeTE9IjY4IiB4Mj0iMTU4IiB5Mj0iODgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI4OCIgeDI9Ijc2IiB5Mj0iMTE4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1OCIgeTE9Ijg4IiB4Mj0iMTYwIiB5Mj0iMTE4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9ImxwIj48cmVjdCB4PSI1MiIgeT0iMjgiIHdpZHRoPSIxMzYiIGhlaWdodD0iNyIgcng9IjMiIGZpbGw9IiNlMmU4ZjgiLz48bGluZSB4MT0iODgiIHkxPSIzMSIgeDI9Ijg4IiB5Mj0iNTEiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTUyIiB5MT0iMzEiIHgyPSIxNTIiIHkyPSI1MSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI3NSIgeT0iMTQwIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+TGF0IFB1bGxkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'overhead press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+Lm9we2FuaW1hdGlvbjpvcHIgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIG9wcnswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMjJweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMzIiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSI0MyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI2MyIgeDI9IjgyIiB5Mj0iODMiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNjMiIHgyPSIxNTgiIHkyPSI4MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4MiIgeTE9IjgzIiB4Mj0iODAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU4IiB5MT0iODMiIHgyPSIxNjAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMTgiIHgyPSI3OCIgeTI9IjE0NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMTgiIHgyPSIxNjIiIHkyPSIxNDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ib3AiPjxyZWN0IHg9IjU1IiB5PSI1NSIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTkwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGxpbmUgeDE9IjEwNCIgeTE9IjU3IiB4Mj0iMTA0IiB5Mj0iNDMiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNTciIHgyPSIxMzYiIHkyPSI0MyIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTU1IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+T3ZlcmhlYWQgUHJlc3M8L3RleHQ+PC9zdmc+',
-    'arnold press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+Lm9we2FuaW1hdGlvbjpvcHIgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIG9wcnswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMjJweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMzIiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSI0MyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI2MyIgeDI9IjgyIiB5Mj0iODMiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNjMiIHgyPSIxNTgiIHkyPSI4MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4MiIgeTE9IjgzIiB4Mj0iODAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU4IiB5MT0iODMiIHgyPSIxNjAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMTgiIHgyPSI3OCIgeTI9IjE0NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMTgiIHgyPSIxNjIiIHkyPSIxNDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ib3AiPjxyZWN0IHg9IjU1IiB5PSI1NSIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTkwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGxpbmUgeDE9IjEwNCIgeTE9IjU3IiB4Mj0iMTA0IiB5Mj0iNDMiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNTciIHgyPSIxMzYiIHkyPSI0MyIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTU1IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+T3ZlcmhlYWQgUHJlc3M8L3RleHQ+PC9zdmc+',
-    'military press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+Lm9we2FuaW1hdGlvbjpvcHIgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIG9wcnswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMjJweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMzIiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSI0MyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI2MyIgeDI9IjgyIiB5Mj0iODMiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNjMiIHgyPSIxNTgiIHkyPSI4MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4MiIgeTE9IjgzIiB4Mj0iODAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTU4IiB5MT0iODMiIHgyPSIxNjAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMTgiIHgyPSI3OCIgeTI9IjE0NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMTgiIHgyPSIxNjIiIHkyPSIxNDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ib3AiPjxyZWN0IHg9IjU1IiB5PSI1NSIgd2lkdGg9IjEzMCIgaGVpZ2h0PSI3IiByeD0iMyIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTkwIiBjeT0iNTgiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGxpbmUgeDE9IjEwNCIgeTE9IjU3IiB4Mj0iMTA0IiB5Mj0iNDMiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNTciIHgyPSIxMzYiIHkyPSI0MyIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTU1IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+T3ZlcmhlYWQgUHJlc3M8L3RleHQ+PC9zdmc+',
-    'bicep curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LmN1e2FuaW1hdGlvbjpjdXJsIDEuMnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9QGtleWZyYW1lcyBjdXJsezAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKX01MCV7dHJhbnNmb3JtOnJvdGF0ZSgtNzJkZWcpfX08L3N0eWxlPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjI4IiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9Ijg4IiB5PSIzOSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjQyIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI4OCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI5MCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMTYiIHkxPSI2MCIgeDI9IjEzNCIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjcwIiB5MT0iOTAiIHgyPSI2OCIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzQiIHkxPSI5MCIgeDI9IjEzNiIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxnIGNsYXNzPSJjdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTM0cHggOTBweCI+PGxpbmUgeDE9IjEzNCIgeTE9IjkwIiB4Mj0iMTY4IiB5Mj0iMTEyIiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTY2IiB5PSIxMDciIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNmZjVhNWEiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE0OCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJpY2VwIEN1cmw8L3RleHQ+PC9zdmc+',
-    'hammer curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LmN1e2FuaW1hdGlvbjpjdXJsIDEuMnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9QGtleWZyYW1lcyBjdXJsezAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKX01MCV7dHJhbnNmb3JtOnJvdGF0ZSgtNzJkZWcpfX08L3N0eWxlPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjI4IiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9Ijg4IiB5PSIzOSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjQyIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI4OCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI5MCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMTYiIHkxPSI2MCIgeDI9IjEzNCIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjcwIiB5MT0iOTAiIHgyPSI2OCIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzQiIHkxPSI5MCIgeDI9IjEzNiIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxnIGNsYXNzPSJjdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTM0cHggOTBweCI+PGxpbmUgeDE9IjEzNCIgeTE9IjkwIiB4Mj0iMTY4IiB5Mj0iMTEyIiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTY2IiB5PSIxMDciIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNmZjVhNWEiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE0OCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJpY2VwIEN1cmw8L3RleHQ+PC9zdmc+',
-    'preacher curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LmN1e2FuaW1hdGlvbjpjdXJsIDEuMnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9QGtleWZyYW1lcyBjdXJsezAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKX01MCV7dHJhbnNmb3JtOnJvdGF0ZSgtNzJkZWcpfX08L3N0eWxlPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjI4IiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9Ijg4IiB5PSIzOSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjQyIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI4OCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI5MCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMTYiIHkxPSI2MCIgeDI9IjEzNCIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjcwIiB5MT0iOTAiIHgyPSI2OCIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzQiIHkxPSI5MCIgeDI9IjEzNiIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxnIGNsYXNzPSJjdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTM0cHggOTBweCI+PGxpbmUgeDE9IjEzNCIgeTE9IjkwIiB4Mj0iMTY4IiB5Mj0iMTEyIiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTY2IiB5PSIxMDciIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNmZjVhNWEiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE0OCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJpY2VwIEN1cmw8L3RleHQ+PC9zdmc+',
-    'concentration curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LmN1e2FuaW1hdGlvbjpjdXJsIDEuMnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9QGtleWZyYW1lcyBjdXJsezAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKX01MCV7dHJhbnNmb3JtOnJvdGF0ZSgtNzJkZWcpfX08L3N0eWxlPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjI4IiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9Ijg4IiB5PSIzOSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjQyIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI4OCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI5MCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMTYiIHkxPSI2MCIgeDI9IjEzNCIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjcwIiB5MT0iOTAiIHgyPSI2OCIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzQiIHkxPSI5MCIgeDI9IjEzNiIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxnIGNsYXNzPSJjdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTM0cHggOTBweCI+PGxpbmUgeDE9IjEzNCIgeTE9IjkwIiB4Mj0iMTY4IiB5Mj0iMTEyIiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTY2IiB5PSIxMDciIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNmZjVhNWEiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE0OCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJpY2VwIEN1cmw8L3RleHQ+PC9zdmc+',
-    'cable curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LmN1e2FuaW1hdGlvbjpjdXJsIDEuMnMgZWFzZS1pbi1vdXQgaW5maW5pdGV9QGtleWZyYW1lcyBjdXJsezAlLDEwMCV7dHJhbnNmb3JtOnJvdGF0ZSgwZGVnKX01MCV7dHJhbnNmb3JtOnJvdGF0ZSgtNzJkZWcpfX08L3N0eWxlPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjI4IiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9Ijg4IiB5PSIzOSIgd2lkdGg9IjI4IiBoZWlnaHQ9IjQyIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI4OCIgeTE9IjYwIiB4Mj0iNzAiIHkyPSI5MCIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMTYiIHkxPSI2MCIgeDI9IjEzNCIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjcwIiB5MT0iOTAiIHgyPSI2OCIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzQiIHkxPSI5MCIgeDI9IjEzNiIgeTI9IjEyNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxnIGNsYXNzPSJjdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTM0cHggOTBweCI+PGxpbmUgeDE9IjEzNCIgeTE9IjkwIiB4Mj0iMTY4IiB5Mj0iMTEyIiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTY2IiB5PSIxMDciIHdpZHRoPSIyOCIgaGVpZ2h0PSIxMCIgcng9IjUiIGZpbGw9IiNmZjVhNWEiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE0OCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkJpY2VwIEN1cmw8L3RleHQ+PC9zdmc+',
-    'tricep pushdown':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnRwe2FuaW1hdGlvbjp0cGQgMS4zcyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHRwZHswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoNTVkZWcpfX08L3N0eWxlPjxyZWN0IHg9IjExNSIgeT0iMiIgd2lkdGg9IjgiIGhlaWdodD0iMzIiIGZpbGw9IiM4ODgiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI0MCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI4OCIgeT0iNTEiIHdpZHRoPSIyOCIgaGVpZ2h0PSI0MiIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTE2IiB5MT0iNjMiIHgyPSIxMzgiIHkyPSI1MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4OCIgeTE9IjY1IiB4Mj0iNjYiIHkyPSI5MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI2NiIgeTE9IjkyIiB4Mj0iNjQiIHkyPSIxMjUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODgiIHkxPSI5MyIgeDI9Ijg2IiB5Mj0iMTI1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InRwIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMzhweCA1M3B4Ij48bGluZSB4MT0iMTM4IiB5MT0iNTMiIHgyPSIxNTIiIHkyPSI4NiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxyZWN0IHg9IjE0OCIgeT0iODQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTQ4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+VHJpY2VwIFB1c2hkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'tricep overhead extension':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnRwe2FuaW1hdGlvbjp0cGQgMS4zcyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHRwZHswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoNTVkZWcpfX08L3N0eWxlPjxyZWN0IHg9IjExNSIgeT0iMiIgd2lkdGg9IjgiIGhlaWdodD0iMzIiIGZpbGw9IiM4ODgiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI0MCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI4OCIgeT0iNTEiIHdpZHRoPSIyOCIgaGVpZ2h0PSI0MiIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTE2IiB5MT0iNjMiIHgyPSIxMzgiIHkyPSI1MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4OCIgeTE9IjY1IiB4Mj0iNjYiIHkyPSI5MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI2NiIgeTE9IjkyIiB4Mj0iNjQiIHkyPSIxMjUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODgiIHkxPSI5MyIgeDI9Ijg2IiB5Mj0iMTI1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InRwIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMzhweCA1M3B4Ij48bGluZSB4MT0iMTM4IiB5MT0iNTMiIHgyPSIxNTIiIHkyPSI4NiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxyZWN0IHg9IjE0OCIgeT0iODQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTQ4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+VHJpY2VwIFB1c2hkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'skull crusher':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnRwe2FuaW1hdGlvbjp0cGQgMS4zcyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHRwZHswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoNTVkZWcpfX08L3N0eWxlPjxyZWN0IHg9IjExNSIgeT0iMiIgd2lkdGg9IjgiIGhlaWdodD0iMzIiIGZpbGw9IiM4ODgiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI0MCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI4OCIgeT0iNTEiIHdpZHRoPSIyOCIgaGVpZ2h0PSI0MiIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTE2IiB5MT0iNjMiIHgyPSIxMzgiIHkyPSI1MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4OCIgeTE9IjY1IiB4Mj0iNjYiIHkyPSI5MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI2NiIgeTE9IjkyIiB4Mj0iNjQiIHkyPSIxMjUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODgiIHkxPSI5MyIgeDI9Ijg2IiB5Mj0iMTI1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InRwIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMzhweCA1M3B4Ij48bGluZSB4MT0iMTM4IiB5MT0iNTMiIHgyPSIxNTIiIHkyPSI4NiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxyZWN0IHg9IjE0OCIgeT0iODQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTQ4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+VHJpY2VwIFB1c2hkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'close grip bench press':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnRwe2FuaW1hdGlvbjp0cGQgMS4zcyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHRwZHswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoNTVkZWcpfX08L3N0eWxlPjxyZWN0IHg9IjExNSIgeT0iMiIgd2lkdGg9IjgiIGhlaWdodD0iMzIiIGZpbGw9IiM4ODgiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI0MCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI4OCIgeT0iNTEiIHdpZHRoPSIyOCIgaGVpZ2h0PSI0MiIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTE2IiB5MT0iNjMiIHgyPSIxMzgiIHkyPSI1MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4OCIgeTE9IjY1IiB4Mj0iNjYiIHkyPSI5MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI2NiIgeTE9IjkyIiB4Mj0iNjQiIHkyPSIxMjUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODgiIHkxPSI5MyIgeDI9Ijg2IiB5Mj0iMTI1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InRwIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMzhweCA1M3B4Ij48bGluZSB4MT0iMTM4IiB5MT0iNTMiIHgyPSIxNTIiIHkyPSI4NiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxyZWN0IHg9IjE0OCIgeT0iODQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTQ4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+VHJpY2VwIFB1c2hkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'tricep dip':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTU1Ij48c3R5bGU+LnRwe2FuaW1hdGlvbjp0cGQgMS4zcyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHRwZHswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoNTVkZWcpfX08L3N0eWxlPjxyZWN0IHg9IjExNSIgeT0iMiIgd2lkdGg9IjgiIGhlaWdodD0iMzIiIGZpbGw9IiM4ODgiLz48Y2lyY2xlIGN4PSIxMDAiIGN5PSI0MCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI4OCIgeT0iNTEiIHdpZHRoPSIyOCIgaGVpZ2h0PSI0MiIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iMTE2IiB5MT0iNjMiIHgyPSIxMzgiIHkyPSI1MyIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI4OCIgeTE9IjY1IiB4Mj0iNjYiIHkyPSI5MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI2NiIgeTE9IjkyIiB4Mj0iNjQiIHkyPSIxMjUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODgiIHkxPSI5MyIgeDI9Ijg2IiB5Mj0iMTI1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InRwIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjoxMzhweCA1M3B4Ij48bGluZSB4MT0iMTM4IiB5MT0iNTMiIHgyPSIxNTIiIHkyPSI4NiIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxyZWN0IHg9IjE0OCIgeT0iODQiIHdpZHRoPSIyNCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48dGV4dCB4PSI2OCIgeT0iMTQ4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+VHJpY2VwIFB1c2hkb3duPC90ZXh0Pjwvc3ZnPg==',
-    'bent over row':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnJ3e2FuaW1hdGlvbjpyb3cgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHJvd3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVYKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWCgtMTZweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTQ1IiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA1IiB5PSI0OCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjMwIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIgc3R5bGU9InRyYW5zZm9ybTpyb3RhdGUoLTM1ZGVnKTt0cmFuc2Zvcm0tb3JpZ2luOjEzMHB4IDYzcHgiLz48bGluZSB4MT0iMTA1IiB5MT0iNzIiIHgyPSI3MiIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHlsZT0idHJhbnNmb3JtOnJvdGF0ZSgtMTVkZWcpO3RyYW5zZm9ybS1vcmlnaW46OTBweCA4MnB4Ii8+PGxpbmUgeDE9IjE1NyIgeTE9IjcyIiB4Mj0iMTc1IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InJ3Ij48cmVjdCB4PSI0MCIgeT0iMTA4IiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZTJlOGY4Ii8+PGNpcmNsZSBjeD0iMzYiIGN5PSIxMTEiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTYyIiBjeT0iMTExIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxsaW5lIHgxPSIxMDUiIHkxPSI3OCIgeDI9IjgwIiB5Mj0iMTA4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxMzUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5CZW50IE92ZXIgUm93PC90ZXh0Pjwvc3ZnPg==',
-    'cable row':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnJ3e2FuaW1hdGlvbjpyb3cgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHJvd3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVYKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWCgtMTZweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTQ1IiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA1IiB5PSI0OCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjMwIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIgc3R5bGU9InRyYW5zZm9ybTpyb3RhdGUoLTM1ZGVnKTt0cmFuc2Zvcm0tb3JpZ2luOjEzMHB4IDYzcHgiLz48bGluZSB4MT0iMTA1IiB5MT0iNzIiIHgyPSI3MiIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHlsZT0idHJhbnNmb3JtOnJvdGF0ZSgtMTVkZWcpO3RyYW5zZm9ybS1vcmlnaW46OTBweCA4MnB4Ii8+PGxpbmUgeDE9IjE1NyIgeTE9IjcyIiB4Mj0iMTc1IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InJ3Ij48cmVjdCB4PSI0MCIgeT0iMTA4IiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZTJlOGY4Ii8+PGNpcmNsZSBjeD0iMzYiIGN5PSIxMTEiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTYyIiBjeT0iMTExIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxsaW5lIHgxPSIxMDUiIHkxPSI3OCIgeDI9IjgwIiB5Mj0iMTA4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxMzUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5CZW50IE92ZXIgUm93PC90ZXh0Pjwvc3ZnPg==',
-    'dumbbell row':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LnJ3e2FuaW1hdGlvbjpyb3cgMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIHJvd3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVYKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWCgtMTZweCl9fTwvc3R5bGU+PGNpcmNsZSBjeD0iMTQ1IiBjeT0iMzgiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA1IiB5PSI0OCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjMwIiByeD0iNSIgZmlsbD0iIzRhOWVmZiIgc3R5bGU9InRyYW5zZm9ybTpyb3RhdGUoLTM1ZGVnKTt0cmFuc2Zvcm0tb3JpZ2luOjEzMHB4IDYzcHgiLz48bGluZSB4MT0iMTA1IiB5MT0iNzIiIHgyPSI3MiIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHlsZT0idHJhbnNmb3JtOnJvdGF0ZSgtMTVkZWcpO3RyYW5zZm9ybS1vcmlnaW46OTBweCA4MnB4Ii8+PGxpbmUgeDE9IjE1NyIgeTE9IjcyIiB4Mj0iMTc1IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGcgY2xhc3M9InJ3Ij48cmVjdCB4PSI0MCIgeT0iMTA4IiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZTJlOGY4Ii8+PGNpcmNsZSBjeD0iMzYiIGN5PSIxMTEiIHI9IjkiIGZpbGw9IiNmZjVhNWEiIG9wYWNpdHk9Ii44Ii8+PGNpcmNsZSBjeD0iMTYyIiBjeT0iMTExIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxsaW5lIHgxPSIxMDUiIHkxPSI3OCIgeDI9IjgwIiB5Mj0iMTA4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxMzUiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5CZW50IE92ZXIgUm93PC90ZXh0Pjwvc3ZnPg==',
-    'lateral raise':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+Lmxye2FuaW1hdGlvbjpscmEgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxyYXswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoLTYwZGVnKX19PC9zdHlsZT48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjM5IiB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijc5IiB4Mj0iODAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNzkiIHgyPSIxNjAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMDUiIHgyPSI3OCIgeTI9IjEzNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMDUiIHgyPSIxNjIiIHkyPSIxMzUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEwNHB4IDUycHgiPjxsaW5lIHgxPSIxMDQiIHkxPSI1MiIgeDI9IjYyIiB5Mj0iNTgiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0NCIgeT0iNTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEzNnB4IDUycHg7YW5pbWF0aW9uLWRpcmVjdGlvbjphbHRlcm5hdGUiPjxsaW5lIHgxPSIxMzYiIHkxPSI1MiIgeDI9IjE3OCIgeTI9IjU4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTc2IiB5PSI1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjkiIHJ4PSI0IiBmaWxsPSIjZmY1YTVhIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MYXRlcmFsIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'front raise':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+Lmxye2FuaW1hdGlvbjpscmEgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxyYXswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoLTYwZGVnKX19PC9zdHlsZT48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjM5IiB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijc5IiB4Mj0iODAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNzkiIHgyPSIxNjAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMDUiIHgyPSI3OCIgeTI9IjEzNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMDUiIHgyPSIxNjIiIHkyPSIxMzUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEwNHB4IDUycHgiPjxsaW5lIHgxPSIxMDQiIHkxPSI1MiIgeDI9IjYyIiB5Mj0iNTgiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0NCIgeT0iNTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEzNnB4IDUycHg7YW5pbWF0aW9uLWRpcmVjdGlvbjphbHRlcm5hdGUiPjxsaW5lIHgxPSIxMzYiIHkxPSI1MiIgeDI9IjE3OCIgeTI9IjU4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTc2IiB5PSI1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjkiIHJ4PSI0IiBmaWxsPSIjZmY1YTVhIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MYXRlcmFsIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'upright row':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+Lmxye2FuaW1hdGlvbjpscmEgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxyYXswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoLTYwZGVnKX19PC9zdHlsZT48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjM5IiB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijc5IiB4Mj0iODAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNzkiIHgyPSIxNjAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMDUiIHgyPSI3OCIgeTI9IjEzNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMDUiIHgyPSIxNjIiIHkyPSIxMzUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEwNHB4IDUycHgiPjxsaW5lIHgxPSIxMDQiIHkxPSI1MiIgeDI9IjYyIiB5Mj0iNTgiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0NCIgeT0iNTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEzNnB4IDUycHg7YW5pbWF0aW9uLWRpcmVjdGlvbjphbHRlcm5hdGUiPjxsaW5lIHgxPSIxMzYiIHkxPSI1MiIgeDI9IjE3OCIgeTI9IjU4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTc2IiB5PSI1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjkiIHJ4PSI0IiBmaWxsPSIjZmY1YTVhIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MYXRlcmFsIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'face pull':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+Lmxye2FuaW1hdGlvbjpscmEgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxyYXswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoLTYwZGVnKX19PC9zdHlsZT48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjM5IiB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijc5IiB4Mj0iODAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNzkiIHgyPSIxNjAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMDUiIHgyPSI3OCIgeTI9IjEzNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMDUiIHgyPSIxNjIiIHkyPSIxMzUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEwNHB4IDUycHgiPjxsaW5lIHgxPSIxMDQiIHkxPSI1MiIgeDI9IjYyIiB5Mj0iNTgiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0NCIgeT0iNTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEzNnB4IDUycHg7YW5pbWF0aW9uLWRpcmVjdGlvbjphbHRlcm5hdGUiPjxsaW5lIHgxPSIxMzYiIHkxPSI1MiIgeDI9IjE3OCIgeTI9IjU4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTc2IiB5PSI1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjkiIHJ4PSI0IiBmaWxsPSIjZmY1YTVhIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MYXRlcmFsIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'shrug':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+Lmxye2FuaW1hdGlvbjpscmEgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxyYXswJSwxMDAle3RyYW5zZm9ybTpyb3RhdGUoMGRlZyl9NTAle3RyYW5zZm9ybTpyb3RhdGUoLTYwZGVnKX19PC9zdHlsZT48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTEiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjM5IiB3aWR0aD0iMzIiIGhlaWdodD0iNDAiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijc5IiB4Mj0iODAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iNzkiIHgyPSIxNjAiIHkyPSIxMDUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iODAiIHkxPSIxMDUiIHgyPSI3OCIgeTI9IjEzNSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNjAiIHkxPSIxMDUiIHgyPSIxNjIiIHkyPSIxMzUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEwNHB4IDUycHgiPjxsaW5lIHgxPSIxMDQiIHkxPSI1MiIgeDI9IjYyIiB5Mj0iNTgiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSI0NCIgeT0iNTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI5IiByeD0iNCIgZmlsbD0iI2ZmNWE1YSIvPjwvZz48ZyBjbGFzcz0ibHIiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjEzNnB4IDUycHg7YW5pbWF0aW9uLWRpcmVjdGlvbjphbHRlcm5hdGUiPjxsaW5lIHgxPSIxMzYiIHkxPSI1MiIgeDI9IjE3OCIgeTI9IjU4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTc2IiB5PSI1NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjkiIHJ4PSI0IiBmaWxsPSIjZmY1YTVhIi8+PC9nPjx0ZXh0IHg9IjcyIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MYXRlcmFsIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'plank':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTE1Ij48c3R5bGU+LnBre2FuaW1hdGlvbjpwbG5rIDJzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgcGxua3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtNXB4KX19PC9zdHlsZT48bGluZSB4MT0iMTAiIHkxPSIxMDUiIHgyPSIyMzAiIHkyPSIxMDUiIHN0cm9rZT0iIzJhMzA1MCIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGcgY2xhc3M9InBrIj48Y2lyY2xlIGN4PSIxODgiIGN5PSI1OCIgcj0iMTAiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI5MCIgeT0iNjgiIHdpZHRoPSI5MiIgaGVpZ2h0PSIxMyIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iOTAiIHkxPSI3NCIgeDI9IjU4IiB5Mj0iNzQiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTgiIHkxPSI3NCIgeDI9IjUyIiB5Mj0iOTYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTgyIiB5MT0iODEiIHgyPSIxODAiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iODEiIHgyPSIxMzgiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODIiIHk9IjExNSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPlBsYW5rPC90ZXh0Pjwvc3ZnPg==',
-    'mountain climber':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTE1Ij48c3R5bGU+LnBre2FuaW1hdGlvbjpwbG5rIDJzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgcGxua3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtNXB4KX19PC9zdHlsZT48bGluZSB4MT0iMTAiIHkxPSIxMDUiIHgyPSIyMzAiIHkyPSIxMDUiIHN0cm9rZT0iIzJhMzA1MCIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGcgY2xhc3M9InBrIj48Y2lyY2xlIGN4PSIxODgiIGN5PSI1OCIgcj0iMTAiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI5MCIgeT0iNjgiIHdpZHRoPSI5MiIgaGVpZ2h0PSIxMyIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iOTAiIHkxPSI3NCIgeDI9IjU4IiB5Mj0iNzQiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTgiIHkxPSI3NCIgeDI9IjUyIiB5Mj0iOTYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTgyIiB5MT0iODEiIHgyPSIxODAiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iODEiIHgyPSIxMzgiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODIiIHk9IjExNSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPlBsYW5rPC90ZXh0Pjwvc3ZnPg==',
-    'dead bug':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTE1Ij48c3R5bGU+LnBre2FuaW1hdGlvbjpwbG5rIDJzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgcGxua3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtNXB4KX19PC9zdHlsZT48bGluZSB4MT0iMTAiIHkxPSIxMDUiIHgyPSIyMzAiIHkyPSIxMDUiIHN0cm9rZT0iIzJhMzA1MCIgc3Ryb2tlLXdpZHRoPSI0Ii8+PGcgY2xhc3M9InBrIj48Y2lyY2xlIGN4PSIxODgiIGN5PSI1OCIgcj0iMTAiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSI5MCIgeT0iNjgiIHdpZHRoPSI5MiIgaGVpZ2h0PSIxMyIgcng9IjUiIGZpbGw9IiM0YTllZmYiLz48bGluZSB4MT0iOTAiIHkxPSI3NCIgeDI9IjU4IiB5Mj0iNzQiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTgiIHkxPSI3NCIgeDI9IjUyIiB5Mj0iOTYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTgyIiB5MT0iODEiIHgyPSIxODAiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTQwIiB5MT0iODEiIHgyPSIxMzgiIHkyPSIxMDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iODIiIHk9IjExNSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPlBsYW5rPC90ZXh0Pjwvc3ZnPg==',
-    'hip thrust':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+Lmh0e2FuaW1hdGlvbjpodGggMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGh0aHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMjBweCl9fTwvc3R5bGU+PHJlY3QgeD0iMTcwIiB5PSI3MCIgd2lkdGg9IjU1IiBoZWlnaHQ9IjM4IiByeD0iNiIgZmlsbD0iIzJhMzA1MCIvPjxsaW5lIHgxPSIxMCIgeTE9IjExNSIgeDI9IjIzMCIgeTI9IjExNSIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjY4IiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSI0MCIgeTE9Ijc4IiB4Mj0iNDIiIHkyPSIxMTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0iaHQiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjQycHggMTAwcHgiPjxsaW5lIHgxPSI0MiIgeTE9IjEwMCIgeDI9IjE1MiIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MiIgeTE9IjkwIiB4Mj0iMTcyIiB5Mj0iMTE1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTA4IiB5PSI3OCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjEwIiByeD0iNSIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjEwNCIgY3k9IjgzIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjE2MiIgY3k9IjgzIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjwvZz48dGV4dCB4PSI3OCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+SGlwIFRocnVzdDwvdGV4dD48L3N2Zz4=',
-    'glute bridge':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTMwIj48c3R5bGU+Lmh0e2FuaW1hdGlvbjpodGggMS41cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGh0aHswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMjBweCl9fTwvc3R5bGU+PHJlY3QgeD0iMTcwIiB5PSI3MCIgd2lkdGg9IjU1IiBoZWlnaHQ9IjM4IiByeD0iNiIgZmlsbD0iIzJhMzA1MCIvPjxsaW5lIHgxPSIxMCIgeTE9IjExNSIgeDI9IjIzMCIgeTI9IjExNSIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjQiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjY4IiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSI0MCIgeTE9Ijc4IiB4Mj0iNDIiIHkyPSIxMTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48ZyBjbGFzcz0iaHQiIHN0eWxlPSJ0cmFuc2Zvcm0tb3JpZ2luOjQycHggMTAwcHgiPjxsaW5lIHgxPSI0MiIgeTE9IjEwMCIgeDI9IjE1MiIgeTI9IjkwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MiIgeTE9IjkwIiB4Mj0iMTcyIiB5Mj0iMTE1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHJlY3QgeD0iMTA4IiB5PSI3OCIgd2lkdGg9IjUyIiBoZWlnaHQ9IjEwIiByeD0iNSIgZmlsbD0iI2UyZThmOCIvPjxjaXJjbGUgY3g9IjEwNCIgY3k9IjgzIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjxjaXJjbGUgY3g9IjE2MiIgY3k9IjgzIiByPSI5IiBmaWxsPSIjZmY1YTVhIiBvcGFjaXR5PSIuOCIvPjwvZz48dGV4dCB4PSI3OCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+SGlwIFRocnVzdDwvdGV4dD48L3N2Zz4=',
-    'burpee':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQwIj48c3R5bGU+LnBoMXthbmltYXRpb246cDEgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMXswJSw0OSV7b3BhY2l0eToxfTUwJSwxMDAle29wYWNpdHk6MH19LnBoMnthbmltYXRpb246cDIgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMnswJSw0OSV7b3BhY2l0eTowfTUwJSwxMDAle29wYWNpdHk6MX19PC9zdHlsZT48ZyBjbGFzcz0icGgxIj48Y2lyY2xlIGN4PSI4MCIgY3k9IjIyIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjY2IiB5PSIzMyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjM1IiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI2NiIgeTE9IjY4IiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI5NCIgeTE9IjY4IiB4Mj0iMTEwIiB5Mj0iOTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTIiIHkxPSI0MCIgeDI9IjM0IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI0MCIgeDI9Ijk2IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PGcgY2xhc3M9InBoMiI+PGNpcmNsZSBjeD0iMTYwIiBjeT0iNjIiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iODAiIHk9IjcwIiB3aWR0aD0iNzQiIGhlaWdodD0iMTIiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjgwIiB5MT0iNzYiIHgyPSI1NiIgeTI9Ijc2IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjU2IiB5MT0iNzYiIHgyPSI1MCIgeTI9Ijk4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MCIgeTE9IjgyIiB4Mj0iMTQ4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjExMCIgeTE9IjgyIiB4Mj0iMTA4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSIxMCIgeTE9IjEwOCIgeDI9IjIzMCIgeTI9IjEwOCIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI4MCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+Q2FyZGlvPC90ZXh0Pjwvc3ZnPg==',
-    'jumping jacks':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQwIj48c3R5bGU+LnBoMXthbmltYXRpb246cDEgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMXswJSw0OSV7b3BhY2l0eToxfTUwJSwxMDAle29wYWNpdHk6MH19LnBoMnthbmltYXRpb246cDIgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMnswJSw0OSV7b3BhY2l0eTowfTUwJSwxMDAle29wYWNpdHk6MX19PC9zdHlsZT48ZyBjbGFzcz0icGgxIj48Y2lyY2xlIGN4PSI4MCIgY3k9IjIyIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjY2IiB5PSIzMyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjM1IiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI2NiIgeTE9IjY4IiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI5NCIgeTE9IjY4IiB4Mj0iMTEwIiB5Mj0iOTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTIiIHkxPSI0MCIgeDI9IjM0IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI0MCIgeDI9Ijk2IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PGcgY2xhc3M9InBoMiI+PGNpcmNsZSBjeD0iMTYwIiBjeT0iNjIiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iODAiIHk9IjcwIiB3aWR0aD0iNzQiIGhlaWdodD0iMTIiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjgwIiB5MT0iNzYiIHgyPSI1NiIgeTI9Ijc2IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjU2IiB5MT0iNzYiIHgyPSI1MCIgeTI9Ijk4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MCIgeTE9IjgyIiB4Mj0iMTQ4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjExMCIgeTE9IjgyIiB4Mj0iMTA4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSIxMCIgeTE9IjEwOCIgeDI9IjIzMCIgeTI9IjEwOCIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI4MCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+Q2FyZGlvPC90ZXh0Pjwvc3ZnPg==',
-    'jump rope':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQwIj48c3R5bGU+LnBoMXthbmltYXRpb246cDEgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMXswJSw0OSV7b3BhY2l0eToxfTUwJSwxMDAle29wYWNpdHk6MH19LnBoMnthbmltYXRpb246cDIgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMnswJSw0OSV7b3BhY2l0eTowfTUwJSwxMDAle29wYWNpdHk6MX19PC9zdHlsZT48ZyBjbGFzcz0icGgxIj48Y2lyY2xlIGN4PSI4MCIgY3k9IjIyIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjY2IiB5PSIzMyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjM1IiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI2NiIgeTE9IjY4IiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI5NCIgeTE9IjY4IiB4Mj0iMTEwIiB5Mj0iOTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTIiIHkxPSI0MCIgeDI9IjM0IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI0MCIgeDI9Ijk2IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PGcgY2xhc3M9InBoMiI+PGNpcmNsZSBjeD0iMTYwIiBjeT0iNjIiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iODAiIHk9IjcwIiB3aWR0aD0iNzQiIGhlaWdodD0iMTIiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjgwIiB5MT0iNzYiIHgyPSI1NiIgeTI9Ijc2IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjU2IiB5MT0iNzYiIHgyPSI1MCIgeTI9Ijk4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MCIgeTE9IjgyIiB4Mj0iMTQ4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjExMCIgeTE9IjgyIiB4Mj0iMTA4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSIxMCIgeTE9IjEwOCIgeDI9IjIzMCIgeTI9IjEwOCIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI4MCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+Q2FyZGlvPC90ZXh0Pjwvc3ZnPg==',
-    'running':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQwIj48c3R5bGU+LnBoMXthbmltYXRpb246cDEgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMXswJSw0OSV7b3BhY2l0eToxfTUwJSwxMDAle29wYWNpdHk6MH19LnBoMnthbmltYXRpb246cDIgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMnswJSw0OSV7b3BhY2l0eTowfTUwJSwxMDAle29wYWNpdHk6MX19PC9zdHlsZT48ZyBjbGFzcz0icGgxIj48Y2lyY2xlIGN4PSI4MCIgY3k9IjIyIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjY2IiB5PSIzMyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjM1IiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI2NiIgeTE9IjY4IiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI5NCIgeTE9IjY4IiB4Mj0iMTEwIiB5Mj0iOTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTIiIHkxPSI0MCIgeDI9IjM0IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI0MCIgeDI9Ijk2IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PGcgY2xhc3M9InBoMiI+PGNpcmNsZSBjeD0iMTYwIiBjeT0iNjIiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iODAiIHk9IjcwIiB3aWR0aD0iNzQiIGhlaWdodD0iMTIiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjgwIiB5MT0iNzYiIHgyPSI1NiIgeTI9Ijc2IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjU2IiB5MT0iNzYiIHgyPSI1MCIgeTI9Ijk4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MCIgeTE9IjgyIiB4Mj0iMTQ4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjExMCIgeTE9IjgyIiB4Mj0iMTA4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSIxMCIgeTE9IjEwOCIgeDI9IjIzMCIgeTI9IjEwOCIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI4MCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+Q2FyZGlvPC90ZXh0Pjwvc3ZnPg==',
-    'sprints':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQwIj48c3R5bGU+LnBoMXthbmltYXRpb246cDEgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMXswJSw0OSV7b3BhY2l0eToxfTUwJSwxMDAle29wYWNpdHk6MH19LnBoMnthbmltYXRpb246cDIgMnMgc3RlcHMoMSkgaW5maW5pdGV9QGtleWZyYW1lcyBwMnswJSw0OSV7b3BhY2l0eTowfTUwJSwxMDAle29wYWNpdHk6MX19PC9zdHlsZT48ZyBjbGFzcz0icGgxIj48Y2lyY2xlIGN4PSI4MCIgY3k9IjIyIiByPSIxMSIgZmlsbD0iI2Y1YTYyMyIvPjxyZWN0IHg9IjY2IiB5PSIzMyIgd2lkdGg9IjI4IiBoZWlnaHQ9IjM1IiByeD0iNSIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSI2NiIgeTE9IjY4IiB4Mj0iNTAiIHkyPSI5NSIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSI5NCIgeTE9IjY4IiB4Mj0iMTEwIiB5Mj0iOTUiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNTIiIHkxPSI0MCIgeDI9IjM0IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iNzgiIHkxPSI0MCIgeDI9Ijk2IiB5Mj0iMjYiIHN0cm9rZT0iIzRjZGI4YSIgc3Ryb2tlLXdpZHRoPSI1IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PGcgY2xhc3M9InBoMiI+PGNpcmNsZSBjeD0iMTYwIiBjeT0iNjIiIHI9IjEwIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iODAiIHk9IjcwIiB3aWR0aD0iNzQiIGhlaWdodD0iMTIiIHJ4PSI1IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjgwIiB5MT0iNzYiIHgyPSI1NiIgeTI9Ijc2IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjU2IiB5MT0iNzYiIHgyPSI1MCIgeTI9Ijk4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MCIgeTE9IjgyIiB4Mj0iMTQ4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjExMCIgeTE9IjgyIiB4Mj0iMTA4IiB5Mj0iMTAwIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSIxMCIgeTE9IjEwOCIgeDI9IjIzMCIgeTI9IjEwOCIgc3Ryb2tlPSIjMmEzMDUwIiBzdHJva2Utd2lkdGg9IjMiLz48dGV4dCB4PSI4MCIgeT0iMTI4IiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMSIgZmlsbD0iIzhhOTRiOCI+Q2FyZGlvPC90ZXh0Pjwvc3ZnPg==',
-    'lunge':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmx1e2FuaW1hdGlvbjpsbmcgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxuZ3swJSwxMDAle3RyYW5zZm9ybTpzY2FsZVgoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWCgxLjA4KSB0cmFuc2xhdGVZKDVweCl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTQwIiB4Mj0iMjMwIiB5Mj0iMTQwIiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxnIGNsYXNzPSJsdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTBweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjUiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzNiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI3NiIgeDI9Ijc2IiB5Mj0iMTEyIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNiIgeTE9Ijc2IiB4Mj0iMTY0IiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9Ijc2IiB5MT0iMTEyIiB4Mj0iNjgiIHkyPSIxMzgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTY0IiB5MT0iMTA4IiB4Mj0iMTcyIiB5Mj0iMTM1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjgyIiB5PSIxNTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MdW5nZTwvdGV4dD48L3N2Zz4=',
-    'bulgarian split squat':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmx1e2FuaW1hdGlvbjpsbmcgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxuZ3swJSwxMDAle3RyYW5zZm9ybTpzY2FsZVgoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWCgxLjA4KSB0cmFuc2xhdGVZKDVweCl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTQwIiB4Mj0iMjMwIiB5Mj0iMTQwIiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxnIGNsYXNzPSJsdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTBweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjUiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzNiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI3NiIgeDI9Ijc2IiB5Mj0iMTEyIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNiIgeTE9Ijc2IiB4Mj0iMTY0IiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9Ijc2IiB5MT0iMTEyIiB4Mj0iNjgiIHkyPSIxMzgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTY0IiB5MT0iMTA4IiB4Mj0iMTcyIiB5Mj0iMTM1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjgyIiB5PSIxNTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MdW5nZTwvdGV4dD48L3N2Zz4=',
-    'split squat':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmx1e2FuaW1hdGlvbjpsbmcgMS42cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGxuZ3swJSwxMDAle3RyYW5zZm9ybTpzY2FsZVgoMSkgdHJhbnNsYXRlWSgwKX01MCV7dHJhbnNmb3JtOnNjYWxlWCgxLjA4KSB0cmFuc2xhdGVZKDVweCl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTQwIiB4Mj0iMjMwIiB5Mj0iMTQwIiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxnIGNsYXNzPSJsdSIgc3R5bGU9InRyYW5zZm9ybS1vcmlnaW46MTIwcHggOTBweCI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjUiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzNiIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQwIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI3NiIgeDI9Ijc2IiB5Mj0iMTEyIiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNiIgeTE9Ijc2IiB4Mj0iMTY0IiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9Ijc2IiB5MT0iMTEyIiB4Mj0iNjgiIHkyPSIxMzgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTY0IiB5MT0iMTA4IiB4Mj0iMTcyIiB5Mj0iMTM1IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjgyIiB5PSIxNTAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5MdW5nZTwvdGV4dD48L3N2Zz4=',
-    'crunch':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LmFie2FuaW1hdGlvbjphYiAxLjRzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgYWJ7MCUsMTAwJXt0cmFuc2Zvcm06cm90YXRlKDBkZWcpfTUwJXt0cmFuc2Zvcm06cm90YXRlKC0zMmRlZyl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjQwIiB5PSI5MCIgd2lkdGg9IjEzMCIgaGVpZ2h0PSIxMiIgcng9IjUiIGZpbGw9IiM0YTllZmYiIG9wYWNpdHk9Ii42Ii8+PGcgY2xhc3M9ImFiIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo2MHB4IDkwcHgiPjxyZWN0IHg9IjYwIiB5PSI1NSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjM2IiByeD0iOCIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE0OCIgY3k9IjYyIiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSIxNDgiIHkxPSI1NSIgeDI9IjE0OCIgeTI9IjM4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSI0MCIgeTE9Ijk2IiB4Mj0iMjAiIHkyPSI5NiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjx0ZXh0IHg9IjgyIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DcnVuY2ggLyBDb3JlPC90ZXh0Pjwvc3ZnPg==',
-    'hanging leg raise':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LmFie2FuaW1hdGlvbjphYiAxLjRzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgYWJ7MCUsMTAwJXt0cmFuc2Zvcm06cm90YXRlKDBkZWcpfTUwJXt0cmFuc2Zvcm06cm90YXRlKC0zMmRlZyl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjQwIiB5PSI5MCIgd2lkdGg9IjEzMCIgaGVpZ2h0PSIxMiIgcng9IjUiIGZpbGw9IiM0YTllZmYiIG9wYWNpdHk9Ii42Ii8+PGcgY2xhc3M9ImFiIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo2MHB4IDkwcHgiPjxyZWN0IHg9IjYwIiB5PSI1NSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjM2IiByeD0iOCIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE0OCIgY3k9IjYyIiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSIxNDgiIHkxPSI1NSIgeDI9IjE0OCIgeTI9IjM4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSI0MCIgeTE9Ijk2IiB4Mj0iMjAiIHkyPSI5NiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjx0ZXh0IHg9IjgyIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DcnVuY2ggLyBDb3JlPC90ZXh0Pjwvc3ZnPg==',
-    'cable crunch':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LmFie2FuaW1hdGlvbjphYiAxLjRzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgYWJ7MCUsMTAwJXt0cmFuc2Zvcm06cm90YXRlKDBkZWcpfTUwJXt0cmFuc2Zvcm06cm90YXRlKC0zMmRlZyl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjQwIiB5PSI5MCIgd2lkdGg9IjEzMCIgaGVpZ2h0PSIxMiIgcng9IjUiIGZpbGw9IiM0YTllZmYiIG9wYWNpdHk9Ii42Ii8+PGcgY2xhc3M9ImFiIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo2MHB4IDkwcHgiPjxyZWN0IHg9IjYwIiB5PSI1NSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjM2IiByeD0iOCIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE0OCIgY3k9IjYyIiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSIxNDgiIHkxPSI1NSIgeDI9IjE0OCIgeTI9IjM4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSI0MCIgeTE9Ijk2IiB4Mj0iMjAiIHkyPSI5NiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjx0ZXh0IHg9IjgyIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DcnVuY2ggLyBDb3JlPC90ZXh0Pjwvc3ZnPg==',
-    'russian twist':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LmFie2FuaW1hdGlvbjphYiAxLjRzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgYWJ7MCUsMTAwJXt0cmFuc2Zvcm06cm90YXRlKDBkZWcpfTUwJXt0cmFuc2Zvcm06cm90YXRlKC0zMmRlZyl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjQwIiB5PSI5MCIgd2lkdGg9IjEzMCIgaGVpZ2h0PSIxMiIgcng9IjUiIGZpbGw9IiM0YTllZmYiIG9wYWNpdHk9Ii42Ii8+PGcgY2xhc3M9ImFiIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo2MHB4IDkwcHgiPjxyZWN0IHg9IjYwIiB5PSI1NSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjM2IiByeD0iOCIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE0OCIgY3k9IjYyIiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSIxNDgiIHkxPSI1NSIgeDI9IjE0OCIgeTI9IjM4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSI0MCIgeTE9Ijk2IiB4Mj0iMjAiIHkyPSI5NiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjx0ZXh0IHg9IjgyIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DcnVuY2ggLyBDb3JlPC90ZXh0Pjwvc3ZnPg==',
-    'sit up':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTIwIj48c3R5bGU+LmFie2FuaW1hdGlvbjphYiAxLjRzIGVhc2UtaW4tb3V0IGluZmluaXRlfUBrZXlmcmFtZXMgYWJ7MCUsMTAwJXt0cmFuc2Zvcm06cm90YXRlKDBkZWcpfTUwJXt0cmFuc2Zvcm06cm90YXRlKC0zMmRlZyl9fTwvc3R5bGU+PGxpbmUgeDE9IjEwIiB5MT0iMTA4IiB4Mj0iMjMwIiB5Mj0iMTA4IiBzdHJva2U9IiMyYTMwNTAiIHN0cm9rZS13aWR0aD0iNCIvPjxyZWN0IHg9IjQwIiB5PSI5MCIgd2lkdGg9IjEzMCIgaGVpZ2h0PSIxMiIgcng9IjUiIGZpbGw9IiM0YTllZmYiIG9wYWNpdHk9Ii42Ii8+PGcgY2xhc3M9ImFiIiBzdHlsZT0idHJhbnNmb3JtLW9yaWdpbjo2MHB4IDkwcHgiPjxyZWN0IHg9IjYwIiB5PSI1NSIgd2lkdGg9IjgwIiBoZWlnaHQ9IjM2IiByeD0iOCIgZmlsbD0iIzRhOWVmZiIvPjxjaXJjbGUgY3g9IjE0OCIgY3k9IjYyIiByPSIxMCIgZmlsbD0iI2Y1YTYyMyIvPjxsaW5lIHgxPSIxNDgiIHkxPSI1NSIgeDI9IjE0OCIgeTI9IjM4IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjxsaW5lIHgxPSI0MCIgeTE9Ijk2IiB4Mj0iMjAiIHkyPSI5NiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjx0ZXh0IHg9IjgyIiB5PSIxMjAiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DcnVuY2ggLyBDb3JlPC90ZXh0Pjwvc3ZnPg==',
-    'calf raise':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LmNye2FuaW1hdGlvbjpjbGYgMS4ycyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGNsZnswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMThweCl9fTwvc3R5bGU+PHJlY3QgeD0iODAiIHk9IjEyOCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjEwIiByeD0iMyIgZmlsbD0iIzJhMzA1MCIvPjxnIGNsYXNzPSJjciI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjIiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzMyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQyIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI3NSIgeDI9IjkwIiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNiIgeTE9Ijc1IiB4Mj0iMTUwIiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkwIiB5MT0iMTA4IiB4Mj0iODgiIHkyPSIxMjgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTUwIiB5MT0iMTA4IiB4Mj0iMTUyIiB5Mj0iMTI4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjgwIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DYWxmIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'standing calf raise':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTQ1Ij48c3R5bGU+LmNye2FuaW1hdGlvbjpjbGYgMS4ycyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGNsZnswJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMThweCl9fTwvc3R5bGU+PHJlY3QgeD0iODAiIHk9IjEyOCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjEwIiByeD0iMyIgZmlsbD0iIzJhMzA1MCIvPjxnIGNsYXNzPSJjciI+PGNpcmNsZSBjeD0iMTIwIiBjeT0iMjIiIHI9IjExIiBmaWxsPSIjZjVhNjIzIi8+PHJlY3QgeD0iMTA0IiB5PSIzMyIgd2lkdGg9IjMyIiBoZWlnaHQ9IjQyIiByeD0iNiIgZmlsbD0iIzRhOWVmZiIvPjxsaW5lIHgxPSIxMDQiIHkxPSI3NSIgeDI9IjkwIiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEzNiIgeTE9Ijc1IiB4Mj0iMTUwIiB5Mj0iMTA4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjkwIiB5MT0iMTA4IiB4Mj0iODgiIHkyPSIxMjgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTUwIiB5MT0iMTA4IiB4Mj0iMTUyIiB5Mj0iMTI4IiBzdHJva2U9IiM0YTllZmYiIHN0cm9rZS13aWR0aD0iNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjx0ZXh0IHg9IjgwIiB5PSIxNDMiIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBmb250LXNpemU9IjExIiBmaWxsPSIjOGE5NGI4Ij5DYWxmIFJhaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'hyperextension':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmdue2FuaW1hdGlvbjpnbnMgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGduc3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMTBweCl9fTwvc3R5bGU+PGcgY2xhc3M9ImduIj48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTIiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjQwIiB3aWR0aD0iMzIiIGhlaWdodD0iNDQiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9IjYyIiB4Mj0iNzgiIHkyPSI4NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI2MiIgeDI9IjE2MiIgeTI9Ijg1IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijg0IiB4Mj0iOTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iODQiIHgyPSIxNTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iOTAiIHkxPSIxMTgiIHgyPSI4OCIgeTI9IjE0MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAiIHkxPSIxMTgiIHgyPSIxNTIiIHkyPSIxNDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE1MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkV4ZXJjaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'surya namaskar':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmdue2FuaW1hdGlvbjpnbnMgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGduc3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMTBweCl9fTwvc3R5bGU+PGcgY2xhc3M9ImduIj48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTIiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjQwIiB3aWR0aD0iMzIiIGhlaWdodD0iNDQiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9IjYyIiB4Mj0iNzgiIHkyPSI4NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI2MiIgeDI9IjE2MiIgeTI9Ijg1IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijg0IiB4Mj0iOTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iODQiIHgyPSIxNTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iOTAiIHkxPSIxMTgiIHgyPSI4OCIgeTI9IjE0MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAiIHkxPSIxMTgiIHgyPSIxNTIiIHkyPSIxNDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE1MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkV4ZXJjaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'yoga':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmdue2FuaW1hdGlvbjpnbnMgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGduc3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMTBweCl9fTwvc3R5bGU+PGcgY2xhc3M9ImduIj48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTIiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjQwIiB3aWR0aD0iMzIiIGhlaWdodD0iNDQiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9IjYyIiB4Mj0iNzgiIHkyPSI4NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI2MiIgeDI9IjE2MiIgeTI9Ijg1IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijg0IiB4Mj0iOTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iODQiIHgyPSIxNTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iOTAiIHkxPSIxMTgiIHgyPSI4OCIgeTI9IjE0MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAiIHkxPSIxMTgiIHgyPSIxNTIiIHkyPSIxNDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE1MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkV4ZXJjaXNlPC90ZXh0Pjwvc3ZnPg==',
-    'leg curl':'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNDAgMTUwIj48c3R5bGU+Lmdue2FuaW1hdGlvbjpnbnMgMS40cyBlYXNlLWluLW91dCBpbmZpbml0ZX1Aa2V5ZnJhbWVzIGduc3swJSwxMDAle3RyYW5zZm9ybTp0cmFuc2xhdGVZKDApfTUwJXt0cmFuc2Zvcm06dHJhbnNsYXRlWSgtMTBweCl9fTwvc3R5bGU+PGcgY2xhc3M9ImduIj48Y2lyY2xlIGN4PSIxMjAiIGN5PSIyOCIgcj0iMTIiIGZpbGw9IiNmNWE2MjMiLz48cmVjdCB4PSIxMDQiIHk9IjQwIiB3aWR0aD0iMzIiIGhlaWdodD0iNDQiIHJ4PSI2IiBmaWxsPSIjNGE5ZWZmIi8+PGxpbmUgeDE9IjEwNCIgeTE9IjYyIiB4Mj0iNzgiIHkyPSI4NSIgc3Ryb2tlPSIjNGNkYjhhIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMzYiIHkxPSI2MiIgeDI9IjE2MiIgeTI9Ijg1IiBzdHJva2U9IiM0Y2RiOGEiIHN0cm9rZS13aWR0aD0iNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjEwNCIgeTE9Ijg0IiB4Mj0iOTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMTM2IiB5MT0iODQiIHgyPSIxNTAiIHkyPSIxMTgiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI3IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iOTAiIHkxPSIxMTgiIHgyPSI4OCIgeTI9IjE0MiIgc3Ryb2tlPSIjNGE5ZWZmIiBzdHJva2Utd2lkdGg9IjYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxNTAiIHkxPSIxMTgiIHgyPSIxNTIiIHkyPSIxNDIiIHN0cm9rZT0iIzRhOWVmZiIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L2c+PHRleHQgeD0iNzIiIHk9IjE1MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZpbGw9IiM4YTk0YjgiPkV4ZXJjaXNlPC90ZXh0Pjwvc3ZnPg=='
-  };
-  const lname=(exerciseName||'').toLowerCase().trim();
-  if(GIFS[lname]) return GIFS[lname];
-  for(const[k,v] of Object.entries(GIFS)){if(lname.includes(k)||k.includes(lname))return v;}
-  return GIFS['plank']||null;
-}
 
 
-function getExTips(ex){
-  const w=S.player?.weightKg||S.profile?.weightKg||70;
-  const level=S.player?.level||1;
-  const muscle=(ex.muscle||'').toLowerCase();
-  const name=(ex.name||'').toLowerCase();
-  // Optimal starting weight suggestions based on body weight and level
-  const bwRatios={
-    'chest':0.7,'pectorals':0.7,'bench':0.7,
-    'back':0.6,'latissimus':0.6,'row':0.5,
-    'shoulder':0.35,'deltoid':0.35,'lateral':0.15,
-    'bicep':0.25,'curl':0.25,
-    'tricep':0.3,'triceps':0.3,
-    'leg':1.0,'quad':1.0,'squat':1.0,
-    'hamstring':0.7,'deadlift':1.0,
-    'glute':0.8,'hip':0.8,
-    'calf':0.5,'abs':0.3,'core':0.3
-  };
-  let ratio=0.4;
-  for(const[k,v] of Object.entries(bwRatios)){
-    if(muscle.includes(k)||name.includes(k)){ratio=v;break;}
-  }
-  const levelMult=Math.min(2.5,1+(level-1)*0.08);
-  const suggestedKg=Math.round(w*ratio*levelMult/2.5);
-  // Optimal angles / form cues per exercise type
-  const formTips={
-    'bench press':['Lie flat, retract shoulder blades','Bar path: slight arc from lower chest to above shoulders','Elbow angle: 45-75° from torso (not flared)','Drive feet into floor for leg drive'],
-    'squat':['Feet shoulder-width, toes 15-30° out','Knees track over toes throughout','Hips below parallel for full ROM','Neutral spine — do not round lower back'],
-    'deadlift':['Bar over mid-foot (1 inch from shins)','Hip hinge, not a squat — push floor away','Shoulders slightly in front of bar at setup','Lock hips and knees out simultaneously at top'],
-    'pull up':['Full hang at bottom, chin clears bar at top','Depress scapula before pulling','Elbows drive down and back','Slight lean back for lat engagement'],
-    'overhead press':['Bar rests on upper chest/front delts','Press straight up — elbows slightly forward','Tuck chin as bar passes face','Full lockout at top, glutes squeezed'],
-    'row':['Hinge 45° at hips, neutral spine','Pull to lower ribcage/navel (not chest)','Lead with elbows, squeeze scapula at top','Full stretch at bottom for lat engagement'],
-    'curl':['Keep elbows pinned at sides','Supinate wrist as you curl up','Full extension at bottom (no cheating)','1-2s eccentric for best hypertrophy'],
-    'lateral raise':['Slight forward lean (10-15°)','Lead with pinky (thumb slightly down)','Stop at shoulder height — going higher is traps','2-3kg is ideal for most beginners'],
-    'plank':['Neutral spine — no sagging hips','Engage glutes and abs simultaneously','Breathe steadily — do not hold breath','Aim for 30-60s quality over longer with bad form'],
-  };
-  let tips=[];
-  for(const[k,v] of Object.entries(formTips)){
-    if(name.includes(k)){tips=v;break;}
-  }
-  if(!tips.length){
-    tips=[
-      `Start at ${suggestedKg}kg (~${Math.round(suggestedKg*2.2)}lbs) based on your bodyweight and level`,
-      'Focus on controlled eccentric (lowering) phase — 2-3 seconds down',
-      'Full range of motion beats heavier weight with partial reps',
-      'Rest 60-90s between sets for hypertrophy, 2-3min for strength',
-    ];
-  } else {
-    tips=[`Suggested starting weight: ${suggestedKg}kg (${Math.round(suggestedKg*2.2)}lbs) for Level ${level}`,...tips];
-  }
-  // Alternatives
-  const alts={
-    'bench press':['Dumbbell Press','Push-Up','Cable Fly','Chest Dip'],
-    'squat':['Leg Press','Bulgarian Split Squat','Goblet Squat','Hack Squat'],
-    'deadlift':['Romanian Deadlift','Hip Thrust','Trap Bar Deadlift','Good Morning'],
-    'pull up':['Lat Pulldown','Assisted Pull-Up','Band Pull-Up','Cable Row'],
-    'overhead press':['Dumbbell Press','Arnold Press','Machine Press','Cable Press'],
-    'row':['Cable Row','Machine Row','Dumbbell Row','Pull-Up'],
-    'curl':['Hammer Curl','Preacher Curl','Cable Curl','Concentration Curl'],
-    'lateral raise':['Cable Lateral Raise','Machine Fly','Upright Row','Face Pull'],
-    'plank':['Dead Bug','Hollow Hold','Ab Wheel','Pallof Press'],
-  };
-  let alternatives=[];
-  for(const[k,v] of Object.entries(alts)){
-    if(name.includes(k)){alternatives=v;break;}
-  }
-  if(!alternatives.length) alternatives=['Try the dumbbell variation','Try the cable variation','Bodyweight regression','Machine version for isolation'];
-  return{tips,alternatives,suggestedKg};
-}
 
-function renderExHelper(el){
-  const filteredResults=exMuscleFilter==='All'?exSearchResults:exSearchResults.filter(e=>(e.muscle||'').toLowerCase().includes(exMuscleFilter.toLowerCase()));
-  el.innerHTML=`
-  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">Exercise Guide — search exercises to see animated GIFs and instructions</h2>
-  <!-- SEARCH BAR -->
-  <div class="card mb16">
-    <div class="section-title">Exercise Guide</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <input type="text" id="ex-search" placeholder='Search e.g. "tricep overhead", "squat", "bench press"...' value="${exQuery}" style="flex:1" onkeydown="if(event.key==='Enter')searchExercises(this.value)">
-      <button class="btn btn-primary" onclick="searchExercises(document.getElementById('ex-search').value)">Search</button>
-    </div>
-    <!-- Muscle filter chips -->
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${MUSCLE_FILTERS.map(m=>`<button class="btn btn-sm" style="${exMuscleFilter===m?'background:var(--purple2);border-color:var(--purple);color:#fff':''}" onclick="exMuscleFilter='${m}';renderScreens()">${m}</button>`).join('')}
-    </div>
-  </div>
 
-  ${exLoading?`<div style="text-align:center;padding:40px;color:var(--text2)"><div style="font-size:32px;margin-bottom:12px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg></div>Searching exercises...</div>`:''}
 
-  <!-- POPULAR QUICK SEARCHES -->
-  ${!exLoading&&exSearchResults.length===0&&!exQuery?`
-  <div class="section-title">Quick Search</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
-    ${['Bench Press','Squat','Deadlift','Pull Up','Tricep Overhead Extension','Bicep Curl','Lateral Raise','Plank','Romanian Deadlift','Overhead Press','Lat Pulldown','Push Up'].map(n=>`<button class="btn btn-sm" onclick="document.getElementById('ex-search').value='${n}';searchExercises('${n}')">${n}</button>`).join('')}
-  </div>
-  <div class="insight"><b style="color:#f5a623">!</b> Search any exercise name or muscle group. Variations are shown automatically — try "tricep" to see all tricep exercises including overhead and machine variants!</div>
-  `:''}
 
-  ${!exLoading&&exQuery&&filteredResults.length===0?`<div style="color:var(--text3);font-size:13px;padding:20px 0;text-align:center">No results for "${exQuery}". Try a shorter term like "tricep" or "chest".</div>`:''}
-
-  <!-- EXERCISE DETAIL VIEW -->
-  ${exSelectedEx?renderExDetail(exSelectedEx):''}
-
-  <!-- RESULTS GRID -->
-  ${!exSelectedEx&&filteredResults.length>0?`
-  <div class="section-title">${filteredResults.length} result${filteredResults.length!==1?'s':''} for "${exQuery}"${exMuscleFilter!=='All'?' · '+exMuscleFilter:''}</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
-    ${filteredResults.map((ex,i)=>exCard(ex,i)).join('')}
-  </div>
-  `:''}`;
-}
 
 function exCard(ex,i){
   const muscleColor={Chest:'var(--amber)',Triceps:'var(--purple)',Biceps:'var(--blue)',Back:'var(--teal)',Shoulders:'var(--pink)',Legs:'var(--green)',Core:'var(--red)',Cardio:'var(--amber)'}[ex.muscle]||'var(--text2)';
@@ -1095,63 +566,7 @@ function exCard(ex,i){
   </div>`;
 }
 
-function renderExDetail(ex){
-  const muscleColor={Chest:'var(--amber)',Triceps:'var(--purple)',Biceps:'var(--blue)',Back:'var(--teal)',Shoulders:'var(--pink)',Legs:'var(--green)',Core:'var(--red)',Cardio:'var(--amber)'}[ex.muscle]||'var(--text2)';
-  // Find variations from builtin DB
-  const builtinKey=Object.keys(BUILTIN_EX).find(k=>ex.name.toLowerCase().includes(k)||k.includes(ex.name.toLowerCase()));
-  const variations=builtinKey?BUILTIN_EX[builtinKey].variations||[]:[];
-  const tips=builtinKey?BUILTIN_EX[builtinKey].tips||[]:[];
-  const instructions=ex.instructions?.length?ex.instructions:(builtinKey?BUILTIN_EX[builtinKey].instructions||[]:[]); 
-  return`
-  <div class="card mb16">
-    <button class="btn btn-sm" onclick="exSelectedEx=null;renderScreens()" style="margin-bottom:12px">← Back to results</button>
-    <div class="grid2" style="gap:16px">
-      <!-- GIF / Image -->
-      <div>
-        ${ex.gifUrl?`<img src="${ex.gifUrl}" alt="${ex.name} animated demonstration" style="width:100%;border-radius:10px;max-height:320px;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:240px;background:var(--bg4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px\'><svg width=\'48\' height=\'48\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'#4a9eff\' stroke-width=\'1.5\'><path d=\'M18 8h2a2 2 0 0 1 0 8h-2\'/><path d=\'M4 8H2a2 2 0 0 0 0 8h2\'/><line x1=\'6\' y1=\'12\' x2=\'18\' y2=\'12\'/><rect x=\'6\' y=\'8\' width=\'2\' height=\'8\' rx=\'1\'/><rect x=\'16\' y=\'8\' width=\'2\' height=\'8\' rx=\'1\'/></svg></div>'">`:
-        `<div style="width:100%;height:240px;background:var(--bg4);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:48px"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="1.5"><path d="M18 8h2a2 2 0 0 1 0 8h-2"/><path d="M4 8H2a2 2 0 0 0 0 8h2"/><line x1="6" y1="12" x2="18" y2="12"/><rect x="6" y="8" width="2" height="8" rx="1"/><rect x="16" y="8" width="2" height="8" rx="1"/></svg></div>`}
-        <!-- Add to workout button -->
-        <button class="btn btn-primary btn-full" style="margin-top:10px" onclick="addExToWorkout('${ex.name.replace(/'/g,"\\'")}')">+ Add to Today's Workout</button>
-      </div>
-      <!-- Info -->
-      <div>
-        <div style="font-size:18px;font-weight:700;text-transform:capitalize;margin-bottom:10px">${ex.name}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-          <span class="badge" style="background:${muscleColor}22;color:${muscleColor}">${ex.muscle}</span>
-          ${ex.equipment?`<span class="badge badge-blue">${ex.equipment}</span>`:''}
-          ${ex.difficulty?`<span class="badge badge-purple">${ex.difficulty}</span>`:''}
-        </div>
-        ${ex.muscles?.length?`<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">MUSCLES WORKED</div>${ex.muscles.map(m=>`<span style="display:inline-block;background:var(--bg4);border-radius:6px;padding:3px 8px;font-size:12px;margin:2px;color:var(--text2)">${m}</span>`).join('')}</div>`:''}
-        ${tips.length?`<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text3);margin-bottom:6px">PRO TIPS</div>${tips.map(t=>`<div style="font-size:12px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)">✓ ${t}</div>`).join('')}</div>`:''}
-      </div>
-    </div>
 
-    ${instructions.length?`
-    <hr>
-    <div class="section-title" style="margin-top:12px">Step-by-Step Instructions</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      ${instructions.map((step,i)=>`<div style="display:flex;gap:12px;padding:10px;background:var(--bg3);border-radius:8px">
-        <div style="width:24px;height:24px;border-radius:50%;background:var(--purple2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">${i+1}</div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.5">${step}</div>
-      </div>`).join('')}
-    </div>`:''}
-
-    ${variations.length?`
-    <hr>
-    <div class="section-title" style="margin-top:12px">Variations</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${variations.map(v=>`<button class="btn btn-sm" onclick="document.getElementById('ex-search').value='${v}';searchExercises('${v}')">${v}</button>`).join('')}
-    </div>`:''}
-
-    <hr style="margin:12px 0;border-color:var(--border)">
-    <div class="section-title" style="margin-top:12px">Form Tips &amp; Weight Guide</div>
-    ${(function(){var t=getExTips(ex);return t.tips.map(function(tip,i){return '<div style="display:flex;gap:10px;padding:8px;background:'+(i===0?'var(--bg4)':'var(--bg3)')+';border-radius:8px;margin-bottom:6px;border-left:3px solid '+(i===0?'var(--amber)':'var(--purple2)')+'"><span style="font-size:13px;flex-shrink:0">'+(i===0?'&#9734;':'&#8227;')+'</span><span style="font-size:12px;color:var(--text2);line-height:1.5">'+tip+'</span></div>';}).join('');})()}
-    <div class="section-title" style="margin-top:10px">Alternatives</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      ${(function(){var t=getExTips(ex);return t.alternatives.map(function(a){return '<button class="btn btn-sm" style="border-color:var(--teal);color:var(--teal)" onclick="document.getElementById(\'ex-search\').value=\''+a+'\';searchExercises(\''+a+'\')">'+ a+'</button>';}).join('');})()}
-    </div>
-  </div>`;
-}
 
 function addExToWorkout(name){
   // Pre-fill workout screen and switch to it
@@ -1498,7 +913,6 @@ const SCREENS=[
   {id:'water',label:'Water',icon:'&#128167;'},
   {id:'workout',label:'Workout',icon:'&#127947;'},
   {id:'plans',label:'Plans',icon:'&#128203;'},
-  {id:'exhelper',label:'Exercise Guide',icon:'&#128170;'},
   {id:'burned',label:'Burned',icon:'&#128293;'},
   {id:'habits',label:'Habits',icon:'&#9745;'},
   {id:'study',label:'Study',icon:'&#128218;'},
@@ -1546,7 +960,7 @@ function switchScreen(id){
 function renderScreens(){
   const c=document.getElementById('screens');c.innerHTML='';
   SCREENS.forEach(s=>{const d=document.createElement('div');d.className=`screen${currentScreen===s.id?' active':''}`;d.id=`screen-${s.id}`;c.appendChild(d);});
-  const fns={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,plans:renderPlans,exhelper:renderExHelper,burned:renderBurned,habits:renderHabits,study:renderStudy,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,customdish:renderCustomDish,mealplanner:renderMealPlanner,leaderboard:renderLeaderboard,screentime:renderScreenTime};
+  const fns={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,plans:renderPlans,burned:renderBurned,habits:renderHabits,study:renderStudy,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,customdish:renderCustomDish,mealplanner:renderMealPlanner,leaderboard:renderLeaderboard,screentime:renderScreenTime};
   if(fns[currentScreen])fns[currentScreen](document.getElementById(`screen-${currentScreen}`));
 }
 
@@ -1577,8 +991,7 @@ function renderAWHome(el){
     {id:'burned',     icon:'&#128293;', lbl:'Burned',    color:'#ff5a5a'},
     {id:'quests',     icon:'&#11088;',  lbl:'Quests',    color:'#f5a623'},
     {id:'leaderboard',icon:'&#127942;', lbl:'Ranks',     color:'#c084fc'},
-    {id:'exhelper',   icon:'&#128170;', lbl:'Exercise',  color:'#00d4aa'},
-    {id:'screentime', icon:'&#128241;', lbl:'Screen',    color:'#ff5a5a'},
+        {id:'screentime', icon:'&#128241;', lbl:'Screen',    color:'#ff5a5a'},
     {id:'profile',    icon:'&#128100;', lbl:'Profile',   color:'#8a94b8'},
   ];
   
@@ -2588,9 +2001,9 @@ function renderProfile(el){
 
   el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    '<button class="btn btn-primary" onclick="exportData()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export Backup</button>' +
-    '<button class="btn" onclick="importData()" style="border:1px solid var(--border)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import Backup</button>' +
-    '</div><div style="font-size:11px;color:var(--text3);margin-top:8px">Export your data as JSON to back up or transfer to another device. Import a previous backup to restore all your progress.</div></div>';
+    '<button class="btn btn-primary" onclick="exportData()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Share / Export</button>' +
+    '<button class="btn" onclick="importData()" style="border:1px solid var(--border)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import Backup</button>' +
+    '</div><div style="font-size:11px;color:var(--text3);margin-top:8px">Share or copy your data as JSON backup. On Android: uses native share sheet. Paste into Import on your new device to restore. Import a previous backup to restore all your progress.</div></div>';
 
 
 
@@ -3246,7 +2659,7 @@ function aB(icon,label,val){return`<div class="card-sm" style="text-align:center
 // ════════════════════════════
 (function(){
   let sx=0,sy=0,locked=false;
-  const SCREEN_IDS=['dashboard','nutrition','water','workout','plans','exhelper','burned','habits','study','quests','analytics','profile'];
+  const SCREEN_IDS=['dashboard','nutrition','water','workout','plans','burned','habits','study','quests','analytics','profile'];
   document.addEventListener('touchstart',e=>{
     const t=e.touches[0];sx=t.clientX;sy=t.clientY;locked=false;
   },{passive:true});
@@ -3379,32 +2792,75 @@ function renderBottomNav(){
 // ════════════════════════════
 function exportData(){
   var json=JSON.stringify(S,null,2);
-  var blob=new Blob([json],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='zenfit_backup_'+getTodayStr()+'.json';
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},500);
-  showNotif('Data exported!','OK');
+  var filename='zenfit_backup_'+getTodayStr()+'.json';
+  // Try Web Share API first (works on Android/iOS)
+  if(navigator.share){
+    var file=new File([json],[filename],{type:'application/json'});
+    navigator.share({files:[file],title:'ZenFit Backup',text:'ZenFit data backup'})
+      .then(function(){showNotif('Backup shared!','OK');})
+      .catch(function(e){
+        // Share cancelled or files not supported - fall back to text share
+        navigator.share({title:'ZenFit Backup '+getTodayStr(),text:json})
+          .then(function(){showNotif('Data copied to share!','OK');})
+          .catch(function(){exportFallback(json,filename);});
+      });
+  } else {
+    exportFallback(json,filename);
+  }
 }
-function importData(){
-  var inp=document.createElement('input');
-  inp.type='file';inp.accept='.json,application/json';
-  inp.onchange=function(e){
-    var file=e.target.files[0];if(!file)return;
-    var reader=new FileReader();
-    reader.onload=function(ev){
-      try{
-        var imported=JSON.parse(ev.target.result);
-        if(!imported.player||!imported.nutrition)throw new Error('Invalid backup');
-        // Merge imported data
-        S=Object.assign({},S,imported);
-        persistSave();render();
-        showNotif('Data imported!','OK');
-      }catch(err){
-        showNotif('Import failed: '+err.message,'!');
-      }
-    };
+function exportFallback(json,filename){
+  // Try clipboard
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(json).then(function(){
+      showNotif('Backup copied to clipboard!','OK');
+    }).catch(function(){exportDownload(json,filename);});
+  } else {
+    exportDownload(json,filename);
+  }
+}
+function exportDownload(json,filename){
+  try{
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    setTimeout(function(){try{document.body.removeChild(a);}catch(e){}URL.revokeObjectURL(url);},1000);
+    showNotif('Download started!','OK');
+  }catch(e){
+    // Last resort: show the JSON in a modal so user can copy manually
+    function showExportModal(json){
+  var overlay=document.createElement('div');
+  overlay.id='export-modal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px';
+  var box=document.createElement('div');
+  box.style.cssText='background:#161a27;border-radius:14px;padding:20px;width:100%;max-width:500px;max-height:80vh;display:flex;flex-direction:column';
+  var title=document.createElement('div');
+  title.style.cssText='font-size:14px;font-weight:700;color:#e2e8f8;margin-bottom:12px';
+  title.textContent='Backup Data — Copy All';
+  var ta=document.createElement('textarea');
+  ta.id='export-json-ta';
+  ta.style.cssText='flex:1;min-height:200px;font-size:10px;font-family:monospace;background:#0d0f14;color:#4cdb8a;border:1px solid #2a3050;border-radius:8px;padding:10px;resize:none;margin-bottom:12px';
+  ta.value=json;
+  var btns=document.createElement('div');
+  btns.style.cssText='display:flex;gap:8px';
+  var copyBtn=document.createElement('button');
+  copyBtn.style.cssText='flex:1;padding:10px;background:#7c6fff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600';
+  copyBtn.textContent='Select All & Copy';
+  copyBtn.onclick=function(){
+    ta.select();ta.setSelectionRange(0,99999);
+    try{document.execCommand('copy');showNotif('Copied to clipboard!','OK');}
+    catch(e){showNotif('Select the text above and copy manually','!');}
+  };
+  var closeBtn=document.createElement('button');
+  closeBtn.style.cssText='padding:10px 16px;background:#2a3050;color:#e2e8f8;border:none;border-radius:8px;cursor:pointer';
+  closeBtn.textContent='Close';
+  closeBtn.onclick=function(){var m=document.getElementById('export-modal');if(m)m.remove();};
+  btns.appendChild(copyBtn);btns.appendChild(closeBtn);
+  box.appendChild(title);box.appendChild(ta);box.appendChild(btns);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+};
     reader.readAsText(file);
   };
   document.body.appendChild(inp);inp.click();
