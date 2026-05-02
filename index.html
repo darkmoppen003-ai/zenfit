@@ -260,12 +260,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 
 /* ═══ ORBITAL HOME SCREEN ═══ */
 .aw-home3{
-  width:100%;height:100vh;min-height:600px;position:relative;
-  background:var(--bg);display:flex;align-items:center;justify-content:center;
+  width:100%;
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
 }
+
 .aw-orbital-wrap{
-  position:relative;width:540px;height:540px;flex-shrink:0;
+  position:relative;
+  width:540px;
+  height:540px;
+  transform: scale(calc(min(92vw, 92vh) / 540));
+  transform-origin: center;
 }
 /* Orbital ring decorations */
 .aw-ring1{position:absolute;width:280px;height:280px;border-radius:50%;
