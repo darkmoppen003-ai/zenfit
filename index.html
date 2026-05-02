@@ -413,6 +413,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 })();
 </script>
 
+
+<input type="file" id="zenfit-import-inp-static" accept=".json,application/json,text/plain" style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px">
 <div class="app">
 <nav id="nav"></nav>
 <div id="screens"></div>
@@ -439,8 +441,8 @@ const safeFetch = async function(url, opts){
     return null;
   }
 };
-const APP_VERSION="v5.1";
-const APP_BUILD="2025.01.29";
+const APP_VERSION="v5.2";
+const APP_BUILD="2025.01.30";
 // STATE
 // ════════════════════════════
 const SK='zenfit_v1';
@@ -703,7 +705,15 @@ function gradeFood(n){
   return s>60?'A':s>40?'B':s>20?'C':s>5?'D':'E';
 }
 function todayNutrition(){
-  return S.nutrition.entries.filter(e=>e.date===getTodayStr()).reduce((a,e)=>{a.cal+=e.nutrients.cal;a.protein+=e.nutrients.protein;a.carbs+=e.nutrients.carbs;a.fat+=e.nutrients.fat;a.fiber+=e.nutrients.fiber;return a;},{cal:0,protein:0,carbs:0,fat:0,fiber:0});
+  return S.nutrition.entries.filter(e=>e.date===getTodayStr()).reduce((a,e)=>{
+    const n=e.nutrients||{};
+    a.cal  += +n.cal  ||0;
+    a.protein += +(n.protein||n.prot)||0;  // handle both field names
+    a.carbs+= +n.carbs ||0;
+    a.fat  += +n.fat   ||0;
+    a.fiber+= +n.fiber ||0;
+    return a;
+  },{cal:0,protein:0,carbs:0,fat:0,fiber:0});
 }
 function todayWater(){return S.water.entries.filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.ml,0);}
 function todayBurned(){return(S.burned||[]).filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.calories,0);}
@@ -725,6 +735,7 @@ const MET_DB={
   'burpees':9.0,'mountain climbers':8.0,'box jumps':9.5,'plank':3.0,
   'boxing':10.0,'kickboxing':9.5,'martial arts':8.0,'zumba':6.5,'aerobics':6.0,
   'abs':4.0,'core':4.0,'crunches':3.5,'deadlift':6.0,'bench press':5.0,'shoulder press':4.5,
+  'brisk walk':4.3,'fast walk':5.0,'swimming':7.0,'tennis':7.3,'football':8.0,'basketball':8.0,'badminton':5.5,'volleyball':4.0,'cricket':5.0,'stretching':2.5,'pilates':3.0,'dance':5.5,'zumba':6.0,'boxing':9.0,'kickboxing':10.0,'martial arts':8.0,'stair climbing':9.0,'custom':5.0
 };
 function parseActivityNLP(text){
   const t=text.toLowerCase();
@@ -1123,7 +1134,10 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="color:var(--text3);font-size:13px;padding:8px 0">No meals logged.</div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text2)">${e.nutrients.cal} kcal · P:${e.nutrients.protein}g · C:${e.nutrients.carbs}g · F:${e.nutrients.fat}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${i})" style="color:var(--red)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text2)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${i})" style="color:var(--red)">×</button></div>`).join('')}`;
+}
+function nn(x){
+  return x ? Number(x).toFixed(0) : 0;
 }
 function setFT(t){activeTab=t;parsedFood=null;renderScreens();}
 function parseFoodInput(){
@@ -1133,7 +1147,7 @@ function parseFoodInput(){
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
   if(!r)return;
   if(!res.length){r.innerHTML=`<div style="color:var(--red);font-size:13px">Could not recognize. Try "2 chapati" or "1 bowl dal".</div>`;return;}
-  r.innerHTML=res.map(f=>`<div class="card-sm mb8 flex gap8"><div class="grade grade-${gradeFood(f.nutrients)}">${gradeFood(f.nutrients)}</div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${f.name} × ${f.qty}</div><div style="font-size:11px;color:var(--text2)">${f.nutrients.cal} kcal · P:${f.nutrients.protein}g · C:${f.nutrients.carbs}g</div></div></div>`).join('');
+  r.innerHTML=res.map(f=>`<div class="card-sm mb8 flex gap8"><div class="grade grade-${gradeFood(f.nutrients)}">${gradeFood(f.nutrients)}</div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${f.name} × ${f.qty}</div><div style="font-size:11px;color:var(--text2)">${nn(f.nutrients.cal)} kcal · P:${nn(f.nutrients.protein||f.nutrients.prot)}g · C:${nn(f.nutrients.carbs)}g</div></div></div>`).join('');
   if(btn)btn.style.display='block';
 }
 function logParsedFood(){
@@ -1213,38 +1227,150 @@ function delW(i){S.water.entries.splice(i,1);persistSave();renderScreens();}
 // ════════════════════════════
 function renderWorkout(el){
   const today=getTodayStr();
+  const todayW=S.workouts.filter(w=>w.date===today);
+  const todayCal=todayW.reduce((a,w)=>a+(w.caloriesBurned||0),0);
+  const todaySets=todayW.reduce((a,w)=>a+(w.sets||0),0);
+  const todayVol=todayW.reduce((a,w)=>a+(w.sets||0)*(w.reps||0)*(w.weight||0),0);
+
   el.innerHTML=`
-  <div class="card mb16">
+  <!-- Today summary bar -->
+  <div class="card mb12" style="display:flex;gap:0;padding:0;overflow:hidden">
+    <div style="flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--border)">
+      <div style="font-size:18px;font-weight:700;color:var(--red)">${todayCal}</div>
+      <div style="font-size:10px;color:var(--text3)">kcal burned</div>
+    </div>
+    <div style="flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--border)">
+      <div style="font-size:18px;font-weight:700;color:var(--purple)">${todaySets}</div>
+      <div style="font-size:10px;color:var(--text3)">sets done</div>
+    </div>
+    <div style="flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--border)">
+      <div style="font-size:18px;font-weight:700;color:var(--blue)">${todayW.length}</div>
+      <div style="font-size:10px;color:var(--text3)">exercises</div>
+    </div>
+    <div style="flex:1;padding:12px 10px;text-align:center;cursor:pointer" onclick="switchScreen('burned')">
+      <div style="font-size:18px;font-weight:700;color:var(--amber)">${todayVol>0?Math.round(todayVol/1000)+'k':'-'}</div>
+      <div style="font-size:10px;color:var(--teal)">vol kg → Burned ↗</div>
+    </div>
+  </div>
+
+  <!-- Log form -->
+  <div class="card mb12">
     <div class="section-title">Log Exercise</div>
     <div class="grid2" style="gap:8px;margin-bottom:8px">
-      <input type="text" id="w-name" placeholder="Exercise name" value="${S._pendingWorkout||''}">
-      <select id="w-type"><option>Strength</option><option>Cardio</option><option>HIIT</option><option>Yoga</option><option>Other</option></select>
-      <input type="number" id="w-sets" placeholder="Sets">
-      <input type="number" id="w-reps" placeholder="Reps">
-      <input type="number" id="w-weight" placeholder="Weight (kg)">
-      <input type="number" id="w-duration" placeholder="Duration (mins)">
+      <input type="text" id="w-name" placeholder="Exercise name"
+        value="${S._pendingWorkout||''}"
+        oninput="wLivePreview()" onchange="wLivePreview()">
+      <select id="w-type" onchange="wLivePreview()">
+        <option>Strength</option><option>Cardio</option>
+        <option>HIIT</option><option>Yoga</option><option>Other</option>
+      </select>
+      <input type="number" id="w-sets"   placeholder="Sets"          oninput="wLivePreview()">
+      <input type="number" id="w-reps"   placeholder="Reps"          oninput="wLivePreview()">
+      <input type="number" id="w-weight" placeholder="Weight (kg)"   oninput="wLivePreview()">
+      <input type="number" id="w-duration" placeholder="Duration (min)" oninput="wLivePreview()">
     </div>
-    <textarea id="w-notes" placeholder="Notes..." style="height:44px;margin-bottom:8px"></textarea>
-    <button class="btn btn-primary" onclick="logWorkout()">Log Exercise</button>
-    <button class="btn btn-sm" style="margin-left:8px" onclick="switchScreen('plans')">📋 Use a Plan</button>
-    <button class="btn btn-sm" style="margin-left:8px" onclick="S._pendingWorkout='';switchScreen('exhelper')">💪 Exercise Guide</button>
+    <textarea id="w-notes" placeholder="Notes..." style="height:40px;margin-bottom:8px"></textarea>
+
+    <!-- LIVE PREVIEW CARD -->
+    <div id="w-preview" style="display:none;background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;letter-spacing:1px">LIVE PREVIEW</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div id="wp-cal" style="font-size:22px;font-weight:800;color:var(--red)">0<span style="font-size:12px;color:var(--text3);font-weight:400"> kcal</span></div>
+        <div id="wp-vol" style="font-size:14px;font-weight:600;color:var(--blue)"></div>
+        <div id="wp-met" style="font-size:11px;color:var(--text3)"></div>
+      </div>
+      <div id="wp-bar" style="height:4px;background:var(--bg4);border-radius:2px;margin-top:8px;overflow:hidden">
+        <div id="wp-bar-fill" style="height:100%;background:var(--red);width:0%;border-radius:2px;transition:width .3s"></div>
+      </div>
+      <div id="wp-link" style="margin-top:8px;font-size:11px;color:var(--teal);cursor:pointer" onclick="switchScreen('burned')"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="logWorkout()">+ Log Exercise</button>
+      <button class="btn btn-sm" onclick="switchScreen('plans')" style="border-color:var(--purple);color:var(--purple)">Use Plan</button>
+    </div>
   </div>
-  <div class="section-title">Exercise Log</div>
-  ${S.workouts.length===0?`<div style="color:var(--text3);font-size:13px">No exercises yet.</div>`:''}
-  ${[...S.workouts].reverse().slice(0,15).map((w,ri)=>{
-    const i=S.workouts.length-1-ri;
+
+  <!-- Today's log -->
+  <div class="section-title">Today's Log (${todayW.length})</div>
+  ${S.workouts.length===0?'<div style="color:var(--text3);font-size:13px;padding:8px 0">No exercises yet.</div>':''}
+  ${[...S.workouts].reverse().slice(0,20).map((w,ri)=>{
+    const idx=S.workouts.length-1-ri;
+    const cal=w.caloriesBurned||0;
+    const vol=(w.sets||0)*(w.reps||0)*(w.weight||0);
     return`<div class="card-sm mb8">
       <div class="flex-between mb4">
-        <div class="flex gap8"><span style="font-size:13px;font-weight:500">${w.name}</span><span class="badge badge-purple">${w.type}</span>${w.date===today?`<span class="badge badge-green">Today</span>`:''}</div>
-        <div class="flex gap8"><span style="font-size:11px;color:var(--text3)">${w.date}</span><button class="btn btn-icon btn-sm" onclick="delW2(${i})" style="color:var(--red)">×</button></div>
+        <div class="flex gap8">
+          <span style="font-size:13px;font-weight:600">${w.name}</span>
+          <span class="badge badge-purple">${w.type}</span>
+          ${w.date===today?'<span class="badge badge-green">Today</span>':''}
+        </div>
+        <div class="flex gap8">
+          <span style="font-size:11px;color:var(--text3)">${w.date}</span>
+          <button class="btn btn-icon btn-sm" onclick="delW2(${idx})" style="color:var(--red)">×</button>
+        </div>
       </div>
-      <div style="font-size:12px;color:var(--text2);display:flex;gap:12px;flex-wrap:wrap">
-        ${w.sets?`<span>Sets: ${w.sets}</span>`:''}${w.reps?`<span>Reps: ${w.reps}</span>`:''}
-        ${w.weight?`<span>${w.weight}kg</span>`:''}${w.duration?`<span>${w.duration}min</span>`:''}
-        ${w.caloriesBurned?`<span style="color:var(--red)">🔥 ${w.caloriesBurned} kcal</span>`:''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text2)">
+        ${w.sets?`<span>${w.sets} sets</span>`:''}
+        ${w.reps?`<span>× ${w.reps} reps</span>`:''}
+        ${w.weight?`<span>@ ${w.weight}kg</span>`:''}
+        ${w.duration?`<span>${w.duration} min</span>`:''}
+        ${cal?`<span style="color:var(--red)">&#128293; ${cal} kcal</span>`:''}
+        ${vol>0?`<span style="color:var(--blue)">${vol>=1000?(vol/1000).toFixed(1)+'k':vol} kg·vol</span>`:''}
       </div>
+      ${w.notes?`<div style="font-size:11px;color:var(--text3);margin-top:4px">${w.notes}</div>`:''}
     </div>`;
   }).join('')}`;
+}
+
+// Live workout preview - called on every input change
+function wLivePreview(){
+  const name=(document.getElementById('w-name')||{}).value||'';
+  const type=(document.getElementById('w-type')||{}).value||'Strength';
+  const sets=+(document.getElementById('w-sets')||{}).value||0;
+  const reps=+(document.getElementById('w-reps')||{}).value||0;
+  const weight=+(document.getElementById('w-weight')||{}).value||0;
+  const dur=+(document.getElementById('w-duration')||{}).value||0;
+  const wt=S.player.weightKg||S.profile?.weightKg||70;
+
+  const preview=document.getElementById('w-preview');
+  if(!preview) return;
+  if(!name&&!sets&&!dur){preview.style.display='none';return;}
+  preview.style.display='block';
+
+  // Find MET for this exercise
+  const nameLow=name.toLowerCase();
+  let met=MET_DB[nameLow];
+  if(!met){
+    for(const[k,v] of Object.entries(MET_DB)){
+      if(nameLow.includes(k)||k.includes(nameLow)){met=v;break;}
+    }
+  }
+  if(!met) met=type==='Cardio'?7:type==='HIIT'?10:type==='Yoga'?3:3.5;
+
+  // Estimate effective duration: if no explicit duration, estimate from sets/reps
+  let effectiveDur=dur;
+  if(!dur&&sets>0){
+    // ~3 min per set for strength (rest+work), ~1.5 min for bodyweight
+    effectiveDur=sets*(weight>0?2.5:1.5);
+  }
+
+  const cal=effectiveDur>0?Math.round(calcBurn(met,effectiveDur,wt)):0;
+  const vol=sets*reps*weight;
+  const tdee=getTDEEfromProfile();
+  const pct=tdee>0?Math.min(100,Math.round(cal/tdee*100)):0;
+
+  const calEl=document.getElementById('wp-cal');
+  const volEl=document.getElementById('wp-vol');
+  const metEl=document.getElementById('wp-met');
+  const barEl=document.getElementById('wp-bar-fill');
+  const lnkEl=document.getElementById('wp-link');
+
+  if(calEl) calEl.innerHTML=cal+'<span style="font-size:12px;color:var(--text3);font-weight:400"> kcal est.</span>';
+  if(volEl) volEl.textContent=vol>0?'Volume: '+(vol>=1000?(vol/1000).toFixed(1)+'k':vol)+' kg·reps':'';
+  if(metEl) metEl.textContent='MET: '+met.toFixed(1)+(dur?'':' · '+effectiveDur.toFixed(1)+'min est.');
+  if(barEl) barEl.style.width=pct+'%';
+  if(lnkEl) lnkEl.textContent=cal>0?'Will add '+cal+' kcal to Burned tab → tap to view':'';
 }
 function logWorkout(override=null){
   const name=override?.name||document.getElementById('w-name')?.value?.trim();
@@ -1269,6 +1395,11 @@ function logWorkout(override=null){
     S.burned.push({activity:name,duration,met,weightKg:S.player.weightKg||70,calories:caloriesBurned,date:getTodayStr(),ts:Date.now(),source:'workout'});
   }
   updStat('strength',5);updStat('endurance',2);
+  // Live refresh - update workout tab immediately without full re-render
+  const el=document.getElementById('screen-workout');
+  if(el&&currentScreen==='workout'){renderWorkout(el);}
+  else{persistSave();renderScreens();}
+  gainXP(entry.caloriesBurned>0?15:8,'Exercise logged');
   return entry;
 }
 function delW2(i){S.workouts.splice(i,1);persistSave();renderScreens();}
@@ -1411,37 +1542,191 @@ function renderBurned(el){
   const balLabel=diff<-50?'Deficit +':diff>50?'Surplus -':'Balanced =';
   const balClass=diff<-50?'deficit':diff>50?'surplus':'balanced';
   const balColor=diff<-50?'var(--green)':diff>50?'var(--red)':'var(--blue)';
-  const w=S.player.weightKg||70;
+  const w=S.player.weightKg||S.profile?.weightKg||70;
+
+  // Build activity category list from MET_DB
+  const actCategories={
+    'Walking & Running':['walk','brisk walk','fast walk','jog','run','sprint','treadmill'],
+    'Cycling':['cycle','fast cycle'],
+    'Strength & HIIT':['weight training','bodyweight','hiit','tabata','circuit training','crossfit','pushups','pullups','squats'],
+    'Sports & Recreation':['swimming','tennis','football','basketball','badminton','volleyball','cricket'],
+    'Flexibility':['yoga','stretching','pilates'],
+    'Other Cardio':['elliptical','stairmaster','rowing','jump rope','dance','zumba','boxing','kickboxing','martial arts'],
+  };
+
   el.innerHTML=`
-  <!-- TDEE Balance Banner -->
+  <!-- Balance Banner -->
   <div class="cal-balance-banner ${balClass}">
     <div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:3px">vs Maintenance (${tdee} kcal TDEE)</div>
-      <div style="font-size:26px;font-weight:700;color:${balColor}">${Math.abs(diff)} kcal ${diff<0?'under':'over'}</div>
-      <div style="font-size:13px;font-weight:600;color:${balColor}">${balLabel}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:2px">vs Maintenance (${tdee} kcal TDEE)</div>
+      <div style="font-size:28px;font-weight:800;color:${balColor}">${Math.abs(diff)} kcal ${diff<0?'under':'over'}</div>
+      <div style="font-size:12px;font-weight:600;color:${balColor}">${balLabel}</div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:11px;color:var(--text3)">Goal for deficit</div>
-      <div style="font-size:13px;color:var(--text2)">Net < ${tdee}</div>
+    <div style="text-align:right;font-size:11px;color:var(--text3)">
+      <div>Eaten: <b style="color:var(--amber)">${nut.cal}</b> kcal</div>
+      <div>Burned: <b style="color:var(--red)">${total}</b> kcal</div>
+      <div>Net: <b style="color:${balColor}">${net}</b> kcal</div>
     </div>
   </div>
-  <div class="grid3 mb16">
-    <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text3)">Consumed</div><div style="font-size:24px;font-weight:700;color:var(--amber);margin:4px 0">${nut.cal}</div><div style="font-size:11px;color:var(--text3)">kcal eaten</div></div>
-    <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text3)">Burned</div><div style="font-size:24px;font-weight:700;color:var(--red);margin:4px 0">${total}</div><div style="font-size:11px;color:var(--text3)">kcal burned</div></div>
-    <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text3)">Net</div><div style="font-size:24px;font-weight:700;margin:4px 0;color:${net<tdee?'var(--green)':net>tdee?'var(--red)':'var(--teal)'}">${net}</div><div style="font-size:11px;color:var(--text3)">kcal net</div></div>
+
+  <!-- Today summary -->
+  <div class="card mb12" style="padding:0;display:flex;overflow:hidden">
+    <div style="flex:1;padding:12px;text-align:center;border-right:1px solid var(--border)">
+      <div style="font-size:20px;font-weight:700;color:var(--red)">${total}</div>
+      <div style="font-size:10px;color:var(--text3)">total burned</div>
+    </div>
+    <div style="flex:1;padding:12px;text-align:center;border-right:1px solid var(--border)">
+      <div style="font-size:20px;font-weight:700;color:var(--purple)">${fromW.reduce((a,e)=>a+e.calories,0)}</div>
+      <div style="font-size:10px;color:var(--text3)">from workouts</div>
+    </div>
+    <div style="flex:1;padding:12px;text-align:center">
+      <div style="font-size:20px;font-weight:700;color:var(--amber)">${fromA.reduce((a,e)=>a+e.calories,0)}</div>
+      <div style="font-size:10px;color:var(--text3)">manual logged</div>
+    </div>
   </div>
-  <div class="card mb16">
-    <div class="section-title">Log Activity (NLP)</div>
-    <div style="margin-bottom:8px"><label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Your weight (kg)</label><input type="number" id="cb-w" value="${w}" style="width:120px" onchange="S.player.weightKg=+this.value;persistSave()"></div>
-    <input type="text" id="cb-nlp" placeholder='"15 min walk on 15 degree incline" or "30 min hiit"' style="margin-bottom:8px">
-    <div id="cb-prev" style="margin-bottom:10px"></div>
-    <button class="btn btn-primary" onclick="previewAct()">Preview Burn</button>
-    <button class="btn btn-primary" id="log-act-btn" style="display:none;margin-left:8px" onclick="logAct()">Log Activity</button>
+
+  <!-- CALORIE BURN CALCULATOR -->
+  <div class="card mb12">
+    <div class="section-title">Calorie Burn Calculator</div>
+
+    <!-- Body weight -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+      <label style="font-size:12px;color:var(--text2);white-space:nowrap">Your weight:</label>
+      <input type="number" id="calc-wt" value="${w}" min="30" max="300"
+        style="width:80px" oninput="burnCalcPreview()">
+      <span style="font-size:12px;color:var(--text3)">kg</span>
+      <button class="btn btn-sm" onclick="S.player.weightKg=+(document.getElementById('calc-wt').value)||70;persistSave();showNotif('Weight saved','OK')" style="font-size:11px">Save</button>
+    </div>
+
+    <!-- Activity picker -->
+    <div style="margin-bottom:8px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Activity</label>
+      <select id="calc-act" style="width:100%" onchange="burnCalcPreview()">
+        ${Object.entries(actCategories).map(([cat,acts])=>
+          `<optgroup label="${cat}">${acts.map(a=>`<option value="${a}">${a.charAt(0).toUpperCase()+a.slice(1)}</option>`).join('')}</optgroup>`
+        ).join('')}
+        <option value="custom">Custom (enter MET manually)</option>
+      </select>
+    </div>
+
+    <!-- Duration + intensity row -->
+    <div class="grid2" style="gap:8px;margin-bottom:8px">
+      <div>
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">Duration (min)</label>
+        <input type="number" id="calc-dur" placeholder="30" min="1" max="600" oninput="burnCalcPreview()">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">Intensity</label>
+        <select id="calc-int" onchange="burnCalcPreview()">
+          <option value="1.0">Normal</option>
+          <option value="1.2">Moderate</option>
+          <option value="1.5">Vigorous</option>
+          <option value="1.8">Max Effort</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Custom MET (shown only when custom selected) -->
+    <div id="calc-met-row" style="display:none;margin-bottom:8px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:3px">Custom MET value</label>
+      <input type="number" id="calc-met-val" placeholder="e.g. 6.5" step="0.1" min="1" max="20" oninput="burnCalcPreview()">
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">MET 2=light, 4=moderate, 6=vigorous, 10+=intense</div>
+    </div>
+
+    <!-- LIVE RESULT -->
+    <div id="calc-result" style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Enter duration above to see estimate</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="logFromCalc()">Log to Burned Tab</button>
   </div>
-  ${fromW.length>0?`<div class="section-title">From Workouts (auto-linked)</div>${fromW.map((e,i)=>burnRow(e,i,true)).join('')}`:''}
-  <div class="section-title">Manual Activities (${fromA.length})</div>
-  ${fromA.length===0?`<div style="color:var(--text3);font-size:13px">No manual activities.</div>`:''}
-  ${fromA.map((e,i)=>burnRow(e,i,false)).join('')}`;
+
+  <!-- NLP log -->
+  <div class="card mb12">
+    <div class="section-title">Quick Log (Natural Language)</div>
+    <input type="text" id="cb-nlp" placeholder='e.g. "30 min run" or "45 min weights"' style="margin-bottom:8px">
+    <div id="cb-prev" style="margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="previewAct()">Preview</button>
+      <button class="btn btn-primary btn-sm" id="log-act-btn" style="display:none" onclick="logAct()">Log Activity</button>
+    </div>
+  </div>
+
+  ${fromW.length?`<div class="section-title">From Workouts (auto)</div>${fromW.map((e,i)=>burnRow(e,i,true)).join('')}`:''}
+  ${fromA.length?`<div class="section-title">Manual Activities (${fromA.length})</div>${fromA.map((e,i)=>burnRow(e,i,false)).join('')}`:''}
+  ${!fromA.length&&!fromW.length?'<div style="color:var(--text3);font-size:13px;padding:8px 0">No activities logged today. Use the calculator above!</div>':''}`;
+
+  // Trigger initial calc preview if values are present
+  setTimeout(burnCalcPreview, 50);
+}
+
+function burnCalcPreview(){
+  const actEl=document.getElementById('calc-act');
+  const durEl=document.getElementById('calc-dur');
+  const intEl=document.getElementById('calc-int');
+  const metRow=document.getElementById('calc-met-row');
+  const resEl=document.getElementById('calc-result');
+  const wtEl=document.getElementById('calc-wt');
+  if(!actEl||!resEl) return;
+
+  const act=actEl.value;
+  const isCustom=act==='custom';
+  if(metRow) metRow.style.display=isCustom?'block':'none';
+
+  const dur=parseFloat((durEl||{}).value)||0;
+  const intMult=parseFloat((intEl||{}).value)||1.0;
+  const wt=parseFloat((wtEl||{}).value)||S.player.weightKg||70;
+  let met=MET_DB[act]||MET_DB[act.toLowerCase()]||4;
+  if(isCustom) met=parseFloat((document.getElementById('calc-met-val')||{}).value)||4;
+  met*=intMult;
+
+  if(dur<=0){
+    resEl.innerHTML='<div style="font-size:12px;color:var(--text3)">Enter duration above ↑</div>';
+    return;
+  }
+
+  const cal=Math.round(calcBurn(met,dur,wt));
+  const tdee=getTDEEfromProfile();
+  const pct=tdee>0?Math.min(100,Math.round(cal/tdee*100)):0;
+  const perMin=Math.round(cal/dur);
+
+  resEl.innerHTML=
+    '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:8px">' +
+      '<span style="font-size:32px;font-weight:800;color:var(--red)">'+cal+'</span>' +
+      '<span style="font-size:14px;color:var(--text2)">kcal</span>' +
+      '<span style="font-size:12px;color:var(--text3)">('+perMin+' kcal/min)</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-bottom:8px">' +
+      '<span>MET: <b style="color:var(--text)">'+met.toFixed(1)+'</b></span>' +
+      '<span>Duration: <b style="color:var(--text)">'+dur+'min</b></span>' +
+      '<span>Body weight: <b style="color:var(--text)">'+wt+'kg</b></span>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:6px">'+pct+'% of your daily maintenance ('+tdee+' kcal TDEE)</div>' +
+    '<div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden">' +
+      '<div style="height:100%;width:'+pct+'%;background:var(--red);border-radius:3px;transition:width .4s"></div>' +
+    '</div>';
+}
+
+function logFromCalc(){
+  const actEl=document.getElementById('calc-act');
+  const durEl=document.getElementById('calc-dur');
+  const intEl=document.getElementById('calc-int');
+  const wtEl=document.getElementById('calc-wt');
+  if(!actEl||!durEl) return;
+  const act=actEl.value||'exercise';
+  const dur=parseFloat((durEl||{}).value)||0;
+  if(dur<=0){showNotif('Enter a duration first','!');return;}
+  const intMult=parseFloat((intEl||{}).value)||1.0;
+  const wt=parseFloat((wtEl||{}).value)||S.player.weightKg||70;
+  const isCustom=act==='custom';
+  let met=(isCustom?parseFloat((document.getElementById('calc-met-val')||{}).value)||4:MET_DB[act]||4)*intMult;
+  const cal=Math.round(calcBurn(met,dur,wt));
+  if(!S.burned) S.burned=[];
+  S.burned.push({activity:act,duration:dur,met,weightKg:wt,calories:cal,date:getTodayStr(),ts:Date.now(),source:'manual'});
+  persistSave();
+  showNotif(act+' logged — '+cal+' kcal burned','OK');
+  const el=document.getElementById('screen-burned');
+  if(el&&currentScreen==='burned'){renderBurned(el);}else{renderScreens();}
 }
 function burnRow(e,i,fromW){
   return`<div class="card-sm mb8 flex gap12">
@@ -2311,7 +2596,7 @@ function logCustomDish(){
   const today=getTodayStr();
   S.nutrition.entries.push({
     id:Date.now(),name:dishName,date:today,mealType:'meal',
-    nutrients:{cal:n.cal,prot:n.prot,carbs:n.carbs,fat:n.fat,fiber:n.fiber}
+    nutrients:{cal:n.cal,protein:n.prot||n.protein||0,carbs:n.carbs,fat:n.fat,fiber:n.fiber||0}
   });
   persistSave();
   showNotif(`${dishName} logged — ${n.cal} kcal`,'OK');
@@ -2465,7 +2750,7 @@ function logMealPlan(i){
   mp.items.forEach(item=>{
     S.nutrition.entries.push({
       id:Date.now()+Math.random(),name:item.name,date:today,mealType:'meal',
-      nutrients:{cal:item.cal,prot:item.prot,carbs:item.carbs,fat:item.fat,fiber:0}
+      nutrients:{cal:item.cal,protein:item.prot||item.protein||0,carbs:item.carbs,fat:item.fat,fiber:0}
     });
   });
   persistSave();
@@ -2956,7 +3241,7 @@ function logOnlineFood(food){
   const today=getTodayStr();
   S.nutrition.entries.push({
     id:Date.now(),name:food.name,date:today,mealType:'meal',
-    nutrients:{cal:food.cal,prot:food.prot,carbs:food.carbs,fat:food.fat,fiber:food.fiber||0}
+    nutrients:{cal:food.cal,protein:food.prot||food.protein||0,carbs:food.carbs,fat:food.fat,fiber:food.fiber||0}
   });
   persistSave();
   showNotif(`${food.name} logged — ${food.cal} kcal`,'OK');
@@ -3269,6 +3554,80 @@ function getDetailedCard(){
   });
 }
 
+// ════════════════════════════════════════════════════
+// IMPORT DATA - works on both browser and Android
+// ════════════════════════════════════════════════════
+function importData(){
+  // Try to use a persistent hidden input (more reliable on iOS/browser)
+  var existing=document.getElementById('zenfit-import-inp');
+  if(existing){existing.click();return;}
+  // Create fresh input each time as fallback
+  var inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='.json,application/json,text/plain';
+  inp.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px';
+  inp.id='zenfit-import-inp';
+  inp.onchange=function(e){
+    var file=e.target.files[0];
+    if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var text=ev.target.result;
+        var imported=JSON.parse(text);
+        if(!imported.player||!imported.nutrition){
+          showNotif('Invalid backup file','!');
+          return;
+        }
+        // Deep merge - preserve new keys, restore old data
+        S=Object.assign({},S,imported);
+        persistSave();
+        renderScreens();
+        showNotif('Data restored! Welcome back, '+imported.player.name+'!','OK');
+      }catch(err){
+        showNotif('Import failed: '+err.message,'!');
+      }
+      // Reset input so same file can be imported again
+      inp.value='';
+    };
+    reader.onerror=function(){showNotif('Could not read file','!');};
+    reader.readAsText(file);
+  };
+  document.body.appendChild(inp);
+  inp.click();
+}
+
+function exportDataFile(){
+  var json=JSON.stringify(S,null,2);
+  var filename='zenfit_backup_'+getTodayStr()+'.json';
+  // Method 1: data URI (works in all browsers, no blob permission needed)
+  try{
+    var dataUri='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+    var a=document.createElement('a');
+    a.setAttribute('href',dataUri);
+    a.setAttribute('download',filename);
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showNotif('Download started!','OK');
+    return;
+  }catch(e){}
+  // Method 2: blob URL
+  try{
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a2=document.createElement('a');
+    a2.href=url;a2.download=filename;a2.style.display='none';
+    document.body.appendChild(a2);a2.click();
+    document.body.removeChild(a2);
+    setTimeout(function(){URL.revokeObjectURL(url);},2000);
+    showNotif('File saved!','OK');
+  }catch(e2){
+    showNotif('Use Share/Export button on mobile','!');
+  }
+}
+
 initTheme();
 persistLoad();
 </script>
@@ -3283,6 +3642,38 @@ persistLoad();
     else{s.style.display='none';}
   }, ms);
 });
+</script>
+
+
+<script>
+(function(){
+  function wireImportInp(){
+    var si = document.getElementById('zenfit-import-inp-static');
+    if(!si) return;
+
+    si.onchange = function(e){
+      var file = e.target.files[0];
+      if(!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        try{
+          var imported = JSON.parse(ev.target.result);
+          if(!imported.player || !imported.nutrition){
+            showNotif('Invalid backup','!');
+            return;
+          }
+          S = Object.assign({}, S, imported);
+        } catch(err){
+          console.error(err);
+        }
+      };
+      reader.readAsText(file);
+    };
+  }
+
+  wireImportInp();
+})();
 </script>
 
 </body>
