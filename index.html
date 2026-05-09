@@ -1419,7 +1419,7 @@ function logWorkout(override=null){
   const el=document.getElementById('screen-workout');
   if(el&&currentScreen==='workout'){renderWorkout(el);}
   else{persistSave();renderScreens();}
-  gainXP(entry.caloriesBurned>0?15:8,'Exercise logged');
+  addXP(entry.caloriesBurned>0?15:8,'Exercise logged');
   return entry;
 }
 function delW2(i){
