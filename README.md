@@ -1,3 +1,5 @@
+NOTE - IF U SEE ANY ADS ON THE APP , USE A DNS 
+HERE IS ONE "dns.adguard.com"
 WEBSITE : https://darkmoppen003-ai.github.io/zenfit/
 
 here is an apk file for those who want to use it as an app 
