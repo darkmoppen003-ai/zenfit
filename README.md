@@ -97,7 +97,7 @@ It runs entirely in the browser and stores all data locally — no login, no bac
 
 * Workout logging system
 * Activity tracking
-* Integrated with overall progress system
+
 
 ---
 
