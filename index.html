@@ -472,6 +472,7 @@ function defaultState(){
     theme:'dark',
     screenTime:{},screenTimeLimit:120,
     partners:[],peerId:null,profilePic:null,
+    pendingRequests:[],sentRequests:[],partnerStats:{},
     lastSaved:Date.now()
   };
 }
@@ -492,9 +493,10 @@ function loadState(){
       merged.quests=Object.assign({},def.quests,saved.quests||{});
       merged.bonusTasks=Object.assign({},def.bonusTasks,saved.bonusTasks||{});
       // Ensure arrays are always arrays
-      ['workouts','burned','habits','workoutPlans','mealPlans','plans','partners'].forEach(function(k){
+      ['workouts','burned','habits','workoutPlans','mealPlans','plans','partners','pendingRequests','sentRequests'].forEach(function(k){
         if(!Array.isArray(merged[k])) merged[k]=[];
       });
+      if(!merged.partnerStats||typeof merged.partnerStats!=='object') merged.partnerStats={};
       return merged;
     }
   }catch(e){console.warn('ZenFit loadState error:',e);}
@@ -1453,6 +1455,7 @@ function renderPlans(el){
       <div class="flex gap8">
         <button class="btn btn-primary btn-sm" onclick="logPlan(${i})">Log</button>
         <button class="btn btn-sm" onclick="editPlan(${i})" style="border-color:var(--purple);color:var(--purple)">Edit</button>
+        <button class="btn btn-sm" onclick="copyPlan(${i})" style="border-color:var(--teal);color:var(--teal)">Copy</button>
         <button class="btn btn-icon btn-sm" onclick="delPlan(${i})" style="color:var(--red)">×</button>
       </div>
     </div>
@@ -1524,6 +1527,21 @@ function savePlan(){
   persistSave();renderScreens();
 }
 function delPlan(i){if(confirm('Delete this plan?')){(S.workoutPlans||[]).splice(i,1);persistSave();renderScreens();}}
+function copyPlan(i){
+  const plan=(S.workoutPlans||[])[i];
+  if(!plan){showNotif('Plan not found','!');return;}
+  const copy={
+    name:plan.name+' (Copy)',
+    description:plan.description||'',
+    exercises:(plan.exercises||[]).map(function(ex){return Object.assign({},ex);}),
+    createdAt:getTodayStr()
+  };
+  if(!S.workoutPlans) S.workoutPlans=[];
+  S.workoutPlans.push(copy);
+  persistSave();
+  showNotif('Plan "'+plan.name+'" duplicated!','📋');
+  renderScreens();
+}
 function estimatePlanDuration(plan){
   return plan.exercises.reduce((a,ex)=>{
     if(ex.duration)return a+ex.duration;
@@ -2927,8 +2945,46 @@ function renderLeaderboard(el){
     h+='<div style="width:36px;height:36px;border-radius:50%;background:'+rc+'22;border:2px solid '+rc+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+rc+';flex-shrink:0;overflow:hidden">'+(u.avatar?'<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover" alt="">':u.rank)+'</div>';
     h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:'+(u.isMe?'var(--purple)':'var(--text)')+'">'+u.name+(u.isMe?' (You)':'')+(isLive?' <span style="color:var(--green);font-size:9px">&#9679; LIVE</span>':'')+'</div>';
     h+='<div style="font-size:11px;color:var(--text3)">Lv.'+u.level+' &middot; '+u.xp.toLocaleString()+' XP &middot; '+u.streak+'d streak</div></div>';
-    if(!u.isMe) h+='<button class="btn btn-icon btn-sm" onclick="removePartner('+i+')" style="color:var(--red)">&#215;</button>';
+    if(!u.isMe){
+      var partnerIdx=S.partners.findIndex(function(p){return p.name===u.name;});
+      h+='<button class="btn btn-sm" onclick="viewPartnerStats('+partnerIdx+')" style="border-color:var(--blue);color:var(--blue);font-size:10px;padding:4px 8px">Stats</button>';
+      h+='<button class="btn btn-icon btn-sm" onclick="removePartner('+partnerIdx+')" style="color:var(--red)">&#215;</button>';
+    }
     h+='</div>';
+    return h;
+  }
+
+  function buildPendingSection(){
+    const incoming=S.pendingRequests||[];
+    const outgoing=S.sentRequests||[];
+    if(!incoming.length && !outgoing.length) return '';
+    let h='';
+    if(incoming.length){
+      h+='<div class="section-title">Connection Requests ('+incoming.length+')</div>';
+      incoming.forEach(function(req,idx){
+        const rc=RANK_COLORS[req.rank]||'#8a94b8';
+        h+='<div class="card mb10" style="border:1px solid var(--blue)">';
+        h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+        h+='<div style="width:36px;height:36px;border-radius:50%;background:'+rc+'22;border:2px solid '+rc+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+rc+';flex-shrink:0;overflow:hidden">'+(req.avatar?'<img src="'+req.avatar+'" style="width:100%;height:100%;object-fit:cover" alt="">':req.rank||'?')+'</div>';
+        h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">'+req.name+'</div>';
+        h+='<div style="font-size:11px;color:var(--text3)">Lv.'+(req.level||1)+' &middot; '+(req.xp||0).toLocaleString()+' XP &middot; wants to connect</div></div></div>';
+        h+='<div style="display:flex;gap:8px">';
+        h+='<button class="btn btn-primary btn-sm" style="flex:1" onclick="acceptRequest('+idx+')">Accept</button>';
+        h+='<button class="btn btn-sm" style="flex:1;border-color:var(--red);color:var(--red)" onclick="rejectRequest('+idx+')">Reject</button>';
+        h+='</div></div>';
+      });
+    }
+    if(outgoing.length){
+      h+='<div class="section-title">Sent Requests ('+outgoing.length+')</div>';
+      outgoing.forEach(function(req,idx){
+        h+='<div class="card mb10" style="border:1px dashed var(--text3);opacity:0.85">';
+        h+='<div style="display:flex;align-items:center;gap:10px">';
+        h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text2)">'+req.name+'</div>';
+        h+='<div style="font-size:11px;color:var(--text3)">Lv.'+(req.level||1)+' &middot; awaiting response…</div></div>';
+        h+='<button class="btn btn-icon btn-sm" onclick="cancelSentRequest('+idx+')" style="color:var(--red)">&#215;</button>';
+        h+='</div></div>';
+      });
+    }
     return h;
   }
 
@@ -2952,7 +3008,9 @@ function renderLeaderboard(el){
   html+='<span style="font-size:11px;color:var(--text3)">Share code:</span>';
   html+='<code style="font-size:10px;background:var(--bg3);padding:3px 8px;border-radius:4px;color:var(--teal)">'+sc.slice(0,28)+'...</code>';
   html+='<button class="btn btn-sm" style="border-color:var(--teal);color:var(--teal);font-size:11px" onclick="var c=getShareCode();if(navigator.clipboard){navigator.clipboard.writeText(c).then(function(){showNotif(\'Code copied!\',\'OK\');});}else{var t=document.createElement(\'textarea\');t.value=c;document.body.appendChild(t);t.select();document.execCommand(\'copy\');document.body.removeChild(t);showNotif(\'Copied!\',\'OK\');}">Copy</button></div>';
-  html+='<div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="import-code-inp" placeholder="Paste partner share code..." style="flex:1;font-size:11px"><button class="btn btn-sm btn-primary" onclick="importPartnerCode(document.getElementById(\'import-code-inp\').value)">Add Partner</button></div></div>';
+  html+='<div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="import-code-inp" placeholder="Paste partner share code..." style="flex:1;font-size:11px"><button class="btn btn-sm btn-primary" onclick="sendConnectRequest(document.getElementById(\'import-code-inp\').value)">Send Request</button></div></div>';
+  // Pending connection requests
+  html+=buildPendingSection();
   // Live connections
   html+=buildLiveSection();
   // Leaderboard
@@ -3490,24 +3548,163 @@ function getShareCode(){
 }
 
 function importPartnerCode(code){
+  // Legacy alias — routes to the new request handshake
+  return sendConnectRequest(code);
+}
+
+function sendConnectRequest(code){
   try{
+    if(!code||!code.trim()){showNotif('Paste a share code first','!');return;}
     const json=decodeURIComponent(escape(atob(code.trim())));
     const card=JSON.parse(json);
     if(!card.name||!card.level){showNotif('Invalid share code','!');return;}
     if(!S.partners) S.partners=[];
-    // Update if already exists
-    const idx=S.partners.findIndex(function(p){return p.name===card.name;});
-    if(idx>-1) S.partners[idx]=card;
-    else S.partners.push(card);
+    if(!S.sentRequests) S.sentRequests=[];
+    if(!S.pendingRequests) S.pendingRequests=[];
+    // Already a partner?
+    if(S.partners.findIndex(function(p){return p.name===card.name;})>-1){
+      showNotif(card.name+' is already in your leaderboard','!');return;
+    }
+    // Already pending (sent)?
+    if(S.sentRequests.findIndex(function(p){return p.name===card.name;})>-1){
+      showNotif('Request to '+card.name+' is already pending','!');return;
+    }
+    // Did this person already send US a request? Then accepting completes the handshake.
+    const incomingIdx=S.pendingRequests.findIndex(function(p){return p.name===card.name;});
+    if(incomingIdx>-1){
+      acceptRequest(incomingIdx);
+      return;
+    }
+    // Try live P2P first (sends a request, partner must accept)
+    let sentLive=false;
+    if(card.peerId && peer && !peer.destroyed){
+      try{
+        var conn=peer.connect(card.peerId,{reliable:true,metadata:{type:'connect_request'}});
+        conn.on('open',function(){
+          conn.send(JSON.stringify({type:'connect_request',data:getMyCard()}));
+        });
+        setupConn(conn);
+        sentLive=true;
+      }catch(e){}
+    }
+    // Always queue locally as a sent request so the offline path works too.
+    S.sentRequests.push(Object.assign({},card,{ts:Date.now()}));
     persistSave();
-    showNotif('Partner '+card.name+' added! Lv.'+card.level,'OK');
+    showNotif('Request sent to '+card.name+(sentLive?' (live)':' — they must accept'),'📨');
     renderScreens();
   }catch(e){showNotif('Invalid code: '+e.message,'!');}
 }
 
-function removePartner(i){
-  if(S.partners) S.partners.splice(i,1);
+function acceptRequest(i){
+  if(!S.pendingRequests) S.pendingRequests=[];
+  const req=S.pendingRequests[i];
+  if(!req){showNotif('Request not found','!');return;}
+  if(!S.partners) S.partners=[];
+  // Add to my leaderboard
+  const existing=S.partners.findIndex(function(p){return p.name===req.name;});
+  const partnerCard=Object.assign({},req);
+  delete partnerCard.ts;
+  if(existing>-1) S.partners[existing]=partnerCard;
+  else S.partners.push(partnerCard);
+  // Remove from pending
+  S.pendingRequests.splice(i,1);
+  // Notify peer over live link if possible so they can register us too
+  if(req.peerId && peerConnections[req.peerId] && peerConnections[req.peerId].open){
+    try{ peerConnections[req.peerId].send(JSON.stringify({type:'connect_accept',data:getMyCard()})); }catch(e){}
+  } else if(req.peerId && peer && !peer.destroyed){
+    try{
+      var conn=peer.connect(req.peerId,{reliable:true});
+      conn.on('open',function(){
+        conn.send(JSON.stringify({type:'connect_accept',data:getMyCard()}));
+      });
+      setupConn(conn);
+    }catch(e){}
+  }
+  persistSave();
+  showNotif(req.name+' is now in your leaderboard!','✅');
+  renderScreens();
+}
+
+function rejectRequest(i){
+  if(!S.pendingRequests) S.pendingRequests=[];
+  const req=S.pendingRequests[i];
+  if(!req) return;
+  // Notify peer if live
+  if(req.peerId && peerConnections[req.peerId] && peerConnections[req.peerId].open){
+    try{ peerConnections[req.peerId].send(JSON.stringify({type:'connect_reject',name:S.player.name||'Warrior'})); }catch(e){}
+  }
+  S.pendingRequests.splice(i,1);
+  persistSave();
+  showNotif('Request from '+req.name+' rejected','OK');
+  renderScreens();
+}
+
+function cancelSentRequest(i){
+  if(!S.sentRequests) return;
+  S.sentRequests.splice(i,1);
   persistSave();renderScreens();
+}
+
+function removePartner(i){
+  if(i<0||!S.partners||!S.partners[i]) return;
+  if(!confirm('Remove '+S.partners[i].name+' from your leaderboard?')) return;
+  const removed=S.partners[i];
+  S.partners.splice(i,1);
+  if(S.partnerStats && removed && removed.name) delete S.partnerStats[removed.name];
+  persistSave();renderScreens();
+}
+
+// View limited stats of a partner (dashboard, streak, rank, level, XP) —
+// NEVER includes logged meals, exercises, or other private logs.
+function viewPartnerStats(i){
+  const p=(S.partners||[])[i];
+  if(!p){showNotif('Partner not found','!');return;}
+  const cached=(S.partnerStats||{})[p.name]||{};
+  // Try to refresh live data if possible
+  if(p.peerId && peerConnections[p.peerId] && peerConnections[p.peerId].open){
+    try{ peerConnections[p.peerId].send(JSON.stringify({type:'request_public_stats'})); }catch(e){}
+  }
+  const myXp=S.player.xp||0;
+  const allUsers=[...(S.partners||[]),Object.assign({},getMyCard(),{isMe:true})].sort(function(a,b){return b.xp-a.xp;});
+  const partnerRank=allUsers.findIndex(function(u){return u.name===p.name;})+1;
+  const RC={S:'#f5a623',A:'#4cdb8a',B:'#4a9eff',C:'#c084fc',D:'#00d4aa',E:'#8a94b8'};
+  const rc=RC[p.rank]||'#8a94b8';
+  const isLive=p.peerId && peerConnections[p.peerId];
+  let h='<div id="partner-stats-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)" onclick="if(event.target===this)closePartnerStats()">';
+  h+='<div style="background:var(--bg2);border:1px solid var(--purple2);border-radius:14px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:18px;box-shadow:0 12px 40px rgba(0,0,0,0.6)">';
+  h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">';
+  h+='<div style="width:54px;height:54px;border-radius:50%;background:'+rc+'22;border:2px solid '+rc+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:'+rc+';overflow:hidden">'+(p.avatar?'<img src="'+p.avatar+'" style="width:100%;height:100%;object-fit:cover" alt="">':p.rank||'?')+'</div>';
+  h+='<div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:var(--text)">'+p.name+'</div>';
+  h+='<div style="font-size:11px;color:'+(isLive?'var(--green)':'var(--text3)')+'">'+(isLive?'● Live connection':'Cached card')+'</div></div>';
+  h+='<button class="btn btn-icon btn-sm" onclick="closePartnerStats()" style="color:var(--text3)">&#215;</button></div>';
+  // Public stats grid
+  h+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">RANK</div><div style="font-size:24px;font-weight:800;color:'+rc+'">'+(p.rank||'?')+'</div></div>';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">LEADERBOARD</div><div style="font-size:24px;font-weight:800;color:var(--purple)">#'+partnerRank+'</div></div>';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">LEVEL</div><div style="font-size:24px;font-weight:800;color:var(--blue)">'+(p.level||1)+'</div></div>';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">TOTAL XP</div><div style="font-size:24px;font-weight:800;color:var(--teal)">'+(p.xp||0).toLocaleString()+'</div></div>';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">STREAK</div><div style="font-size:24px;font-weight:800;color:var(--orange,#ff9f43)">'+(p.streak||0)+'<span style="font-size:12px">d</span></div></div>';
+  h+='<div class="card-sm" style="text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">HABITS</div><div style="font-size:24px;font-weight:800;color:var(--green)">'+(p.habits||0)+'</div></div>';
+  h+='</div>';
+  // Comparison vs you
+  const diff=(p.xp||0)-myXp;
+  h+='<div class="card-sm" style="margin-bottom:12px;text-align:center"><div style="font-size:10px;color:var(--text3);letter-spacing:1px">VS YOU</div>';
+  h+='<div style="font-size:14px;font-weight:600;color:'+(diff>0?'var(--red)':diff<0?'var(--green)':'var(--text2)')+'">'+(diff>0?'+'+diff.toLocaleString()+' XP ahead':diff<0?Math.abs(diff).toLocaleString()+' XP behind':'Tied')+'</div></div>';
+  // Privacy notice
+  h+='<div style="font-size:11px;color:var(--text3);text-align:center;padding:8px;background:var(--bg3);border-radius:8px;line-height:1.5">';
+  h+='🔒 Only public progress is shared. Logged meals, workouts, water, and personal notes stay private.</div>';
+  h+='</div></div>';
+  // Inject into DOM
+  const old=document.getElementById('partner-stats-modal');
+  if(old) old.remove();
+  const wrap=document.createElement('div');
+  wrap.innerHTML=h;
+  document.body.appendChild(wrap.firstChild);
+}
+
+function closePartnerStats(){
+  const m=document.getElementById('partner-stats-modal');
+  if(m) m.remove();
 }
 
 // PeerJS for real-time (loads dynamically)
@@ -3541,16 +3738,61 @@ function startPeer(){
 function setupConn(conn){
   conn.on('open',function(){
     peerConnections[conn.peer]=conn;
-    // Send our card
-    conn.send(JSON.stringify({type:'card',data:getMyCard()}));
-    showNotif(conn.peer.split('-')[1]+' connected!','OK');
+    // Channel is open. We do NOT auto-share our card now — that would bypass the
+    // accept/reject handshake. The initiator sends an explicit connect_request,
+    // and only after acceptance do both sides exchange cards.
+    showNotif(conn.peer.split('-')[1]+' channel open','OK');
     renderScreens();
   });
   conn.on('data',function(raw){
     try{
       var msg=JSON.parse(raw);
-      if(msg.type==='card'){
-        importFromPeer(conn.peer,msg.data);
+      if(msg.type==='connect_request'){
+        // Incoming connection request — queue for user to accept/reject
+        if(!S.pendingRequests) S.pendingRequests=[];
+        var c=msg.data||{};
+        c.peerId=conn.peer;
+        var dup=S.pendingRequests.findIndex(function(p){return p.name===c.name;});
+        if(dup>-1) S.pendingRequests[dup]=Object.assign({},c,{ts:Date.now()});
+        else S.pendingRequests.push(Object.assign({},c,{ts:Date.now()}));
+        // Already a partner? Auto-accept silently.
+        if((S.partners||[]).findIndex(function(p){return p.name===c.name;})>-1){
+          var idx=S.pendingRequests.findIndex(function(p){return p.name===c.name;});
+          if(idx>-1) acceptRequest(idx);
+        } else {
+          persistSave();
+          showNotif(c.name+' wants to connect — check Leaderboard','🔔');
+          renderScreens();
+        }
+      } else if(msg.type==='connect_accept'){
+        // Our request was accepted — add them as a partner and clear sent queue
+        var card=msg.data||{};
+        card.peerId=conn.peer;
+        if(!S.partners) S.partners=[];
+        var pIdx=S.partners.findIndex(function(p){return p.name===card.name;});
+        if(pIdx>-1) S.partners[pIdx]=card;
+        else S.partners.push(card);
+        if(S.sentRequests){
+          var sIdx=S.sentRequests.findIndex(function(p){return p.name===card.name;});
+          if(sIdx>-1) S.sentRequests.splice(sIdx,1);
+        }
+        persistSave();
+        showNotif(card.name+' accepted your request!','✅');
+        renderScreens();
+      } else if(msg.type==='connect_reject'){
+        // Remove from sent
+        if(S.sentRequests){
+          var rIdx=S.sentRequests.findIndex(function(p){return p.name===msg.name;});
+          if(rIdx>-1) S.sentRequests.splice(rIdx,1);
+        }
+        persistSave();
+        showNotif((msg.name||'Request')+' declined your connection','!');
+        renderScreens();
+      } else if(msg.type==='card'){
+        // Legacy: only refresh card if already a partner
+        if((S.partners||[]).findIndex(function(p){return p.name===msg.data.name;})>-1){
+          importFromPeer(conn.peer,msg.data);
+        }
       } else if(msg.type==='chat'){
         if(!peerChatHistory[conn.peer]) peerChatHistory[conn.peer]=[];
         peerChatHistory[conn.peer].push({from:msg.name,text:msg.text,ts:Date.now(),mine:false});
@@ -3558,8 +3800,22 @@ function setupConn(conn){
         peerChatHistory[conn.peer]=peerChatHistory[conn.peer].filter(function(m){return Date.now()-m.ts<86400000;});
         showNotif(msg.name+': '+msg.text.slice(0,40),'OK');
         if(currentScreen==='leaderboard') renderScreens();
+      } else if(msg.type==='request_public_stats'){
+        // Send only the limited public card (no logs)
+        conn.send(JSON.stringify({type:'public_stats',data:getMyCard()}));
+      } else if(msg.type==='public_stats'){
+        // Refresh that partner's public card
+        var pc=msg.data||{};
+        pc.peerId=conn.peer;
+        if(!S.partners) S.partners=[];
+        var pi=S.partners.findIndex(function(p){return p.name===pc.name;});
+        if(pi>-1){ S.partners[pi]=pc; persistSave(); renderScreens(); }
       } else if(msg.type==='request_detail'){
-        conn.send(JSON.stringify({type:'detail',data:getDetailedCard()}));
+        // Only honour detail requests from accepted partners
+        var fromName=(msg.from||'');
+        var allowed=(S.partners||[]).some(function(p){return p.peerId===conn.peer || p.name===fromName;});
+        if(allowed) conn.send(JSON.stringify({type:'detail',data:getDetailedCard()}));
+        else conn.send(JSON.stringify({type:'public_stats',data:getMyCard()}));
       }
     }catch(e){}
   });
@@ -3571,8 +3827,28 @@ function setupConn(conn){
 function connectToPeer(peerId){
   if(!peer){showNotif('Start P2P first','!');return;}
   if(!peerId||peerId.trim().length<4){showNotif('Enter a valid Peer ID','!');return;}
-  var conn=peer.connect(peerId.trim(),{reliable:true});
+  var pid=peerId.trim();
+  // Already a partner? Just open a chat channel.
+  var alreadyPartner=(S.partners||[]).some(function(p){return p.peerId===pid;});
+  var conn=peer.connect(pid,{reliable:true});
   setupConn(conn);
+  if(!alreadyPartner){
+    // Send a proper connect request the receiver must accept.
+    conn.on('open',function(){
+      try{ conn.send(JSON.stringify({type:'connect_request',data:getMyCard()})); }catch(e){}
+      // Mirror it locally as a sent request
+      if(!S.sentRequests) S.sentRequests=[];
+      var card=getMyCard();
+      // We don't know the receiver's name yet — use the peer ID as placeholder
+      var displayName=pid.split('-').slice(1).join('-')||pid;
+      if(S.sentRequests.findIndex(function(p){return p.peerId===pid;})===-1){
+        S.sentRequests.push({name:displayName,level:'?',xp:0,peerId:pid,ts:Date.now()});
+      }
+      persistSave();
+      showNotif('Connection request sent to '+displayName,'📨');
+      renderScreens();
+    });
+  }
 }
 function importFromPeer(peerId,card){
   if(!S.partners) S.partners=[];
@@ -3730,5 +4006,6 @@ persistLoad();
 })();
 </script>
 
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
