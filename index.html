@@ -260,37 +260,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 
 /* ═══ ORBITAL HOME SCREEN ═══ */
 .aw-home3{
-  width:100%;
-  min-height:100dvh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
+  width:100%;min-height:100vh;min-height:100dvh;
+  position:relative;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;padding:60px 0 80px;box-sizing:border-box;
 }
-
 .aw-orbital-wrap{
-  position:relative;
-  width:540px;
-  height:540px;
-  transform: scale(calc(min(92vw, 92vh) / 540));
-  transform-origin: center;
+  position:relative;width:540px;height:540px;flex-shrink:0;
+  /* Scales to fit any screen - phone, tablet, desktop */
+  transform:scale(calc(min(90vw, max(300px, calc(100dvh - 160px))) / 540px));
+  transform-origin:center center;
 }
-/* Orbital ring decorations */
-.aw-ring1{position:absolute;width:280px;height:280px;border-radius:50%;
-  border:1px solid rgba(124,111,255,.15);top:50%;left:50%;
+.aw-ring1{position:absolute;width:51.85%;height:51.85%;border-radius:50%;
+  border:1px solid rgba(124,111,255,.18);top:50%;left:50%;
   transform:translate(-50%,-50%);pointer-events:none;
   animation:orb-ring-pulse 3s ease-in-out infinite;}
-.aw-ring2{position:absolute;width:476px;height:476px;border-radius:50%;
-  border:1px solid rgba(74,147,255,.1);top:50%;left:50%;
+.aw-ring2{position:absolute;width:88.15%;height:88.15%;border-radius:50%;
+  border:1px solid rgba(74,147,255,.12);top:50%;left:50%;
   transform:translate(-50%,-50%);pointer-events:none;
   animation:orb-ring-pulse 4s ease-in-out infinite .5s;}
 @keyframes orb-ring-pulse{
   0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(1);}
   50%{opacity:.7;transform:translate(-50%,-50%) scale(1.02);}
 }
-/* Center orb */
 .aw-center3{
-  position:absolute;width:100px;height:100px;border-radius:50%;
+  position:absolute;width:18.52%;height:18.52%;border-radius:50%;
   top:50%;left:50%;transform:translate(-50%,-50%);
   background:radial-gradient(circle at 35% 35%,#1a1060,#0a0620);
   border:2px solid #7c6fff;
@@ -298,7 +292,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
   cursor:pointer;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:3px;z-index:20;
   animation:center-pulse 2.5s ease-in-out infinite;
-  transition:transform .3s,box-shadow .3s;
+  transition:transform .3s,box-shadow .3s;overflow:hidden;
 }
 .aw-center3:hover{transform:translate(-50%,-50%) scale(1.1);
   box-shadow:0 0 60px rgba(124,111,255,.7),0 0 100px rgba(124,111,255,.3);}
@@ -306,51 +300,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
   0%,100%{box-shadow:0 0 40px rgba(124,111,255,.5),0 0 80px rgba(124,111,255,.2);}
   50%{box-shadow:0 0 60px rgba(124,111,255,.7),0 0 120px rgba(124,111,255,.35);}
 }
-/* Base orb style */
 .aw-orb3{
   position:absolute;border-radius:50%;border:1.5px solid;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:10;
-  background:rgba(10,12,20,.8);backdrop-filter:blur(4px);
+  background:rgba(10,12,20,.85);backdrop-filter:blur(4px);
 }
-.aw-orb3-inner{width:96px;height:96px;font-size:26px;}
-.aw-orb3-outer{width:76px;height:76px;font-size:18px;}
-.aw-orb3 .aw-oi3{line-height:1;filter:drop-shadow(0 0 6px var(--oc));}
-.aw-orb3 .aw-ol3{font-size:9px;font-weight:600;color:var(--text2);
-  letter-spacing:.5px;text-align:center;line-height:1.1;}
-.aw-orb-dashboard{left:calc(50% + 0px - 48px);top:calc(50% + -140px - 48px);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
+.aw-orb3-inner{width:17.78%;height:17.78%;}
+.aw-orb3-outer{width:14.07%;height:14.07%;}
+.aw-orb3 .aw-oi3{font-size:clamp(14px,4.5%,26px);line-height:1;filter:drop-shadow(0 0 6px var(--oc));}
+.aw-orb3 .aw-ol3{font-size:clamp(8px,1.9%,12px);font-weight:600;color:var(--text2);
+  letter-spacing:.3px;text-align:center;line-height:1.1;}
+.aw-orb-dashboard{left:calc(50.0000% - 8.8889%);top:calc(24.0741% - 8.8889%);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
 .aw-orb-dashboard:hover{box-shadow:0 0 24px #4a9eff88;transform:scale(1.15);}
-.aw-orb-nutrition{left:calc(50% + 121px - 48px);top:calc(50% + -70px - 48px);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-nutrition{left:calc(72.4525% - 8.8889%);top:calc(37.0370% - 8.8889%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
 .aw-orb-nutrition:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
-.aw-orb-water{left:calc(50% + 121px - 48px);top:calc(50% + 70px - 48px);--oc:#00d4aa;border-color:#00d4aa;background:radial-gradient(circle at 35% 35%,#00d4aa22,#00d4aa08);}
+.aw-orb-water{left:calc(72.4525% - 8.8889%);top:calc(62.9630% - 8.8889%);--oc:#00d4aa;border-color:#00d4aa;background:radial-gradient(circle at 35% 35%,#00d4aa22,#00d4aa08);}
 .aw-orb-water:hover{box-shadow:0 0 24px #00d4aa88;transform:scale(1.15);}
-.aw-orb-workout{left:calc(50% + 0px - 48px);top:calc(50% + 140px - 48px);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
+.aw-orb-workout{left:calc(50.0000% - 8.8889%);top:calc(75.9259% - 8.8889%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
 .aw-orb-workout:hover{box-shadow:0 0 24px #4cdb8a88;transform:scale(1.15);}
-.aw-orb-habits{left:calc(50% + -121px - 48px);top:calc(50% + 70px - 48px);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
+.aw-orb-habits{left:calc(27.5475% - 8.8889%);top:calc(62.9630% - 8.8889%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
 .aw-orb-habits:hover{box-shadow:0 0 24px #c084fc88;transform:scale(1.15);}
-.aw-orb-study{left:calc(50% + -121px - 48px);top:calc(50% + -70px - 48px);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
+.aw-orb-study{left:calc(27.5475% - 8.8889%);top:calc(37.0370% - 8.8889%);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
 .aw-orb-study:hover{box-shadow:0 0 24px #f472b688;transform:scale(1.15);}
-
-.aw-orb-customdish{left:calc(50% + 0px - 38px);top:calc(50% + -238px - 38px);--oc:#fb923c;border-color:#fb923c;background:radial-gradient(circle at 35% 35%,#fb923c22,#fb923c08);}
-.aw-orb-customdish:hover{box-shadow:0 0 18px #fb923c88;transform:scale(1.15);}
-.aw-orb-mealplanner{left:calc(50% + 140px - 38px);top:calc(50% + -193px - 38px);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
-.aw-orb-mealplanner:hover{box-shadow:0 0 18px #4a9eff88;transform:scale(1.15);}
-.aw-orb-plans{left:calc(50% + 226px - 38px);top:calc(50% + -74px - 38px);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
-.aw-orb-plans:hover{box-shadow:0 0 18px #4cdb8a88;transform:scale(1.15);}
-.aw-orb-analytics{left:calc(50% + 226px - 38px);top:calc(50% + 74px - 38px);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
-.aw-orb-analytics:hover{box-shadow:0 0 18px #f5a62388;transform:scale(1.15);}
-.aw-orb-burned{left:calc(50% + 140px - 38px);top:calc(50% + 193px - 38px);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
-.aw-orb-burned:hover{box-shadow:0 0 18px #ff5a5a88;transform:scale(1.15);}
-.aw-orb-quests{left:calc(50% + 0px - 38px);top:calc(50% + 238px - 38px);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
-.aw-orb-quests:hover{box-shadow:0 0 18px #f5a62388;transform:scale(1.15);}
-.aw-orb-leaderboard{left:calc(50% + -140px - 38px);top:calc(50% + 193px - 38px);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
-.aw-orb-leaderboard:hover{box-shadow:0 0 18px #c084fc88;transform:scale(1.15);}
-.aw-orb-exhelper{left:calc(50% + -226px - 38px);top:calc(50% + 74px - 38px);--oc:#00d4aa;border-color:#00d4aa;background:radial-gradient(circle at 35% 35%,#00d4aa22,#00d4aa08);}
-.aw-orb-exhelper:hover{box-shadow:0 0 18px #00d4aa88;transform:scale(1.15);}
-.aw-orb-screentime{left:calc(50% + -226px - 38px);top:calc(50% + -74px - 38px);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
-.aw-orb-screentime:hover{box-shadow:0 0 18px #ff5a5a88;transform:scale(1.15);}
-.aw-orb-profile{left:calc(50% + -140px - 38px);top:calc(50% + -193px - 38px);--oc:#8a94b8;border-color:#8a94b8;background:radial-gradient(circle at 35% 35%,#8a94b822,#8a94b808);}
-.aw-orb-profile:hover{box-shadow:0 0 18px #8a94b888;transform:scale(1.15);}
+.aw-orb-customdish{left:calc(50.0000% - 7.0370%);top:calc(5.9259% - 7.0370%);--oc:#fb923c;border-color:#fb923c;background:radial-gradient(circle at 35% 35%,#fb923c22,#fb923c08);}
+.aw-orb-customdish:hover{box-shadow:0 0 24px #fb923c88;transform:scale(1.15);}
+.aw-orb-mealplanner{left:calc(78.3303% - 7.0370%);top:calc(16.2373% - 7.0370%);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
+.aw-orb-mealplanner:hover{box-shadow:0 0 24px #4a9eff88;transform:scale(1.15);}
+.aw-orb-plans{left:calc(93.4045% - 7.0370%);top:calc(42.3466% - 7.0370%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
+.aw-orb-plans:hover{box-shadow:0 0 24px #4cdb8a88;transform:scale(1.15);}
+.aw-orb-analytics{left:calc(88.1693% - 7.0370%);top:calc(72.0370% - 7.0370%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-analytics:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
+.aw-orb-burned{left:calc(65.0742% - 7.0370%);top:calc(91.4161% - 7.0370%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
+.aw-orb-burned:hover{box-shadow:0 0 24px #ff5a5a88;transform:scale(1.15);}
+.aw-orb-quests{left:calc(34.9258% - 7.0370%);top:calc(91.4161% - 7.0370%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-quests:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
+.aw-orb-leaderboard{left:calc(11.8307% - 7.0370%);top:calc(72.0370% - 7.0370%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
+.aw-orb-leaderboard:hover{box-shadow:0 0 24px #c084fc88;transform:scale(1.15);}
+.aw-orb-screentime{left:calc(6.5955% - 7.0370%);top:calc(42.3466% - 7.0370%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
+.aw-orb-screentime:hover{box-shadow:0 0 24px #ff5a5a88;transform:scale(1.15);}
+.aw-orb-profile{left:calc(21.6697% - 7.0370%);top:calc(16.2373% - 7.0370%);--oc:#8a94b8;border-color:#8a94b8;background:radial-gradient(circle at 35% 35%,#8a94b822,#8a94b808);}
+.aw-orb-profile:hover{box-shadow:0 0 24px #8a94b888;transform:scale(1.15);}
 
 
 /* ═══ GRID FALLBACK (hidden) ═══ */
@@ -449,8 +439,8 @@ const safeFetch = async function(url, opts){
     return null;
   }
 };
-const APP_VERSION="v5.2";
-const APP_BUILD="2025.01.30";
+const APP_VERSION="v5.3";
+const APP_BUILD="2025.02.01";
 // STATE
 // ════════════════════════════
 const SK='zenfit_v1';
@@ -481,11 +471,33 @@ function defaultState(){
     bonusTasks:{date:'',list:[]},
     theme:'dark',
     screenTime:{},screenTimeLimit:120,
+    partners:[],peerId:null,profilePic:null,
     lastSaved:Date.now()
   };
 }
 function loadState(){
-  try{const r=localStorage.getItem(SK);if(r)return{...defaultState(),...JSON.parse(r)};}catch(e){}
+  try{
+    const r=localStorage.getItem(SK);
+    if(r){
+      const saved=JSON.parse(r);
+      const def=defaultState();
+      // Deep merge: saved overrides defaults, but defaults fill missing keys
+      const merged=Object.assign({},def,saved);
+      // Ensure nested objects have all required keys
+      merged.player=Object.assign({},def.player,saved.player||{});
+      merged.nutrition=Object.assign({},def.nutrition,saved.nutrition||{});
+      merged.nutrition.dailyGoal=Object.assign({},def.nutrition.dailyGoal,(saved.nutrition||{}).dailyGoal||{});
+      merged.water=Object.assign({},def.water,saved.water||{});
+      merged.study=Object.assign({},def.study,saved.study||{});
+      merged.quests=Object.assign({},def.quests,saved.quests||{});
+      merged.bonusTasks=Object.assign({},def.bonusTasks,saved.bonusTasks||{});
+      // Ensure arrays are always arrays
+      ['workouts','burned','habits','workoutPlans','mealPlans','plans','partners'].forEach(function(k){
+        if(!Array.isArray(merged[k])) merged[k]=[];
+      });
+      return merged;
+    }
+  }catch(e){console.warn('ZenFit loadState error:',e);}
   return defaultState();
 }
 function saveState(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
@@ -622,10 +634,10 @@ function generateBonusTasks(){
 }
 function checkAutoQuests(){
   const today=getTodayStr();if(S.quests.date!==today)return;
-  if(S.water.entries.filter(e=>e.date===today).reduce((a,b)=>a+b.ml,0)>=S.water.dailyGoalMl) autoQ('q1');
+  if((S.water.entries||[]).filter(e=>e.date===today).reduce((a,b)=>a+b.ml,0)>=S.water.dailyGoalMl) autoQ('q1');
   if(S.nutrition.entries.filter(e=>e.date===today).length>=3) autoQ('q2');
-  if(S.workouts.filter(w=>w.date===today).length>0) autoQ('q3');
-  if(S.habits.filter(h=>h.completedDates?.includes(today)).length>=2) autoQ('q4');
+  if((S.workouts||[]).filter(w=>w.date===today).length>0) autoQ('q3');
+  if((S.habits||[]).filter(h=>h.completedDates?.includes(today)).length>=2) autoQ('q4');
   if(S.study.sessions.filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0)>=30) autoQ('q5');
   if(todayBurned()>=200) autoQ('q6');
 }
@@ -723,7 +735,7 @@ function todayNutrition(){
     return a;
   },{cal:0,protein:0,carbs:0,fat:0,fiber:0});
 }
-function todayWater(){return S.water.entries.filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.ml,0);}
+function todayWater(){return (S.water.entries||[]).filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.ml,0);}
 function todayBurned(){return(S.burned||[]).filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.calories,0);}
 
 // ════════════════════════════
@@ -1066,7 +1078,7 @@ function renderHome(el){
   const today=getTodayStr();
   const water=todayWater(),waterP=Math.min(100,Math.round(water/S.water.dailyGoalMl*100));
   const nut=todayNutrition(),calP=Math.min(100,Math.round(nut.cal/S.nutrition.dailyGoal.cal*100));
-  const doneH=S.habits.filter(h=>h.completedDates?.includes(today)).length;
+  const doneH=(S.habits||[]).filter(h=>h.completedDates?.includes(today)).length;
   const doneQ=S.quests.list.filter(q=>q.done).length;
   const burned=todayBurned(),net=nut.cal-burned;
   const rc=RANK_COLORS[p.rank];
@@ -1172,7 +1184,7 @@ async function doBC(){
     if(d.status!==1){if(r)r.innerHTML=`<div style="color:var(--red)">Not found.</div>`;return;}
     const p=d.product,n=p.nutriments||{};
     const e={name:p.product_name||'Product',qty:1,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10}};
-    if(r)r.innerHTML=`<div class="card-sm flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--text2)">${e.nutrients.cal} kcal</div></div><button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button></div>`;
+    if(r)r.innerHTML=`<div class="card-sm flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--text2)">${nn(e.nutrients.cal)} kcal</div></div><button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button></div>`;
   }catch(ex){if(r)r.innerHTML=`<div style="color:var(--red)">Lookup failed.</div>`;}
 }
 function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr()});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();renderScreens();}
@@ -1186,7 +1198,7 @@ function delN(i){
   const te=S.nutrition.entries.filter(e=>e.date===getTodayStr());
   const gi=S.nutrition.entries.indexOf(te[i]);
   if(gi>-1)S.nutrition.entries.splice(gi,1);
-  persistSave();renderScreens();
+  persistSave();var _nel=document.getElementById('screen-nutrition');if(_nel&&currentScreen==='nutrition')renderNutrition(_nel);else renderScreens();
 }
 function mCard(label,val,goal,unit,color){
   const p=Math.min(100,Math.round(val/goal*100));
@@ -1198,7 +1210,7 @@ function mCard(label,val,goal,unit,color){
 // ════════════════════════════
 function renderWater(el){
   const total=todayWater(),pct=Math.min(100,Math.round(total/S.water.dailyGoalMl*100));
-  const entries=S.water.entries.filter(e=>e.date===getTodayStr());
+  const entries=(S.water.entries||[]).filter(e=>e.date===getTodayStr());
   el.innerHTML=`
   <div class="card mb16" style="text-align:center">
     <div class="section-title">Today's Hydration</div>
@@ -1223,10 +1235,10 @@ function renderWater(el){
 function addWater(ml){
   if(!ml||ml<=0)return;
   const prev=todayWater();
-  S.water.entries.push({ml,date:getTodayStr(),ts:Date.now()});
+  S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now()});
   addXP(5,'Hydrating!');updStat('health',1);
   if(todayWater()>=S.water.dailyGoalMl&&prev<S.water.dailyGoalMl)addXP(50,'Water goal!');
-  checkAutoQuests();persistSave();renderScreens();
+  checkAutoQuests();persistSave();var _wel=document.getElementById('screen-water');if(_wel&&currentScreen==='water')renderWater(_wel);else renderScreens();
 }
 function delW(i){S.water.entries.splice(i,1);persistSave();renderScreens();}
 
@@ -1235,7 +1247,7 @@ function delW(i){S.water.entries.splice(i,1);persistSave();renderScreens();}
 // ════════════════════════════
 function renderWorkout(el){
   const today=getTodayStr();
-  const todayW=S.workouts.filter(w=>w.date===today);
+  const todayW=(S.workouts||[]).filter(w=>w.date===today);
   const todayCal=todayW.reduce((a,w)=>a+(w.caloriesBurned||0),0);
   const todaySets=todayW.reduce((a,w)=>a+(w.sets||0),0);
   const todayVol=todayW.reduce((a,w)=>a+(w.sets||0)*(w.reps||0)*(w.weight||0),0);
@@ -1410,7 +1422,11 @@ function logWorkout(override=null){
   gainXP(entry.caloriesBurned>0?15:8,'Exercise logged');
   return entry;
 }
-function delW2(i){S.workouts.splice(i,1);persistSave();renderScreens();}
+function delW2(i){
+  S.workouts.splice(i,1);persistSave();
+  var el=document.getElementById('screen-workout');
+  if(el&&currentScreen==='workout')renderWorkout(el);else renderScreens();
+}
 
 // ════════════════════════════
 // WORKOUT PLANS
@@ -1483,7 +1499,7 @@ function editPlan(i){
   const plan=allPlans[i];
   if(!plan){showNotif('Plan not found','!');return;}
   planExercises=plan.exercises.map(function(ex){return Object.assign({},ex);});
-  S.workoutPlans.splice(i,1);
+  (S.workoutPlans||[]).splice(i,1);
   persistSave();
   currentScreen='plans';
   renderScreens();
@@ -1507,7 +1523,7 @@ function savePlan(){
   showNotif(`Plan "${name}" saved!`,'📋');
   persistSave();renderScreens();
 }
-function delPlan(i){if(confirm('Delete this plan?')){S.workoutPlans.splice(i,1);persistSave();renderScreens();}}
+function delPlan(i){if(confirm('Delete this plan?')){(S.workoutPlans||[]).splice(i,1);persistSave();renderScreens();}}
 function estimatePlanDuration(plan){
   return plan.exercises.reduce((a,ex)=>{
     if(ex.duration)return a+ex.duration;
@@ -1842,16 +1858,45 @@ function miniCal(dates){
 function addHabit(){
   const name=document.getElementById('h-name')?.value?.trim();if(!name)return;
   S.habits.push({name,difficulty:document.getElementById('h-diff')?.value||'easy',category:document.getElementById('h-cat')?.value?.trim()||'',icon:document.getElementById('h-icon')?.value?.trim()||'✅',description:document.getElementById('h-desc')?.value?.trim()||'',streak:0,completedDates:[],createdAt:getTodayStr()});
-  persistSave();renderScreens();
+  persistSave();var _hel=document.getElementById('screen-habits');if(_hel&&currentScreen==='habits')renderHabits(_hel);else renderScreens();
 }
 function toggleHabit(i){
-  const today=getTodayStr(),h=S.habits[i];
-  if(!h.completedDates)h.completedDates=[];
-  if(h.completedDates.includes(today)){h.completedDates=h.completedDates.filter(d=>d!==today);h.streak=Math.max(0,(h.streak||1)-1);}
-  else{h.completedDates.push(today);h.streak=(h.streak||0)+1;const xM={easy:20,medium:40,hard:70};addXP(xM[h.difficulty]||20,'Habit done!');updStat('discipline',3);checkAutoQuests();}
-  persistSave();renderScreens();
+  const today=getTodayStr();
+  const h=S.habits[i];
+  if(!h) return;
+  if(!h.completedDates) h.completedDates=[];
+  const wasDone=h.completedDates.includes(today);
+  if(wasDone){
+    h.completedDates=h.completedDates.filter(d=>d!==today);
+  } else {
+    h.completedDates.push(today);
+    const xM={easy:20,medium:40,hard:70};
+    addXP(xM[h.difficulty]||20,'Habit: '+h.name);
+    updStat('discipline',2);
+  }
+  // Recalculate streak accurately from dates
+  h.streak=calcHabitStreak(h.completedDates);
+  persistSave();
+  const el=document.getElementById('screen-habits');
+  if(el&&currentScreen==='habits') renderHabits(el);
+  else renderScreens();
 }
-function delHabit(i){S.habits.splice(i,1);persistSave();renderScreens();}
+function calcHabitStreak(dates){
+  if(!dates||!dates.length) return 0;
+  const sorted=[...dates].sort().reverse();
+  let streak=0;
+  const today=new Date(); today.setHours(0,0,0,0);
+  let check=new Date(today);
+  for(let i=0;i<sorted.length;i++){
+    const d=new Date(sorted[i]); d.setHours(0,0,0,0);
+    const diff=Math.round((check-d)/86400000);
+    if(diff===0||(i===0&&diff===1)){streak++;check=d;if(diff===1)check=d;}
+    else if(diff===1){streak++;check=d;}
+    else break;
+  }
+  return streak;
+}
+function delHabit(i){S.habits.splice(i,1);persistSave();var _hel=document.getElementById('screen-habits');if(_hel&&currentScreen==='habits')renderHabits(_hel);else renderScreens();}
 
 // ════════════════════════════
 // STUDY TRACKER + TIMER
@@ -1954,6 +1999,7 @@ function startTimer(){
   timerSubject=document.getElementById('t-subject')?.value?.trim()||timerSubject;
   timerTopic=document.getElementById('t-topic')?.value?.trim()||timerTopic;
   timerDiff=document.getElementById('t-diff')?.value||timerDiff;
+  if(timerInterval) clearInterval(timerInterval);
   timerRunning=true;
   // Update button states immediately
   var startBtn=document.querySelector('[onclick="startTimer()"]');
@@ -2085,9 +2131,9 @@ function getLast7(){
       label:d.toLocaleDateString([],{weekday:'short'}),
       cal:S.nutrition.entries.filter(e=>e.date===ds).reduce((a,e)=>a+e.nutrients.cal,0),
       burned:(S.burned||[]).filter(e=>e.date===ds).reduce((a,e)=>a+e.calories,0),
-      water:Math.round(S.water.entries.filter(e=>e.date===ds).reduce((a,e)=>a+e.ml,0)/100)/10,
+      water:Math.round((S.water.entries||[]).filter(e=>e.date===ds).reduce((a,e)=>a+e.ml,0)/100)/10,
       study:(S.study.sessions||[]).filter(s=>s.date===ds).reduce((a,b)=>a+b.duration,0),
-      habits:S.habits.filter(h=>h.completedDates?.includes(ds)).length,
+      habits:(S.habits||[]).filter(h=>h.completedDates?.includes(ds)).length,
     });
   }
   return days;
@@ -2153,7 +2199,7 @@ function getInsights(){
   const burned=todayBurned();if(burned>300)ins.push(`🔥 Great job burning ${burned} kcal today!`);
   const studyMins=(S.study.sessions||[]).filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0);
   if(studyMins>=60)ins.push(`📚 ${studyMins} minutes of study — impressive!`);
-  const topStreak=S.habits.reduce((a,h)=>Math.max(a,h.streak||0),0);
+  const topStreak=(S.habits||[]).reduce((a,h)=>Math.max(a,h.streak||0),0);
   if(topStreak>=7)ins.push(`🔥 ${topStreak}-day streak! You are unstoppable.`);
   if(ins.length===0)ins.push('📊 Keep logging to unlock insights!');
   return ins;
@@ -2279,7 +2325,7 @@ function renderProfile(el){
   <div class="section-title">Achievements</div>
   <div class="grid3 mb16">
     ${aB('🍽️','Meals',S.nutrition.entries.length)}${aB('🏋️','Workouts',S.workouts.length)}
-    ${aB('📚','Study Sessions',(S.study.sessions||[]).length)}${aB('✅','Habits Done',S.habits.reduce((a,h)=>a+(h.completedDates?.length||0),0))}
+    ${aB('📚','Study Sessions',(S.study.sessions||[]).length)}${aB('✅','Habits Done',(S.habits||[]).reduce((a,h)=>a+(h.completedDates?.length||0),0))}
     ${aB('💧','Water Logs',S.water.entries.length)}${aB('🔥','Best Streak',Math.max(0,...S.habits.map(h=>h.streak||0)))}
   </div>
 
@@ -2716,7 +2762,7 @@ function editMealPlan(i){
   const mp=(S.mealPlans||[])[i];
   if(!mp){showNotif('Meal plan not found','!');return;}
   mealPlanItems=mp.items.map(function(it){return Object.assign({},it);});
-  S.mealPlans.splice(i,1);
+  (S.mealPlans||[]).splice(i,1);
   persistSave();
   currentScreen='mealplanner';
   renderScreens();
@@ -2734,7 +2780,7 @@ function duplicateMealPlan(i){
     items:mp.items.map(function(it){return Object.assign({},it);}),
     date:getTodayStr()
   });
-  S.mealPlans.push(copy);
+  (S.mealPlans||(S.mealPlans=[])) && S.mealPlans.push(copy);
   persistSave();
   showNotif('Meal plan duplicated!','OK');
   renderScreens();
@@ -2745,7 +2791,7 @@ function saveMealPlan(){
   if(mealPlanItems.length===0){showNotif('Add at least one food item','!');return;}
   if(!S.mealPlans) S.mealPlans=[];
   const totalCal=mealPlanItems.reduce((a,i)=>a+i.cal,0);
-  S.mealPlans.push({name,items:[...mealPlanItems],totalCal,date:getTodayStr()});
+  (S.mealPlans||(S.mealPlans=[])) && S.mealPlans.push({name,items:[...mealPlanItems],totalCal,date:getTodayStr()});
   persistSave();
   mealPlanItems=[];
   document.getElementById('mp-name').value='';
@@ -2765,7 +2811,7 @@ function logMealPlan(i){
   showNotif(`${mp.name} logged — ${mp.totalCal} kcal total`,'OK');
   renderScreens();
 }
-function deleteMealPlan(i){S.mealPlans.splice(i,1);persistSave();renderScreens();}
+function deleteMealPlan(i){(S.mealPlans||[]).splice(i,1);persistSave();renderScreens();}
 function renderMealPlanner(el){
   const plans=S.mealPlans||[];
   const tot=mealPlanItems.reduce((a,i)=>a+i.cal,0);
@@ -2991,9 +3037,9 @@ function getAnalyticsData(period){
       const dd=new Date(d);dd.setDate(dd.getDate()-j);const dds=dd.toISOString().slice(0,10);
       cal+=S.nutrition.entries.filter(e=>e.date===dds).reduce((a,e)=>a+e.nutrients.cal,0);
       burned+=(S.burned||[]).filter(e=>e.date===dds).reduce((a,e)=>a+e.calories,0);
-      waterL+=S.water.entries.filter(e=>e.date===dds).reduce((a,e)=>a+e.ml,0)/1000;
+      waterL+=(S.water.entries||[]).filter(e=>e.date===dds).reduce((a,e)=>a+e.ml,0)/1000;
       study+=(S.study.sessions||[]).filter(s=>s.date===dds).reduce((a,b)=>a+b.duration,0);
-      habits+=S.habits.filter(h=>h.completedDates?.includes(dds)).length;
+      habits+=(S.habits||[]).filter(h=>h.completedDates?.includes(dds)).length;
     }
     days.push({label,cal:Math.round(cal/step),burned:Math.round(burned/step),water:Math.round(waterL/step*10)/10,study:Math.round(study/step),habits:Math.round(habits/step*10)/10});
   }
@@ -3254,7 +3300,7 @@ function logOnlineFood(food){
   persistSave();
   showNotif(`${food.name} logged — ${food.cal} kcal`,'OK');
   document.getElementById('food-online-result').innerHTML='<div style="color:var(--green);font-size:12px;padding:4px">Logged!</div>';
-  renderScreens();
+  var _nel=document.getElementById('screen-nutrition');if(_nel&&currentScreen==='nutrition')renderNutrition(_nel);else renderScreens();
 }
 
 // ════════════════════════════════════════════════════
@@ -3428,7 +3474,7 @@ function getMyCard(){
     level:S.player.level||1,
     xp:S.player.xp||0,
     rank:calcRank(S.player),
-    streak:S.habits.reduce(function(a,h){return a+(h.streak||0);},0),
+    streak:(S.habits||[]).reduce(function(a,h){return a+(h.streak||0);},0),
     habits:S.habits.length,
     workouts:S.workouts?S.workouts.length:0,
     peerId:S.peerId||null,
@@ -3556,7 +3602,7 @@ function getDetailedCard(){
     todayCalories:todayNutrition().cal,
     todayWaterMl:todayWater(),
     todayBurned:todayBurned(),
-    habitsToday:S.habits.filter(function(h){return h.completedDates&&h.completedDates.includes(getTodayStr());}).length,
+    habitsToday:(S.habits||[]).filter(function(h){return h.completedDates&&h.completedDates.includes(getTodayStr());}).length,
     totalHabits:S.habits.length,
     studyToday:(S.study.sessions||[]).filter(function(s){return s.date===getTodayStr();}).reduce(function(a,s){return a+s.duration;},0),
   });
