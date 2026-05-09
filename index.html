@@ -260,17 +260,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 
 /* ═══ ORBITAL HOME SCREEN ═══ */
 .aw-home3{
-  width:100%;min-height:100vh;min-height:100dvh;
-  position:relative;background:var(--bg);
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  width:100vw;height:100vh;height:100dvh;
+  background:var(--bg);
   display:flex;align-items:center;justify-content:center;
-  overflow:hidden;padding:60px 0 80px;box-sizing:border-box;
+  overflow:hidden;padding:0;margin:0;box-sizing:border-box;
+  z-index:1;
 }
 .aw-orbital-wrap{
   position:relative;width:540px;height:540px;flex-shrink:0;
-  /* Scales to fit any screen - phone, tablet, desktop */
-  transform:scale(calc(min(90vw, max(300px, calc(100dvh - 160px))) / 540px));
+  /* Scales to fully fit the phone screen - bigger orbs, no cutoff */
+  transform:scale(calc(min(100vw, calc(100dvh - 96px)) / 540px));
   transform-origin:center center;
 }
+/* When home screen is active, lock body scroll and remove app padding */
+body.home-active{overflow:hidden!important;position:fixed;width:100%;height:100%}
+body.home-active .app{padding:0!important;max-width:100vw!important;width:100vw!important;margin:0!important}
+body.home-active #screens{width:100vw;height:100vh;height:100dvh;overflow:hidden}
+body.home-active #screen-home{height:100vh;height:100dvh;padding:0!important;margin:0!important;overflow:hidden}
+body.home-active nav#nav{position:fixed;top:0;left:0;right:0;z-index:100}
 .aw-ring1{position:absolute;width:51.85%;height:51.85%;border-radius:50%;
   border:1px solid rgba(124,111,255,.18);top:50%;left:50%;
   transform:translate(-50%,-50%);pointer-events:none;
@@ -958,14 +966,22 @@ const SCREENS=[
   {id:'profile',label:'Profile',icon:'&#128100;'},
 ];
 let currentScreen='home';
+function _toggleHomeBody(isHome){
+  try{
+    if(isHome){document.body.classList.add('home-active');}
+    else{document.body.classList.remove('home-active');}
+  }catch(e){}
+}
 function render(){
   if(typeof renderBottomNav==='function')renderBottomNav();
   if(currentScreen==='home'){
+    _toggleHomeBody(true);
     document.getElementById('nav').style.display='none';
     var c=document.getElementById('screens');
     c.innerHTML='<div class="screen active" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
+    _toggleHomeBody(false);
     document.getElementById('nav').style.display='flex';
     renderNav();renderScreens();renderBottomNav();
   }
@@ -981,11 +997,13 @@ function renderNav(){
 function switchScreen(id){
   currentScreen=id;
   if(id==='home'){
+    _toggleHomeBody(true);
     document.getElementById('nav').style.display='none';
     var c=document.getElementById('screens');
     c.innerHTML='<div class="screen active" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
+    _toggleHomeBody(false);
     document.getElementById('nav').style.display='flex';
     renderNav();renderScreens();renderBottomNav();
   }
@@ -4006,6 +4024,7 @@ persistLoad();
 })();
 </script>
 
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
