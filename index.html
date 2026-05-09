@@ -929,7 +929,7 @@ function completeTutorialNow() {
   showNotif('Let\'s set up your profile!', 'OK');
 }
 
-function restartTutorial() {
+window.restartTutorial = function() {
   tutorialStep = 0;
   localStorage.removeItem('zenfit_tutorial_done');
   showTutorial();
