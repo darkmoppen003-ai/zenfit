@@ -2883,7 +2883,7 @@ function renderProfile(el){
 
   el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    '<button class="btn btn-primary" onclick="exportDataFile()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Share / Export</button>' +
+    '<button class="btn btn-primary" onclick="showExportOptions()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Share / Export</button>' +
     '<button class="btn" onclick="importData()" style="border:1px solid var(--border)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import Backup</button>' +
     '</div><div style="font-size:11px;color:var(--text3);margin-top:8px">Share or Export your data as a .json backup file. Import it on another device to restore your progress. On Android: uses native share sheet. Paste into Import on your new device to restore. Import a previous backup to restore all your progress.</div></div>';
 
@@ -4452,82 +4452,221 @@ function importData(){
   inp.click();
 }
 
-function exportDataFile(){
-  try{
-    var json = JSON.stringify(S, null, 2);
-    var filename = 'zenfit_backup_' + getTodayStr() + '.json';
-    
-    // ULTRA SIMPLE: Just show the data in a modal
-    // No JavaScript APIs, no permissions, just plain HTML
-    showSimpleExportModal(json, filename);
-    
-  }catch(err){
-    console.error('Export error:', err);
-    showNotif('Export error: ' + err.message, '!');
-  }
+// EXPORT OPTIONS MENU
+function showExportOptions(){
+  var overlay = document.createElement('div');
+  overlay.id = 'export-options-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#1a1f2e;border-radius:14px;padding:24px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.6)';
+  
+  var title = document.createElement('h2');
+  title.style.cssText = 'margin:0 0 8px 0;font-size:18px;font-weight:700;color:#e2e8f8;text-align:center';
+  title.textContent = '📤 Export Your Data';
+  
+  var subtitle = document.createElement('p');
+  subtitle.style.cssText = 'margin:0 0 20px 0;font-size:12px;color:#8a94b8;text-align:center;line-height:1.5';
+  subtitle.textContent = 'Choose how you want to export your ZenFit backup:';
+  
+  var methodsContainer = document.createElement('div');
+  methodsContainer.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+  
+  // METHOD 1: Manual Export
+  var btn1 = document.createElement('button');
+  btn1.style.cssText = 'padding:14px;background:#2a3050;border:2px solid #3a4070;border-radius:10px;color:#e2e8f8;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
+  btn1.innerHTML = '<div style="font-size:16px;margin-bottom:4px">📋 Manual Export</div><div style="font-size:11px;color:#8a94b8">Copy & paste the data</div>';
+  btn1.onmouseover = function(){ this.style.background='#3a4070'; this.style.borderColor='#5a6090'; };
+  btn1.onmouseout = function(){ this.style.background='#2a3050'; this.style.borderColor='#3a4070'; };
+  btn1.onclick = function(){
+    overlay.remove();
+    exportDataFileManual();
+  };
+  
+  // METHOD 2: Browser Export
+  var btn2 = document.createElement('button');
+  btn2.style.cssText = 'padding:14px;background:#2a3050;border:2px solid #3a4070;border-radius:10px;color:#e2e8f8;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
+  btn2.innerHTML = '<div style="font-size:16px;margin-bottom:4px">🌐 Browser Export</div><div style="font-size:11px;color:#8a94b8">Use old method (if it works)</div>';
+  btn2.onmouseover = function(){ this.style.background='#3a4070'; this.style.borderColor='#5a6090'; };
+  btn2.onmouseout = function(){ this.style.background='#2a3050'; this.style.borderColor='#3a4070'; };
+  btn2.onclick = function(){
+    overlay.remove();
+    exportDataFileBrowser();
+  };
+  
+  // METHOD 3: Android Export
+  var btn3 = document.createElement('button');
+  btn3.style.cssText = 'padding:14px;background:#0a3d1a;border:2px solid #0f5a2a;border-radius:10px;color:#4cdb8a;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
+  btn3.innerHTML = '<div style="font-size:16px;margin-bottom:4px">🤖 Android Export</div><div style="font-size:11px;color:#2a9a5a">New method for AppSGeyser app</div>';
+  btn3.onmouseover = function(){ this.style.background='#0f5a2a'; this.style.borderColor='#1a7a3a'; };
+  btn3.onmouseout = function(){ this.style.background='#0a3d1a'; this.style.borderColor='#0f5a2a'; };
+  btn3.onclick = function(){
+    overlay.remove();
+    exportDataFileAndroid();
+  };
+  
+  methodsContainer.appendChild(btn1);
+  methodsContainer.appendChild(btn2);
+  methodsContainer.appendChild(btn3);
+  
+  var closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'margin-top:16px;width:100%;padding:10px;background:#2a3050;border:1px solid #3a4070;border-radius:8px;color:#8a94b8;cursor:pointer;font-size:12px';
+  closeBtn.textContent = 'Cancel';
+  closeBtn.onclick = function(){ overlay.remove(); };
+  
+  box.appendChild(title);
+  box.appendChild(subtitle);
+  box.appendChild(methodsContainer);
+  box.appendChild(closeBtn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 }
 
-function showSimpleExportModal(json, filename){
-  // Remove existing modal if present
-  var existing = document.getElementById('export-modal');
-  if(existing) existing.remove();
-  
-  // Create overlay
+// METHOD 1: MANUAL EXPORT (Current method - copy/paste)
+function exportDataFileManual(){
+  var json = JSON.stringify(S, null, 2);
+  showManualExportModal(json);
+}
+
+function showManualExportModal(json){
   var overlay = document.createElement('div');
   overlay.id = 'export-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:10px';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:9999;display:flex;align-items:center;justify-content:center;padding:10px;overflow-y:auto';
   
-  // Create container box
   var box = document.createElement('div');
-  box.style.cssText = 'background:#1a1f2e;border-radius:12px;padding:16px;width:100%;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 0 20px rgba(0,0,0,0.8)';
+  box.style.cssText = 'background:#1a1f2e;border-radius:14px;padding:16px;width:100%;max-width:90vw;max-height:85vh;display:flex;flex-direction:column';
   
-  // Title
-  var title = document.createElement('h2');
-  title.style.cssText = 'margin:0 0 8px 0;font-size:16px;font-weight:600;color:#fff;text-align:center';
-  title.textContent = 'Your ZenFit Backup Data';
+  var title = document.createElement('h3');
+  title.style.cssText = 'margin:0 0 8px 0;font-size:16px;font-weight:600;color:#e2e8f8';
+  title.textContent = '📋 Your ZenFit Backup Data';
   
-  // Instructions
   var instr = document.createElement('div');
-  instr.style.cssText = 'margin:0 0 12px 0;font-size:12px;color:#999;text-align:center;line-height:1.4';
-  instr.innerHTML = 'Select all the text below and copy it (long-press on phone).<br>Then paste it into Notes, Email, Google Drive, or any text app.';
+  instr.style.cssText = 'font-size:12px;color:#8a94b8;margin-bottom:12px;line-height:1.5';
+  instr.innerHTML = '<strong>How to save:</strong><br>1. Tap "Select All Text"<br>2. Long-press and select text<br>3. Copy<br>4. Paste into Email/Notes/Drive';
   
-  // Textarea with the JSON
   var ta = document.createElement('textarea');
   ta.value = json;
   ta.readOnly = true;
-  ta.style.cssText = 'flex:1;width:100%;font-size:11px;font-family:monospace;background:#0f1218;color:#4cdb8a;border:1px solid #2a3050;border-radius:8px;padding:10px;resize:vertical;overflow:auto;margin-bottom:12px;line-height:1.3';
+  ta.style.cssText = 'flex:1;width:100%;font-size:10px;font-family:monospace;background:#0d0f14;color:#4cdb8a;border:1px solid #2a3050;border-radius:8px;padding:10px;resize:vertical;overflow:auto;margin-bottom:12px;line-height:1.3';
   
-  // Select All button
   var selectBtn = document.createElement('button');
-  selectBtn.textContent = 'Select All Text';
-  selectBtn.style.cssText = 'width:100%;padding:12px;background:#4cdb8a;color:#000;border:none;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer;margin-bottom:8px';
+  selectBtn.textContent = '✓ Select All Text';
+  selectBtn.style.cssText = 'width:100%;padding:10px;background:#4cdb8a;color:#000;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:8px';
   selectBtn.onclick = function(){
     ta.select();
     ta.setSelectionRange(0, ta.value.length);
+    showNotif('Text selected - now copy it!', 'OK');
   };
   
-  // Close button
   var closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';
-  closeBtn.style.cssText = 'width:100%;padding:12px;background:#2a3050;color:#e2e8f8;border:none;border-radius:6px;font-weight:600;font-size:14px;cursor:pointer';
-  closeBtn.onclick = function(){
-    overlay.remove();
-  };
+  closeBtn.style.cssText = 'width:100%;padding:10px;background:#2a3050;border:1px solid #3a4070;border-radius:8px;color:#8a94b8;cursor:pointer;font-size:12px';
+  closeBtn.onclick = function(){ overlay.remove(); };
   
-  // Add elements to box
   box.appendChild(title);
   box.appendChild(instr);
   box.appendChild(ta);
   box.appendChild(selectBtn);
   box.appendChild(closeBtn);
-  
-  // Add box to overlay
   overlay.appendChild(box);
-  
-  // Add overlay to page
   document.body.appendChild(overlay);
   
-  showNotif('Backup ready - select and copy the text', 'OK');
+  showNotif('Manual export modal opened', 'OK');
+}
+
+// METHOD 2: BROWSER EXPORT (Old method - try download)
+function exportDataFileBrowser(){
+  try{
+    var json = JSON.stringify(S, null, 2);
+    var filename = 'zenfit_backup_' + getTodayStr() + '.json';
+    var dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+    
+    var link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showNotif('✓ Download started! Check downloads folder', 'OK');
+  }catch(err){
+    showNotif('Browser export failed: ' + err.message, '!');
+    setTimeout(function(){ exportDataFileManual(); }, 500);
+  }
+}
+
+// METHOD 3: ANDROID EXPORT (Opens Chrome to handle download)
+function exportDataFileAndroid(){
+  try{
+    var json = JSON.stringify(S, null, 2);
+    var filename = 'zenfit_backup_' + getTodayStr() + '.json';
+    
+    // Encode the data as URL parameter
+    var encodedData = encodeURIComponent(json);
+    
+    // Create special export URL
+    // This will open in real browser (Chrome) which handles downloads properly
+    var exportUrl = window.location.origin + window.location.pathname + 
+                    '?export=' + encodedData + '&filename=' + encodeURIComponent(filename);
+    
+    // Open in new tab/browser (uses device's default browser - usually Chrome)
+    window.open(exportUrl, '_blank');
+    
+    showNotif('Opening browser for export...', 'OK');
+    
+  }catch(err){
+    showNotif('Android export error: ' + err.message, '!');
+    exportDataFileManual();
+  }
+}
+
+// Handle export when page loads with ?export= parameter
+function handleExportParameter(){
+  var urlParams = new URLSearchParams(window.location.search);
+  var exportData = urlParams.get('export');
+  var filename = urlParams.get('filename') || 'zenfit_backup.json';
+  
+  if(exportData){
+    // Decode the data
+    var json = decodeURIComponent(exportData);
+    
+    try{
+      // Create blob and download
+      var blob = new Blob([json], {type: 'application/json'});
+      var url = URL.createObjectURL(blob);
+      
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      
+      // Clean up
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 100);
+      
+      // Show message
+      showNotif('✓ Download started in Chrome!', 'OK');
+      
+      // Optional: Close the tab after a delay
+      setTimeout(function(){
+        window.close();
+      }, 1500);
+      
+    }catch(err){
+      console.error('Download error:', err);
+      showNotif('Download failed: ' + err.message, '!');
+    }
+  }
+}
+
+// Call this when page loads
+document.addEventListener('DOMContentLoaded', function(){
+  handleExportParameter();
+});
+
+// Keep old exportDataFile as alias
+function exportDataFile(){
+  showExportOptions();
 }
 initTheme();
 persistLoad();
