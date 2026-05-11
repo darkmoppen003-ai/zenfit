@@ -1007,11 +1007,9 @@ function migrateData(saved){
   const version=saved.dataVersion||1;
   
   if(version<2){
-    // Only set tutorial_main=true if this is a BRAND NEW save (no player data at all)
-    const isNewUser = !saved.player || saved.player.level === 1 && saved.player.xp === 0 && (saved.nutrition?.entries||[]).length === 0;
-    
+    // Preserve existing tutorial state, don't override it
     saved.featureFlags=saved.featureFlags||{
-      tutorial_main: isNewUser, // Only true for brand new users
+      tutorial_main:false, // Default to false
       tutorial_nutrition:true,
       tutorial_workout:true,
       tutorial_habits:true
@@ -1020,8 +1018,7 @@ function migrateData(saved){
   }
   
   return saved;
-}
-  
+}  
 function validateAndMergeData(saved,def){
   const merged=Object.assign({},def);
   
@@ -1084,7 +1081,7 @@ function defaultState(){
     partners:[],peerId:null,profilePic:null,
     pendingRequests:[],sentRequests:[],partnerStats:{},
     featureFlags:{
-      tutorial_main:true,
+      tutorial_main:false, // ← CHANGE THIS TO FALSE BY DEFAULT
       tutorial_nutrition:true,
       tutorial_workout:true,
       tutorial_habits:true
@@ -1092,7 +1089,6 @@ function defaultState(){
     lastSaved:Date.now()
   };
 }
-
 function loadState(){
   try{
     const r=localStorage.getItem(STORAGE_KEYS.STATE);
@@ -1104,6 +1100,11 @@ function loadState(){
     }
   }catch(e){console.warn('ZenFit loadState error:',e);}
   
+  // Brand new user - enable tutorial
+  const fresh = defaultState();
+  fresh.featureFlags.tutorial_main = true;
+  return fresh;
+} 
   // This is a fresh user
   const fresh = defaultState();
   fresh.featureFlags.tutorial_main = true; // Only enable for completely new install
@@ -1127,6 +1128,8 @@ function persistLoad(){
     setTimeout(() => {
       if (S.featureFlags?.tutorial_main) {
         showTutorial();
+        S.featureFlags.tutorial_main = false; // Disable after showing
+        persistSave(); // Save immediately
       }
     }, 300);
   }catch(e){
@@ -1139,7 +1142,6 @@ function persistLoad(){
     setTimeout(hide,300);
   }
 }
-
 
 // ════════════════════════════
 // XP & RANK
