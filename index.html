@@ -766,7 +766,7 @@ let tutorialStep = 0;
 let tutorialActive = false;
 
 function showTutorial() {
-  if (S.profile?.filled || localStorage.getItem('zenfit_tutorial_done')) {
+  if (S.profile?.filled || !S.featureFlags?.tutorial_main) {
     return;
   }
   
@@ -903,7 +903,8 @@ function skipTutorial() {
   const overlay = document.getElementById('tutorial-overlay');
   if (overlay) overlay.remove();
   tutorialActive = false;
-  localStorage.setItem('zenfit_tutorial_done', 'true');
+  S.featureFlags.tutorial_main = false;
+  persistSave();
 }
 
 function completeTutorial() {
@@ -937,8 +938,113 @@ function completeTutorialNow() {
 
 window.restartTutorial = function() {
   tutorialStep = 0;
-  localStorage.removeItem('zenfit_tutorial_done');
+  S.featureFlags.tutorial_main = true;
+  persistSave();
   showTutorial();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// FUTURE-PROOF CONFIGURATION & CONSTANTS
+// ════════════════════════════════════════════════════════════════════════════
+const DATA_VERSION=2;
+const STORAGE_KEYS={
+  STATE:'zenfit_v1',
+  DEVICE_ID:'zenfit_device_id',
+  TUTORIAL_DONE:'zenfit_tutorial_done',
+  IMPORT_INPUT:'zenfit_import_inp_static',
+  CHAT_HISTORY:'zenfit_chat_history_'
+};
+
+// Dynamic schema definition - Add new fields here for future-proofing
+const SCHEMA={
+  player:'object',
+  profile:'object',
+  nutrition:'object',
+  water:'object',
+  study:'object',
+  quests:'object',
+  bonusTasks:'object',
+  screenTime:'object',
+  partnerStats:'object',
+  workouts:'array',
+  burned:'array',
+  habits:'array',
+  workoutPlans:'array',
+  plans:'array',
+  mealPlans:'array',
+  partners:'array',
+  pendingRequests:'array',
+  sentRequests:'array'
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// DEVICE FINGERPRINTING FOR PERSISTENT USER ID
+// ════════════════════════════════════════════════════════════════════════════
+function generateDeviceFingerprint(){
+  const data=navigator.userAgent+navigator.language+screen.width+'x'+screen.height+new Date().getTimezoneOffset();
+  let hash=0;
+  for(let i=0;i<data.length;i++){
+    const char=data.charCodeAt(i);
+    hash=((hash<<5)-hash)+char;
+    hash=hash&hash;
+  }
+  return Math.abs(hash).toString(16).slice(0,8);
+}
+
+function getDeviceId(){
+  let deviceId=localStorage.getItem(STORAGE_KEYS.DEVICE_ID);
+  if(!deviceId){
+    deviceId='zenfit-user-'+generateDeviceFingerprint();
+    localStorage.setItem(STORAGE_KEYS.DEVICE_ID,deviceId);
+  }
+  return deviceId;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// DATA MIGRATION SYSTEM
+// ════════════════════════════════════════════════════════════════════════════
+function migrateData(saved){
+  const version=saved.dataVersion||1;
+  
+  if(version<2){
+    saved.featureFlags=saved.featureFlags||{
+      tutorial_main:!localStorage.getItem(STORAGE_KEYS.TUTORIAL_DONE),
+      tutorial_nutrition:true,
+      tutorial_workout:true,
+      tutorial_habits:true
+    };
+    saved.dataVersion=2;
+  }
+  
+  return saved;
+}
+
+function validateAndMergeData(saved,def){
+  const merged=Object.assign({},def);
+  
+  if(!saved) return merged;
+  
+  for(let key in saved){
+    if(SCHEMA.hasOwnProperty(key)){
+      const schemaType=SCHEMA[key];
+      if(schemaType==='array'){
+        merged[key]=Array.isArray(saved[key])?saved[key]:[];
+      }else if(schemaType==='object'){
+        merged[key]=Object.assign({},def[key]||{},saved[key]||{});
+      }else{
+        merged[key]=saved[key];
+      }
+    }
+  }
+  
+  for(let key in SCHEMA){
+    if(!merged.hasOwnProperty(key)){
+      if(SCHEMA[key]==='array') merged[key]=[];
+      else if(SCHEMA[key]==='object') merged[key]={};
+    }
+  }
+  
+  return merged;
 }
 
 // STATE
@@ -957,6 +1063,8 @@ let timerDiff='medium';
 
 function defaultState(){
   return{
+    dataVersion:DATA_VERSION,
+    deviceId:getDeviceId(),
     player:{name:'Hunter',level:1,xp:0,rank:'E',weightKg:70,
       stats:{strength:10,discipline:10,health:10,endurance:10,wisdom:10}},
     profile:{filled:false,name:'',age:0,gender:'male',heightCm:170,weightKg:70,
@@ -972,35 +1080,35 @@ function defaultState(){
     screenTime:{},screenTimeLimit:120,
     partners:[],peerId:null,profilePic:null,
     pendingRequests:[],sentRequests:[],partnerStats:{},
+    featureFlags:{
+      tutorial_main:true,
+      tutorial_nutrition:true,
+      tutorial_workout:true,
+      tutorial_habits:true
+    },
     lastSaved:Date.now()
   };
 }
 
 function loadState(){
   try{
-    const r=localStorage.getItem('zenfit_v1');
+    const r=localStorage.getItem(STORAGE_KEYS.STATE);
     if(r){
-      const saved=JSON.parse(r);
-      const def=defaultState();
-      const merged=Object.assign({},def,saved);
-      merged.player=Object.assign({},def.player,saved.player||{});
-      merged.nutrition=Object.assign({},def.nutrition,saved.nutrition||{});
-      merged.nutrition.dailyGoal=Object.assign({},def.nutrition.dailyGoal,(saved.nutrition||{}).dailyGoal||{});
-      merged.water=Object.assign({},def.water,saved.water||{});
-      merged.study=Object.assign({},def.study,saved.study||{});
-      merged.quests=Object.assign({},def.quests,saved.quests||{});
-      merged.bonusTasks=Object.assign({},def.bonusTasks,saved.bonusTasks||{});
-      ['workouts','burned','habits','workoutPlans','mealPlans','plans','partners','pendingRequests','sentRequests'].forEach(function(k){
-        if(!Array.isArray(merged[k])) merged[k]=[];
-      });
-      if(!merged.partnerStats||typeof merged.partnerStats!=='object') merged.partnerStats={};
+      let saved=JSON.parse(r);
+      saved=migrateData(saved);
+      const merged=validateAndMergeData(saved,defaultState());
       return merged;
     }
   }catch(e){console.warn('ZenFit loadState error:',e);}
   return defaultState();
 }
 
-function saveState(){try{localStorage.setItem('zenfit_v1',JSON.stringify(S));}catch(e){}}
+function saveState(){
+  try{
+    S.lastSaved=Date.now();
+    localStorage.setItem(STORAGE_KEYS.STATE,JSON.stringify(S));
+  }catch(e){}
+}
 function persistSave(){saveState();}
 
 function persistLoad(){
@@ -1010,7 +1118,7 @@ function persistLoad(){
     render();
     
     setTimeout(() => {
-      if (!S.profile?.filled && !localStorage.getItem('zenfit_tutorial_done')) {
+      if (!S.profile?.filled && S.featureFlags?.tutorial_main) {
         showTutorial();
       }
     }, 300);
@@ -3577,27 +3685,94 @@ function aB(icon,label,val){return`<div class="card-sm" style="text-align:center
 // ════════════════════════════
 
 // ════════════════════════════
+// ════════════════════════════
 // SWIPE NAVIGATION
 // ════════════════════════════
-(function(){
-  let sx=0,sy=0,locked=false;
-  const SCREEN_IDS=['dashboard','nutrition','water','workout','plans','burned','habits','study','quests','analytics','profile'];
-  document.addEventListener('touchstart',e=>{
-    const t=e.touches[0];sx=t.clientX;sy=t.clientY;locked=false;
-  },{passive:true});
-  document.addEventListener('touchmove',e=>{
-    if(locked)return;
-    const dx=e.touches[0].clientX-sx,dy=e.touches[0].clientY-sy;
-    if(Math.abs(dy)>Math.abs(dx)||Math.abs(dx)<40)return;
-    locked=true;
-    if(currentScreen==='home')return;
-    const ci=SCREEN_IDS.indexOf(currentScreen);if(ci<0)return;
-    if(dx<-40&&ci<SCREEN_IDS.length-1)switchScreen(SCREEN_IDS[ci+1]);
-    else if(dx>40&&ci>0)switchScreen(SCREEN_IDS[ci-1]);
-    else if(dx>40&&ci===0)switchScreen('home');
-  },{passive:true});
-})();
 
+(function () {
+
+  let sx = 0;
+  let sy = 0;
+  let locked = false;
+
+  const THRESHOLD = 40;
+
+  // Use SCREENS array directly
+  function getScreenIds() {
+    return SCREENS.map(s => s.id);
+  }
+
+  document.addEventListener('touchstart', e => {
+
+    if (!e.touches.length) return;
+
+    const t = e.touches[0];
+
+    sx = t.clientX;
+    sy = t.clientY;
+
+    locked = false;
+
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+
+    if (locked) return;
+    if (!e.touches.length) return;
+
+    const dx = e.touches[0].clientX - sx;
+    const dy = e.touches[0].clientY - sy;
+
+    // Ignore vertical gestures
+    if (Math.abs(dy) > Math.abs(dx)) return;
+
+    // Ignore tiny movement
+    if (Math.abs(dx) < THRESHOLD) return;
+
+    locked = true;
+
+    // Home intentionally disabled
+    if (currentScreen === 'home') return;
+
+    const SCREEN_IDS = getScreenIds();
+
+    const ci = SCREEN_IDS.indexOf(currentScreen);
+
+    if (ci === -1) return;
+
+    // LEFT SWIPE
+    if (
+      dx < -THRESHOLD &&
+      ci < SCREEN_IDS.length - 1
+    ) {
+
+      switchScreen(SCREEN_IDS[ci + 1]);
+
+    }
+
+    // RIGHT SWIPE
+    else if (
+      dx > THRESHOLD &&
+      ci > 0
+    ) {
+
+      switchScreen(SCREEN_IDS[ci - 1]);
+
+    }
+
+    // RIGHT from first tab → home
+    else if (
+      dx > THRESHOLD &&
+      ci === 0
+    ) {
+
+      switchScreen('home');
+
+    }
+
+  }, { passive: true });
+
+})();
 // ════════════════════════════
 // MONTHLY / YEARLY DATA
 // ════════════════════════════
@@ -4243,9 +4418,9 @@ function initPeerJS(){
 }
 function startPeer(){
   if(peer&&!peer.destroyed) return;
-  // Generate stable peer ID from player name + seed
-  var seed=(S.player.name||'warrior').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);
-  var pid='zenfit-'+ seed+'-'+(S.peerSeed||(S.peerSeed=Math.floor(Math.random()*9000)+1000));
+  // Generate stable peer ID from device fingerprint (survives data resets!)
+  const deviceId=getDeviceId(); // Format: zenfit-user-xxxxxxxx
+  const pid=deviceId;
   S.peerId=pid; persistSave();
   peer=new Peer(pid,{debug:0});
   peer.on('open',function(id){
