@@ -766,7 +766,7 @@ let tutorialStep = 0;
 let tutorialActive = false;
 
 function showTutorial() {
-  if (S.profile?.filled || !S.featureFlags?.tutorial_main) {
+  if (!S.featureFlags?.tutorial_main) {
     return;
   }
   
@@ -1118,7 +1118,7 @@ function persistLoad(){
     render();
     
     setTimeout(() => {
-      if (!S.profile?.filled && S.featureFlags?.tutorial_main) {
+      if (S.featureFlags?.tutorial_main) {
         showTutorial();
       }
     }, 300);
