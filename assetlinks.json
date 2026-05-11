@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.healthsystem.zenfit",
+        "sha256_cert_fingerprints": ["FA:1D:CB:11:E8:36:A3:4D:EA:86:43:D7:62:97:25:7A:24:72:3B:FA:C3:68:3F:E5:36:84:E8:20:93:17:01:27"]
+      }
+    }]
