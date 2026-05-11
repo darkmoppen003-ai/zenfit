@@ -1000,15 +1000,18 @@ function getDeviceId(){
   return deviceId;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════
 // DATA MIGRATION SYSTEM
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════
 function migrateData(saved){
   const version=saved.dataVersion||1;
   
   if(version<2){
+    // Only set tutorial_main=true if this is a BRAND NEW save (no player data at all)
+    const isNewUser = !saved.player || saved.player.level === 1 && saved.player.xp === 0 && (saved.nutrition?.entries||[]).length === 0;
+    
     saved.featureFlags=saved.featureFlags||{
-      tutorial_main:!localStorage.getItem(STORAGE_KEYS.TUTORIAL_DONE),
+      tutorial_main: isNewUser, // Only true for brand new users
       tutorial_nutrition:true,
       tutorial_workout:true,
       tutorial_habits:true
@@ -1018,7 +1021,7 @@ function migrateData(saved){
   
   return saved;
 }
-
+  
 function validateAndMergeData(saved,def){
   const merged=Object.assign({},def);
   
@@ -1100,7 +1103,11 @@ function loadState(){
       return merged;
     }
   }catch(e){console.warn('ZenFit loadState error:',e);}
-  return defaultState();
+  
+  // This is a fresh user
+  const fresh = defaultState();
+  fresh.featureFlags.tutorial_main = true; // Only enable for completely new install
+  return fresh;
 }
 
 function saveState(){
