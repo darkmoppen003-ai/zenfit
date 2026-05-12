@@ -1,0 +1,34 @@
+name: Auto Update Build Number
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update-build:
+    runs-on: ubuntu-latest
+
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Build Update Script
+        run: node scripts/update-build.js
+
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Auto update build number" || echo "No changes"
+
+      - name: Push Changes
+        run: git push
