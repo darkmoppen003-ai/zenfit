@@ -4038,10 +4038,8 @@ const THEMES={
   dark:{name:'Dark (Default)',bg:'#0d0f14',bg2:'#161a27',bg3:'#1a1e2a',bg4:'#1e2335',border:'#2a3050',purple:'#7c6fff',text:'#e2e8f8',text2:'#b8c2dc',text3:'#8a94b8'},
   amoled:{name:'AMOLED Black',bg:'#000000',bg2:'#0a0a0a',bg3:'#111111',bg4:'#1a1a1a',border:'#222222',purple:'#7c6fff',text:'#ffffff',text2:'#cccccc',text3:'#888888'},
   midnight:{name:'Midnight Blue',bg:'#050a1a',bg2:'#0a1228',bg3:'#0f1a38',bg4:'#142048',border:'#1e3060',purple:'#4a9eff',text:'#e8f0ff',text2:'#a8c0e8',text3:'#6888b8'},
-  forest:{name:'Forest Green',bg:'#060f08',bg2:'#0a1a0e',bg3:'#0f2218',bg4:'#142a1e',border:'#1e4028',purple:'#4cdb8a',text:'#e0f5e8',text2:'#a0d8b0',text3:'#60a870'},
-  sunset:{name:'Sunset Red',bg:'#130808',bg2:'#1e0f0f',bg3:'#261515',bg4:'#2e1a1a',border:'#402020',purple:'#ff5a5a',text:'#f5e8e8',text2:'#d8b0b0',text3:'#a87878'},
-  purple:{name:'Deep Purple',bg:'#0a0514',bg2:'#12082a',bg3:'#180f38',bg4:'#1e1445',border:'#2e2060',purple:'#c084fc',text:'#f0e8ff',text2:'#c8a8f0',text3:'#9068c0'},
-  gold:{name:'Warrior Gold',bg:'#0f0c00',bg2:'#1a1500',bg3:'#221c00',bg4:'#2a2200',border:'#403400',purple:'#f5a623',text:'#fff8e8',text2:'#e0c878',text3:'#a88840'},
+  frost:{name:'Frozen Steel',bg:'#0e1318',bg2:'#171e26',bg3:'#202833',bg4:'#293340',border:'#3a4757',purple:'#8fcfff',text:'#f3f8ff',text2:'#c3d5e8',text3:'#8ca3bb'},
+  obsidian:{name:'Obsidian Violet',bg:'#07070d',bg2:'#10101a',bg3:'#171726',bg4:'#1e1f31',border:'#313452',purple:'#9b7cff',text:'#f4f1ff',text2:'#c7bde8',text3:'#9388ba'},
 };
 function applyTheme(key){
   const t=THEMES[key];if(!t)return;
@@ -5248,8 +5246,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v6.0';
+var CHANGELOG_VERSION='v6.1';
 var CHANGELOG_ENTRIES=[
+  'Minor Themes Color Correction and Addition'
   'New Tasks system — set tasks with difficulty, time window, and repeat schedule',
   'Tasks linked to Discipline stat — on-time completion = +3 Discipline',
   'Overdue tasks trigger XP penalty to simulate real consequence',
