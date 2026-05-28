@@ -123,6 +123,31 @@ hr{border:none;border-top:1px solid var(--border);margin:16px 0}
 .timer-display{font-size:42px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);letter-spacing:2px}
 /* CHARACTER */
 .char-wrap{position:relative;width:140px;height:200px;margin:0 auto}
+/* CHARACTER CARD NEW */
+/* CHARACTER CARD */
+.char-card-box{border-radius:14px;border:1px solid var(--border);background:var(--bg2);overflow:hidden;padding:0}
+.char-top-row{display:grid;grid-template-columns:1fr 1.4fr}
+.char-avatar-col{background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 12px 20px}
+.char-panel-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;text-align:center}
+.char-avatar-frame{position:relative;width:100%;max-width:250px;aspect-ratio:480/853;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg4);cursor:pointer;flex-shrink:0}
+#charAvatarImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;transition:filter .3s}
+@keyframes avatarGlow{0%,100%{filter:drop-shadow(0 0 8px var(--purple))}50%{filter:drop-shadow(0 0 22px var(--purple)) brightness(1.15)}}
+.avatar-acting #charAvatarImg{animation:avatarGlow .6s ease}
+.char-rank-pip{position:absolute;bottom:8px;right:8px;z-index:4;background:var(--bg);border:1px solid;border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;line-height:1}
+.char-name-block{margin-top:12px;text-align:center}
+.char-name-text{font-size:15px;font-weight:700;color:var(--text);line-height:1.2}
+.char-rank-sub{font-size:11px;color:var(--text3);margin-top:3px}
+.char-class-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.char-stats-col{background:var(--bg2);display:flex;flex-direction:column;padding:16px 18px}
+.char-stat-bar-wrap{background:var(--bg4);border-radius:4px;height:5px;margin-top:4px;overflow:hidden}
+.char-stat-bar-fill{height:100%;border-radius:4px}
+.char-bottom-row{border-top:1px solid var(--border);padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.char-evo-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;width:100%}
+.char-evo-step{background:var(--bg4);border:1px solid var(--border);border-radius:7px;padding:6px 4px;text-align:center;opacity:.32;transition:all .3s;min-width:0;overflow:hidden}
+.char-evo-step.evo-past{opacity:.42}
+.char-evo-step.evo-current{opacity:1;background:var(--bg3)}
+.char-evo-rank{font-size:13px;font-weight:700;line-height:1;margin-bottom:3px;white-space:nowrap}
+.char-evo-name{font-size:8px;color:var(--text3);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* PLAN CARD */
 .plan-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -651,7 +676,7 @@ const safeFetch = async function(url, opts){
     return null;
   }
 };
-const APP_VERSION="v6.0";
+const APP_VERSION="v6.5";
 const APP_BUILD="2026.05.20.5";
 
 // TUTORIAL SYSTEM
@@ -2918,21 +2943,9 @@ function renderProfile(el){
   const charSVG=renderCharacterSVG(p.stats,p.rank);
 
   el.innerHTML=`
-  <!-- CHARACTER + PLAYER -->
-  <div class="grid2 mb16">
-    <div class="card" style="display:flex;flex-direction:column;align-items:center;padding:20px">
-      <div style="font-size:11px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Your Character</div>
-      ${charSVG}
-      <div style="margin-top:12px;font-size:12px;color:var(--text2);text-align:center">
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px">${p.name}</div>
-        <div style="color:${rc};font-weight:500">Rank ${p.rank} · Level ${p.level}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">${getCharacterTier(p.stats) === 'S'?'Legendary Hunter ⚔️':getCharacterTier(p.stats)==='A'?'Elite Warrior [S]':getCharacterTier(p.stats)==='B'?'Seasoned Fighter [A]':getCharacterTier(p.stats)==='C'?'Rising Warrior [B]':getCharacterTier(p.stats)==='D'?'Novice Adventurer [C]':'Awakened Hunter [D]'}</div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="section-title">Player Stats</div>
-      ${['strength','discipline','health','endurance','wisdom'].map(s=>{const icons={strength:'⚔️',discipline:'🧠',health:'❤️',endurance:'🏃',wisdom:'📚'};const colors={strength:'#ff5a5a',discipline:'#c084fc',health:'#4cdb8a',endurance:'#4a9eff',wisdom:'#f5a623'};const val=p.stats[s]||10;return`<div style="margin-bottom:10px"><div class="flex-between" style="margin-bottom:4px"><span style="font-size:12px">${icons[s]} ${s.charAt(0).toUpperCase()+s.slice(1)}</span><span style="font-size:12px;font-weight:600;color:${colors[s]}">${val}</span></div><div class="stat-bar-wrap"><div class="stat-bar" style="width:${val}%;background:${colors[s]}"></div></div></div>`;}).join('')}
-    </div>
+  <!-- CHARACTER -->
+  <div class="mb16">
+    <div id="charCardMount"></div>
   </div>
 
   <!-- PROFILE FORM -->
@@ -3100,7 +3113,8 @@ function renderProfile(el){
 
   // Render notification settings panel (deferred so DOM element exists)
   setTimeout(function(){ renderNotifSettings('notif-settings-box'); }, 20);
-
+  // Render new character card
+  renderCharacterCard();
 }
 
 
@@ -5246,8 +5260,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v6.1';
+var CHANGELOG_VERSION='v6.5';
 var CHANGELOG_ENTRIES=[
+  'New Animated AVATAR In Profile Section, the work is still going on some ranks of female avatar are not uploaded yet this is a test run and avatars are not final yet',
   'Minor Themes Color Correction and Addition',
   'New Tasks system — set tasks with difficulty, time window, and repeat schedule',
   'Tasks linked to Discipline stat — on-time completion = +3 Discipline',
@@ -5298,6 +5313,161 @@ function dismissChangelog(){
   try{localStorage.setItem('zenfit_changelog_seen',CHANGELOG_VERSION);}catch(e){}
   var ov=document.getElementById('changelog-overlay');
   if(ov)ov.remove();
+}
+
+// ════════════════════════════════════════════════════
+// CHARACTER CARD (NEW)
+// ════════════════════════════════════════════════════
+function renderCharacterCard(){
+  var mount=document.getElementById('charCardMount');
+  if(!mount)return;
+  var p=S.player;
+  var pr=S.profile||{};
+  var rc=RANK_COLORS[p.rank]||'#888';
+  var xpNeeded=xpForLevel(p.level);
+  var xpPct=xpNeeded>0?Math.min(100,Math.round((p.xp/xpNeeded)*100)):0;
+  var gender=pr.gender||'male';
+
+  var RANK_CLASS_NAMES={E:'Novice Hunter',D:'Awakened Hunter',C:'Rising Warrior',B:'Iron Sentinel',A:'Apex Predator',S:'Legendary Sovereign'};
+  var RANK_DESCS={
+    E:'Novice Hunter. Weak and inexperienced.',
+    D:'Awakened Hunter. Beginning to show potential.',
+    C:'Rising Warrior. Power is starting to show.',
+    B:'Iron Sentinel. A force to be reckoned with.',
+    A:'Apex Predator. Near the peak of human limits.',
+    S:'Legendary Sovereign. Beyond mortal boundaries.'
+  };
+  var RANK_TITLES={E:'Shadow Initiate',D:'Iron Seeker',C:'Jade Warrior',B:'Silver Vanguard',A:'Gold Sovereign',S:'Crimson Legend'};
+
+  var className=RANK_CLASS_NAMES[p.rank]||'Hunter';
+  var classDesc=RANK_DESCS[p.rank]||'';
+  var currentTitle=RANK_TITLES[p.rank]||'Hunter';
+  var stats=p.stats||{};
+  var RANKS_ORDER=['E','D','C','B','A','S'];
+  var idleGif='assets/'+gender+'/rank_'+p.rank+'_idle.gif';
+
+  var rankEmojiFallback=p.rank==='S'?'🥷':p.rank==='A'?'⚔️':p.rank==='B'?'🛡️':p.rank==='C'?'🏹':p.rank==='D'?'🗡️':'👤';
+
+  var evoSteps=RANKS_ORDER.map(function(r){
+    var rIdx=RANKS_ORDER.indexOf(r);
+    var curIdx=RANKS_ORDER.indexOf(p.rank);
+    var cls='char-evo-step';
+    if(r===p.rank)cls+=' evo-current';
+    else if(rIdx<curIdx)cls+=' evo-past';
+    var rColor=RANK_COLORS[r]||'#888';
+    var extraStyle=r===p.rank?'border-color:'+rColor+';box-shadow:0 0 8px '+rColor+'44':'';
+    return '<div class="'+cls+'" style="'+extraStyle+'">'+
+      '<div class="char-evo-rank" style="color:'+rColor+'">'+r+'</div>'+
+      '<div class="char-evo-name">'+RANK_CLASS_NAMES[r]+'</div>'+
+    '</div>';
+  }).join('');
+
+  mount.innerHTML=
+    '<div class="char-card-box">'+
+
+      // ── TOP ROW ────────────────────────────────────────
+      '<div class="char-top-row">'+
+
+        // LEFT: Avatar column
+        '<div class="char-avatar-col">'+
+          '<div class="char-panel-title">Your Character</div>'+
+
+          // Contained avatar frame
+          '<div class="char-avatar-frame" id="charAvatarBox" onclick="charAvatarAct()">'+
+            '<img id="charAvatarImg" src="'+idleGif+'" alt="character" '+
+              'onerror="this.style.display=\'none\';var fb=document.getElementById(\'charAvatarFallback\');if(fb)fb.style.display=\'flex\'">'+
+            '<div id="charAvatarFallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:64px;z-index:1">'+rankEmojiFallback+'</div>'+
+            // Rank pip badge bottom-right
+            '<div class="char-rank-pip" style="color:'+rc+';border-color:'+rc+'55">'+p.rank+'</div>'+
+          '</div>'+
+
+          // Name / rank / class text below avatar
+          '<div class="char-name-block">'+
+            '<div class="char-name-text">'+(pr.name||'Hunter')+'</div>'+
+            '<div class="char-rank-sub">Rank '+p.rank+' · Level '+p.level+'</div>'+
+            '<div class="char-class-sub" style="color:'+rc+'">'+className+'</div>'+
+          '</div>'+
+        '</div>'+
+
+        // RIGHT: Stats column
+        '<div class="char-stats-col">'+
+          '<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:14px">Player Stats</div>'+
+
+          // XP bar
+          '<div style="margin-bottom:16px">'+
+            '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">'+
+              '<span style="color:var(--text3);letter-spacing:.5px">XP</span>'+
+              '<span style="color:var(--text2)">'+p.xp+' / '+xpNeeded+'</span>'+
+            '</div>'+
+            '<div class="xp-bar-wrap"><div class="xp-bar" style="width:'+xpPct+'%"></div></div>'+
+          '</div>'+
+
+          // 5 stat rows
+          [
+            {key:'strength',  icon:'⚔️', label:'Strength',   color:'var(--red)'},
+            {key:'discipline',icon:'🧠', label:'Discipline',  color:'var(--purple)'},
+            {key:'health',    icon:'❤️', label:'Health',      color:'var(--green)'},
+            {key:'endurance', icon:'🏃', label:'Endurance',   color:'var(--blue)'},
+            {key:'wisdom',    icon:'📚', label:'Wisdom',      color:'var(--amber)'}
+          ].map(function(s){
+            var v=stats[s.key]||10;
+            var pct=Math.min(100,v);
+            return '<div style="margin-bottom:12px">'+
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+                '<span style="font-size:13px;color:var(--text)">'+s.icon+' '+s.label+'</span>'+
+                '<span style="font-size:13px;font-weight:700;color:'+s.color+'">'+v+'</span>'+
+              '</div>'+
+              '<div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div>'+
+            '</div>';
+          }).join('')+
+
+        '</div>'+
+      '</div>'+
+
+      // ── BOTTOM ROW ─────────────────────────────────────
+      '<div style="border-top:1px solid var(--border);padding:10px 16px 8px">'+
+        // Row 1: Current title
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+          '<span style="font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;white-space:nowrap">Current Title</span>'+
+          '<span class="badge" style="background:var(--purple3);border:1px solid var(--purple);color:var(--purple);font-size:10px;white-space:nowrap">'+currentTitle+'</span>'+
+        '</div>'+
+        // Row 2: Evolution path
+        '<div class="char-evo-bar">'+evoSteps+'</div>'+
+      '</div>'+
+
+    '</div>';
+
+  // Auto-play action gif on screen entry
+  var img=document.getElementById('charAvatarImg');
+  if(img){
+    var _g=gender,_r=p.rank;
+    img.src='assets/'+_g+'/rank_'+_r+'_action.gif';
+    var box=document.getElementById('charAvatarBox');
+    if(box)box.classList.add('avatar-acting');
+    setTimeout(function(){
+      var im2=document.getElementById('charAvatarImg');
+      var b2=document.getElementById('charAvatarBox');
+      if(im2)im2.src='assets/'+_g+'/rank_'+_r+'_idle.gif';
+      if(b2)b2.classList.remove('avatar-acting');
+    },2000);
+  }
+}
+
+function charAvatarAct(){
+  var p=S.player;
+  var pr=S.profile||{};
+  var gender=pr.gender||'male';
+  var box=document.getElementById('charAvatarBox');
+  var img=document.getElementById('charAvatarImg');
+  if(!img||!box||box.classList.contains('avatar-acting'))return;
+  box.classList.add('avatar-acting');
+  img.src='assets/'+gender+'/rank_'+p.rank+'_action.gif';
+  setTimeout(function(){
+    var im2=document.getElementById('charAvatarImg');
+    var b2=document.getElementById('charAvatarBox');
+    if(im2)im2.src='assets/'+gender+'/rank_'+p.rank+'_idle.gif';
+    if(b2)b2.classList.remove('avatar-acting');
+  },2000);
 }
 
 initTheme();
