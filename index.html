@@ -127,13 +127,12 @@ hr{border:none;border-top:1px solid var(--border);margin:16px 0}
 /* CHARACTER CARD */
 .char-card-box{border-radius:14px;border:1px solid var(--border);background:var(--bg2);overflow:hidden;padding:0}
 .char-top-row{display:grid;grid-template-columns:1fr 1.4fr}
-.char-avatar-col{background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 12px 20px}
+.char-avatar-col{background:var(--bg3);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:0px 0px 0px}
 .char-panel-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:14px;text-align:center}
 .char-avatar-frame{position:relative;width:100%;max-width:250px;aspect-ratio:480/853;border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--bg4);cursor:pointer;flex-shrink:0}
 #charAvatarImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;transition:filter .3s}
 @keyframes avatarGlow{0%,100%{filter:drop-shadow(0 0 8px var(--purple))}50%{filter:drop-shadow(0 0 22px var(--purple)) brightness(1.15)}}
 .avatar-acting #charAvatarImg{animation:avatarGlow .6s ease}
-.char-rank-pip{position:absolute;bottom:8px;right:8px;z-index:4;background:var(--bg);border:1px solid;border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;line-height:1}
 .char-name-block{margin-top:12px;text-align:center}
 .char-name-text{font-size:15px;font-weight:700;color:var(--text);line-height:1.2}
 .char-rank-sub{font-size:11px;color:var(--text3);margin-top:3px}
