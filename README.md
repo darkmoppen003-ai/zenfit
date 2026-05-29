@@ -3,7 +3,7 @@ HERE IS ONE "dns.adguard.com"
 
 
 WEBSITE : https://darkmoppen003-ai.github.io/zenfit/
-
+(recommended to use lite apk for better and smoother experience)
 here is an apk file for those who want to use it as an app 
 https://drive.google.com/file/d/1JaKQuEWZyRfaw_nn_UYGB3-BRcK0M64t/view?usp=sharing
 
