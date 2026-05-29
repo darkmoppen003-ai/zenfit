@@ -1181,8 +1181,15 @@ function loadState(){
 function saveState(){
   try{
     S.lastSaved=Date.now();
-    localStorage.setItem(STORAGE_KEYS.STATE,JSON.stringify(S));
-  }catch(e){}
+    localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S));
+  }catch(e){
+    if(e.name==='QuotaExceededError'){
+      // Save without the profile pic as fallback
+      const backup={...S, profilePic:null};
+      try{ localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(backup)); }catch(e2){}
+      showNotif('Storage full — profile pic not saved. Try a smaller image.','!');
+    }
+  }
 }
 function persistSave(){saveState();}
 
