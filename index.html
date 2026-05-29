@@ -675,7 +675,7 @@ const safeFetch = async function(url, opts){
     return null;
   }
 };
-const APP_VERSION="v6.5";
+const APP_VERSION="v7";
 const APP_BUILD="2026.05.29.11";
 
 // TUTORIAL SYSTEM
@@ -1042,6 +1042,11 @@ const SCHEMA={
   partners:'array',
   pendingRequests:'array',
   sentRequests:'array'
+  profilePic:'string',
+  peerId:'string',
+  theme:'string',
+  screenTimeLimit:'number',
+  featureFlags:'object',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -5259,9 +5264,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v6.5';
+var CHANGELOG_VERSION='v7';
 var CHANGELOG_ENTRIES=[
-  'New Animated AVATAR In Profile Section, the work is still going on some ranks of female avatar are not uploaded yet this is a test run and avatars are not final yet',
+  'New Animated AVATAR In Profile Section, [the avatars might get updated or changed entirely]',
   'Minor Themes Color Correction and Addition',
   'New Tasks system — set tasks with difficulty, time window, and repeat schedule',
   'Tasks linked to Discipline stat — on-time completion = +3 Discipline',
