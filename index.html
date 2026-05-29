@@ -1233,7 +1233,7 @@ function addXP(amount,reason){
   let lvl=S.player.level;
   while(S.player.xp>=xpForLevel(lvl)){S.player.xp-=xpForLevel(lvl);lvl++;showLevelUp(lvl);}
   S.player.level=lvl;
-  S.player.rank=RANKS[Math.min(Math.floor((lvl-1)/5),5)];
+  S.player.rank=calcRank(S.player);
   showNotif(`+${amount} XP — ${reason}`,'XP');
   persistSave();
 }
@@ -1304,7 +1304,7 @@ function addExToWorkout(name){
 // ════════════════════════════
 // QUESTS & BONUS
 // ════════════════════════════
-function getTodayStr(){return new Date().toISOString().slice(0,10);}
+function getTodayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function generateQuests(){
   if(S.quests.date===getTodayStr()) return;
   S.quests={date:getTodayStr(),list:[
@@ -2614,14 +2614,15 @@ function toggleHabit(i){
 }
 function calcHabitStreak(dates){
   if(!dates||!dates.length) return 0;
-  const sorted=[...dates].sort().reverse();
+  // Deduplicate first, then sort descending
+  const sorted=[...new Set(dates)].sort().reverse();
   let streak=0;
   const today=new Date(); today.setHours(0,0,0,0);
   let check=new Date(today);
   for(let i=0;i<sorted.length;i++){
     const d=new Date(sorted[i]); d.setHours(0,0,0,0);
     const diff=Math.round((check-d)/86400000);
-    if(diff===0||(i===0&&diff===1)){streak++;check=d;if(diff===1)check=d;}
+    if(diff===0){streak++;check=d;}
     else if(diff===1){streak++;check=d;}
     else break;
   }
@@ -3626,7 +3627,7 @@ function renderLeaderboard(el){
     .sort(function(a,b){return b.xp-a.xp;});
   const myPos=allUsers.findIndex(function(u){return u.isMe;})+1;
   const liveIds=Object.keys(peerConnections);
-  const RANK_COLORS={S:'#f5a623',A:'#4cdb8a',B:'#4a9eff',C:'#c084fc',D:'#00d4aa',E:'#8a94b8'};
+  const RANK_COLORS={E:'#888',D:'#4cdb8a',C:'#4a9eff',B:'#c084fc',A:'#f5a623',S:'#ff5a5a'};
 
   function buildLiveSection(){
     if(!liveIds.length) return '';
