@@ -699,7 +699,7 @@ const safeFetch = async function(url, opts){
     return null;
   }
 };
-const APP_VERSION="v7";
+const APP_VERSION="v7.2";
 const APP_BUILD="2026.05.29.17";
 
 // TUTORIAL SYSTEM
@@ -1076,6 +1076,7 @@ const SCHEMA={
   achievements:'array',
   weightLog:'array',
   questsDoneTotal:'number',
+  soundEnabled:'boolean',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1192,6 +1193,7 @@ function defaultState(){
     achievements:[],
     weightLog:[],
     questsDoneTotal:0,
+    soundEnabled:true,
   };
 }
 function loadState(){
@@ -1408,10 +1410,24 @@ function showNotif(msg,icon='+'){
   const el=document.createElement('div');el.className='notif';
   el.innerHTML=`<span style="margin-right:6px">${icon}</span>${msg}`;
   document.body.appendChild(el);setTimeout(()=>el.remove(),2800);
+  if(icon==='XP') SFX.xp();
+  else if(icon==='★') SFX.achievement();
+  else SFX.notif();
 }
 function showLevelUp(lvl){
+  const newRank=calcRank({level:lvl});
+  const oldRank=calcRank({level:lvl-1});
+  const isRankUp=newRank!==oldRank;
+  if(isRankUp) SFX.rankup(); else SFX.levelup();
   const ov=document.createElement('div');ov.className='overlay';
-  ov.innerHTML=`<div class="overlay-box"><div style="font-size:44px;margin-bottom:8px"><svg width="44" height="44" viewBox="0 0 24 24" fill="#f5a623"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div style="font-size:11px;color:var(--text3);letter-spacing:2px">LEVEL UP</div><div style="font-size:52px;font-weight:700;color:var(--purple);margin:8px 0">Lv.${lvl}</div><div style="color:var(--text2);font-size:13px;margin-bottom:20px">You grow stronger, Hunter.</div><button class="btn btn-primary" onclick="this.closest('.overlay').remove()">Continue</button></div>`;
+  ov.innerHTML=`<div class="overlay-box">
+    <div style="font-size:44px;margin-bottom:8px"><svg width="44" height="44" viewBox="0 0 24 24" fill="#f5a623"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+    <div style="font-size:11px;color:var(--text3);letter-spacing:2px">${isRankUp?'RANK UP':'LEVEL UP'}</div>
+    <div style="font-size:52px;font-weight:700;color:var(--purple);margin:8px 0">Lv.${lvl}</div>
+    ${isRankUp?`<div style="font-size:20px;font-weight:700;color:${RANK_COLORS[newRank]||'#888'};margin-bottom:4px">RANK ${newRank} UNLOCKED</div>`:''}
+    <div style="color:var(--text2);font-size:13px;margin-bottom:20px">You grow stronger, Hunter.</div>
+    <button class="btn btn-primary" onclick="this.closest('.overlay').remove()">Continue</button>
+  </div>`;
   document.body.appendChild(ov);
 }
 
@@ -1506,7 +1522,7 @@ function checkAutoQuests(){
   if(S.study.sessions.filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0)>=30) autoQ('q5');
   if(todayBurned()>=200) autoQ('q6');
 }
-function autoQ(id){const q=S.quests.list.find(x=>x.id===id);if(q&&!q.done){q.done=true;S.questsDoneTotal=(S.questsDoneTotal||0)+1;addXP(q.xp,'Quest complete!');checkAchievements();}}
+function autoQ(id){const q=S.quests.list.find(x=>x.id===id);if(q&&!q.done){q.done=true;S.questsDoneTotal=(S.questsDoneTotal||0)+1;SFX.quest();addXP(q.xp,'Quest complete!');checkAchievements();}}
 
 // ════════════════════════════
 // FOOD DATABASE
@@ -1851,6 +1867,7 @@ function renderNav(){
   document.getElementById('nav').innerHTML=homeB+tabs;
 }
 function switchScreen(id){
+  if(id!==currentScreen) SFX.nav();
   currentScreen=id;
   if(id==='home'){
     _toggleHomeBody(true);
@@ -3899,6 +3916,18 @@ function renderProfile(el){
   </div>
 </div>
   <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)" id="notif-settings-box"></div>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">🔊 Sound Effects</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Futuristic system sounds for notifications, achievements & navigation</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">
+        <input type="checkbox" id="sound-toggle" ${S.soundEnabled!==false?'checked':''} onchange="S.soundEnabled=this.checked;persistSave();if(this.checked)SFX.nav();" style="opacity:0;width:0;height:0">
+        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.soundEnabled!==false?'var(--purple2)':'var(--bg4)'};border-radius:24px;transition:.3s;border:1px solid var(--border2)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.soundEnabled!==false?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
+      </label>
+    </div>
+  </div>
   </div>
   <button class="btn btn-full" style="color:var(--red);border-color:var(--red)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();}">Reset All Data</button>`;
 
@@ -4625,6 +4654,12 @@ function aB(icon,label,val){return`<div class="card-sm" style="text-align:center
     if (!e.touches.length) return;
 
     const t = e.touches[0];
+
+    // Ignore swipe if touch starts inside a horizontally scrollable element
+    // (analytics section bar, chart tab bar, nav, etc.)
+    const target = e.target;
+    const scrollable = target.closest('.an-sec-bar, .chart-tab-bar, nav, .bottom-nav, [data-no-swipe]');
+    if (scrollable) { locked = true; return; }
 
     sx = t.clientX;
     sy = t.clientY;
@@ -6195,6 +6230,8 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 var CHANGELOG_VERSION='v7';
 var CHANGELOG_ENTRIES=[
+  'Added Sound Effects',
+  'Minor updates and Updated Analytics Section',
   'New Animated AVATAR In Profile Section, [the avatars might get updated or changed entirely]',
   'Minor Themes Color Correction and Addition',
   'New Tasks system — set tasks with difficulty, time window, and repeat schedule',
@@ -6403,9 +6440,207 @@ function charAvatarAct(){
   },2000);
 }
 
+// ════════════════════════════════════════════════════
+// SOUND ENGINE — Futuristic / System UI
+// ════════════════════════════════════════════════════
+const SFX = (function(){
+  let _ctx = null;
+  let _unlocked = false;
+
+  function ctx(){
+    if(!_ctx) _ctx = new (window.AudioContext||window.webkitAudioContext)();
+    return _ctx;
+  }
+
+  // Resume context on first user gesture (browser autoplay policy)
+  function unlock(){
+    if(_unlocked) return;
+    try{ ctx().resume(); _unlocked=true; }catch(e){}
+  }
+  document.addEventListener('touchstart', unlock, {once:true, passive:true});
+  document.addEventListener('click', unlock, {once:true, passive:true});
+
+  function enabled(){ return S && S.soundEnabled !== false; }
+
+  // Core: play a tone with envelope
+  function tone(freq, type, startTime, dur, vol, attack, decay){
+    const c=ctx();
+    const osc=c.createOscillator();
+    const gain=c.createGain();
+    const filter=c.createBiquadFilter();
+    filter.type='lowpass';
+    filter.frequency.value=4000;
+    osc.type=type||'sine';
+    osc.frequency.setValueAtTime(freq, startTime);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(vol||0.18, startTime+(attack||0.008));
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime+(dur||0.3));
+    osc.connect(filter); filter.connect(gain); gain.connect(c.destination);
+    osc.start(startTime); osc.stop(startTime+(dur||0.3)+(decay||0.05));
+    return osc;
+  }
+
+  // Filtered noise burst — for the "system" texture
+  function noise(startTime, dur, vol, freq){
+    const c=ctx();
+    const buf=c.createBuffer(1,c.sampleRate*dur,c.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1);
+    const src=c.createBufferSource();
+    src.buffer=buf;
+    const filter=c.createBiquadFilter();
+    filter.type='bandpass';
+    filter.frequency.value=freq||800;
+    filter.Q.value=8;
+    const gain=c.createGain();
+    gain.gain.setValueAtTime(vol||0.06, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime+dur);
+    src.connect(filter); filter.connect(gain); gain.connect(c.destination);
+    src.start(startTime); src.stop(startTime+dur+0.01);
+  }
+
+  // Sub-bass thud
+  function thud(startTime, freq, dur, vol){
+    const c=ctx();
+    const osc=c.createOscillator();
+    const gain=c.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(freq||80, startTime);
+    osc.frequency.exponentialRampToValueAtTime((freq||80)*0.3, startTime+(dur||0.12));
+    gain.gain.setValueAtTime(vol||0.4, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime+(dur||0.12));
+    osc.connect(gain); gain.connect(c.destination);
+    osc.start(startTime); osc.stop(startTime+(dur||0.12)+0.02);
+  }
+
+  return {
+    // ── NAV TAP: ultra-brief crystalline ping ──────────────
+    nav(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      tone(1800,'sine',t,0.08,0.07,0.003);
+      tone(2400,'sine',t+0.01,0.05,0.04,0.002);
+    },
+
+    // ── NOTIFICATION: deep system alert — two-tone ──────────
+    notif(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      thud(t, 90, 0.1, 0.22);
+      tone(520,'sine',t+0.02,0.22,0.14,0.01);
+      tone(780,'sine',t+0.05,0.18,0.09,0.008);
+      noise(t+0.02, 0.06, 0.04, 1200);
+    },
+
+    // ── QUEST COMPLETE: sharp system confirm ──────────────
+    quest(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      tone(440,'triangle',t,     0.1, 0.13,0.005);
+      tone(660,'sine',    t+0.07,0.14,0.14,0.005);
+      tone(880,'sine',    t+0.15,0.18,0.12,0.005);
+      noise(t,0.05,0.03,600);
+    },
+
+    // ── ACHIEVEMENT: rising crystalline arpeggio ──────────
+    achievement(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      thud(t,60,0.15,0.3);
+      noise(t,0.08,0.06,900);
+      // Rising arpeggio — minor + major blend (Solo Leveling feel)
+      const notes=[330,415,495,660,830,990];
+      notes.forEach((f,i)=>{
+        tone(f,'sine',t+i*0.07, 0.28-i*0.02, 0.16-i*0.015, 0.006);
+        if(i===notes.length-1){
+          // Final sparkle chord
+          tone(f*2,'sine',t+i*0.07+0.05,0.22,0.07,0.004);
+          noise(t+i*0.07,0.1,0.05,2000);
+        }
+      });
+    },
+
+    // ── LEVEL UP: epic system awakening ──────────────────
+    levelup(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      // Deep resonant strike
+      thud(t,55,0.2,0.5);
+      thud(t+0.02,110,0.15,0.25);
+      noise(t,0.12,0.08,700);
+      // Rising power chord sweep
+      [[165,0],[220,0.12],[277,0.22],[330,0.30],[415,0.38],[494,0.45],[660,0.52]].forEach(([f,dt])=>{
+        tone(f,'sawtooth',t+dt,0.35,0.08,0.01);
+        tone(f,'sine',t+dt,0.35,0.12,0.01);
+      });
+      // Final triumphant chord
+      [330,415,495,660].forEach((f,i)=>{
+        tone(f,'sine',t+0.62,0.6,0.11,0.02);
+      });
+      tone(1320,'sine',t+0.68,0.4,0.06,0.015);
+      noise(t+0.62,0.18,0.07,1800);
+    },
+
+    // ── RANK PROMOTION: the most epic — full awakening ───
+    rankup(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      // Impact
+      thud(t,40,0.25,0.7);
+      thud(t+0.03,80,0.2,0.4);
+      thud(t+0.06,160,0.15,0.2);
+      noise(t,0.15,0.1,500);
+      // The sweep — slow rising glide
+      const osc=c.createOscillator();
+      const g=c.createGain();
+      osc.type='sawtooth';
+      osc.frequency.setValueAtTime(80,t+0.1);
+      osc.frequency.exponentialRampToValueAtTime(800,t+0.8);
+      g.gain.setValueAtTime(0,t+0.1);
+      g.gain.linearRampToValueAtTime(0.12,t+0.25);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.85);
+      osc.connect(g); g.connect(c.destination);
+      osc.start(t+0.1); osc.stop(t+0.9);
+      // Arpeggio cascade
+      [[165,0.3],[220,0.38],[277,0.45],[330,0.51],[415,0.56],[494,0.60],[660,0.64],[880,0.68],[1100,0.71]].forEach(([f,dt])=>{
+        tone(f,'sine',t+dt,0.5,0.14,0.008);
+      });
+      // Final power chord
+      [330,415,660,880].forEach((f,i)=>{tone(f,'sine',t+0.8,0.8,0.12,0.025);});
+      tone(1760,'sine',t+0.85,0.5,0.05,0.01);
+      noise(t+0.78,0.3,0.09,2200);
+    },
+
+    // ── XP GAIN: subtle system tick ──────────────────────
+    xp(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      tone(660,'sine',t,0.1,0.08,0.004);
+      tone(990,'sine',t+0.05,0.08,0.06,0.003);
+    },
+  };
+})();
+
 initTheme();
 // Check achievements on every load (catches anything earned offline)
 setTimeout(function(){checkAchievements();},200);
+
+// ── SERVICE WORKER REGISTRATION ──────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').then(function(reg){
+      // Background update check — notify user if new version available
+      reg.addEventListener('updatefound', function(){
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', function(){
+          if(newWorker.state==='installed' && navigator.serviceWorker.controller){
+            showNotif('Update available — reload to get the latest ZenFit','⚡');
+          }
+        });
+      });
+    }).catch(function(e){ console.warn('SW registration failed:',e); });
+  });
+}
 persistLoad();
 </script>
 
