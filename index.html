@@ -701,7 +701,7 @@ const safeFetch = async function(url, opts){
 };
 
 const APP_VERSION="v7.3";
-const APP_BUILD="2026.06.03.24";
+const APP_BUILD="2026.05.31.22";
 
 // TUTORIAL SYSTEM
 // ================
@@ -4503,7 +4503,7 @@ function renderLeaderboard(el){
   </div>`;
   html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : buildGlobalTab(RANK_COLORS_LB);
   el.innerHTML=html;
-  if(_lbTab==='global' && !_globalLoading) loadGlobalRows(el);
+  if(_lbTab==='global' && !_globalLoading && _globalRows===null) loadGlobalRows(el);
 }
 
 function buildFriendsTab(RANK_COLORS){
@@ -6321,7 +6321,7 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 var CHANGELOG_VERSION='v7.3';
 var CHANGELOG_ENTRIES=[
-  'Updated leaderboard local and global',
+  'Updated local and global leaderboard',
   'Added Sound Effects',
   'Minor updates and Updated Analytics Section',
   'New Animated AVATAR In Profile Section, [the avatars might get updated or changed entirely]',
