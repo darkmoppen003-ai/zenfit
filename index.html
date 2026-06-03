@@ -6766,7 +6766,7 @@ setTimeout(function(){syncGlobalIfOptedIn();},1500);
 // ── SERVICE WORKER REGISTRATION ──────────────────────
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('/sw.js').then(function(reg){
+    navigator.serviceWorker.register('/zenfit/sw.js').then(function(reg){
       // Background update check — notify user if new version available
       reg.addEventListener('updatefound', function(){
         const newWorker = reg.installing;
