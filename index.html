@@ -111,10 +111,13 @@ textarea{resize:vertical;min-height:50px}
 .cal-day.done{background:#0a3d22;border-color:#1a6d3a;color:#4cdb8a}
 .cal-day.today{border-color:var(--purple);color:var(--purple)}
 .insight{background:var(--bg3);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;color:var(--text2);margin-bottom:8px}
-.bottle-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
-.bottle{width:50px;height:100px;border:2px solid var(--border2);border-radius:0 0 14px 14px;overflow:hidden;position:relative;background:var(--bg4)}
-.bottle-top{width:26px;height:10px;background:var(--border2);border-radius:4px 4px 0 0;margin-bottom:-1px}
-.bottle-fill{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,#00c8ff88, #0088ff);transition:height .8s ease;border-radius:0 0 12px 12px}
+/* WATER WAVE */
+.water-tank{position:relative;width:140px;height:220px;margin:0 auto;border-radius:12px;border:2px solid var(--border2);overflow:hidden;background:var(--bg4);cursor:pointer}
+.water-fill{position:absolute;bottom:0;left:0;right:0;transition:height 1s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.water-wave-svg{position:absolute;top:-14px;left:0;width:200%;animation:wavemove 2.2s linear infinite}
+.water-body{position:absolute;top:14px;left:0;right:0;bottom:0;background:linear-gradient(180deg,#00c8ff66 0%,#0066ff99 100%)}
+.water-pct-label{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;font-weight:700;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.5);z-index:2;pointer-events:none}
+@keyframes wavemove{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 .bonus-card{background:var(--bg3);border:1px solid var(--amber);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
 .bonus-card.done{opacity:.4;border-color:var(--border)}
 hr{border:none;border-top:1px solid var(--border);margin:16px 0}
@@ -700,7 +703,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v7.3";
+const APP_VERSION="v7.4";
 const APP_BUILD="2026.06.03.25";
 
 // TUTORIAL SYSTEM
@@ -1079,6 +1082,9 @@ const SCHEMA={
   questsDoneTotal:'number',
   soundEnabled:'boolean',
   globalLeaderboardOptIn:'boolean',
+  profilePic:'string',
+  customFoods:'array',
+  customBottomNav:'array',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -1096,12 +1102,13 @@ function generateDeviceFingerprint(){
 }
 
 function getDeviceId(){
-  let deviceId=localStorage.getItem(STORAGE_KEYS.DEVICE_ID);
-  if(!deviceId){
-    deviceId='zenfit-user-'+generateDeviceFingerprint();
-    localStorage.setItem(STORAGE_KEYS.DEVICE_ID,deviceId);
-  }
-  return deviceId;
+  // Priority: existing localStorage ID > existing S.deviceId > generate new
+  let stored=localStorage.getItem(STORAGE_KEYS.DEVICE_ID);
+  if(stored&&stored.startsWith('zenfit-user-')) return stored;
+  // Generate once and lock it permanently
+  const newId='zenfit-user-'+generateDeviceFingerprint()+'-'+Math.random().toString(36).slice(2,8);
+  localStorage.setItem(STORAGE_KEYS.DEVICE_ID,newId);
+  return newId;
 }
 
 // ════════════════════════════
@@ -1197,6 +1204,8 @@ function defaultState(){
     questsDoneTotal:0,
     soundEnabled:true,
     globalLeaderboardOptIn:false,
+    customFoods:[],
+    customBottomNav:[],
   };
 }
 function loadState(){
@@ -1216,13 +1225,48 @@ function loadState(){
   return fresh;
 }
 
+function trimOldData(){
+  function localDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  const KEEP_DAYS=14;
+  const cutoff=new Date();cutoff.setHours(0,0,0,0);cutoff.setDate(cutoff.getDate()-KEEP_DAYS);
+  const cutoffStr=localDs(cutoff);
+  if(!S.analyticsArchive)S.analyticsArchive=[];
+  function archiveAndTrim(entries,dateFn,valueFns){
+    const old=entries.filter(e=>(dateFn(e)||'')<cutoffStr);
+    if(!old.length)return entries;
+    const byDay={};
+    old.forEach(e=>{
+      const d=dateFn(e)||'';if(!d)return;
+      if(!byDay[d])byDay[d]={date:d,cal:0,burned:0,waterMl:0,studyMins:0};
+      valueFns.forEach(fn=>fn(byDay[d],e));
+    });
+    Object.values(byDay).forEach(day=>{
+      const ex=S.analyticsArchive.findIndex(a=>a.date===day.date);
+      if(ex>=0){const a=S.analyticsArchive[ex];a.cal+=day.cal;a.burned+=day.burned;a.waterMl+=day.waterMl;a.studyMins+=day.studyMins;}
+      else S.analyticsArchive.push(day);
+    });
+    return entries.filter(e=>(dateFn(e)||'')>=cutoffStr);
+  }
+  S.nutrition.entries=archiveAndTrim(S.nutrition.entries,e=>e.date,[(a,e)=>{a.cal+=(e.nutrients&&e.nutrients.cal||0);}]);
+  S.workouts=archiveAndTrim(S.workouts||[],e=>e.date,[(a,e)=>{a.burned+=(e.caloriesBurned||0);}]);
+  S.burned=archiveAndTrim(S.burned||[],e=>e.date,[(a,e)=>{a.burned+=(e.calories||0);}]);
+  if(S.water&&S.water.entries)S.water.entries=archiveAndTrim(S.water.entries,e=>e.date,[(a,e)=>{a.waterMl+=(e.ml||0);}]);
+  if(S.study&&S.study.sessions)S.study.sessions=archiveAndTrim(S.study.sessions,e=>e.date,[(a,e)=>{a.studyMins+=(e.duration||0);}]);
+  // Habit completedDates — keep 90 days only
+  const hCutoff=new Date();hCutoff.setDate(hCutoff.getDate()-90);
+  const hCutoffStr=localDs(hCutoff);
+  (S.habits||[]).forEach(h=>{if(h.completedDates&&h.completedDates.length>90)h.completedDates=h.completedDates.filter(d=>d>=hCutoffStr);});
+}
+
 function saveState(){
   try{
     S.lastSaved=Date.now();
+    // Auto-trim when entries grow large
+    const totalEntries=(S.nutrition.entries||[]).length+(S.workouts||[]).length+(S.burned||[]).length+(S.water&&S.water.entries||[]).length;
+    if(totalEntries>600)trimOldData();
     localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S));
   }catch(e){
     if(e.name==='QuotaExceededError'){
-      // Save without the profile pic as fallback
       const backup={...S, profilePic:null};
       try{ localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(backup)); }catch(e2){}
       showNotif('Storage full — profile pic not saved. Try a smaller image.','!');
@@ -1589,6 +1633,10 @@ function parseFood(text){
   if(nm){qty=parseFloat(nm[1]);text=text.slice(nm[0].length).trim();}
   else{const qw={'half':0.5,'one':1,'two':2,'three':3,'four':4,'a ':1,'an ':1};for(const[w,v]of Object.entries(qw)){if(text.startsWith(w)){qty=v;text=text.slice(w.length).trim();break;}}}
   text=text.replace(/\b(bowl|piece|cup|glass|serving|plate|small|large|medium|full)\b/g,'').trim().replace(/\s+/g,' ');
+  // Check user's personal food database first
+  const cf=S.customFoods||[];
+  const userMatch=cf.find(f=>f.name.toLowerCase()===text||text.includes(f.name.toLowerCase())||f.name.toLowerCase().includes(text));
+  if(userMatch)return{name:userMatch.name,qty,nutrients:{cal:userMatch.cal*qty,protein:userMatch.protein*qty,carbs:userMatch.carbs*qty,fat:userMatch.fat*qty,fiber:(userMatch.fiber||0)*qty}};
   if(ALIASES[text]&&INGR_DB[ALIASES[text]]) return bE(ALIASES[text],text,qty);
   if(INGR_DB[text]) return bE(text,text,qty);
   let best=null,bs=0;
@@ -1882,6 +1930,13 @@ function switchScreen(id){
     _toggleHomeBody(false);
     document.getElementById('nav').style.display='flex';
     renderNav();renderScreens();renderBottomNav();
+    // Auto-scroll active nav tab into view
+    setTimeout(function(){
+      var nav=document.getElementById('nav');
+      if(!nav)return;
+      var active=nav.querySelector('.nav-btn.active');
+      if(active)active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    },60);
   }
 }
 function renderScreens(){
@@ -1973,41 +2028,84 @@ function renderHome(el){
   const water=todayWater(),waterP=Math.min(100,Math.round(water/S.water.dailyGoalMl*100));
   const nut=todayNutrition(),calP=Math.min(100,Math.round(nut.cal/S.nutrition.dailyGoal.cal*100));
   const doneH=(S.habits||[]).filter(h=>h.completedDates?.includes(today)).length;
-  const doneQ=S.quests.list.filter(q=>q.done).length;
   const burned=todayBurned(),net=nut.cal-burned;
-  const rc=RANK_COLORS[p.rank];
   const studyMins=(S.study.sessions||[]).filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0);
   const now=Date.now();
   const dueTasks=getTasksDueToday();
   const doneT=dueTasks.filter(t=>t.completedAt&&now-t.completedAt<86400000).length;
+  // Quest logic: show incomplete first, then bonus when all done
+  const incompleteQ=S.quests.list.filter(q=>!q.done);
+  const bonusQ=(S.bonusTasks&&S.bonusTasks.list||[]).filter(q=>!q.done);
+  const allQDone=incompleteQ.length===0;
+  const showQ=allQDone?bonusQ.slice(0,3):incompleteQ.slice(0,3);
+  const questLabel=allQDone?'Bonus Tasks':'Active Quests';
+  const rc=RANK_COLORS[p.rank];
   el.innerHTML=`
-  <div class="flex-between mb16">
-    <div><div style="font-size:20px;font-weight:600">${p.name}</div><div style="color:var(--text2);font-size:13px;margin-top:2px">Keep pushing your limits.</div></div>
-    <div class="rank-badge" style="color:${rc};border-color:${rc};background:${rc}18">${p.rank}</div>
-  </div>
-  <div class="card mb16">
-    <div class="flex-between mb8"><div><span style="font-size:13px;color:var(--text2)">Level </span><span style="font-size:22px;font-weight:700;color:var(--purple)">${p.level}</span></div><span style="font-size:13px;color:var(--text2)">${p.xp}/${xpN} XP</span></div>
-    <div class="xp-bar-wrap"><div class="xp-bar" style="width:${xpP}%"></div></div>
-    <div style="font-size:11px;color:var(--text3);margin-top:4px">${xpP}% to Level ${p.level+1}</div>
-  </div>
-  <div class="grid4 mb16">
-    ${sCard('⚔️','Strength',p.stats.strength,'#ff5a5a')}${sCard('🧠','Discipline',p.stats.discipline,'#c084fc')}
-    ${sCard('❤️','Health',p.stats.health,'#4cdb8a')}${sCard('🏃','Endurance',p.stats.endurance,'#4a9eff')}
-  </div>
+  <!-- CHARACTER CARD -->
+  <div id="charCardMount" class="mb12"></div>
+
+  <!-- TODAY'S STATS -->
   <div class="section-title">Today</div>
-  <div class="grid3 mb16">
-    <div class="card-sm"><div class="flex-between mb6"><span style="font-size:12px;color:var(--text2)">💧 Water</span><span style="font-size:12px;color:var(--teal)">${Math.round(water/100)/10}/${S.water.dailyGoalMl/1000}L</span></div><div class="xp-bar-wrap"><div class="xp-bar" style="width:${waterP}%;background:var(--teal)"></div></div></div>
-    <div class="card-sm"><div class="flex-between mb6"><span style="font-size:12px;color:var(--text2)">🍽️ Cal</span><span style="font-size:12px;color:var(--amber)">${nut.cal}/${S.nutrition.dailyGoal.cal}</span></div><div class="xp-bar-wrap"><div class="xp-bar" style="width:${calP}%;background:var(--amber)"></div></div></div>
-    <div class="card-sm"><div class="flex-between"><span style="font-size:12px;color:var(--text2)">🔥 Net</span><span style="font-size:13px;font-weight:500;color:${net<0?'var(--green)':'var(--red)'}">${net} kcal</span></div><div style="font-size:10px;color:var(--text3);margin-top:4px">${burned} burned</div></div>
-    <div class="card-sm"><div class="flex-between"><span style="font-size:12px;color:var(--text2)">✅ Habits</span><span style="font-size:15px;font-weight:600;color:var(--green)">${doneH}/${S.habits.length}</span></div></div>
-    <div class="card-sm"><div class="flex-between"><span style="font-size:12px;color:var(--text2)">⚔️ Tasks</span><span style="font-size:15px;font-weight:600;color:#ff5a5a">${doneT}/${dueTasks.length}</span></div></div>
-    <div class="card-sm"><div class="flex-between"><span style="font-size:12px;color:var(--text2)">📚 Study</span><span style="font-size:15px;font-weight:600;color:var(--blue)">${studyMins}min</span></div></div>
+  <div class="grid3 mb12">
+    <div class="card-sm" onclick="switchScreen('water')" style="cursor:pointer">
+      <div class="flex-between mb5"><span style="font-size:11px;color:var(--teal)">💧 Water</span><span style="font-size:11px;color:var(--teal)">${Math.round(water/100)/10}/${S.water.dailyGoalMl/1000}L</span></div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${waterP}%;background:var(--teal)"></div></div>
+    </div>
+    <div class="card-sm" onclick="switchScreen('nutrition')" style="cursor:pointer">
+      <div class="flex-between mb5"><span style="font-size:11px;color:var(--amber)">🍽️ Cal</span><span style="font-size:11px;color:var(--amber)">${nut.cal}/${S.nutrition.dailyGoal.cal}</span></div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${calP}%;background:var(--amber)"></div></div>
+    </div>
+    <div class="card-sm" onclick="switchScreen('burned')" style="cursor:pointer">
+      <div style="font-size:11px;color:var(--text3)">🔥 Net Cal</div>
+      <div style="font-size:16px;font-weight:700;color:${net<=0?'var(--green)':'var(--red)'};">${net>0?'+':''}${net}</div>
+    </div>
+    <div class="card-sm" onclick="switchScreen('habits')" style="cursor:pointer">
+      <div style="font-size:11px;color:var(--text3)">✅ Habits</div>
+      <div style="font-size:16px;font-weight:700;color:var(--green)">${doneH}<span style="font-size:11px;color:var(--text3)">/${S.habits.length}</span></div>
+    </div>
+    <div class="card-sm" onclick="switchScreen('tasks')" style="cursor:pointer">
+      <div style="font-size:11px;color:var(--text3)">⚔️ Tasks</div>
+      <div style="font-size:16px;font-weight:700;color:var(--red)">${doneT}<span style="font-size:11px;color:var(--text3)">/${dueTasks.length}</span></div>
+    </div>
+    <div class="card-sm" onclick="switchScreen('study')" style="cursor:pointer">
+      <div style="font-size:11px;color:var(--text3)">📚 Study</div>
+      <div style="font-size:16px;font-weight:700;color:var(--blue)">${studyMins}<span style="font-size:11px;color:var(--text3)">min</span></div>
+    </div>
   </div>
-  <div class="section-title">Active Quests</div>
-  ${S.quests.list.slice(0,3).map(q=>`<div class="quest-card${q.done?' done':''}"><span style="font-size:18px;width:24px">${q.icon}</span><div style="flex:1"><div style="font-size:13px">${q.title}</div><div style="font-size:11px;color:var(--text3)">+${q.xp} XP</div></div><div class="quest-check${q.done?' done':''}">${q.done?'✓':''}</div></div>`).join('')}
-  <button class="btn btn-sm mt8" onclick="switchScreen('quests')">View all quests →</button>`;
+
+  <!-- QUESTS -->
+  <div class="flex-between mb8">
+    <div class="section-title" style="margin-bottom:0">${questLabel} ${allQDone?'<span style="font-size:10px;color:var(--green)">✓ All done!</span>':''}</div>
+    <button class="btn btn-sm" style="font-size:11px" onclick="switchScreen('quests')">View all</button>
+  </div>
+  ${showQ.length===0?`<div class="card-sm" style="text-align:center;padding:14px;color:var(--green)">🎉 All quests and bonus tasks completed today!</div>`:''}
+  ${showQ.map((q,qi)=>{
+    const isBonus=allQDone;
+    const listKey=isBonus?'bonusTasks':'quests';
+    const realIdx=isBonus?(S.bonusTasks.list||[]).indexOf(q):S.quests.list.indexOf(q);
+    return`<div class="quest-card" onclick="dashCompleteQuest('${listKey}',${realIdx})" style="cursor:pointer;transition:all .2s;${q.done?'opacity:.5':''}">
+      <span style="font-size:18px;width:24px">${q.icon||'⚡'}</span>
+      <div style="flex:1"><div style="font-size:13px">${q.title}</div><div style="font-size:11px;color:var(--text3)">+${q.xp} XP</div></div>
+      <div class="quest-check${q.done?' done':''}" style="flex-shrink:0">${q.done?'✓':''}</div>
+    </div>`;
+  }).join('')}`;
+  // Render character card after innerHTML is set
+  renderCharacterCard();
 }
-function sCard(icon,name,val,color){return`<div class="card-sm" style="text-align:center"><div style="font-size:16px;margin-bottom:4px">${icon}</div><div style="font-size:10px;color:var(--text3);margin-bottom:4px">${name}</div><div style="font-size:17px;font-weight:600;color:${color}">${val}</div><div class="stat-bar-wrap" style="margin-top:6px"><div class="stat-bar" style="width:${val}%;background:${color}"></div></div></div>`;}
+function dashCompleteQuest(listKey,idx){
+  const list=listKey==='bonusTasks'?(S.bonusTasks&&S.bonusTasks.list||[]):S.quests.list;
+  const q=list[idx];
+  if(!q||q.done)return;
+  q.done=true;
+  S.questsDoneTotal=(S.questsDoneTotal||0)+1;
+  SFX.quest();
+  addXP(q.xp,'Quest: '+q.title);
+  checkAchievements();
+  persistSave();
+  const el=document.getElementById('screen-dashboard');
+  if(el&&currentScreen==='dashboard')renderHome(el);
+  else renderScreens();
+}
 
 // ════════════════════════════
 // NUTRITION
@@ -2033,20 +2131,38 @@ function renderNutrition(el){
       </div>
     </div>
     <div id="ft-barcode" style="${activeTab==='barcode'?'':'display:none'}">
-      <input type="text" id="bc-input" placeholder="Barcode number..." style="margin-bottom:8px">
-      <button class="btn btn-primary" onclick="doBC()">Lookup</button>
+      <div id="bc-camera-wrap" style="display:none;margin-bottom:10px;border-radius:10px;overflow:hidden;position:relative;background:#000;aspect-ratio:4/3">
+        <video id="bc-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:block"></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+          <div style="width:70%;aspect-ratio:3/1;border:2px solid var(--teal);border-radius:6px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)"></div>
+        </div>
+        <button onclick="stopBCCamera()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer">✕ Stop</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-primary" onclick="startBCCamera()" id="bc-camera-btn">📷 Scan Barcode</button>
+        <input type="number" id="bc-input" placeholder="Or enter barcode..." style="flex:1">
+        <button class="btn" onclick="doBC()">Lookup</button>
+      </div>
       <div id="bc-res" style="margin-top:10px"></div>
     </div>
     <div id="ft-manual" style="${activeTab==='manual'?'':'display:none'}">
       <div class="grid2" style="gap:8px;margin-bottom:8px">
-        <input type="text" id="m-name" placeholder="Food name">
-        <input type="number" id="m-cal" placeholder="Calories">
+        <input type="text" id="m-name" placeholder="Food name" list="my-foods-list" style="grid-column:1/-1">
+        <datalist id="my-foods-list">${(S.customFoods||[]).map(f=>`<option value="${f.name}">`).join('')}</datalist>
+        <input type="number" id="m-cal" placeholder="Calories (kcal)">
         <input type="number" id="m-protein" placeholder="Protein (g)">
         <input type="number" id="m-carbs" placeholder="Carbs (g)">
         <input type="number" id="m-fat" placeholder="Fat (g)">
         <input type="number" id="m-fiber" placeholder="Fiber (g)">
       </div>
-      <button class="btn btn-primary" onclick="logMF()">Log Food</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input type="checkbox" id="m-save-food" checked style="width:auto;flex-shrink:0">
+        <label for="m-save-food" style="font-size:12px;color:var(--text2)">Save to My Foods for future use</label>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="logMF()">Log Food</button>
+        ${(S.customFoods||[]).length>0?`<button class="btn btn-sm" onclick="showMyFoods()" style="border-color:var(--purple);color:var(--purple)">📌 My Foods (${(S.customFoods||[]).length})</button>`:''}
+      </div>
     </div>
   </div>
   <div class="section-title">Today (${te.length})</div>
@@ -2084,15 +2200,107 @@ async function doBC(){
     if(r)r.innerHTML=`<div class="card-sm flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${e.name}</div><div style="font-size:11px;color:var(--text2)">${nn(e.nutrients.cal)} kcal</div></div><button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button></div>`;
   }catch(ex){if(r)r.innerHTML=`<div style="color:var(--red)">Lookup failed.</div>`;}
 }
+let _bcStream=null,_bcDetecting=false;
+async function startBCCamera(){
+  const wrap=document.getElementById('bc-camera-wrap');
+  const video=document.getElementById('bc-video');
+  const btn=document.getElementById('bc-camera-btn');
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    showNotif('Camera not supported on this browser','!');return;
+  }
+  try{
+    // Request camera permission
+    _bcStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}}});
+    video.srcObject=_bcStream;
+    wrap.style.display='block';
+    if(btn)btn.style.display='none';
+    _bcDetecting=true;
+    _runBCDetect(video);
+    showNotif('Point camera at barcode','📷');
+  }catch(e){
+    if(e.name==='NotAllowedError')showNotif('Camera permission denied. Please allow camera access.','!');
+    else showNotif('Camera error: '+e.message,'!');
+  }
+}
+async function _runBCDetect(video){
+  // Try native BarcodeDetector API (Chrome/Android WebView)
+  if('BarcodeDetector' in window){
+    const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','qr_code']});
+    const scan=async()=>{
+      if(!_bcDetecting)return;
+      try{
+        const codes=await detector.detect(video);
+        if(codes&&codes.length>0){
+          const code=codes[0].rawValue;
+          stopBCCamera();
+          document.getElementById('bc-input').value=code;
+          showNotif('Barcode detected: '+code,'✅');
+          doBC();return;
+        }
+      }catch(e){}
+      if(_bcDetecting)requestAnimationFrame(scan);
+    };
+    video.addEventListener('playing',()=>requestAnimationFrame(scan),{once:true});
+  } else {
+    // Fallback: show manual entry with explanation
+    showNotif('Auto-detect not supported. Enter barcode manually below.','!');
+    stopBCCamera();
+  }
+}
+function stopBCCamera(){
+  _bcDetecting=false;
+  if(_bcStream){_bcStream.getTracks().forEach(t=>t.stop());_bcStream=null;}
+  const wrap=document.getElementById('bc-camera-wrap');
+  const btn=document.getElementById('bc-camera-btn');
+  if(wrap)wrap.style.display='none';
+  if(btn)btn.style.display='';
+}
 function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr()});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
 function logMF(){
-  const name=document.getElementById('m-name')?.value||'Custom';
+  const name=(document.getElementById('m-name')?.value?.trim())||'Custom';
   const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0};
   S.nutrition.entries.push({name,qty:1,nutrients:n,date:getTodayStr()});
+  // Save to personal food db if checkbox checked
+  const shouldSave=document.getElementById('m-save-food')?.checked!==false;
+  if(shouldSave&&name&&name!=='Custom'){
+    if(!S.customFoods)S.customFoods=[];
+    const exists=S.customFoods.some(f=>f.name.toLowerCase()===name.toLowerCase());
+    if(!exists){
+      S.customFoods.push({name,cal:n.cal,protein:n.protein,carbs:n.carbs,fat:n.fat,fiber:n.fiber,source:'manual'});
+      showNotif('"'+name+'" saved to My Foods','📌');
+    }
+  }
   updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();
 }
+function showMyFoods(){
+  if(!S.customFoods||!S.customFoods.length)return;
+  const ov=document.createElement('div');ov.className='overlay';
+  ov.innerHTML=`<div class="overlay-box" style="max-height:80vh;overflow-y:auto;text-align:left;max-width:400px;width:92%">
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px">📌 My Foods (${S.customFoods.length})</div>
+    ${S.customFoods.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${f.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${f.cal} kcal · P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="quickLogMyFood(${i});this.closest('.overlay').remove()">Log</button>
+      <button class="btn btn-icon btn-sm" onclick="deleteMyFood(${i});this.closest('.overlay').remove()" style="color:var(--red)">×</button>
+    </div>`).join('')}
+    <button class="btn btn-full mt12" onclick="this.closest('.overlay').remove()">Close</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function quickLogMyFood(i){
+  const f=(S.customFoods||[])[i];if(!f)return;
+  S.nutrition.entries.push({name:f.name,qty:1,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0},date:getTodayStr()});
+  updStat('health');addXP(30,'Meal logged!');checkAutoQuests();persistSave();renderScreens();
+  showNotif(f.name+' logged','OK');
+}
+function deleteMyFood(i){
+  if(!S.customFoods)return;
+  S.customFoods.splice(i,1);
+  persistSave();showNotif('Removed from My Foods','OK');renderScreens();
+}
 function delN(i){
-  const te=S.nutrition.entries.filter(e=>e.date===getTodayStr());
   const gi=S.nutrition.entries.indexOf(te[i]);
   if(gi>-1)S.nutrition.entries.splice(gi,1);
   persistSave();var _nel=document.getElementById('screen-nutrition');if(_nel&&currentScreen==='nutrition')renderNutrition(_nel);else renderScreens();
@@ -2111,9 +2319,18 @@ function renderWater(el){
   el.innerHTML=`
   <div class="card mb16" style="text-align:center">
     <div class="section-title">Today's Hydration</div>
-    <div class="bottle-wrap" style="margin:12px auto"><div class="bottle-top"></div><div class="bottle"><div class="bottle-fill" style="height:${Math.round(pct)}px"></div></div></div>
+    <div class="water-tank mb12" onclick="addWater(250)" title="Tap to add 250ml">
+      <div class="water-fill" id="water-fill-anim" style="height:${pct}%">
+        <svg class="water-wave-svg" viewBox="0 0 400 28" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" height="28">
+          <path d="M0,14 C50,0 100,28 150,14 C200,0 250,28 300,14 C350,0 400,28 400,14 L400,28 L0,28 Z" fill="#00c8ffaa"/>
+          <path d="M0,18 C60,6 120,30 180,18 C240,6 300,30 400,18 L400,28 L0,28 Z" fill="#0077ffaa"/>
+        </svg>
+        <div class="water-body"></div>
+      </div>
+      <div class="water-pct-label">${pct}%</div>
+    </div>
     <div style="font-size:22px;font-weight:500;color:var(--teal)">${Math.round(total/100)/10}L <span style="color:var(--text3);font-size:13px">/ ${S.water.dailyGoalMl/1000}L</span></div>
-    <div style="font-size:12px;color:var(--text2);margin-top:4px">${pct}% of goal</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">${pct}% of daily goal · Tap tank to add 250ml</div>
   </div>
   <div class="card mb16">
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2131,6 +2348,7 @@ function renderWater(el){
 }
 function addWater(ml){
   if(!ml||ml<=0)return;
+  SFX.water();
   const prev=todayWater();
   S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now()});
   addXP(5,'Hydrating!');updStat('health',1);
@@ -4575,7 +4793,7 @@ function buildFriendsTab(RANK_COLORS){
 }
 
 function buildGlobalTab(RANK_COLORS){
-  const myDeviceId=S.peerId||'unknown';
+  const myDeviceId=S.deviceId||S.peerId||'unknown';
   const optedIn=S.globalLeaderboardOptIn;
   const profileOk=S.profile&&S.profile.name&&S.profile.filled;
   let html=`<div class="card mb12" style="border:1px solid ${optedIn?'var(--green)':'var(--border2)'}">
@@ -4679,7 +4897,7 @@ async function toggleGlobalOptIn(val){
 }
 
 async function syncGlobalIfOptedIn(){
-  if(!S.globalLeaderboardOptIn||!S.peerId) return;
+  if(!S.globalLeaderboardOptIn||!S.deviceId) return;
   const key='zf_last_global_sync';
   const last=+localStorage.getItem(key)||0;
   if(Date.now()-last<30*60*1000) return;
@@ -4992,14 +5210,92 @@ const BOT_NAV_TABS=[
   {id:'habits',icon:'&#9745;',label:'Habits'},
   {id:'analytics',icon:'&#128200;',label:'Analytics'},
 ];
+const ALL_NAV_OPTIONS=[
+  {id:'dashboard',icon:'&#9783;',label:'Dashboard'},
+  {id:'nutrition',icon:'&#127869;',label:'Nutrition'},
+  {id:'workout',icon:'&#127947;',label:'Workout'},
+  {id:'habits',icon:'&#9745;',label:'Habits'},
+  {id:'analytics',icon:'&#128200;',label:'Analytics'},
+  {id:'water',icon:'&#128167;',label:'Water'},
+  {id:'quests',icon:'&#11088;',label:'Quests'},
+  {id:'tasks',icon:'&#9998;',label:'Tasks'},
+  {id:'study',icon:'&#128218;',label:'Study'},
+  {id:'leaderboard',icon:'&#127942;',label:'Ranks'},
+  {id:'burned',icon:'&#128293;',label:'Burned'},
+  {id:'plans',icon:'&#128203;',label:'Plans'},
+  {id:'mealplanner',icon:'&#128197;',label:'Meals'},
+  {id:'customdish',icon:'&#127859;',label:'Dish'},
+  {id:'profile',icon:'&#128100;',label:'Profile'},
+];
+function getActiveNavTabs(){
+  if(S.customBottomNav&&S.customBottomNav.length>0)
+    return S.customBottomNav.map(id=>ALL_NAV_OPTIONS.find(o=>o.id===id)).filter(Boolean);
+  return BOT_NAV_TABS;
+}
 function renderBottomNav(){
   let el=document.getElementById('bottom-nav');
   if(!el){el=document.createElement('div');el.id='bottom-nav';el.className='bottom-nav';document.body.appendChild(el);}
   if(currentScreen==='home'){el.style.display='none';return;}
   el.style.display='flex';
-  el.innerHTML=BOT_NAV_TABS.map(t=>`<div class="bottom-nav-item${currentScreen===t.id?' active':''}" onclick="switchScreen('${t.id}')">
+  const tabs=getActiveNavTabs();
+  el.innerHTML=tabs.map(t=>`<div class="bottom-nav-item${currentScreen===t.id?' active':''}" onclick="switchScreen('${t.id}')">
     <span class="bni-icon">${t.icon}</span><span class="bni-label">${t.label}</span>
-  </div>`).join('');
+  </div>`).join('')+
+  `<div class="bottom-nav-item" onclick="openNavEditor()" title="Customize">
+    <span class="bni-icon">&#9881;</span><span class="bni-label">Edit</span>
+  </div>`;
+}
+function openNavEditor(){
+  const current=getActiveNavTabs().map(t=>t.id);
+  const ov=document.createElement('div');ov.className='overlay';ov.id='nav-editor-ov';
+  ov.innerHTML=`<div class="overlay-box" style="max-height:85vh;overflow-y:auto;text-align:left;max-width:420px;width:94%">
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">⚙️ Customize Bottom Nav</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Select up to 6 tabs. Tap to toggle.</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+      ${ALL_NAV_OPTIONS.map(o=>{
+        const sel=current.includes(o.id);
+        return`<div onclick="toggleNavTab('${o.id}',this)" data-id="${o.id}" data-sel="${sel?'1':'0'}" style="padding:10px 6px;border-radius:10px;border:2px solid ${sel?'var(--purple)':'var(--border)'};background:${sel?'var(--purple3)':'var(--bg3)'};text-align:center;cursor:pointer;transition:all .2s">
+          <div style="font-size:20px;margin-bottom:4px">${o.icon}</div>
+          <div style="font-size:9px;color:${sel?'var(--purple)':'var(--text3)'}">${o.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px" id="nav-sel-count">Selected: ${current.length}/6</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" style="flex:1" onclick="saveNavLayout()">Save</button>
+      <button class="btn btn-sm" style="flex:1" onclick="resetNavLayout()">Reset Default</button>
+      <button class="btn btn-sm" style="color:var(--red)" onclick="this.closest('.overlay').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+function toggleNavTab(id,el){
+  const ov=document.getElementById('nav-editor-ov');if(!ov)return;
+  const isSel=el.getAttribute('data-sel')==='1';
+  if(!isSel){
+    const curCount=[...ov.querySelectorAll('[data-id]')].filter(e=>e.getAttribute('data-sel')==='1').length;
+    if(curCount>=6){showNotif('Max 6 tabs allowed','!');return;}
+    el.setAttribute('data-sel','1');
+    el.style.border='2px solid var(--purple)';el.style.background='var(--purple3)';
+    el.querySelector('div:last-child').style.color='var(--purple)';
+  }else{
+    el.setAttribute('data-sel','0');
+    el.style.border='2px solid var(--border)';el.style.background='var(--bg3)';
+    el.querySelector('div:last-child').style.color='var(--text3)';
+  }
+  const cnt=[...ov.querySelectorAll('[data-id]')].filter(e=>e.getAttribute('data-sel')==='1').length;
+  const c=document.getElementById('nav-sel-count');if(c)c.textContent='Selected: '+cnt+'/6';
+}
+function saveNavLayout(){
+  const ov=document.getElementById('nav-editor-ov');if(!ov)return;
+  const sel=[...ov.querySelectorAll('[data-id]')].filter(e=>e.getAttribute('data-sel')==='1').map(e=>e.getAttribute('data-id'));
+  if(sel.length===0){showNotif('Select at least 1 tab','!');return;}
+  S.customBottomNav=sel;persistSave();ov.remove();renderBottomNav();showNotif('Nav updated','✅');
+}
+function resetNavLayout(){
+  S.customBottomNav=[];persistSave();
+  document.getElementById('nav-editor-ov')?.remove();
+  renderBottomNav();showNotif('Reset to default','✅');
 }
 
 // ════════════════════════════
@@ -5740,6 +6036,11 @@ function importData(){
         }
         // Deep merge - preserve new keys, restore old data
         S=Object.assign({},S,imported);
+        // CRITICAL: restore the device ID from backup so friends + leaderboard still work
+        if(imported.deviceId){
+          localStorage.setItem(STORAGE_KEYS.DEVICE_ID, imported.deviceId);
+          S.deviceId=imported.deviceId;
+        }
         persistSave();
         renderScreens();
         showNotif('Data restored! Welcome back, '+imported.player.name+'!','OK');
@@ -6319,7 +6620,7 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v7.3';
+var CHANGELOG_VERSION='v7.4';
 var CHANGELOG_ENTRIES=[
   'Updated local and global leaderboard',
   'Added Sound Effects',
@@ -6703,7 +7004,27 @@ const SFX = (function(){
       noise(t+0.78,0.3,0.09,2200);
     },
 
-    // ── XP GAIN: subtle system tick ──────────────────────
+    // ── WATER: gurgling splash sound ──────────────────────
+    water(){
+      if(!enabled()) return;
+      const c=ctx(), t=c.currentTime;
+      // Bubbling noise bursts
+      [0,0.06,0.13,0.21].forEach(dt=>{
+        const buf=c.createBuffer(1,Math.floor(c.sampleRate*0.08),c.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/d.length*8);
+        const src=c.createBufferSource();src.buffer=buf;
+        const filt=c.createBiquadFilter();filt.type='bandpass';filt.frequency.value=800+Math.random()*400;filt.Q.value=3;
+        const g=c.createGain();g.gain.setValueAtTime(0.12,t+dt);g.gain.exponentialRampToValueAtTime(0.0001,t+dt+0.08);
+        src.connect(filt);filt.connect(g);g.connect(c.destination);
+        src.start(t+dt);src.stop(t+dt+0.1);
+      });
+      // Gentle low rumble
+      const osc=c.createOscillator();const og=c.createGain();
+      osc.type='sine';osc.frequency.value=180;
+      og.gain.setValueAtTime(0,t);og.gain.linearRampToValueAtTime(0.06,t+0.05);og.gain.exponentialRampToValueAtTime(0.0001,t+0.4);
+      osc.connect(og);og.connect(c.destination);osc.start(t);osc.stop(t+0.42);
+    },
     xp(){
       if(!enabled()) return;
       const c=ctx(), t=c.currentTime;
@@ -6726,7 +7047,7 @@ const LeaderboardAPI=(function(){
       try{
         const topStreak=(S.habits||[]).reduce((a,h)=>Math.max(a,h.streak||0),0);
         const body={
-          device_id:S.peerId||'unknown',
+          device_id:S.deviceId||S.peerId||'unknown',
           name:S.profile&&S.profile.name?S.profile.name:(S.player.name||'Hunter'),
           level:S.player.level||1,
           xp:S.player.xp||0,
@@ -6749,7 +7070,7 @@ const LeaderboardAPI=(function(){
     },
     async optOut(){
       try{
-        const id=S.peerId||'unknown';
+        const id=S.deviceId||S.peerId||'unknown';
         const res=await fetch(`${URL}/rest/v1/${TABLE}?device_id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
         return res.ok;
       }catch(e){console.warn('LeaderboardAPI.optOut:',e);return false;}
