@@ -2321,7 +2321,7 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="color:var(--text3);font-size:13px;padding:8px 0">No meals logged.</div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text2)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${i})" style="color:var(--red)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text2)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--red)">×</button></div>`).join('')}`;
 }
 function nn(x){
   return x ? Number(x).toFixed(0) : 0;
@@ -2455,9 +2455,19 @@ function deleteMyFood(i){
   persistSave();showNotif('Removed from My Foods','OK');renderScreens();
 }
 function delN(i){
-  const gi=S.nutrition.entries.indexOf(te[i]);
-  if(gi>-1)S.nutrition.entries.splice(gi,1);
-  persistSave();var _nel=document.getElementById('screen-nutrition');if(_nel&&currentScreen==='nutrition')renderNutrition(_nel);else renderScreens();
+  if(typeof i!=='number' || i<0 || i>=S.nutrition.entries.length) return;
+
+  S.nutrition.entries.splice(i,1);
+
+  persistSave();
+  showNotif('Removed','OK');
+
+  const el=document.getElementById('screen-nutrition');
+  if(el && currentScreen==='nutrition'){
+    renderNutrition(el);
+  }else{
+    renderScreens();
+  }
 }
 function mCard(label,val,goal,unit,color){
   const p=Math.min(100,Math.round(val/goal*100));
@@ -4618,14 +4628,73 @@ function removeDishIngredient(i){dishIngredients.splice(i,1);renderScreens();}
 function logCustomDish(){
   const dishName=document.getElementById('dish-name')?.value?.trim()||'Custom Dish';
   const n=calcDishNutrition();
-  if(n.cal===0){showNotif('Add ingredients first','!');return;}
+
+  if(n.cal===0){
+    showNotif('Add ingredients first','!');
+    return;
+  }
+
   const today=getTodayStr();
+
+  // Log to nutrition diary
   S.nutrition.entries.push({
-    id:Date.now(),name:dishName,date:today,mealType:'meal',
-    nutrients:{cal:n.cal,protein:n.prot||n.protein||0,carbs:n.carbs,fat:n.fat,fiber:n.fiber||0}
+    id:Date.now(),
+    name:dishName,
+    date:today,
+    mealType:'meal',
+    nutrients:{
+      cal:n.cal,
+      protein:n.prot||n.protein||0,
+      carbs:n.carbs,
+      fat:n.fat,
+      fiber:n.fiber||0
+    }
   });
+
+  // Save as reusable custom dish
+  if(!S.customDishes) S.customDishes=[];
+
+  const dishExists=S.customDishes.some(
+    d=>d.name.toLowerCase()===dishName.toLowerCase()
+  );
+
+  if(!dishExists){
+    S.customDishes.push({
+      name:dishName,
+      ingredients:[...dishIngredients],
+      cal:n.cal,
+      protein:n.prot||n.protein||0,
+      carbs:n.carbs,
+      fat:n.fat,
+      fiber:n.fiber||0,
+      source:'manual',
+      date:today
+    });
+  }
+
+  // Also add to searchable foods database
+  if(!S.customFoods) S.customFoods=[];
+
+  const foodExists=S.customFoods.some(
+    f=>f.name.toLowerCase()===dishName.toLowerCase()
+  );
+
+  if(!foodExists){
+    S.customFoods.push({
+      name:dishName,
+      cal:n.cal,
+      protein:n.prot||n.protein||0,
+      carbs:n.carbs,
+      fat:n.fat,
+      fiber:n.fiber||0,
+      source:'dish'
+    });
+  }
+
   persistSave();
+
   showNotif(`${dishName} logged — ${n.cal} kcal`,'OK');
+
   dishIngredients=[];
   renderScreens();
 }
@@ -6775,6 +6844,7 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 var CHANGELOG_VERSION='v7.5';
 var CHANGELOG_ENTRIES=[	
+  'Auto food saves for user defined foods',
   'Additional minor changes and bug fixes',
   'Updated Dashboard, now quests can be completed directly from dashboard',
   'Avatar moved from profile to Dashboard',
