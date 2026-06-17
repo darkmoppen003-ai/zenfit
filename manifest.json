@@ -1,33 +1,39 @@
 {
-  "name": "ZenFit",
+  "name": "ZenFit v7.8 — Health RPG",
   "short_name": "ZenFit",
   "start_url": "https://darkmoppen003-ai.github.io/zenfit/",
   "display": "standalone",
-  "background_color": "#0d0f14",
-  "theme_color": "#161a27",
+  "background_color": "#080A10",
+  "theme_color": "#7B5EFF",
+  "description": "ZenFit is a modern fitness and wellness RPG tracker — workouts, nutrition, hydration, body metrics, habits, and health with a neon cyberpunk interface. Fully offline capable.",
+  "lang": "en",
+  "id": "com.healthsystem.zenfit.v7.8",
+  "dir": "ltr",
+  "scope": "/zenfit/",
+  "orientation": "portrait",
+  "categories": ["fitness", "health", "productivity", "utilities", "lifestyle"],
+  "display_override": ["standalone", "window-controls-overlay"],
   "icons": [
     {
       "src": "zenfit.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "zenfit.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "lang": "en",
-  "id": "com.healthsystem.zenfit",
-  "description": "ZenFit is a modern fitness and wellness tracker designed to help users monitor workouts, nutrition, hydration, body metrics, habits, and overall health with a clean interactive interface.",
-  "dir": "ltr",
-  "scope": "/zenfit/",
-  "orientation": "portrait",
-  "categories": [
-    "fitness",
-    "games",
-    "health",
-    "productivity",
-    "utilities"
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Home",
+      "description": "Open ZenFit Dashboard",
+      "url": "https://darkmoppen003-ai.github.io/zenfit/"
+    }
   ]
 }
