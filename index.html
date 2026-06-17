@@ -2,17 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="theme-color" content="#0d0f14">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ZenFit">
-<meta name="theme-color" content="#0d0f14">
+<meta name="theme-color" content="#7B5EFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ZenFit">
 <link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="zenfit.png">
+<meta name="apple-touch-fullscreen" content="yes">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>ZenFit</title>
 <link rel="icon" href="data:,">
@@ -212,10 +209,10 @@ input[type=text],input[type=number],input[type=email],input[type=search],textare
   background:#1a1e2a!important;color:#e2e8f8!important;
   border:1px solid #2a3050!important;border-radius:8px!important;
   padding:9px 12px!important;width:100%!important;
-  -webkit-appearance:none!important;font-size:14px!important}
+  -webkit-appearance:none!important;appearance:none!important;font-size:14px!important}
 select{background:#1a1e2a!important;color:#e2e8f8!important;
   border:1px solid #2a3050!important;border-radius:8px!important;
-  padding:9px 12px!important;-webkit-appearance:none!important;font-size:14px!important}
+  padding:9px 12px!important;-webkit-appearance:none!important;appearance:none!important;font-size:14px!important}
 .grid2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
 .grid3{display:grid!important;grid-template-columns:1fr 1fr 1fr!important;gap:8px!important}
 .card,.card-sm{padding:14px!important;border-radius:14px!important;margin-bottom:0}
@@ -293,8 +290,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
   justify-content:center;gap:2px;padding:4px 2px;cursor:pointer;border-radius:8px}
 .bottom-nav-item:active{background:#ffffff0a}
 .bni-icon{display:flex;align-items:center;justify-content:center;
-  width:22px;height:22px;color:#8a94b8;transition:color .2s}
-.bni-icon svg{display:block;width:20px;height:20px;stroke:currentColor}
+  width:24px;height:24px;color:#8a94b8;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
+.bni-icon svg{display:block;width:22px;height:22px;stroke:currentColor;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.bottom-nav-item.active .bni-icon svg{transform:scale(1.1);filter:drop-shadow(0 0 6px rgba(123,94,255,.4))}
 .bni-label{font-size:10px;color:#8a94b8;white-space:nowrap;transition:color .2s}
 .bottom-nav-item.active .bni-icon{color:var(--primary)}
 .bottom-nav-item.active .bni-label{color:var(--primary)}
@@ -303,7 +301,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 .aw-home3{
   position:fixed;top:0;left:0;right:0;bottom:0;
   width:100vw;height:100vh;height:100dvh;
-  background:var(--bg-base);
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
   overflow:hidden;padding:0;margin:0;box-sizing:border-box;
   z-index:1;
@@ -358,38 +356,38 @@ body.home-active nav#nav{position:fixed;top:0;left:0;right:0;z-index:100}
 .aw-orb3 .aw-oi3{font-size:clamp(14px,4.5%,26px);line-height:1;filter:drop-shadow(0 0 6px var(--oc));}
 .aw-orb3 .aw-ol3{font-size:clamp(8px,1.9%,12px);font-weight:600;color:var(--text-secondary);
   letter-spacing:.3px;text-align:center;line-height:1.1;}
-.aw-orb-nutrition{left:calc(50.0000% - 8.8889%);top:calc(24.0700% - 8.8889%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
-.aw-orb-nutrition:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
-.aw-orb-water{left:calc(74.6570% - 8.8889%);top:calc(41.9890% - 8.8889%);--oc:#00d4aa;border-color:#00d4aa;background:radial-gradient(circle at 35% 35%,#00d4aa22,#00d4aa08);}
-.aw-orb-water:hover{box-shadow:0 0 24px #00d4aa88;transform:scale(1.15);}
-.aw-orb-workout{left:calc(65.2390% - 8.8889%);top:calc(70.9760% - 8.8889%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
-.aw-orb-workout:hover{box-shadow:0 0 24px #4cdb8a88;transform:scale(1.15);}
-.aw-orb-habits{left:calc(34.7610% - 8.8889%);top:calc(70.9760% - 8.8889%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
-.aw-orb-habits:hover{box-shadow:0 0 24px #c084fc88;transform:scale(1.15);}
-.aw-orb-tasks{left:calc(25.3430% - 8.8889%);top:calc(41.9890% - 8.8889%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
-.aw-orb-tasks:hover{box-shadow:0 0 24px #ff5a5a88;transform:scale(1.15);}
-.aw-orb-study{left:calc(50.0000% - 7.0370%);top:calc(94.0741% - 7.0370%);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
-.aw-orb-study:hover{box-shadow:0 0 24px #f472b688;transform:scale(1.15);}
-.aw-orb-customdish{left:calc(50.0000% - 7.037%);top:calc(5.9300% - 7.037%);--oc:#fb923c;border-color:#fb923c;background:radial-gradient(circle at 35% 35%,#fb923c22,#fb923c08);}
-.aw-orb-customdish:hover{box-shadow:0 0 24px #fb923c88;transform:scale(1.15);}
-.aw-orb-mealplanner{left:calc(75.9037% - 7.037%);top:calc(14.3466% - 7.037%);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
-.aw-orb-mealplanner:hover{box-shadow:0 0 24px #4a9eff88;transform:scale(1.15);}
-.aw-orb-plans{left:calc(91.9131% - 7.037%);top:calc(36.3816% - 7.037%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
-.aw-orb-plans:hover{box-shadow:0 0 24px #4cdb8a88;transform:scale(1.15);}
-.aw-orb-analytics{left:calc(91.9131% - 7.037%);top:calc(63.6184% - 7.037%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
-.aw-orb-analytics:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
-.aw-orb-burned{left:calc(75.9037% - 7.037%);top:calc(85.6534% - 7.037%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
-.aw-orb-burned:hover{box-shadow:0 0 24px #ff5a5a88;transform:scale(1.15);}
-.aw-orb-study{left:calc(50.0000% - 7.037%);top:calc(94.0700% - 7.037%);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
-.aw-orb-study:hover{box-shadow:0 0 24px #f472b688;transform:scale(1.15);}
-.aw-orb-quests{left:calc(24.0963% - 7.037%);top:calc(85.6534% - 7.037%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
-.aw-orb-quests:hover{box-shadow:0 0 24px #f5a62388;transform:scale(1.15);}
-.aw-orb-leaderboard{left:calc(8.0869% - 7.037%);top:calc(63.6184% - 7.037%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
-.aw-orb-leaderboard:hover{box-shadow:0 0 24px #c084fc88;transform:scale(1.15);}
-.aw-orb-screentime{left:calc(8.0869% - 7.037%);top:calc(36.3816% - 7.037%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
-.aw-orb-screentime:hover{box-shadow:0 0 24px #ff5a5a88;transform:scale(1.15);}
-.aw-orb-profile{left:calc(24.0963% - 7.037%);top:calc(14.3466% - 7.037%);--oc:#8a94b8;border-color:#8a94b8;background:radial-gradient(circle at 35% 35%,#8a94b822,#8a94b808);}
-.aw-orb-profile:hover{box-shadow:0 0 24px #8a94b888;transform:scale(1.15);}
+.aw-orb-nutrition{left:calc(50.0000% - 8.8889%);top:calc(24.0700% - 10.4%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-nutrition:hover{box-shadow:0 0 24px #f5a62388;}
+.aw-orb-water{left:calc(74.6570% - 8.8889%);top:calc(41.9890% - 10.4%);--oc:#00d4aa;border-color:#00d4aa;background:radial-gradient(circle at 35% 35%,#00d4aa22,#00d4aa08);}
+.aw-orb-water:hover{box-shadow:0 0 24px #00d4aa88;}
+.aw-orb-workout{left:calc(65.2390% - 8.8889%);top:calc(70.9760% - 10.4%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
+.aw-orb-workout:hover{box-shadow:0 0 24px #4cdb8a88;}
+.aw-orb-habits{left:calc(34.7610% - 8.8889%);top:calc(70.9760% - 10.4%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
+.aw-orb-habits:hover{box-shadow:0 0 24px #c084fc88;}
+.aw-orb-tasks{left:calc(25.3430% - 8.8889%);top:calc(41.9890% - 10.4%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
+.aw-orb-tasks:hover{box-shadow:0 0 24px #ff5a5a88;}
+.aw-orb-study{left:calc(50.0000% - 7.0370%);top:calc(94.0741% - 8.5%);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
+.aw-orb-study:hover{box-shadow:0 0 24px #f472b688;}
+.aw-orb-customdish{left:calc(50.0000% - 7.037%);top:calc(5.9300% - 8.5%);--oc:#fb923c;border-color:#fb923c;background:radial-gradient(circle at 35% 35%,#fb923c22,#fb923c08);}
+.aw-orb-customdish:hover{box-shadow:0 0 24px #fb923c88;}
+.aw-orb-mealplanner{left:calc(75.9037% - 7.037%);top:calc(14.3466% - 8.5%);--oc:#4a9eff;border-color:#4a9eff;background:radial-gradient(circle at 35% 35%,#4a9eff22,#4a9eff08);}
+.aw-orb-mealplanner:hover{box-shadow:0 0 24px #4a9eff88;}
+.aw-orb-plans{left:calc(91.9131% - 7.037%);top:calc(36.3816% - 8.5%);--oc:#4cdb8a;border-color:#4cdb8a;background:radial-gradient(circle at 35% 35%,#4cdb8a22,#4cdb8a08);}
+.aw-orb-plans:hover{box-shadow:0 0 24px #4cdb8a88;}
+.aw-orb-analytics{left:calc(91.9131% - 7.037%);top:calc(63.6184% - 8.5%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-analytics:hover{box-shadow:0 0 24px #f5a62388;}
+.aw-orb-burned{left:calc(75.9037% - 7.037%);top:calc(85.6534% - 8.5%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
+.aw-orb-burned:hover{box-shadow:0 0 24px #ff5a5a88;}
+.aw-orb-study{left:calc(50.0000% - 7.037%);top:calc(94.0700% - 8.5%);--oc:#f472b6;border-color:#f472b6;background:radial-gradient(circle at 35% 35%,#f472b622,#f472b608);}
+.aw-orb-study:hover{box-shadow:0 0 24px #f472b688;}
+.aw-orb-quests{left:calc(24.0963% - 7.037%);top:calc(85.6534% - 8.5%);--oc:#f5a623;border-color:#f5a623;background:radial-gradient(circle at 35% 35%,#f5a62322,#f5a62308);}
+.aw-orb-quests:hover{box-shadow:0 0 24px #f5a62388;}
+.aw-orb-leaderboard{left:calc(8.0869% - 7.037%);top:calc(63.6184% - 8.5%);--oc:#c084fc;border-color:#c084fc;background:radial-gradient(circle at 35% 35%,#c084fc22,#c084fc08);}
+.aw-orb-leaderboard:hover{box-shadow:0 0 24px #c084fc88;}
+.aw-orb-screentime{left:calc(8.0869% - 7.037%);top:calc(36.3816% - 8.5%);--oc:#ff5a5a;border-color:#ff5a5a;background:radial-gradient(circle at 35% 35%,#ff5a5a22,#ff5a5a08);}
+.aw-orb-screentime:hover{box-shadow:0 0 24px #ff5a5a88;}
+.aw-orb-profile{left:calc(24.0963% - 7.037%);top:calc(14.3466% - 8.5%);--oc:#8a94b8;border-color:#8a94b8;background:radial-gradient(circle at 35% 35%,#8a94b822,#8a94b808);}
+.aw-orb-profile:hover{box-shadow:0 0 24px #8a94b888;}
 
 .aw-home2{min-height:100vh;padding:12px 12px 80px;background:var(--bg-base)}
 .aw-hero{display:flex;align-items:center;justify-content:space-between;
@@ -672,17 +670,985 @@ body.home-active nav#nav{position:fixed;top:0;left:0;right:0;z-index:100}
 .splash-ver{font-size:var(--text-xs);color:var(--border-strong);margin-top:2px;letter-spacing:1px;font-family:var(--font-ui)}
 .splash-bar-wrap{margin-top:24px;width:140px;height:3px;background:var(--bg-raised);border-radius:2px;overflow:hidden}
 .splash-bar{height:100%;border-radius:2px;width:0;transition:width .08s linear}
+
+/* ══════════════════════════════════════════════════════════════
+   ZENFIT VISUAL ENHANCEMENTS — Glassmorphism, Animations, Polish
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Animated ambient background ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, color-mix(in srgb, var(--primary) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, color-mix(in srgb, var(--glow2, #00c8ff) 7%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 40% at 50% 80%, color-mix(in srgb, var(--glow1, #f5a635) 6%, transparent) 0%, transparent 50%),
+    var(--bg-base);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--primary) 5%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  background-attachment: fixed;
+}
+
+body.home-active::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, color-mix(in srgb, var(--primary) 13%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 60%, color-mix(in srgb, var(--glow2, #00c8ff) 9%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 40% at 50% 80%, color-mix(in srgb, var(--glow1, #f5a635) 7%, transparent) 0%, transparent 50%),
+    var(--bg-base);
+}
+
+/* ── Animated gradient orb (subtle) ── */
+@keyframes ambientOrb {
+  0% { transform: translate(0,0) scale(1); opacity: .3; }
+  25% { transform: translate(30px,-20px) scale(1.1); opacity: .45; }
+  50% { transform: translate(-10px,30px) scale(.95); opacity: .35; }
+  75% { transform: translate(-30px,-15px) scale(1.05); opacity: .4; }
+  100% { transform: translate(0,0) scale(1); opacity: .3; }
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 8%, transparent) 0%, transparent 70%);
+  top: -200px;
+  right: -200px;
+  z-index: -1;
+  pointer-events: none;
+  animation: ambientOrb 18s ease-in-out infinite;
+}
+
+/* ── Glassmorphism card enhancement ── */
+.card, .card-sm, .card-raised, .plan-card {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .3s ease,
+              border-color .3s ease,
+              background .3s ease;
+}
+
+.card:hover, .card-raised:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(123,94,255,.08);
+  border-color: rgba(123,94,255,.15);
+}
+
+.card-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.3);
+  border-color: rgba(123,94,255,.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card:hover, .card-raised:hover, .card-sm:hover {
+    transform: none;
+  }
+}
+
+/* ── Improved button micro-interactions ── */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.08);
+  opacity: 0;
+  transition: opacity .2s;
+  pointer-events: none;
+}
+
+.btn:hover::after { opacity: 1; }
+
+.btn:active {
+  transform: scale(.96);
+}
+
+.btn-primary::after { background: rgba(255,255,255,.12); }
+
+.btn-primary {
+  text-shadow: 0 1px 2px rgba(0,0,0,.3);
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(123,94,255,.4), 0 0 0 1px rgba(123,94,255,.2);
+}
+
+.btn-success:hover, .btn-green:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34,217,138,.35);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255,77,106,.35);
+}
+
+/* ── XP bar shimmer effect ── */
+.xp-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  animation: xpShimmer 2.8s ease-in-out infinite;
+}
+
+@keyframes xpShimmer {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ── Stat bar smooth fill ── */
+.stat-bar {
+  background-image: linear-gradient(90deg, rgba(255,255,255,.1) 0%, transparent 100%);
+  background-size: 200% 100%;
+}
+
+/* ── Bottom nav enhancement ── */
+.bottom-nav {
+  backdrop-filter: blur(12px) saturate(1.3);
+  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  background: rgba(15,17,24,.85) !important;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+  transition: transform .3s ease;
+}
+
+.bottom-nav-item {
+  position: relative;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.bottom-nav-item:hover {
+  transform: translateY(-2px);
+}
+
+.bottom-nav-item.active {
+  transform: translateY(-2px);
+}
+
+.bottom-nav-item.active .bni-icon {
+  filter: drop-shadow(0 0 8px rgba(123,94,255,.5));
+}
+
+.bottom-nav-item:active {
+  transform: scale(.92);
+}
+
+/* ── Navigation top bar ── */
+nav {
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  background: rgba(15,17,24,.8) !important;
+}
+
+.nav-btn {
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.nav-btn.active {
+  box-shadow: inset 0 -2px 0 var(--primary);
+  text-shadow: 0 0 12px rgba(123,94,255,.4);
+}
+
+/* ── Quest card enhancement ── */
+.quest-card {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.quest-card:not(.done):hover {
+  transform: translateX(4px);
+  background: var(--bg-overlay);
+  border-color: rgba(123,94,255,.2);
+}
+
+.quest-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity .3s;
+  border-radius: 0 2px 2px 0;
+}
+
+.quest-card:not(.done):hover::before {
+  opacity: 1;
+}
+
+.quest-check {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+.quest-check:hover {
+  border-color: var(--primary);
+  box-shadow: 0 0 12px rgba(123,94,255,.3);
+}
+
+/* ── Section title glow ── */
+.section-title {
+  position: relative;
+  display: inline-block;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 24px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 1px;
+  opacity: .5;
+}
+
+/* ── Water tank refinement ── */
+.water-tank {
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+
+.water-tank:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 30px rgba(0,200,255,.15), inset 0 0 30px rgba(0,200,255,.05);
+  border-color: rgba(0,200,255,.35);
+}
+
+.water-tank:active {
+  transform: scale(.97);
+}
+
+/* ── Chart container glass effect ── */
+canvas {
+  border-radius: 8px;
+}
+
+/* ── Overlay/Modal enhancement ── */
+.overlay-box {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(15,17,24,.92) !important;
+}
+
+/* ── Level up animation ── */
+@keyframes rankUpGlow {
+  0% { box-shadow: 0 0 20px rgba(123,94,255,.3); }
+  50% { box-shadow: 0 0 40px rgba(123,94,255,.5), 0 0 80px rgba(123,94,255,.15); }
+  100% { box-shadow: 0 0 20px rgba(123,94,255,.3); }
+}
+
+.overlay-box {
+  animation: popIn .45s cubic-bezier(.34,1.56,.64,1), rankUpGlow 2s ease-in-out infinite;
+}
+
+/* ── Achievement card refinement ── */
+.ach-card.earned {
+  position: relative;
+  overflow: hidden;
+}
+
+.ach-card.earned::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(245,166,53,.06), transparent, rgba(245,166,53,.06), transparent);
+  animation: earnSpin 6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes earnSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Progress bar enhancements ── */
+.xp-bar-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Cal balance banner glow ── */
+.cal-balance-banner {
+  position: relative;
+  overflow: hidden;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.cal-balance-banner:hover {
+  transform: scale(1.01);
+}
+
+.cal-balance-banner.deficit {
+  box-shadow: 0 4px 16px rgba(34,217,138,.12);
+}
+
+.cal-balance-banner.surplus {
+  box-shadow: 0 4px 16px rgba(245,166,53,.12);
+}
+
+.cal-balance-banner.balanced {
+  box-shadow: 0 4px 16px rgba(74,158,255,.12);
+}
+
+/* ── Screen transition ── */
+.screen {
+  animation: fadeIn .35s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── Avatar refinement ── */
+.char-avatar-frame {
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.char-avatar-frame:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 24px rgba(123,94,255,.2);
+}
+
+/* ── Scrollbar enhancement ── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(123,94,255,.3);
+  border-radius: 4px;
+  transition: background .2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(123,94,255,.5);
+}
+
+/* ── Input focus glow ── */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(123,94,255,.15), var(--glow-primary) !important;
+}
+
+/* ── Badge subtle hover ── */
+.badge {
+  transition: all .2s ease;
+}
+
+.badge:hover {
+  filter: brightness(1.2);
+}
+
+/* ── Timer display refinement ── */
+.timer-ring circle {
+  transition: stroke .3s ease;
+}
+
+.timer-display {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 3px;
+  background: linear-gradient(135deg, var(--text-primary), rgba(255,255,255,.7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Habit card refinement ── */
+.habit-card-0, .habit-card-1, .habit-card-2, .habit-card-3,
+.habit-card-4, .habit-card-5, .habit-card-6, .habit-card-7 {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer;
+}
+
+.habit-card-0:hover, .habit-card-1:hover, .habit-card-2:hover, .habit-card-3:hover,
+.habit-card-4:hover, .habit-card-5:hover, .habit-card-6:hover, .habit-card-7:hover {
+  transform: translateX(3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
+
+/* ── Task card enhancement ── */
+.task-card {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  position: relative;
+  overflow: hidden;
+}
+
+.task-card:not(.task-completed):hover {
+  transform: translateX(3px);
+  border-color: rgba(123,94,255,.2);
+}
+
+.task-card.task-overdue {
+  animation: overduePulse 2s ease-in-out infinite;
+}
+
+@keyframes overduePulse {
+  0%, 100% { border-color: rgba(255,90,90,.25); }
+  50% { border-color: rgba(255,90,90,.5); }
+}
+
+/* ── Plan card refinement ── */
+.plan-card {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer;
+}
+
+.plan-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,.3);
+  border-color: rgba(123,94,255,.15);
+}
+
+/* ── Insight card ── */
+.insight {
+  transition: all .2s ease;
+}
+
+.insight:hover {
+  background: var(--bg-overlay);
+  border-left-color: var(--primary);
+}
+
+/* ── Minimal scroll snap for sections ── */
+#screens {
+  scroll-behavior: smooth;
+}
+
+/* ── Nav editor icon sizing ── */
+.bni-icon svg, [onclick*="toggleNavTab"] svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ── Gradient text utility ── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--info));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Notif refinement ── */
+.notif {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15,17,24,.9) !important;
+  border: 1px solid rgba(123,94,255,.2) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px rgba(123,94,255,.1) !important;
+}
+
+.notif-xp {
+  border-color: var(--primary) !important;
+}
+
+/* ── Fitness score ring hover ── */
+.fs-ring-wrap {
+  transition: transform .3s ease;
+  cursor: pointer;
+}
+
+.fs-ring-wrap:hover {
+  transform: scale(1.08);
+}
+
+/* ── Rank badge hover ── */
+.rank-badge {
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  cursor: pointer;
+}
+
+.rank-badge:hover {
+  transform: scale(1.15) rotate(-5deg);
+  box-shadow: 0 0 20px rgba(123,94,255,.2);
+}
+
+/* ── Loading shimmer for dynamic content ── */
+@keyframes skeletonPulse {
+  0% { opacity: .6; }
+  50% { opacity: 1; }
+  100% { opacity: .6; }
+}
+
+.skeleton {
+  background: var(--bg-overlay);
+  border-radius: 8px;
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+/* ── Character card evolution glow ── */
+.char-evo-step.evo-current {
+  animation: currentEvoPulse 2s ease-in-out infinite;
+  border-color: var(--primary) !important;
+}
+
+@keyframes currentEvoPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(123,94,255,.2); }
+  50% { box-shadow: 0 0 16px rgba(123,94,255,.4); }
+}
+
+/* ── Button group refinement ── */
+.chart-tab-bar {
+  background: rgba(22,27,38,.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.chart-tab {
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+.chart-tab:hover {
+  background: rgba(123,94,255,.1);
+  color: var(--text-primary);
+}
+
+.chart-tab.active {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+}
+
+/* ── Top nav scroll indicator ── */
+nav::-webkit-scrollbar {
+  height: 0;
+}
+
+/* ── Responsive polish ── */
+@media (max-width: 400px) {
+  .timer-display {
+    font-size: 32px;
+  }
+  .aw-hero-stats {
+    gap: 6px;
+  }
+  .bni-label {
+    font-size: 8px;
+    max-width: 40px;
+  }
+  .section-title {
+    font-size: 10px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .card:hover, .card-raised:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.4);
+  }
+  .card-sm:hover {
+    transform: translateY(-2px);
+  }
+}
+
+/* ── Honour reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   NEON HOME SCREEN — Orbital Redesign
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Ambient glow backgrounds ── */
+.aw-home3 {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw; height: 100vh; height: 100dvh;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 0; margin: 0; z-index: 1;
+}
+
+.bg-glow-orb {
+  position: fixed; border-radius: 50%; filter: blur(120px);
+  opacity: 0.12; pointer-events: none; z-index: 0;
+  animation: bgPulse 8s ease-in-out infinite alternate;
+}
+.bg-glow-orb:nth-of-type(1) {
+  width: 500px; height: 500px;
+  background: var(--glow1, #39ff14); top: -150px; left: -150px;
+  animation-delay: 0s;
+}
+.bg-glow-orb:nth-of-type(2) {
+  width: 400px; height: 400px;
+  background: var(--glow2, #bf00ff); bottom: -100px; right: -100px;
+  animation-delay: 2s;
+}
+.bg-glow-orb:nth-of-type(3) {
+  width: 350px; height: 350px;
+  background: var(--glow3, #00ffff); top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 4s; opacity: 0.05;
+}
+.bg-glow-orb:nth-of-type(4) {
+  width: 280px; height: 280px;
+  background: var(--glow1, #39ff14); top: 10%; right: -60px;
+  animation-delay: 1s; opacity: 0.07;
+}
+.bg-glow-orb:nth-of-type(5) {
+  width: 300px; height: 300px;
+  background: var(--glow2, #bf00ff); bottom: 5%; left: -80px;
+  animation-delay: 3s; opacity: 0.08;
+}
+.bg-glow-orb:nth-of-type(6) {
+  width: 200px; height: 200px;
+  background: var(--glow3, #00ffff); top: 30%; right: 15%;
+  animation-delay: 5s; opacity: 0.06;
+}
+
+@keyframes bgPulse {
+  0% { transform: scale(1); opacity: 0.08; }
+  50% { transform: scale(1.2); opacity: 0.16; }
+  100% { transform: scale(0.85); opacity: 0.06; }
+}
+
+/* ── Particles canvas ── */
+#particles-canvas {
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+}
+
+/* ── Orbital rings ── */
+.aw-ring1, .aw-ring2 {
+  pointer-events: none;
+}
+.aw-ring1 {
+  animation: orbRingPulse1 3s ease-in-out infinite;
+}
+.aw-ring2 {
+  animation: orbRingPulse2 4s ease-in-out infinite 0.5s;
+}
+@keyframes orbRingPulse1 {
+  0%, 100% { opacity: 0.25; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%,-50%) scale(1.03); }
+}
+@keyframes orbRingPulse2 {
+  0%, 100% { opacity: 0.2; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 0.5; transform: translate(-50%,-50%) scale(1.025); }
+}
+
+/* ── Center orb ── */
+.aw-center3 {
+  background: radial-gradient(circle at 35% 35%, #1a1060, #0a0620);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 40px rgba(124,111,255,.5), 0 0 80px rgba(124,111,255,.2),
+              inset 0 0 30px rgba(124,111,255,.08);
+  cursor: pointer; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; z-index: 20;
+  animation: centerPulse 2.5s ease-in-out infinite;
+  transition: transform .4s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .4s ease;
+  overflow: hidden;
+}
+.aw-center3:hover {
+  transform: translate(-50%,-50%) scale(1.12);
+  box-shadow: 0 0 60px rgba(124,111,255,.7), 0 0 100px rgba(124,111,255,.35),
+              0 0 160px rgba(124,111,255,.15);
+}
+@keyframes centerPulse {
+  0%, 100% { box-shadow: 0 0 40px rgba(124,111,255,.5), 0 0 80px rgba(124,111,255,.2); }
+  50% { box-shadow: 0 0 60px rgba(124,111,255,.7), 0 0 120px rgba(124,111,255,.35); }
+}
+
+/* ── Orb Wrapper (positioned container) ── */
+.aw-orb3 {
+  position: absolute;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  z-index: 10;
+  cursor: pointer;
+  transition: transform .45s cubic-bezier(.34,1.56,.64,1);
+  will-change: transform;
+  animation: orbFloat 6s ease-in-out infinite;
+}
+.aw-orb3:hover { animation-play-state: paused; }
+.aw-orb3:active { transform: scale(0.95) !important; }
+
+.aw-orb3-inner { width: 17.78%; }
+.aw-orb3-outer { width: 14.07%; }
+
+/* ── Orb Circle ── */
+.aw-orb3-circle {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 50%; border: 1.5px solid;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: all .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+.aw-orb3-circle::after {
+  content: '';
+  position: absolute; inset: 4px; border-radius: 50%;
+  background: rgba(10,12,20,.55);
+  z-index: 0; pointer-events: none;
+  transition: opacity .5s ease;
+}
+
+.aw-orb3 .aw-oi3 {
+  position: relative; z-index: 1;
+  width: 40%; height: 40%;
+  filter: drop-shadow(0 0 5px var(--oc));
+  transition: transform .5s cubic-bezier(.34,1.56,.64,1);
+}
+
+.aw-orb3 .aw-oi3 svg { width: 100%; height: 100%; display: block; }
+
+/* ── Orb Label (below orb, outside circle) ── */
+.aw-orb3 .aw-orb3-label {
+  font-size: clamp(7px, 1.5%, 10px);
+  font-weight: 600; color: var(--text-muted);
+  letter-spacing: .5px; text-align: center;
+  text-transform: uppercase;
+  line-height: 1.2; white-space: nowrap;
+  transition: color .3s ease;
+}
+
+/* ── Hover states ── */
+.aw-orb3:hover .aw-orb3-circle {
+  transform: scale(1.25);
+}
+
+.aw-orb3:hover .aw-orb3-circle::after {
+  opacity: 0.3;
+}
+
+.aw-orb3:hover .aw-oi3 {
+  transform: scale(0.85);
+}
+
+.aw-orb3:hover .aw-orb3-label {
+  color: var(--text-primary);
+}
+
+/* ── Individual orb color variants (matching homescreen.html style) ── */
+.aw-orb-nutrition .aw-orb3-circle {
+  --oc: #f5a623;
+  border-color: rgba(245,166,35,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(245,166,35,0.15), rgba(245,166,35,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(245,166,35,0.08), inset 0 0 20px rgba(245,166,35,0.02);
+}
+.aw-orb-nutrition:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(245,166,35,0.45), 0 0 100px rgba(245,166,35,0.12), inset 0 0 30px rgba(245,166,35,0.05); border-color: rgba(245,166,35,0.6); }
+
+.aw-orb-water .aw-orb3-circle {
+  --oc: #00d4aa;
+  border-color: rgba(0,212,170,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(0,212,170,0.15), rgba(0,212,170,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(0,212,170,0.08), inset 0 0 20px rgba(0,212,170,0.02);
+}
+.aw-orb-water:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(0,212,170,0.45), 0 0 100px rgba(0,212,170,0.12), inset 0 0 30px rgba(0,212,170,0.05); border-color: rgba(0,212,170,0.6); }
+
+.aw-orb-workout .aw-orb3-circle {
+  --oc: #4cdb8a;
+  border-color: rgba(76,219,138,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(76,219,138,0.15), rgba(76,219,138,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(76,219,138,0.08), inset 0 0 20px rgba(76,219,138,0.02);
+}
+.aw-orb-workout:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(76,219,138,0.45), 0 0 100px rgba(76,219,138,0.12), inset 0 0 30px rgba(76,219,138,0.05); border-color: rgba(76,219,138,0.6); }
+
+.aw-orb-habits .aw-orb3-circle {
+  --oc: #c084fc;
+  border-color: rgba(192,132,252,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(192,132,252,0.15), rgba(192,132,252,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(192,132,252,0.08), inset 0 0 20px rgba(192,132,252,0.02);
+}
+.aw-orb-habits:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(192,132,252,0.45), 0 0 100px rgba(192,132,252,0.12), inset 0 0 30px rgba(192,132,252,0.05); border-color: rgba(192,132,252,0.6); }
+
+.aw-orb-tasks .aw-orb3-circle {
+  --oc: #ff5a5a;
+  border-color: rgba(255,90,90,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(255,90,90,0.15), rgba(255,90,90,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(255,90,90,0.08), inset 0 0 20px rgba(255,90,90,0.02);
+}
+.aw-orb-tasks:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(255,90,90,0.45), 0 0 100px rgba(255,90,90,0.12), inset 0 0 30px rgba(255,90,90,0.05); border-color: rgba(255,90,90,0.6); }
+
+.aw-orb-study .aw-orb3-circle {
+  --oc: #f472b6;
+  border-color: rgba(244,114,182,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(244,114,182,0.15), rgba(244,114,182,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(244,114,182,0.08), inset 0 0 20px rgba(244,114,182,0.02);
+}
+.aw-orb-study:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(244,114,182,0.45), 0 0 100px rgba(244,114,182,0.12), inset 0 0 30px rgba(244,114,182,0.05); border-color: rgba(244,114,182,0.6); }
+
+.aw-orb-customdish .aw-orb3-circle {
+  --oc: #fb923c;
+  border-color: rgba(251,146,60,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(251,146,60,0.15), rgba(251,146,60,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(251,146,60,0.08), inset 0 0 20px rgba(251,146,60,0.02);
+}
+.aw-orb-customdish:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(251,146,60,0.45), 0 0 100px rgba(251,146,60,0.12), inset 0 0 30px rgba(251,146,60,0.05); border-color: rgba(251,146,60,0.6); }
+
+.aw-orb-mealplanner .aw-orb3-circle {
+  --oc: #4a9eff;
+  border-color: rgba(74,158,255,0.3);
+  background: radial-gradient(circle at 30% 30%, rgba(74,158,255,0.15), rgba(74,158,255,0.03) 60%, transparent 80%);
+  box-shadow: 0 0 20px rgba(74,158,255,0.08), inset 0 0 20px rgba(74,158,255,0.02);
+}
+.aw-orb-mealplanner:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(74,158,255,0.45), 0 0 100px rgba(74,158,255,0.12), inset 0 0 30px rgba(74,158,255,0.05); border-color: rgba(74,158,255,0.6); }
+
+.aw-orb-plans .aw-orb3-circle { --oc: #4cdb8a; border-color: rgba(76,219,138,0.3); background: radial-gradient(circle at 30% 30%, rgba(76,219,138,0.15), rgba(76,219,138,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(76,219,138,0.08), inset 0 0 20px rgba(76,219,138,0.02); }
+.aw-orb-plans:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(76,219,138,0.45), 0 0 100px rgba(76,219,138,0.12); border-color: rgba(76,219,138,0.6); }
+
+.aw-orb-analytics .aw-orb3-circle { --oc: #f5a623; border-color: rgba(245,166,35,0.3); background: radial-gradient(circle at 30% 30%, rgba(245,166,35,0.15), rgba(245,166,35,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(245,166,35,0.08), inset 0 0 20px rgba(245,166,35,0.02); }
+.aw-orb-analytics:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(245,166,35,0.45), 0 0 100px rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.6); }
+
+.aw-orb-burned .aw-orb3-circle { --oc: #ff5a5a; border-color: rgba(255,90,90,0.3); background: radial-gradient(circle at 30% 30%, rgba(255,90,90,0.15), rgba(255,90,90,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(255,90,90,0.08), inset 0 0 20px rgba(255,90,90,0.02); }
+.aw-orb-burned:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(255,90,90,0.45), 0 0 100px rgba(255,90,90,0.12); border-color: rgba(255,90,90,0.6); }
+
+.aw-orb-quests .aw-orb3-circle { --oc: #f5a623; border-color: rgba(245,166,35,0.3); background: radial-gradient(circle at 30% 30%, rgba(245,166,35,0.15), rgba(245,166,35,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(245,166,35,0.08), inset 0 0 20px rgba(245,166,35,0.02); }
+.aw-orb-quests:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(245,166,35,0.45), 0 0 100px rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.6); }
+
+.aw-orb-leaderboard .aw-orb3-circle { --oc: #c084fc; border-color: rgba(192,132,252,0.3); background: radial-gradient(circle at 30% 30%, rgba(192,132,252,0.15), rgba(192,132,252,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(192,132,252,0.08), inset 0 0 20px rgba(192,132,252,0.02); }
+.aw-orb-leaderboard:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(192,132,252,0.45), 0 0 100px rgba(192,132,252,0.12); border-color: rgba(192,132,252,0.6); }
+
+.aw-orb-screentime .aw-orb3-circle { --oc: #ff5a5a; border-color: rgba(255,90,90,0.3); background: radial-gradient(circle at 30% 30%, rgba(255,90,90,0.15), rgba(255,90,90,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(255,90,90,0.08), inset 0 0 20px rgba(255,90,90,0.02); }
+.aw-orb-screentime:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(255,90,90,0.45), 0 0 100px rgba(255,90,90,0.12); border-color: rgba(255,90,90,0.6); }
+
+.aw-orb-profile .aw-orb3-circle { --oc: #8a94b8; border-color: rgba(138,148,184,0.3); background: radial-gradient(circle at 30% 30%, rgba(138,148,184,0.15), rgba(138,148,184,0.03) 60%, transparent 80%); box-shadow: 0 0 20px rgba(138,148,184,0.08), inset 0 0 20px rgba(138,148,184,0.02); }
+.aw-orb-profile:hover .aw-orb3-circle { box-shadow: 0 0 50px rgba(138,148,184,0.45), 0 0 100px rgba(138,148,184,0.12); border-color: rgba(138,148,184,0.6); }
+
+/* ── Floating animation delays ── */
+.aw-orb-nutrition { animation-delay: 0s; }
+.aw-orb-water { animation-delay: 0.5s; }
+.aw-orb-workout { animation-delay: 1s; }
+.aw-orb-habits { animation-delay: 1.5s; }
+.aw-orb-tasks { animation-delay: 2s; }
+.aw-orb-study { animation-delay: 2.5s; }
+.aw-orb-customdish { animation-delay: 0.3s; }
+.aw-orb-mealplanner { animation-delay: 0.8s; }
+.aw-orb-plans { animation-delay: 1.3s; }
+.aw-orb-analytics { animation-delay: 1.8s; }
+.aw-orb-burned { animation-delay: 2.3s; }
+.aw-orb-quests { animation-delay: 0.1s; }
+.aw-orb-leaderboard { animation-delay: 0.6s; }
+.aw-orb-screentime { animation-delay: 1.1s; }
+.aw-orb-profile { animation-delay: 1.6s; }
+
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ── Preview card ── */
+.preview-card {
+  position: fixed; z-index: 200; pointer-events: none;
+  opacity: 0; transform: translateY(10px) scale(0.95);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: rgba(18,18,26,0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 16px 20px; min-width: 200px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+.preview-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+.preview-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.preview-card .preview-metric {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; font-size: 0.82rem; color: var(--text-secondary);
+}
+.preview-card .preview-metric .val {
+  font-weight: 600; color: var(--text-primary);
+}
+.preview-card .preview-bar {
+  height: 3px; border-radius: 3px; background: rgba(255,255,255,0.06);
+  margin-top: 8px; overflow: hidden;
+}
+.preview-card .preview-bar-fill {
+  height: 100%; border-radius: 3px; transition: width 0.6s ease;
+}
+
+/* ── Bottom stat badges on home ── */
+.home-stats-row {
+  position: fixed; bottom: 64px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 10px; white-space: nowrap;
+  background: rgba(8,10,16,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 5px 12px; border-radius: 14px;
+  z-index: 30; pointer-events: auto;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+.home-stat-badge {
+  text-align: center; padding: 6px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; font-size: 10px; cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+.home-stat-badge:hover {
+  transform: translateY(-2px);
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
+}
+
+@media (max-width: 500px) {
+  .home-stat-badge { padding: 4px 8px; font-size: 9px; }
+  .aw-center3 { width: 19%; height: 19%; }
+}
+
+@media (min-width: 768px) {
+  .aw-orb3-inner { width: 17.78%; height: 17.78%; }
+  .aw-orb3-outer { width: 14.07%; height: 14.07%; }
+}
 </style>
 </head>
 <body>
 <img id="zenfit-logo-data" src="zenfit.png" style="display:none" alt="">
 
 
+<div class="bg-glow-orb"></div>
+<div class="bg-glow-orb"></div>
+<div class="bg-glow-orb"></div>
+<div class="bg-glow-orb"></div>
+<div class="bg-glow-orb"></div>
+<div class="bg-glow-orb"></div>
+<canvas id="particles-canvas"></canvas>
+<div class="preview-card" id="previewCard">
+  <h3 id="previewTitle">Category</h3>
+  <div id="previewMetrics"></div>
+  <div class="preview-bar">
+    <div class="preview-bar-fill" id="previewBarFill" style="width: 0%"></div>
+  </div>
+</div>
 <div id="splash" class="splash">
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v7.5</div>
+  <div class="splash-ver">v7.8</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -733,8 +1699,8 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v7.5";
-const APP_BUILD="2026.06.12.29";
+const APP_VERSION="v7.8";
+const APP_BUILD="2026.06.17.01";
 
 // TUTORIAL SYSTEM
 // ================
@@ -1485,8 +2451,11 @@ function updStat(stat,amt=1){S.player.stats[stat]=Math.min(100,(S.player.stats[s
 // ════════════════════════════
 function showNotif(msg,icon='+'){
   const el=document.createElement('div');el.className='notif';
-  el.innerHTML=`<span style="margin-right:6px">${icon}</span>${msg}`;
-  document.body.appendChild(el);setTimeout(()=>el.remove(),2800);
+  const iconClass = icon==='XP'?'notif-xp':(icon==='★'?'notif-success':(icon==='!'||icon==='×')?'notif-danger':'');
+  if(iconClass) el.classList.add(iconClass);
+  el.innerHTML=`<span style="margin-right:8px;font-size:16px">${icon==='XP'?'⚡':icon==='★'?'🏆':icon==='OK'?'✓':icon==='!'?'⚠️':icon}</span><span>${msg}</span>`;
+  document.body.appendChild(el);
+  setTimeout(()=>{el.style.transition='opacity .3s,transform .3s';el.style.opacity='0';el.style.transform='translateX(40px)';setTimeout(()=>el.remove(),350);},2600);
   if(icon==='XP') SFX.xp();
   else if(icon==='★') SFX.achievement();
   else SFX.notif();
@@ -1497,16 +2466,54 @@ function showLevelUp(lvl){
   const isRankUp=newRank!==oldRank;
   if(isRankUp) SFX.rankup(); else SFX.levelup();
   const ov=document.createElement('div');ov.className='overlay';
-  ov.innerHTML=`<div class="overlay-box">
-    <div style="font-size:44px;margin-bottom:8px"><svg width="44" height="44" viewBox="0 0 24 24" fill="#f5a623"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-    <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px">${isRankUp?'RANK UP':'LEVEL UP'}</div>
-    <div style="font-size:52px;font-weight:700;font-family:var(--font-display);color:var(--primary);margin:8px 0">Lv.${lvl}</div>
-    ${isRankUp?`<div style="font-size:20px;font-weight:700;font-family:var(--font-display)${RANK_COLORS[newRank]||'#888'};margin-bottom:4px">RANK ${newRank} UNLOCKED</div>`:''}
-    <div style="color:var(--text-secondary);font-size:13px;margin-bottom:20px">You grow stronger, Hunter.</div>
-    <button class="btn btn-primary" onclick="this.closest('.overlay').remove()">Continue</button>
+  const rc=RANK_COLORS[newRank]||'var(--primary)';
+  ov.innerHTML=`<div class="overlay-box" style="border-color:${rc};box-shadow:0 0 40px ${rc}44,0 0 80px ${rc}22,var(--shadow-lg)">
+    <div style="position:relative">
+      ${isRankUp?`<div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:48px;animation:levelUpBounce .6s cubic-bezier(.34,1.56,.64,1)">${newRank==='S'?'👑':newRank==='A'?'⚡':newRank==='B'?'🛡️':newRank==='C'?'🏹':'🗡️'}</div>`:''}
+      <div style="font-size:44px;margin-bottom:4px;margin-top:${isRankUp?'10px':'0'}">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="${isRankUp?rc:'#f5a623'}">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+        </svg>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);letter-spacing:2px;font-weight:600">${isRankUp?'RANK UP':'LEVEL UP'}</div>
+    <div style="font-size:52px;font-weight:700;font-family:var(--font-display);color:${isRankUp?rc:'var(--primary)'};margin:8px 0;text-shadow:0 0 20px ${isRankUp?rc+'88':'rgba(123,94,255,.5)'}">Lv.${lvl}</div>
+    ${isRankUp?`<div style="font-size:18px;font-weight:800;font-family:var(--font-display);color:${rc};margin-bottom:2px;letter-spacing:2px">RANK ${newRank} UNLOCKED</div>
+    <div style="font-size:12px;color:${rc}88">${RANK_CLASS_NAMES?.[newRank]||'Hunter'}</div>`:''}
+    <div style="color:var(--text-secondary);font-size:13px;margin:${isRankUp?'12px':'16px'} 0 20px">You grow stronger, Hunter.</div>
+    <button class="btn btn-primary" onclick="this.closest('.overlay').remove()" style="${isRankUp?`background:${rc};border-color:${rc};box-shadow:0 0 20px ${rc}66`:''}">Continue</button>
   </div>`;
   document.body.appendChild(ov);
+  // Add particle burst effect for rank up
+  if(isRankUp) setTimeout(()=>{try{createParticles(ov);}catch(e){}}, 100);
 }
+
+function createParticles(container){
+  const box=container.querySelector('.overlay-box');
+  if(!box)return;
+  const colors=['#7B5EFF','#F5A623','#4CDB8A','#FF4D6A','#00C8FF','#C084FC'];
+  for(let i=0;i<30;i++){
+    const p=document.createElement('div');
+    const size=4+Math.random()*8;
+    const color=colors[Math.floor(Math.random()*colors.length)];
+    const x=20+Math.random()*60;
+    const y=20+Math.random()*60;
+    const tx=(Math.random()-0.5)*120;
+    const ty=-40-Math.random()*120;
+    p.style.cssText=`position:absolute;width:${size}px;height:${size}px;border-radius:50%;background:${color};left:${x}%;top:${y}%;pointer-events:none;z-index:1;opacity:0;animation:particleBurst .8s ease-out forwards;--tx:${tx}px;--ty:${ty}px`;
+    p.style.animationDelay=(Math.random()*0.15)+'s';
+    box.appendChild(p);
+    setTimeout(()=>p.remove(),1200);
+  }
+}
+
+// Dynamically add particle animation keyframe
+(function(){
+  const style=document.createElement('style');
+  style.textContent=`@keyframes levelUpBounce{0%{transform:translateX(-50%) scale(0) rotate(-20deg);opacity:0}60%{transform:translateX(-50%) scale(1.3) rotate(5deg);opacity:1}100%{transform:translateX(-50%) scale(1) rotate(0);opacity:1}}
+@keyframes particleBurst{0%{opacity:0;transform:translate(0,0) scale(0)}20%{opacity:1;transform:translate(calc(var(--tx)*.3),calc(var(--ty)*.3)) scale(1)}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(.2)}}`;
+  document.head.appendChild(style);
+})();
 
 // ════════════════════════════
 // EXERCISE HELPER
@@ -1940,7 +2947,7 @@ function render(){
   }
 }
 function renderNav(){
-  var homeB='<button class="nav-btn" onclick="switchScreen(\x27home\x27)" style="color:var(--primary);border:1px solid var(--primary-dim);margin-right:6px">&#8962; Home</button>';
+  var homeB='<button class="nav-btn" onclick="switchScreen(\x27home\x27)" style="color:var(--primary);border:1px solid var(--primary-dim);margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>';
   var tabs=SCREENS.map(function(s){
     var a=currentScreen===s.id?' active':'';
     return '<button class="nav-btn'+a+'" onclick="switchScreen(\x27'+s.id+'\x27)">'+s.label+'</button>';
@@ -1985,69 +2992,120 @@ function renderAWHome(el){
   var water=todayWater(),waterP=Math.min(100,Math.round((water/S.water.dailyGoalMl)*100));
   var nut=todayNutrition(),calP=Math.min(100,Math.round((nut.cal/S.nutrition.dailyGoal.cal)*100));
   
+  // SVG icons for each category
+  var svgs={
+    nutrition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',
+    water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M12 3C7 8 5 12 5 16a7 7 0 0 0 14 0C19 12 17 8 12 3z"/></svg>',
+    workout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M6.5 6.5 17.5 17.5"/><path d="M17.5 6.5l-11 11"/><circle cx="6" cy="6" r="3.5"/><circle cx="18" cy="18" r="3.5"/></svg>',
+    habits: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+    tasks: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+    customdish: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M7 12V7a5 5 0 0 1 10 0v5"/><rect x="5" y="12" width="14" height="5" rx="2"/><path d="M17 9a3 3 0 0 1 0 3"/></svg>',
+    mealplanner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+    plans: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+    analytics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+    burned: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>',
+    quests: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+    study: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    leaderboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 6 9 6 9z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 18 9 18 9z"/><path d="M4 22h16"/><path d="M10 22V8h4v14"/><path d="M7 22V2h10v20"/></svg>',
+    screentime: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+  };
+  
+  // Preview card data
+  window._previewData = window._previewData || {
+    nutrition: { title: 'Nutrition', metrics: [ {label:'Calories',value:nut.cal+'/'+S.nutrition.dailyGoal.cal}, {label:'Protein',value:'--'}, {label:'Carbs',value:'--'} ], progress: Math.round((nut.cal/S.nutrition.dailyGoal.cal)*100) },
+    water: { title: 'Water Intake', metrics: [ {label:'Today',value:Math.round(water/10)/100+'L'}, {label:'Goal',value:S.water.dailyGoalMl/1000+'L'}, {label:'Remaining',value:Math.max(0,Math.round((S.water.dailyGoalMl-water)/10)/100+'L')} ], progress: waterP },
+    workout: { title: 'Workout', metrics: [ {label:'Today',value:(S.workouts||[]).filter(w=>w.date===today).length+' sessions'}, {label:'Cal Burned',value:'--'} ], progress: 0 },
+    habits: { title: 'Habits', metrics: [ {label:'Done',value:(S.habits||[]).filter(h=>h.completedDates?.includes(today)).length+'/'+(S.habits||[]).length} ], progress: (S.habits||[]).length ? Math.round((S.habits||[]).filter(h=>h.completedDates?.includes(today)).length/(S.habits||[]).length*100) : 0 },
+    tasks: { title: 'Tasks', metrics: [ {label:'Due',value:'--'}, {label:'Done',value:'--'} ], progress: 50 },
+    customdish: { title: 'Custom Dish', metrics: [ {label:'Create',value:'Your recipe'} ], progress: 0 },
+    mealplanner: { title: 'Meal Planner', metrics: [ {label:'Plan',value:'Weekly meals'} ], progress: 0 },
+    plans: { title: 'Plans', metrics: [ {label:'Active',value:'--'} ], progress: 0 },
+    analytics: { title: 'Analytics', metrics: [ {label:'7-day',value:'Trends'}, {label:'30-day',value:'Progress'} ], progress: 0 },
+    burned: { title: 'Calories Burned', metrics: [ {label:'Today',value:todayBurned()+' cal'}, {label:'Goal',value:'500 cal'} ], progress: Math.min(100,Math.round(todayBurned()/500*100)) },
+    quests: { title: 'Quests', metrics: [ {label:'Active',value:(S.quests.list||[]).filter(q=>!q.done).length}, {label:'Done',value:(S.quests.list||[]).filter(q=>q.done).length} ], progress: (S.quests.list||[]).length ? Math.round((S.quests.list||[]).filter(q=>q.done).length/(S.quests.list||[]).length*100) : 0 },
+    study: { title: 'Study', metrics: [ {label:'Today',value:(S.study.sessions||[]).filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0)+' min'} ], progress: 0 },
+    leaderboard: { title: 'Leaderboard', metrics: [ {label:'Rank',value:p.rank}, {label:'Level',value:p.level} ], progress: 0 },
+    screentime: { title: 'Screen Time', metrics: [ {label:'Limit',value:S.screenTimeLimit+' min'} ], progress: 0 },
+    profile: { title: 'Profile', metrics: [ {label:'Level',value:p.level}, {label:'Rank',value:p.rank} ], progress: xpP }
+  };
+  
   // Inner ring tabs (5)
   var innerTabs=[
-    
-    {id:'nutrition',  icon:'&#127869;', lbl:'Nutrition',  color:'#f5a623'},
-    {id:'water',      icon:'&#128167;', lbl:'Water',      color:'#00d4aa'},
-    {id:'workout',    icon:'&#127947;', lbl:'Workout',    color:'#4cdb8a'},
-    {id:'habits',     icon:'&#9745;',   lbl:'Habits',     color:'#c084fc'},
-    {id:'tasks',      icon:'&#9998;',   lbl:'Tasks',      color:'#ff5a5a'},
+    {id:'nutrition',  svg:svgs.nutrition, lbl:'Nutrition',  color:'#f5a623'},
+    {id:'water',      svg:svgs.water,     lbl:'Water',      color:'#00d4aa'},
+    {id:'workout',    svg:svgs.workout,   lbl:'Workout',    color:'#4cdb8a'},
+    {id:'habits',     svg:svgs.habits,    lbl:'Habits',     color:'#c084fc'},
+    {id:'tasks',      svg:svgs.tasks,     lbl:'Tasks',      color:'#ff5a5a'},
   ];
   // Outer ring tabs (10)
   var outerTabs=[
-    {id:'customdish', icon:'&#127859;', lbl:'Dish',      color:'#fb923c'},
-    {id:'mealplanner',icon:'&#128197;', lbl:'Meals',     color:'#4a9eff'},
-    {id:'plans',      icon:'&#128203;', lbl:'Plans',     color:'#4cdb8a'},
-    {id:'analytics',  icon:'&#128200;', lbl:'Stats',     color:'#f5a623'},
-    {id:'burned',     icon:'&#128293;', lbl:'Burned',    color:'#ff5a5a'},
-    {id:'quests',     icon:'&#11088;',  lbl:'Quests',    color:'#f5a623'},
-    {id:'study',      icon:'&#128218;', lbl:'Study',     color:'#f472b6'},
-    {id:'leaderboard',icon:'&#127942;', lbl:'Ranks',     color:'#c084fc'},
-        {id:'screentime', icon:'&#128241;', lbl:'Screen',    color:'#ff5a5a'},
-    {id:'profile',  icon:'&#128100;', lbl:'Profile', color:'#8a94b8'},
+    {id:'customdish', svg:svgs.customdish, lbl:'Dish',      color:'#fb923c'},
+    {id:'mealplanner',svg:svgs.mealplanner,lbl:'Meals',     color:'#4a9eff'},
+    {id:'plans',      svg:svgs.plans,      lbl:'Plans',     color:'#4cdb8a'},
+    {id:'analytics',  svg:svgs.analytics,  lbl:'Stats',     color:'#f5a623'},
+    {id:'burned',     svg:svgs.burned,     lbl:'Burned',    color:'#ff5a5a'},
+    {id:'quests',     svg:svgs.quests,     lbl:'Quests',    color:'#f5a623'},
+    {id:'study',      svg:svgs.study,      lbl:'Study',     color:'#f472b6'},
+    {id:'leaderboard',svg:svgs.leaderboard,lbl:'Ranks',     color:'#c084fc'},
+    {id:'screentime', svg:svgs.screentime, lbl:'Screen',    color:'#ff5a5a'},
+    {id:'profile',    svg:svgs.profile,    lbl:'Profile',   color:'#8a94b8'},
   ];
   
+  // Update preview data with live values
+  var pd = window._previewData;
+  pd.nutrition.metrics[0].value = nut.cal+'/'+S.nutrition.dailyGoal.cal;
+  pd.nutrition.progress = Math.round((nut.cal/S.nutrition.dailyGoal.cal)*100);
+  pd.water.metrics[0].value = Math.round(water/10)/100+'L';
+  pd.water.metrics[2].value = Math.max(0,Math.round((S.water.dailyGoalMl-water)/10)/100)+'L';
+  pd.water.progress = waterP;
+  pd.burned.metrics[0].value = todayBurned()+' cal';
+  pd.burned.progress = Math.min(100,Math.round(todayBurned()/500*100));
+  pd.profile.metrics[0].value = p.level;
+  pd.profile.progress = xpP;
+  pd.workout.metrics[0].value = (S.workouts||[]).filter(function(w){return w.date===today}).length+' sessions';
+  pd.habits.metrics[0].value = (S.habits||[]).filter(function(h){return h.completedDates&&h.completedDates.includes(today)}).length+'/'+(S.habits||[]).length;
+  var hDone = (S.habits||[]).filter(function(h){return h.completedDates&&h.completedDates.includes(today)}).length;
+  pd.habits.progress = (S.habits||[]).length ? Math.round(hDone/(S.habits||[]).length*100) : 0;
+
   function makeOrb(t,sizeClass){
-    return '<div class="aw-orb3 '+sizeClass+' aw-orb-'+t.id+'" onclick="switchScreen(\''+t.id+'\')">'+
-      '<div class="aw-oi3">'+t.icon+'</div>'+
+    return '<div class="aw-orb3 '+sizeClass+' aw-orb-'+t.id+'" data-category="'+t.id+'" onclick="switchScreen(\''+t.id+'\')" onmouseenter="showPreviewCard(event,\''+t.id+'\')" onmouseleave="hidePreviewCard()">'+
+      '<div class="aw-oi3" style="color:'+t.color+'">'+t.svg+'</div>'+
       '<div class="aw-ol3">'+t.lbl+'</div>'+
     '</div>';
   }
+  
+  var greeting='Good evening';
+  var h=new Date().getHours();
+  if(h<12)greeting='Good morning';else if(h<17)greeting='Good afternoon';
   
   el.innerHTML=
     '<div class="aw-home3">'+
       '<div class="aw-orbital-wrap">'+
         '<div class="aw-ring1"></div>'+
         '<div class="aw-ring2"></div>'+
-        // Inner ring orbs
         innerTabs.map(function(t){return makeOrb(t,'aw-orb3-inner');}).join('')+
-        // Outer ring orbs
         outerTabs.map(function(t){return makeOrb(t,'aw-orb3-outer');}).join('')+
-        // Center orb
         '<div class="aw-center3" onclick="switchScreen(\'dashboard\')">'+
-          (S.profilePic?'<img src="'+S.profilePic+'" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--primary)" alt="Profile">':('<img src="'+ZENFIT_LOGO+'" style="width:56px;height:56px;border-radius:50%;object-fit:contain" alt="ZF" onerror="this.style.display=\'none\'">')+'')+
-          '<div style="font-size:10px;font-weight:700;color:#fff;letter-spacing:1px">'+(p.name||'Warrior').toUpperCase().slice(0,8)+'</div>'+
+          (S.profilePic
+            ? '<img src="'+S.profilePic+'" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);box-shadow:0 0 20px rgba(124,111,255,.3)" alt="Profile">'
+            : '<img src="'+ZENFIT_LOGO+'" style="width:56px;height:56px;border-radius:50%;object-fit:contain" alt="ZF" onerror="this.style.display=\'none\'">')+
+          '<div style="font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;text-shadow:0 0 10px rgba(124,111,255,.5)">'+(p.name||'Warrior').toUpperCase().slice(0,8)+'</div>'+
         '</div>'+
-        // Stats overlay bottom
-        '<div style="position:absolute;bottom:-56px;left:50%;transform:translateX(-50%);'+
-          'display:flex;gap:12px;white-space:nowrap">'+
-          '<div style="text-align:center;padding:6px 10px;background:rgba(124,111,255,.15);'+
-            'border:1px solid rgba(124,111,255,.3);border-radius:8px;font-size:10px;">'+
-            '<div style="color:var(--primary);font-weight:700">Lv.'+p.level+'</div>'+
-            '<div style="color:var(--text-muted)">'+xpP+'% XP</div>'+
-          '</div>'+
-          '<div style="text-align:center;padding:6px 10px;background:rgba(0,212,170,.1);'+
-            'border:1px solid rgba(0,212,170,.25);border-radius:8px;font-size:10px;">'+
-            '<div style="color:#00d4aa;font-weight:700">'+waterP+'%</div>'+
-            '<div style="color:var(--text-muted)">Water</div>'+
-          '</div>'+
-          '<div style="text-align:center;padding:6px 10px;background:rgba(245,166,35,.1);'+
-            'border:1px solid rgba(245,166,35,.25);border-radius:8px;font-size:10px;">'+
-            '<div style="color:#f5a623;font-weight:700">'+calP+'%</div>'+
-            '<div style="color:var(--text-muted)">Cals</div>'+
-          '</div>'+
-        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="home-stats-row">'+
+      '<div class="home-stat-badge" onclick="switchScreen(\'profile\')">'+
+        '<div style="color:var(--primary);font-weight:700">Lv.'+p.level+'</div>'+
+        '<div style="color:var(--text-muted)">'+xpP+'% XP</div>'+
+      '</div>'+
+      '<div class="home-stat-badge" onclick="switchScreen(\'water\')">'+
+        '<div style="color:#00d4aa;font-weight:700">'+waterP+'%</div>'+
+        '<div style="color:var(--text-muted)">Water</div>'+
+      '</div>'+
+      '<div class="home-stat-badge" onclick="switchScreen(\'nutrition\')">'+
+        '<div style="color:#f5a623;font-weight:700">'+calP+'%</div>'+
+        '<div style="color:var(--text-muted)">Cals</div>'+
       '</div>'+
     '</div>';
 }
@@ -5457,29 +6515,49 @@ function getCalBalance(){
 // ════════════════════════════
 // BOTTOM NAV (Android)
 // ════════════════════════════
-const BOT_NAV_TABS=[
-  {id:'dashboard',icon:'&#9783;',label:'Dashboard'},
-  {id:'nutrition',icon:'&#127869;',label:'Nutrition'},
-  {id:'workout',icon:'&#127947;',label:'Workout'},
-  {id:'habits',icon:'&#9745;',label:'Habits'},
-  {id:'analytics',icon:'&#128200;',label:'Analytics'},
-];
+/* ── SVG Icons for Bottom Nav ── */
+const NAV_ICONS = {
+  dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>',
+  nutrition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>',
+  workout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5"/><path d="M14.5 6.5 3.5 17.5"/><path d="m20.5 2.5-1 1"/><path d="m3.5 20.5-1 1"/></svg>',
+  habits: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  analytics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+  water: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3C7 8 5 12 5 16a7 7 0 0 0 14 0C19 12 17 8 12 3z"/></svg>',
+  quests: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+  tasks: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+  study: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  leaderboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 9 7 9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 9 17 9"/><path d="M4 22h16"/><path d="M10 22V8h4v14"/><path d="M10 4H8"/><path d="M16 4h-2"/></svg>',
+  burned: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  plans: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>',
+  mealplanner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  customdish: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12V7a5 5 0 0 1 10 0v5"/><rect x="5" y="12" width="14" height="5" rx="2"/><path d="M17 9a3 3 0 0 1 0 3"/></svg>',
+  profile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+};
+
 const ALL_NAV_OPTIONS=[
-  {id:'dashboard',icon:'&#9783;',label:'Dashboard'},
-  {id:'nutrition',icon:'&#127869;',label:'Nutrition'},
-  {id:'workout',icon:'&#127947;',label:'Workout'},
-  {id:'habits',icon:'&#9745;',label:'Habits'},
-  {id:'analytics',icon:'&#128200;',label:'Analytics'},
-  {id:'water',icon:'&#128167;',label:'Water'},
-  {id:'quests',icon:'&#11088;',label:'Quests'},
-  {id:'tasks',icon:'&#9998;',label:'Tasks'},
-  {id:'study',icon:'&#128218;',label:'Study'},
-  {id:'leaderboard',icon:'&#127942;',label:'Ranks'},
-  {id:'burned',icon:'&#128293;',label:'Burned'},
-  {id:'plans',icon:'&#128203;',label:'Plans'},
-  {id:'mealplanner',icon:'&#128197;',label:'Meals'},
-  {id:'customdish',icon:'&#127859;',label:'Dish'},
-  {id:'profile',icon:'&#128100;',label:'Profile'},
+  {id:'dashboard',icon:NAV_ICONS.dashboard,label:'Dashboard'},
+  {id:'nutrition',icon:NAV_ICONS.nutrition,label:'Nutrition'},
+  {id:'workout',icon:NAV_ICONS.workout,label:'Workout'},
+  {id:'habits',icon:NAV_ICONS.habits,label:'Habits'},
+  {id:'analytics',icon:NAV_ICONS.analytics,label:'Analytics'},
+  {id:'water',icon:NAV_ICONS.water,label:'Water'},
+  {id:'quests',icon:NAV_ICONS.quests,label:'Quests'},
+  {id:'tasks',icon:NAV_ICONS.tasks,label:'Tasks'},
+  {id:'study',icon:NAV_ICONS.study,label:'Study'},
+  {id:'leaderboard',icon:NAV_ICONS.leaderboard,label:'Ranks'},
+  {id:'burned',icon:NAV_ICONS.burned,label:'Burned'},
+  {id:'plans',icon:NAV_ICONS.plans,label:'Plans'},
+  {id:'mealplanner',icon:NAV_ICONS.mealplanner,label:'Meals'},
+  {id:'customdish',icon:NAV_ICONS.customdish,label:'Dish'},
+  {id:'profile',icon:NAV_ICONS.profile,label:'Profile'},
+];
+
+const BOT_NAV_TABS=[
+  {id:'dashboard',icon:NAV_ICONS.dashboard,label:'Dashboard'},
+  {id:'nutrition',icon:NAV_ICONS.nutrition,label:'Nutrition'},
+  {id:'workout',icon:NAV_ICONS.workout,label:'Workout'},
+  {id:'habits',icon:NAV_ICONS.habits,label:'Habits'},
+  {id:'analytics',icon:NAV_ICONS.analytics,label:'Analytics'},
 ];
 function getActiveNavTabs(){
   if(S.customBottomNav&&S.customBottomNav.length>0)
@@ -5489,14 +6567,13 @@ function getActiveNavTabs(){
 function renderBottomNav(){
   let el=document.getElementById('bottom-nav');
   if(!el){el=document.createElement('div');el.id='bottom-nav';el.className='bottom-nav';document.body.appendChild(el);}
-  if(currentScreen==='home'){el.style.display='none';return;}
   el.style.display='flex';
   const tabs=getActiveNavTabs();
   el.innerHTML=tabs.map(t=>`<div class="bottom-nav-item${currentScreen===t.id?' active':''}" onclick="switchScreen('${t.id}')">
     <span class="bni-icon">${t.icon}</span><span class="bni-label">${t.label}</span>
   </div>`).join('')+
   `<div class="bottom-nav-item" onclick="openNavEditor()" title="Customize">
-    <span class="bni-icon">&#9881;</span><span class="bni-label">Edit</span>
+    <span class="bni-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="bni-label">Edit</span>
   </div>`;
 }
 function openNavEditor(){
@@ -5645,11 +6722,11 @@ if(typeof Chart !== 'undefined'){
 // THEMES
 // ════════════════════════════════════════════════════
 const THEMES={
-  dark:{name:'Dark (Default)',bgBase:'#080A10',bgSurface:'#0F1118',bgRaised:'#161B26',bgOverlay:'#1E2435',borderMid:'#2a3050',primary:'#7c6fff',textPrimary:'#e2e8f8',textSecondary:'#b8c2dc',textMuted:'#8a94b8'},
-  amoled:{name:'AMOLED Black',bgBase:'#000000',bgSurface:'#0a0a0a',bgRaised:'#111111',bgOverlay:'#1a1a1a',borderMid:'#222222',primary:'#7c6fff',textPrimary:'#ffffff',textSecondary:'#cccccc',textMuted:'#888888'},
-  midnight:{name:'Midnight Blue',bgBase:'#050a1a',bgSurface:'#0a1228',bgRaised:'#0f1a38',bgOverlay:'#142048',borderMid:'#1e3060',primary:'#4a9eff',textPrimary:'#e8f0ff',textSecondary:'#a8c0e8',textMuted:'#6888b8'},
-  frost:{name:'Frozen Steel',bgBase:'#0e1318',bgSurface:'#171e26',bgRaised:'#202833',bgOverlay:'#293340',borderMid:'#3a4757',primary:'#8fcfff',textPrimary:'#f3f8ff',textSecondary:'#c3d5e8',textMuted:'#8ca3bb'},
-  obsidian:{name:'Obsidian Violet',bgBase:'#07070d',bgSurface:'#10101a',bgRaised:'#171726',bgOverlay:'#1e1f31',borderMid:'#313452',primary:'#9b7cff',textPrimary:'#f4f1ff',textSecondary:'#c7bde8',textMuted:'#9388ba'},
+  dark:{name:'Dark (Default)',bgBase:'#080A10',bgSurface:'#0F1118',bgRaised:'#161B26',bgOverlay:'#1E2435',borderMid:'#2a3050',primary:'#7c6fff',textPrimary:'#e2e8f8',textSecondary:'#b8c2dc',textMuted:'#8a94b8',glow1:'#7c6fff',glow2:'#00d4ff',glow3:'#bf00ff',p_hue:'250'},
+  amoled:{name:'AMOLED Black',bgBase:'#000000',bgSurface:'#0a0a0a',bgRaised:'#111111',bgOverlay:'#1a1a1a',borderMid:'#222222',primary:'#7c6fff',textPrimary:'#ffffff',textSecondary:'#cccccc',textMuted:'#888888',glow1:'#7c6fff',glow2:'#00d4ff',glow3:'#bf00ff',p_hue:'250'},
+  midnight:{name:'Midnight Blue',bgBase:'#050a1a',bgSurface:'#0a1228',bgRaised:'#0f1a38',bgOverlay:'#142048',borderMid:'#1e3060',primary:'#4a9eff',textPrimary:'#e8f0ff',textSecondary:'#a8c0e8',textMuted:'#6888b8',glow1:'#4a9eff',glow2:'#00d4aa',glow3:'#7c6fff',p_hue:'210'},
+  frost:{name:'Frozen Steel',bgBase:'#0e1318',bgSurface:'#171e26',bgRaised:'#202833',bgOverlay:'#293340',borderMid:'#3a4757',primary:'#8fcfff',textPrimary:'#f3f8ff',textSecondary:'#c3d5e8',textMuted:'#8ca3bb',glow1:'#8fcfff',glow2:'#a8e0ff',glow3:'#c084fc',p_hue:'220'},
+  obsidian:{name:'Obsidian Violet',bgBase:'#07070d',bgSurface:'#10101a',bgRaised:'#171726',bgOverlay:'#1e1f31',borderMid:'#313452',primary:'#9b7cff',textPrimary:'#f4f1ff',textSecondary:'#c7bde8',textMuted:'#9388ba',glow1:'#9b7cff',glow2:'#ff6bff',glow3:'#00ccff',p_hue:'255'},
 };
 function applyTheme(key){
   const t=THEMES[key];if(!t)return;
@@ -5660,6 +6737,8 @@ function applyTheme(key){
   r.setProperty('--border-mid',t.borderMid);r.setProperty('--primary',t.primary);
   r.setProperty('--text-primary',t.textPrimary);r.setProperty('--text-secondary',t.textSecondary);
   r.setProperty('--text-muted',t.textMuted);
+  r.setProperty('--glow1',t.glow1);r.setProperty('--glow2',t.glow2);r.setProperty('--glow3',t.glow3);
+  r.setProperty('--particle-hue',t.p_hue);
   document.body.style.background=t.bgBase;
   document.getElementById('splash')?.remove();
   showNotif(`Theme: ${t.name}`,'OK');
@@ -6730,6 +7809,13 @@ function requestNotifPermission(){
 
 function fireLocalNotif(title,body){
   if(!('Notification' in window)||Notification.permission!=='granted')return;
+   if(navigator.serviceWorker&&navigator.serviceWorker.controller){
+     navigator.serviceWorker.controller.postMessage({
+       type:'SHOW_NOTIFICATION',
+       payload:{title:title,body:body,tag:title,url:'./'}
+     });
+     return;
+   }
   try{new Notification(title,{body:body,silent:false,tag:title});}
   catch(e){try{new Notification(title);}catch(e2){}}
 }
@@ -6739,12 +7825,23 @@ function scheduleWaterReminders(){
   if(!ns.water||!ns.water.enabled)return;
   var ms=(ns.water.intervalMins||90)*60000;
   var id=setInterval(function(){
-    if(document.hidden)return;
     var pct=Math.min(100,Math.round(todayWater()/(S.water.dailyGoalMl||3000)*100));
     if(pct>=100)return;
-    fireLocalNotif('[ SYSTEM ALERT ] Hydration Check','Water: '+pct+'% — Stay hydrated, hunter.');
+    fireLocalNotif('[ ZenFit ] Hydration Check','💧 Water: '+pct+'% — Stay hydrated, hunter.');
   },ms);
   _notifTimers.push(id);
+  if('serviceWorker' in navigator && navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({
+      type:'SCHEDULE_REMINDER',
+      payload:{
+        title:'💧 Hydration Check',
+        body:'Time to drink water, hunter! Stay hydrated.',
+        tag:'zenfit-water',
+        url:'/',
+        delayMs:ms
+      }
+    });
+  }
 }
 
 function scheduleTaskReminder(task){
@@ -6793,6 +7890,8 @@ function initNotifications(){
   scheduleWaterReminders();
   scheduleDailyReminders();
   (getTasksDueToday()||[]).forEach(function(t){if(!t.completedAt)scheduleTaskReminder(t);});
+  // Ensure push subscription is active if permission granted
+  if(Notification.permission==='granted'&&_swReg) subscribeToPush(_swReg);
 }
 
 function saveNotifSetting(type,key,val){
@@ -6823,7 +7922,7 @@ function renderNotifSettings(containerId){
         '<div style="font-size:13px;font-weight:600;color:var(--text-primary)">Enable Notifications</div>'+
         '<div style="font-size:11px;color:var(--text-muted)">System-style alerts. No server — fully local.</div>'+
       '</div>'+
-      '<button class="btn btn-primary btn-sm" onclick="requestNotifPermission().then(function(ok){if(ok){initNotifications();renderNotifSettings(\'notif-settings-box\');}})">Enable</button>'+
+      '<button class="btn btn-primary btn-sm" onclick="requestNotifAndSubscribe().then(function(ok){if(ok){initNotifications();renderNotifSettings(\'notif-settings-box\');}})">Enable</button>'+
     '</div>';
   }
   html+='<div style="display:flex;flex-direction:column;gap:10px">';
@@ -6867,29 +7966,23 @@ function renderNotifSettings(containerId){
   '<div class="flex-between"><span style="font-size:12px;color:var(--text-muted)">At hour</span>'+
   '<div class="flex gap6"><input type="number" value="'+streakHour+'" min="0" max="23" style="width:60px;text-align:center" onchange="saveNotifSetting(\'streak\',\'hour\',+this.value)">'+
   '<span style="font-size:12px;color:var(--text-muted)">:00</span></div></div></div>';
-  html+='</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.6">All reminders run locally on your device. No server required. Notifications fire while the app tab is open.</div>';
+  html+='</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px;line-height:1.6">All reminders run locally on your device. Service worker delivers notifications even when the app is in the background.</div>';
   el.innerHTML=html;
 }
 
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v7.5';
+var CHANGELOG_VERSION='v7.8';
 var CHANGELOG_ENTRIES=[	
-  'Auto food saves for user defined foods',
-  'Additional minor changes and bug fixes',
-  'Updated Dashboard, now quests can be completed directly from dashboard',
-  'Avatar moved from profile to Dashboard',
-  'Center orb now redirects to dashbpard instead of profile',
-  'Foods that are manually added will get autosaved to user profile and can be later on logged through standard procedure no need to add all nutrients again',
-  'Updated local and global leaderboard',
-  'Added Sound Effects',
-  'Minor updates and Updated Analytics Section',
-  'Minor Themes Color Correction and Addition',
-  'New Tasks system — set tasks with difficulty, time window, and repeat schedule',
-  'Tasks linked to Discipline stat — on-time completion = +3 Discipline',
-  'Overdue tasks trigger XP penalty to simulate real consequence',
-  'Repeating tasks: Once, Daily, Weekdays, Alternate Days, Mon–Sat, Custom',
+  'v7.8 Major Visual Update — complete UI overhaul with enhanced neon aesthetics',
+  'Rewritten Service Worker — intelligent caching for full offline support',
+  'Service Worker auto-updates as soon as connection is restored',
+  'Enhanced Notification System — reminders fire even when app is in background',
+  'Water reminders now work reliably outside the app via Service Worker',
+  'New splash screen animation and improved loading experience',
+  'Optimized asset caching — rank GIFs and CDN libraries cached for offline use',
+  'Background Sync support — pending notifications delivered on reconnect',
 ];
 
 function checkChangelog(){
@@ -7340,21 +8433,239 @@ setTimeout(function(){checkAchievements();},200);
 setTimeout(function(){syncGlobalIfOptedIn();},1500);
 
 // ── SERVICE WORKER REGISTRATION ──────────────────────
+var _swReg = null;
+var _swUpdatePending = false;
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('/zenfit/sw.js').then(function(reg){
-      // Background update check — notify user if new version available
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      _swReg = reg;
+
       reg.addEventListener('updatefound', function(){
-        const newWorker = reg.installing;
+        var newWorker = reg.installing;
+        if(!newWorker) return;
         newWorker.addEventListener('statechange', function(){
           if(newWorker.state==='installed' && navigator.serviceWorker.controller){
-            showNotif('Update available — reload to get the latest ZenFit','⚡');
+            _swUpdatePending = true;
+            showNotif('⚡ Update v7.8 ready — reloading...','');
+            setTimeout(function(){
+              newWorker.postMessage({type:'SKIP_WAITING'});
+            }, 1000);
           }
         });
       });
+
+      // Subscribe to push if permission already granted
+      if(Notification.permission==='granted') subscribeToPush(reg);
+
+      // Register periodic sync for water reminders
+      if(reg.periodicSync){
+        reg.periodicSync.register('zenfit-water-reminder', {
+          minInterval: 60 * 60 * 1000
+        }).catch(function(){});
+      }
     }).catch(function(e){ console.warn('SW registration failed:',e); });
   });
+
+  // Listen for controller change to auto-reload
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(_swUpdatePending){
+      _swUpdatePending = false;
+      window.location.reload();
+    }
+  });
 }
+
+function subscribeToPush(reg) {
+  if(!reg||!reg.pushManager) return;
+  reg.pushManager.getSubscription().then(function(sub){
+    if(sub) return;
+    // For production, generate VAPID keys and pass applicationServerKey
+    reg.pushManager.subscribe({userVisibleOnly:true}).then(function(subscription){
+      console.log('Push subscription active:', JSON.stringify(subscription));
+    }).catch(function(e){
+      if(e.code===20||e.name==='AbortError') return; // VAPID required on HTTPS
+    });
+  });
+}
+
+function requestNotifAndSubscribe() {
+  return requestNotifPermission().then(function(ok){
+    if(ok&&_swReg) subscribeToPush(_swReg);
+    return ok;
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// NEON HOME — Particle System & Preview Card
+// ══════════════════════════════════════════════════════════════
+
+(function initParticleSystem(){
+  var canvas = document.getElementById('particles-canvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var mouseX = -9999, mouseY = -9999;
+  var animId;
+  
+  function resize(){
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  
+  function getThemeHue(){
+    var val = getComputedStyle(document.body).getPropertyValue('--particle-hue').trim();
+    return val ? parseInt(val) : 220;
+  }
+  function Particle(){
+    this.reset = function(){
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.4;
+      this.speedY = (Math.random() - 0.5) * 0.4;
+      this.opacity = Math.random() * 0.5 + 0.1;
+      var baseHue = getThemeHue();
+      this.hue = Math.random() * 40 + baseHue - 20;
+      this.pulse = Math.random() * Math.PI * 2;
+      this.pulseSpeed = Math.random() * 0.02 + 0.01;
+    };
+    this.reset();
+    
+    this.update = function(){
+      this.x += this.speedX;
+      this.y += this.speedY;
+      this.pulse += this.pulseSpeed;
+      
+      var dx = this.x - mouseX;
+      var dy = this.y - mouseY;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if(dist < 200){
+        var force = (200 - dist) / 200 * 0.3;
+        this.x += dx / dist * force;
+        this.y += dy / dist * force;
+      }
+      
+      if(this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height){
+        this.reset();
+      }
+    };
+    
+    this.draw = function(){
+      var pulseOpacity = this.opacity * (0.6 + 0.4 * Math.sin(this.pulse));
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + this.hue + ', 80%, 60%, ' + pulseOpacity + ')';
+      ctx.fill();
+      
+      if(this.size > 1.5){
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = 'hsla(' + this.hue + ', 80%, 60%, ' + (pulseOpacity * 0.15) + ')';
+        ctx.fill();
+      }
+    };
+  }
+  
+  function initParticles(){
+    var count = Math.min(Math.floor(canvas.width * canvas.height / 6000), 120);
+    particles = [];
+    for(var i = 0; i < count; i++) particles.push(new Particle());
+  }
+  initParticles();
+  
+  function animate(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for(var i = 0; i < particles.length; i++){
+      particles[i].update();
+      particles[i].draw();
+    }
+    for(var i = 0; i < particles.length; i++){
+      for(var j = i + 1; j < particles.length; j++){
+        var dx = particles[i].x - particles[j].x;
+        var dy = particles[i].y - particles[j].y;
+        var dist = dx * dx + dy * dy;
+        if(dist < 14400){
+          var opacity = (1 - dist / 14400) * 0.12;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = 'rgba(124,111,255,' + opacity + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    animId = requestAnimationFrame(animate);
+  }
+  
+  document.addEventListener('mousemove', function(e){
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+  
+  document.addEventListener('touchmove', function(e){
+    var t = e.touches[0];
+    mouseX = t.clientX;
+    mouseY = t.clientY;
+  }, { passive: true });
+  
+  animate();
+})();
+
+// ── Preview Card ──
+window.showPreviewCard = function(e, cat){
+  var data = window._previewData && window._previewData[cat];
+  if(!data) return;
+  var card = document.getElementById('previewCard');
+  if(!card) return;
+  
+  document.getElementById('previewTitle').textContent = data.title;
+  var colors = { nutrition:'#f5a623', water:'#00d4aa', workout:'#4cdb8a', habits:'#c084fc', tasks:'#ff5a5a',
+    customdish:'#fb923c', mealplanner:'#4a9eff', plans:'#4cdb8a', analytics:'#f5a623', burned:'#ff5a5a',
+    quests:'#f5a623', study:'#f472b6', leaderboard:'#c084fc', screentime:'#ff5a5a', profile:'#8a94b8' };
+  var color = colors[cat] || 'var(--primary)';
+  document.getElementById('previewTitle').style.color = color;
+  
+  var mContainer = document.getElementById('previewMetrics');
+  mContainer.innerHTML = data.metrics.map(function(m){
+    return '<div class="preview-metric"><span>' + m.label + '</span><span class="val">' + m.value + '</span></div>';
+  }).join('');
+  
+  var bar = document.getElementById('previewBarFill');
+  bar.style.width = Math.min(100, Math.max(0, data.progress || 0)) + '%';
+  bar.style.background = 'linear-gradient(90deg, ' + color + ', ' + color + '88)';
+  
+  card.classList.add('visible');
+  
+  var rect = e.target.closest('.aw-orb3').getBoundingClientRect();
+  var orbCenterX = rect.left + rect.width / 2;
+  var orbTop = rect.top;
+  var cardW = 200;
+  
+  var left = orbCenterX - cardW / 2;
+  var top = orbTop - card.offsetHeight - 16;
+  
+  if(top < 12){
+    top = rect.bottom + 12;
+  }
+  if(left < 12) left = 12;
+  if(left + cardW > window.innerWidth - 12){
+    left = window.innerWidth - cardW - 12;
+  }
+  
+  card.style.left = left + 'px';
+  card.style.top = top + 'px';
+};
+
+window.hidePreviewCard = function(){
+  setTimeout(function(){
+    var card = document.getElementById('previewCard');
+    if(card) card.classList.remove('visible');
+  }, 150);
+};
+
 persistLoad();
 </script>
 
