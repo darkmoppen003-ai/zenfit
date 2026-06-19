@@ -1,9 +1,16 @@
-// ZenFit Service Worker v7.8 — Major Visual Update
-// Full offline support + background notifications
+// ZenFit Service Worker
+// Full offline support + background notifications + auto-update
 
-const CACHE = 'zenfit-v7.8';
-const STATIC_CACHE = 'zenfit-static-v7.8';
-const DYNAMIC_CACHE = 'zenfit-dynamic-v7.8';
+// ── BUILD INFO (auto-updated by update-build.js) ───
+const SW_BUILD = "2026.06.19.4";
+const SCHEMA_VERSION = 1;
+
+// Cache names derived from build — changes on every deploy
+// forces browser to detect SW update and refresh all caches
+const CACHE = `zenfit-${SW_BUILD}`;
+const STATIC_CACHE = `zenfit-static-${SW_BUILD}`;
+const DYNAMIC_CACHE = `zenfit-dynamic-${SW_BUILD}`;
+const BUILD_CACHE = `zenfit-build-${SW_BUILD}`;
 
 const PRECACHE = [
   './',
@@ -52,6 +59,14 @@ const NEVER_CACHE_HOSTS = [
 // Install — precache core shell + static assets
 self.addEventListener('install', e => {
   const precacheAll = async () => {
+    // Store build metadata for cross-session build tracking
+    const metaCache = await caches.open(BUILD_CACHE);
+    await metaCache.put('zenfit-build-meta', new Response(JSON.stringify({
+      build: SW_BUILD,
+      schema: SCHEMA_VERSION,
+      timestamp: Date.now()
+    })));
+
     const cache = await caches.open(CACHE);
     await cache.addAll(PRECACHE);
     const staticCache = await caches.open(STATIC_CACHE);
@@ -60,11 +75,12 @@ self.addEventListener('install', e => {
   e.waitUntil(precacheAll().then(() => self.skipWaiting()));
 });
 
-// Activate — clean old caches, claim clients
+// Activate — clean old caches (including previous builds), claim clients
 self.addEventListener('activate', e => {
   const cleanCache = async () => {
     const keys = await caches.keys();
-    const keep = [CACHE, STATIC_CACHE, DYNAMIC_CACHE];
+    const keep = [CACHE, STATIC_CACHE, DYNAMIC_CACHE, BUILD_CACHE];
+    // Delete any cache that doesn't match this build — ensures no stale data survives a deploy
     await Promise.all(keys.filter(k => !keep.includes(k)).map(k => caches.delete(k)));
     await self.clients.claim();
   };
@@ -182,6 +198,36 @@ self.addEventListener('message', e => {
 
     case 'SCHEDULE_REMINDER':
       scheduleReminderViaSW(data.payload);
+      break;
+
+    case 'GET_VERSION':
+      // Main thread asks for current SW build info
+      if (e.source) {
+        e.source.postMessage({
+          type: 'VERSION_INFO',
+          build: SW_BUILD,
+          schema: SCHEMA_VERSION
+        });
+      }
+      break;
+
+    case 'BUILD_UPDATED':
+      // Main thread notified us of a new build — soft refresh
+      if (data && data.schemaVersion && data.schemaVersion !== SCHEMA_VERSION) {
+        // Schema version mismatch — clear all caches for clean slate
+        caches.keys().then(keys =>
+          Promise.all(keys.map(k => caches.delete(k)))
+        );
+      }
+      break;
+
+    case 'CLEAR_ALL_CACHES':
+      // Force clear everything (manual or migration trigger)
+      caches.keys().then(keys =>
+        Promise.all(keys.map(k => caches.delete(k)))
+      ).then(() => {
+        if (e.source) e.source.postMessage({ type: 'CACHES_CLEARED' });
+      });
       break;
   }
 });

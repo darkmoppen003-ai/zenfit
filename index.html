@@ -1691,7 +1691,54 @@ const safeFetch = async function(url, opts){
 };
 
 const APP_VERSION="v7.9";
-const APP_BUILD="2026.06.19.3";
+const APP_BUILD="2026.06.19.4";
+
+// ── BUILD / SCHEMA VERSION CHECK ────────────────────
+// Runs on every page load. When APP_BUILD changes (new deploy),
+// it runs schema migrations and notifies the Service Worker.
+(function(){
+  var lastBuild = localStorage.getItem('zf_build');
+  var lastSchema = parseInt(localStorage.getItem('zf_schema') || '0', 10);
+  var currentSchema = 1; // bump this when localStorage/IndexedDB schema changes
+
+  if (APP_BUILD && lastBuild !== APP_BUILD) {
+    // Run pending schema migrations step-wise
+    for (var v = lastSchema + 1; v <= currentSchema; v++) {
+      try {
+        if (typeof schemaMigrations[v] === 'function') {
+          schemaMigrations[v]();
+          console.log('[ZF] Schema migrated v' + (v-1) + ' → v' + v);
+        }
+      } catch (e) {
+        console.warn('[ZF] Schema migration v' + v + ' failed:', e);
+      }
+    }
+
+    // Persist new versions
+    localStorage.setItem('zf_build', APP_BUILD);
+    localStorage.setItem('zf_schema', String(currentSchema));
+
+    // Tell active SW about the update
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'BUILD_UPDATED',
+        build: APP_BUILD,
+        schemaVersion: currentSchema
+      });
+      console.log('[ZF] Notified SW of build ' + APP_BUILD);
+    }
+  }
+})();
+
+// Schema migration registry — add numbered functions here when schema changes.
+// Example:
+// var schemaMigrations = {
+//   1: function() {
+//     // v0→v1: rename a localStorage key or add default data
+//     localStorage.setItem('newKey', JSON.stringify(defaultVal));
+//   }
+// };
+var schemaMigrations = {};
 
 // TUTORIAL SYSTEM
 // ================
@@ -1700,72 +1747,72 @@ const TUTORIAL_STEPS = [
   {
     id: 'welcome',
     title: 'Welcome to ZenFit',
-    subtitle: 'Health RPG',
+    subtitle: 'Your Health RPG Journey',
     icon: '⚔️',
-    content: 'You are a warrior on a health journey. Track fitness, nutrition, and habits to level up and climb the leaderboard.',
+    content: 'You are a warrior on a health mission. Every meal logged, every workout crushed, every habit built earns XP and levels you up. Train hard, climb ranks from E to S, and dominate the leaderboard.',
     highlights: [],
-    action: 'Next'
+    action: 'Begin'
   },
   {
     id: 'navigation',
     title: 'Navigation',
-    subtitle: 'Explore the App',
+    subtitle: 'Getting Around',
     icon: '🧭',
-    content: 'Use the top navigation bar to switch between screens. Swipe left/right on mobile to navigate quickly between sections.',
-    highlights: ['nav'],
+    content: 'Use the bottom nav bar to jump between screens. Swipe left/right on any screen to quickly navigate. The Home button (top-left) returns you to the action wheel at any time.',
+    highlights: ['#bottom-nav'],
     action: 'Next'
   },
   {
     id: 'dashboard',
-    title: 'Your Dashboard',
-    subtitle: 'Daily Overview',
+    title: 'Dashboard',
+    subtitle: 'Mission Control',
     icon: '📊',
-    content: 'See your level, XP progress, daily stats (water, calories, habits), and active quests. This is your mission control center.',
+    content: 'Your daily command center. See your level, XP progress toward next rank, today\'s calorie balance, water intake, habit completion, and active quests — all in one place.',
     highlights: ['screen-dashboard'],
     action: 'Next'
   },
   {
     id: 'nutrition',
-    title: 'Log Food',
-    subtitle: 'Track Meals',
+    title: 'Nutrition',
+    subtitle: 'Log Meals & Track Macros',
     icon: '🍎',
-    content: 'Log meals using AI-powered text parsing ("2 chapati, dal"), barcode scanner, or manual entry. See calorie and macro breakdowns.',
+    content: 'Log food three ways:\n📝 Text — type "2 chapati, dal" for AI parsing\n📷 Barcode — scan packaged food labels\n✏️ Manual — enter calories and macros directly\n\nUse the Calculator tab to build custom dishes with ingredient-level macros and cooking adjustments. The Meal Plans tab lets you create and reuse full-day meal plans.',
     highlights: ['screen-nutrition'],
     action: 'Next'
   },
   {
     id: 'water',
-    title: 'Stay Hydrated',
-    subtitle: 'Water Tracking',
+    title: 'Hydration',
+    subtitle: 'Track Your Water',
     icon: '💧',
-    content: 'Track your daily water intake with quick buttons (250ml, 500ml) or custom amounts. Reach your daily goal for XP rewards.',
+    content: 'Tap quick-add buttons (100ml–500ml) or enter a custom amount. Watch your water tank fill up as you approach your daily goal. Hit 100% for an XP bonus — stay hydrated, stay sharp.',
     highlights: ['screen-water'],
     action: 'Next'
   },
   {
     id: 'workout',
-    title: 'Log Workouts',
-    subtitle: 'Exercise Tracking',
+    title: 'Workouts',
+    subtitle: 'Log Exercises',
     icon: '🏋️',
-    content: 'Log exercises with sets, reps, weight, duration. See live calorie burn estimate. Use workout plans for structured routines.',
+    content: 'Log exercises with sets, reps, weight, and duration. Get live calorie burn estimates. Use the Plans tab to create structured workout routines and track completion over time.',
     highlights: ['screen-workout'],
     action: 'Next'
   },
   {
     id: 'habits',
-    title: 'Build Habits',
-    subtitle: 'Habit Tracking',
+    title: 'Habits',
+    subtitle: 'Build Daily Routines',
     icon: '✅',
-    content: 'Create daily habits (meditation, reading, etc.) and mark them done daily. Build streaks and earn XP. See 30-day completion graph.',
+    content: 'Create habits (meditation, reading, stretching, etc.) and check them off daily. Build streaks to earn bonus XP. View your 30-day completion heatmap to spot patterns and improve.',
     highlights: ['screen-habits'],
     action: 'Next'
   },
   {
     id: 'tasks',
-    title: 'Task Manager',
+    title: 'Tasks',
     subtitle: 'Discipline System',
     icon: '⚔️',
-    content: 'Create custom tasks with difficulty ratings and time limits. Complete tasks on time to earn XP and boost your Discipline stat. Miss the deadline and lose XP. Set tasks to repeat daily, on weekdays, alternate days, or custom days.',
+    content: 'Create tasks with difficulty (Easy → Extreme) and optional time limits. Complete before the deadline to earn XP and boost Discipline. Miss it and lose XP. Set recurrence: daily, weekdays, alternate days, or custom schedule.',
     highlights: ['screen-tasks'],
     action: 'Next'
   },
@@ -1774,34 +1821,43 @@ const TUTORIAL_STEPS = [
     title: 'Study Timer',
     subtitle: 'Focus Sessions',
     icon: '📚',
-    content: 'Use the study timer for focused work sessions. Log by subject and difficulty. Earn XP based on duration and difficulty level.',
+    content: 'Track focused study sessions with the built-in timer. Log by subject and difficulty. Earn XP proportional to duration and difficulty — the harder the subject, the more XP.',
     highlights: ['screen-study'],
     action: 'Next'
   },
   {
     id: 'quests',
-    title: 'Daily Quests',
-    subtitle: 'Missions',
+    title: 'Quests & Bonuses',
+    subtitle: 'Daily Missions',
     icon: '⭐',
-    content: 'Complete auto-generated quests (drink water, log meals, etc.) and bonus tasks daily. Earn XP and progress your rank.',
+    content: 'Auto-generated daily quests based on your activity — drink water, log meals, complete habits. Bonus tasks give extra XP. Each quest completed pushes you closer to the next rank.',
     highlights: ['screen-quests'],
     action: 'Next'
   },
   {
     id: 'analytics',
     title: 'Analytics',
-    subtitle: 'Track Progress',
+    subtitle: 'Track Your Progress',
     icon: '📈',
-    content: 'View 7-day, 30-day, and yearly charts. See calorie balance vs TDEE, hydration trends, habit completion, and study time.',
+    content: 'View 7-day, 30-day, and yearly charts across all metrics: calorie balance vs TDEE, hydration trends, habit completion rates, workout volume, and study time. Know your trends.',
     highlights: ['screen-analytics'],
     action: 'Next'
   },
   {
+    id: 'screentime',
+    title: 'Screen Time',
+    subtitle: 'Digital Wellness',
+    icon: '📱',
+    content: 'Track your daily screen time and set usage limits. Stay mindful of how much time you spend on your device. ZenFit isn\'t just about fitness — it\'s about balance.',
+    highlights: ['screen-screentime'],
+    action: 'Next'
+  },
+  {
     id: 'profile',
-    title: 'Your Profile',
-    subtitle: 'Health Data',
+    title: 'Profile',
+    subtitle: 'Your Stats & Character',
     icon: '👤',
-    content: 'Set up your profile: age, height, weight, goal. Get personalized macros, BMI, TDEE calculations, and character avatar.',
+    content: 'Set your age, height, weight, activity level, and goal. Get personalized TDEE, BMI, and macro targets. Your character avatar evolves as you rank up — from E-rank recruit to S-rank legend.',
     highlights: ['screen-profile'],
     action: 'Next'
   },
@@ -1810,34 +1866,34 @@ const TUTORIAL_STEPS = [
     title: 'Leaderboard',
     subtitle: 'Connect & Compete',
     icon: '🏆',
-    content: 'Add friends via P2P share codes, compete on global leaderboard, send messages, and view partner stats (public only).',
+    content: 'Share your P2P code with friends to connect. Compete on the global leaderboard, compare stats, and send messages. View partner profiles (public stats only) and climb the ranks together.',
     highlights: ['screen-leaderboard'],
     action: 'Next'
   },
   {
     id: 'xp_system',
-    title: 'XP & Ranking',
-    subtitle: 'Level Up',
+    title: 'XP & Ranks',
+    subtitle: 'How Leveling Works',
     icon: '⚡',
-    content: 'Earn XP from logging workouts, meals, water, habits, and quests. Level up and climb ranks: E → D → C → B → A → S.',
+    content: 'Earn XP from every activity — meals, workouts, water, habits, tasks, study sessions, and quests. Level up to unlock higher ranks: E → D → C → B → A → S. Each rank unlocks new character cosmetic tiers.',
     highlights: [],
     action: 'Next'
   },
   {
     id: 'stats',
-    title: 'Stats System',
-    subtitle: 'Build Strength',
+    title: 'Core Stats',
+    subtitle: 'Build Your Warrior',
     icon: '💪',
-    content: 'Increase your 5 core stats (Strength, Discipline, Health, Endurance, Wisdom) as you log activities. Stats unlock character tiers.',
+    content: 'Five core stats grow as you log activities:\n💪 Strength — from workouts\n⚔️ Discipline — from completing tasks\n❤️ Health — from nutrition & water\n🏃 Endurance — from habits & consistency\n📖 Wisdom — from study sessions\n\nHigher stats unlock better character evolutions.',
     highlights: [],
     action: 'Next'
   },
   {
     id: 'tips',
     title: 'Pro Tips',
-    subtitle: 'Get Started',
+    subtitle: 'Start Strong',
     icon: '💡',
-    content: '✓ Set profile for accurate TDEE\n✓ Log meals at time of eating\n✓ Use workout plans for consistency\n✓ Check analytics weekly\n✓ Connect with friends for motivation',
+    content: '✓ Fill out your Profile first for accurate TDEE & macros\n✓ Log meals as you eat — don\'t let them pile up\n✓ Set 3–5 daily habits you can realistically keep\n✓ Use workout plans for consistent training\n✓ Check Analytics weekly to spot trends\n✓ Connect with friends for extra motivation\n✓ Customize your bottom nav in Settings\n✓ Enable Glass Mode in Settings for the full neon experience',
     highlights: [],
     action: 'Complete'
   }
@@ -1995,18 +2051,19 @@ function completeTutorial() {
   overlay.innerHTML = `
     <div class="tutorial-card" style="text-align: center">
       <div style="font-size: 64px; margin-bottom: 16px">🎉</div>
-      <div class="tutorial-title">Welcome to ZenFit!</div>
-      <div class="tutorial-subtitle">You're ready to begin your journey</div>
+      <div class="tutorial-title">You're Ready, Warrior!</div>
+      <div class="tutorial-subtitle">Your journey begins now</div>
       <div class="tutorial-content" style="margin: 20px 0">
-        <div class="tutorial-text">You now know the basics. Start by:</div>
-        <div class="tutorial-text" style="margin-top: 12px; font-size: 13px; line-height: 1.8">
-          ✓ Complete your profile<br>
-          ✓ Log your first meal or workout<br>
-          ✓ Create a habit to track<br>
-          ✓ Join the leaderboard
+        <div class="tutorial-text" style="font-size: 14px; color: var(--text-secondary)">Here's your launch checklist:</div>
+        <div class="tutorial-text" style="margin-top: 12px; font-size: 13px; line-height: 2">
+          ✓ Fill out your Profile for personalized targets<br>
+          ✓ Log your first meal in Nutrition<br>
+          ✓ Record a workout or create a habit<br>
+          ✓ Check your Dashboard daily for quests<br>
+          ✓ Connect with friends on the Leaderboard
         </div>
       </div>
-      <button class="btn btn-primary btn-full" onclick="completeTutorialNow()" style="margin-top: 16px">Start Your Journey</button>
+      <button class="btn btn-primary btn-full" onclick="completeTutorialNow()" style="margin-top: 16px">Begin Your Journey →</button>
     </div>
   `;
 }
