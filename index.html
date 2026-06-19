@@ -39,8 +39,9 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .nav-btn{background:none;border:none;color:var(--text-secondary);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:var(--text-xs);white-space:nowrap;transition:all .2s;display:inline-flex;align-items:center;gap:4px;height:30px;vertical-align:middle;line-height:1;font-family:var(--font-ui)}
 .nav-btn:hover{background:var(--bg-raised);color:var(--text-primary)}
 .nav-btn.active{background:var(--primary-dim);color:var(--primary);font-weight:600}
-.screen{display:none;padding:16px 0 60px;animation:fadeIn .2s}
-.screen.active{display:block}
+.screen{display:none;padding:16px 0 60px}
+.screen.active{display:block;backface-visibility:hidden;opacity:1}
+.screen.active:not(.nav-enter){opacity:1!important}
 .aw-home{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-base)}
 .aw-wrap{position:relative;width:380px;height:380px}
 .aw-center{position:absolute;top:50%;left:50%;width:148px;height:148px;margin-top:-74px;margin-left:-74px;border-radius:50%;border:3px solid var(--primary);cursor:pointer;z-index:20;background:radial-gradient(circle at 35% 35%,#4a3a6a,#1a1030);box-shadow:0 0 36px rgba(123,94,255,.45),0 0 72px rgba(123,94,255,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease}
@@ -69,6 +70,7 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .aw-pulse{position:absolute;top:50%;left:50%;width:148px;height:148px;margin-top:-74px;margin-left:-74px;border-radius:50%;border:2px solid var(--primary);animation:awPulse 2.4s ease-out infinite;pointer-events:none;z-index:1}
 @media(max-width:500px){.aw-wrap{width:300px;height:300px}.aw-center{width:118px;height:118px;margin-top:-59px;margin-left:-59px}.aw-orb{width:90px;height:90px}.aw-oi{font-size:22px}.aw-ol{font-size:11px}.aw-ci{font-size:40px}.aw-pulse{width:118px;height:118px;margin-top:-59px;margin-left:-59px}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.screen.nav-enter{animation:fadeIn .22s ease-out}
 @keyframes questPop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
 @keyframes levelUpSlide{0%{transform:translateY(100%);opacity:0}15%{transform:translateY(0);opacity:1}85%{transform:translateY(0);opacity:1}100%{transform:translateY(-20px);opacity:0}}
 .card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:14px;padding:16px}
@@ -1017,11 +1019,6 @@ canvas {
 
 .cal-balance-banner.balanced {
   box-shadow: 0 4px 16px rgba(74,158,255,.12);
-}
-
-/* ── Screen transition ── */
-.screen {
-  animation: fadeIn .35s cubic-bezier(.34,1.56,.64,1);
 }
 
 /* ── Avatar refinement ── */
@@ -2933,17 +2930,18 @@ function _toggleHomeBody(isHome){
   }catch(e){}
 }
 function render(){
+  hidePreviewCard(true);
   if(typeof renderBottomNav==='function')renderBottomNav();
   if(currentScreen==='home'){
     _toggleHomeBody(true);
     document.getElementById('nav').style.display='none';
     var c=document.getElementById('screens');
-    c.innerHTML='<div class="screen active" id="screen-home"></div>';
+    c.innerHTML='<div class="screen active nav-enter" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
     _toggleHomeBody(false);
     document.getElementById('nav').style.display='flex';
-    renderNav();renderScreens();renderBottomNav();
+    renderNav();renderScreens(true);renderBottomNav();
   }
 }
 function renderNav(){
@@ -2955,18 +2953,19 @@ function renderNav(){
   document.getElementById('nav').innerHTML=homeB+tabs;
 }
 function switchScreen(id){
+  hidePreviewCard(true);
   if(id!==currentScreen) SFX.nav();
   currentScreen=id;
   if(id==='home'){
     _toggleHomeBody(true);
     document.getElementById('nav').style.display='none';
     var c=document.getElementById('screens');
-    c.innerHTML='<div class="screen active" id="screen-home"></div>';
+    c.innerHTML='<div class="screen active nav-enter" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
     _toggleHomeBody(false);
     document.getElementById('nav').style.display='flex';
-    renderNav();renderScreens();renderBottomNav();
+    renderNav();renderScreens(true);renderBottomNav();
     // Auto-scroll active nav tab into view
     setTimeout(function(){
       var nav=document.getElementById('nav');
@@ -2976,11 +2975,34 @@ function switchScreen(id){
     },60);
   }
 }
-function renderScreens(){
-  const c=document.getElementById('screens');c.innerHTML='';
-  SCREENS.forEach(s=>{const d=document.createElement('div');d.className=`screen${currentScreen===s.id?' active':''}`;d.id=`screen-${s.id}`;c.appendChild(d);});
-  const fns={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,plans:renderPlans,burned:renderBurned,habits:renderHabits,tasks:renderTasks,study:renderStudy,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,customdish:renderCustomDish,mealplanner:renderMealPlanner,leaderboard:renderLeaderboard,screentime:renderScreenTime};
-  if(fns[currentScreen])fns[currentScreen](document.getElementById(`screen-${currentScreen}`));
+function ensureScreenContainers(){
+  const c=document.getElementById('screens');
+  if(!c) return;
+  if(document.getElementById(`screen-${SCREENS[0].id}`)) return;
+  c.innerHTML='';
+  SCREENS.forEach(s=>{
+    const d=document.createElement('div');
+    d.className='screen';
+    d.id=`screen-${s.id}`;
+    c.appendChild(d);
+  });
+}
+const RENDER_FNS={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,plans:renderPlans,burned:renderBurned,habits:renderHabits,tasks:renderTasks,study:renderStudy,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,customdish:renderCustomDish,mealplanner:renderMealPlanner,leaderboard:renderLeaderboard,screentime:renderScreenTime};
+function renderScreens(navigating){
+  ensureScreenContainers();
+  SCREENS.forEach(s=>{
+    const el=document.getElementById(`screen-${s.id}`);
+    if(el){
+      el.classList.toggle('active', s.id===currentScreen);
+      el.classList.remove('nav-enter');
+    }
+  });
+  const target=document.getElementById(`screen-${currentScreen}`);
+  if(target && RENDER_FNS[currentScreen]) RENDER_FNS[currentScreen](target);
+  if(navigating && target){
+    void target.offsetWidth;
+    target.classList.add('nav-enter');
+  }
 }
 
 // ════════════════════════════
@@ -8659,10 +8681,16 @@ window.showPreviewCard = function(e, cat){
   card.style.top = top + 'px';
 };
 
-window.hidePreviewCard = function(){
+window.hidePreviewCard = function(immediate){
+  var card = document.getElementById('previewCard');
+  if(!card) return;
+  if(immediate){
+    card.classList.remove('visible');
+    return;
+  }
   setTimeout(function(){
-    var card = document.getElementById('previewCard');
-    if(card) card.classList.remove('visible');
+    var c = document.getElementById('previewCard');
+    if(c) c.classList.remove('visible');
   }, 150);
 };
 
