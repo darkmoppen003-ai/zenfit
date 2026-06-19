@@ -41,7 +41,8 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .nav-btn.active{background:var(--primary-dim);color:var(--primary);font-weight:600}
 .screen{display:none;padding:16px 0 60px}
 .screen.active{display:block;backface-visibility:hidden;opacity:1}
-.screen.active:not(.nav-enter){opacity:1!important}
+.screen.active.nav-enter>*{animation:fadeIn .22s ease-out}
+.screen.active.nav-enter{overflow:hidden}
 .aw-home{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-base)}
 .aw-wrap{position:relative;width:380px;height:380px}
 .aw-center{position:absolute;top:50%;left:50%;width:148px;height:148px;margin-top:-74px;margin-left:-74px;border-radius:50%;border:3px solid var(--primary);cursor:pointer;z-index:20;background:radial-gradient(circle at 35% 35%,#4a3a6a,#1a1030);box-shadow:0 0 36px rgba(123,94,255,.45),0 0 72px rgba(123,94,255,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease}
@@ -70,12 +71,14 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .aw-pulse{position:absolute;top:50%;left:50%;width:148px;height:148px;margin-top:-74px;margin-left:-74px;border-radius:50%;border:2px solid var(--primary);animation:awPulse 2.4s ease-out infinite;pointer-events:none;z-index:1}
 @media(max-width:500px){.aw-wrap{width:300px;height:300px}.aw-center{width:118px;height:118px;margin-top:-59px;margin-left:-59px}.aw-orb{width:90px;height:90px}.aw-oi{font-size:22px}.aw-ol{font-size:11px}.aw-ci{font-size:40px}.aw-pulse{width:118px;height:118px;margin-top:-59px;margin-left:-59px}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.screen.nav-enter{animation:fadeIn .22s ease-out}
 @keyframes questPop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
 @keyframes levelUpSlide{0%{transform:translateY(100%);opacity:0}15%{transform:translateY(0);opacity:1}85%{transform:translateY(0);opacity:1}100%{transform:translateY(-20px);opacity:0}}
 .card{background:var(--bg-surface);border:1px solid var(--border-subtle);border-radius:14px;padding:16px}
 .card-sm{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:12px;padding:12px}
 .card-raised{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:14px;padding:16px;box-shadow:var(--shadow-md)}
+@keyframes glassBgFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+body.glass-mode .screen.active{background:linear-gradient(135deg,#0d0f14,#100d1a,#0d0f14)!important;background-size:200% 200%!important;animation:glassBgFlow 14s ease infinite}
+body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised{background:rgba(13,15,20,var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -1697,7 +1700,7 @@ const safeFetch = async function(url, opts){
 };
 
 const APP_VERSION="v7.8";
-const APP_BUILD="2026.06.19.3";
+const APP_BUILD="2026.06.17.2";
 
 // TUTORIAL SYSTEM
 // ================
@@ -2078,6 +2081,9 @@ const SCHEMA={
   profilePic:'string',
   customFoods:'array',
   customBottomNav:'array',
+  glassMode:'boolean',
+  glassBlur:'number',
+  glassAlpha:'number',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2199,6 +2205,9 @@ function defaultState(){
     globalLeaderboardOptIn:false,
     customFoods:[],
     customBottomNav:[],
+    glassMode:false,
+    glassBlur:12,
+    glassAlpha:0.55,
   };
 }
 function loadState(){
@@ -5425,8 +5434,21 @@ function renderProfile(el){
       </label>
     </div>
   </div>
+  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">🪟 Liquid Glass</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Frosted blur effect on cards</div>
+      </div>
+      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">
+        <input type="checkbox" id="glass-toggle" ${S.glassMode?'checked':''} onchange="S.glassMode=this.checked;persistSave();applyGlassMode();renderScreens();" style="opacity:0;width:0;height:0">
+        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.glassMode?'var(--primary-dark)':'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.glassMode?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
+      </label>
+    </div>
+    ${S.glassMode?('<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Blur</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-blur-val">'+(S.glassBlur||12)+'px</span></div><input type="range" min="4" max="30" value="'+(S.glassBlur||12)+'" onchange="S.glassBlur=+this.value;document.getElementById(\'glass-blur-val\').textContent=this.value+\'px\';document.documentElement.style.setProperty(\'--glass-blur\',this.value+\'px\');persistSave();renderScreens();" style="width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--bg-overlay);border-radius:3px;outline:none;cursor:pointer;-webkit-appearance:auto"><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.55)*100)+'%</span></div><input type="range" min="10" max="100" value="'+Math.round((S.glassAlpha??0.55)*100)+'" onchange="var a=+this.value/100;S.glassAlpha=a;document.getElementById(\'glass-alpha-val\').textContent=this.value+\'%\';document.documentElement.style.setProperty(\'--glass-alpha\',a.toString());persistSave();renderScreens();" style="width:100%;height:6px;-webkit-appearance:none;appearance:none;background:var(--bg-overlay);border-radius:3px;outline:none;cursor:pointer;-webkit-appearance:auto"></div>'):''}
   </div>
-  <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();}">Reset All Data</button>`;
+  </div>
+  <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();}">Reset All Data</button>`;
 
 
   el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
@@ -6766,7 +6788,13 @@ function applyTheme(key){
   showNotif(`Theme: ${t.name}`,'OK');
   renderScreens();
 }
-function initTheme(){if(S.theme)applyTheme(S.theme);}
+function applyGlassMode(){
+  if(!S)return;
+  document.body.classList.toggle('glass-mode',!!S.glassMode);
+  document.documentElement.style.setProperty('--glass-blur',(S.glassBlur||12)+'px');
+  document.documentElement.style.setProperty('--glass-alpha',(S.glassAlpha??0.55).toString());
+}
+function initTheme(){if(S.theme)applyTheme(S.theme);applyGlassMode();}
 
 // ════════════════════════════════════════════════════
 // ONLINE NUTRITION LOOKUP (Open Food Facts API)
