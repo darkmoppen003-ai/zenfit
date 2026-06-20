@@ -3911,9 +3911,9 @@ function renderWorkout(el){
 
   <!-- Today's log -->
   <div class="section-title">Today's Log (${todayW.length})</div>
-  ${S.workouts.length===0?'<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No exercises yet.</div>':''}
-  ${[...S.workouts].reverse().slice(0,20).map((w,ri)=>{
-    const idx=S.workouts.length-1-ri;
+  ${todayW.length===0?'<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No exercises logged today yet.</div>':''}
+  ${todayW.reverse().slice(0,20).map((w,ri)=>{
+    const idx=S.workouts.indexOf(w);
     const cal=w.caloriesBurned||0;
     const vol=(w.sets||0)*(w.reps||0)*(w.weight||0);
     return`<div class="card-sm mb8">
@@ -3921,7 +3921,6 @@ function renderWorkout(el){
         <div class="flex gap8">
           <span style="font-size:13px;font-weight:600">${w.name}</span>
           <span class="badge badge-purple">${w.type}</span>
-          ${w.date===today?'<span class="badge badge-green">Today</span>':''}
         </div>
         <div class="flex gap8">
           <span style="font-size:11px;color:var(--text-muted)">${w.date}</span>
@@ -6417,6 +6416,15 @@ function renderLeaderboard(el){
   html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : buildGlobalTab(RANK_COLORS_LB);
   el.innerHTML=html;
   if(_lbTab==='global' && !_globalLoading && _globalRows===null) loadGlobalRows(el);
+  if(_lbTab==='friends' && S.partners&&S.partners.length&&!_partnersRefreshing){
+    const autoRefreshKey='zf_last_partners_fetch_auto';
+    const lastAuto=+localStorage.getItem(autoRefreshKey)||0;
+    if(Date.now()-lastAuto>120000){ // auto-refresh max every 2 minutes
+      syncFriendProfileIfHasPartners();
+      refreshPartnerData();
+      localStorage.setItem(autoRefreshKey,Date.now());
+    }
+  }
 }
 
 function buildFriendsTab(RANK_COLORS){
@@ -6481,7 +6489,11 @@ function buildFriendsTab(RANK_COLORS){
   html+='<div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="import-code-inp" placeholder="Paste partner share code..." style="flex:1;font-size:11px"><button class="btn btn-sm btn-primary" onclick="sendConnectRequest(document.getElementById(\'import-code-inp\').value)">Send Request</button></div></div>';
   html+=buildPendingSection();
   html+=buildLiveSection();
-  html+='<div class="section-title">Friends Leaderboard ('+allUsers.length+')</div>';
+  const lastFetchAgo=_partnersLastFetched?Math.round((Date.now()-_partnersLastFetched)/1000):null;
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div class="section-title" style="margin-bottom:0">Friends Leaderboard ('+allUsers.length+')</div><div style="display:flex;align-items:center;gap:6px">'+
+    (lastFetchAgo!==null?'<span style="font-size:9px;color:var(--text-muted)">'+(lastFetchAgo<60?lastFetchAgo+'s':Math.round(lastFetchAgo/60)+'m')+' ago</span>':'')+
+    '<button class="btn btn-sm" onclick="refreshPartnerData()" style="font-size:10px;padding:4px 10px;'+(S.partners&&S.partners.length?'':'opacity:0.5;pointer-events:none')+'" '+(S.partners&&S.partners.length?'':'disabled')+'>'+
+    (_partnersRefreshing?'<span style="animation:spin 1s linear infinite;display:inline-block">&#9881;</span>':'&#128260;')+' Refresh</button></div></div>';
   html+=allUsers.map(buildUserRow).join('');
   if(allUsers.length<=1) html+='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Add partners via share code or live P2P</div>';
   return html;
@@ -6600,6 +6612,53 @@ async function syncGlobalIfOptedIn(){
   if(ok) localStorage.setItem(key,Date.now());
 }
 
+async function syncFriendProfileIfHasPartners(){
+  if(!S.partners||!S.partners.length||!S.deviceId) return;
+  const key='zf_last_friend_profile_sync';
+  const last=+localStorage.getItem(key)||0;
+  if(Date.now()-last<120*1000) return; // throttle to every 2 min
+  const ok=await LeaderboardAPI.syncFriendProfile();
+  if(ok) localStorage.setItem(key,Date.now());
+}
+
+let _partnersRefreshing=false;
+let _partnersLastFetched=null;
+
+async function refreshPartnerData(){
+  if(!S.partners||!S.partners.length) return;
+  const deviceIds=S.partners.map(function(p){return p.peerId;}).filter(Boolean);
+  if(!deviceIds.length) return;
+  _partnersRefreshing=true;
+  if(currentScreen==='leaderboard') renderLeaderboard(document.getElementById('screen-leaderboard'));
+  try{
+    const rows=await LeaderboardAPI.fetchByDeviceIds(deviceIds);
+    if(rows&&rows.length){
+      const updated={};
+      rows.forEach(function(r){updated[r.device_id]=r;});
+      S.partners=S.partners.map(function(p){
+        const fresh=p.peerId&&updated[p.peerId];
+        if(fresh){
+          return Object.assign({},p,{
+            level:fresh.level||p.level,
+            xp:fresh.xp||p.xp,
+            rank:fresh.rank||p.rank,
+            streak:fresh.streak||p.streak,
+            name:fresh.name||p.name,
+            avatar:fresh.avatar_b64||p.avatar,
+            timestamp:Date.now()
+          });
+        }
+        return p;
+      });
+      persistSave();
+    }
+    _partnersLastFetched=Date.now();
+  }catch(e){
+    console.warn('refreshPartnerData error:',e);
+  }
+  _partnersRefreshing=false;
+  if(currentScreen==='leaderboard') renderLeaderboard(document.getElementById('screen-leaderboard'));
+}
 
 function calcRank(p){
   const RANKS=['E','D','C','B','A','S'];
@@ -8823,12 +8882,42 @@ const LeaderboardAPI=(function(){
         return res.ok||res.status===201||res.status===200;
       }catch(e){console.warn('LeaderboardAPI.sync:',e);return false;}
     },
+    async syncFriendProfile(){
+      try{
+        if(!S.partners||!S.partners.length) return false;
+        const topStreak=(S.habits||[]).reduce((a,h)=>Math.max(a,h.streak||0),0);
+        const body={
+          device_id:S.deviceId||S.peerId||'unknown',
+          name:S.profile&&S.profile.name?S.profile.name:(S.player.name||'Hunter'),
+          level:S.player.level||1,
+          xp:S.player.xp||0,
+          rank:calcRank(S.player),
+          streak:topStreak,
+          avatar_b64:S.profilePic||null,
+          opted_in:!!S.globalLeaderboardOptIn,
+          updated_at:new Date().toISOString()
+        };
+        const res=await fetch(`${URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
+        return res.ok||res.status===201||res.status===200;
+      }catch(e){console.warn('LeaderboardAPI.syncFriendProfile:',e);return false;}
+    },
     async fetch(){
       try{
         const res=await fetch(`${URL}/rest/v1/${TABLE}?opted_in=eq.true&order=level.desc,xp.desc&limit=200`,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
         if(!res.ok)return null;
         return await res.json();
       }catch(e){console.warn('LeaderboardAPI.fetch:',e);return null;}
+    },
+    async fetchByDeviceIds(ids){
+      if(!ids||!ids.length) return [];
+      try{
+        const unique=[...new Set(ids.filter(Boolean))];
+        if(!unique.length) return [];
+        const q=unique.map(id=>`device_id.eq.${encodeURIComponent(id)}`).join(',');
+        const res=await fetch(`${URL}/rest/v1/${TABLE}?or=(${q})&order=level.desc,xp.desc&limit=200`,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
+        if(!res.ok)return [];
+        return await res.json();
+      }catch(e){console.warn('LeaderboardAPI.fetchByDeviceIds:',e);return [];}
     },
     async optOut(){
       try{
@@ -8845,6 +8934,8 @@ initTheme();
 setTimeout(function(){checkAchievements();},200);
 // Sync global leaderboard in background if opted in
 setTimeout(function(){syncGlobalIfOptedIn();},1500);
+// Sync friend-visible profile if user has partners (even without global opt-in)
+setTimeout(function(){syncFriendProfileIfHasPartners();},2000);
 
 // ── SERVICE WORKER REGISTRATION ──────────────────────
 var _swReg = null;
