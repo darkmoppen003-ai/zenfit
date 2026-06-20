@@ -1615,6 +1615,68 @@ nav::-webkit-scrollbar {
   .aw-orb3-inner { width: 17.78%; height: 17.78%; }
   .aw-orb3-outer { width: 14.07%; height: 14.07%; }
 }
+
+/* ── CHALLENGE CARDS ── */
+.challenge-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-mid);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  transition: all .3s ease;
+}
+.challenge-card.active {
+  border-color: var(--info);
+  box-shadow: 0 0 12px rgba(74,158,255,.08);
+}
+.challenge-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.3);
+}
+.challenge-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-overlay);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.challenge-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease;
+}
+.challenge-part-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.challenge-part-row:last-child { border-bottom: none; }
+.challenge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+.challenge-badge-workouts { background: #0a3d2218; color: #4cdb8a; border: 1px solid #4cdb8a33; }
+.challenge-badge-habits { background: #2a105018; color: #c084fc; border: 1px solid #c084fc33; }
+.challenge-badge-water { background: #002a3d18; color: #00d4aa; border: 1px solid #00d4aa33; }
+.challenge-badge-xp { background: #3d280018; color: #f5a623; border: 1px solid #f5a62333; }
+
+/* ── HIGH FIVE ANIMATION ── */
+@keyframes highFivePop {
+  0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+  50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.high-five-toast {
+  animation: highFivePop 0.5s cubic-bezier(.34,1.56,.64,1);
+}
+
 </style>
 </head>
 <body>
@@ -1639,7 +1701,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v7.9</div>
+  <div class="splash-ver">v8.0</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1690,7 +1752,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v7.9";
+const APP_VERSION="v8.0";
 const APP_BUILD="2026.06.20.6";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2122,6 +2184,7 @@ const SCHEMA={
   _analyticsPeriod:'string',
   _analyticsSection:'string',
   achievements:'array',
+  challenges:'array',
   weightLog:'array',
   questsDoneTotal:'number',
   soundEnabled:'boolean',
@@ -2249,6 +2312,7 @@ function defaultState(){
     },
     lastSaved:Date.now(),
     achievements:[],
+    challenges:[],
     weightLog:[],
     questsDoneTotal:0,
     soundEnabled:true,
@@ -2498,7 +2562,7 @@ function addXP(amount,reason){
   S.player.level=lvl;
   S.player.rank=calcRank(S.player);
   showNotif(`+${amount} XP — ${reason}`,'XP');
-  persistSave();
+  trackChallengeProgress();persistSave();
 }
 function updStat(stat,amt=1){S.player.stats[stat]=Math.min(100,(S.player.stats[stat]||10)+amt);}
 
@@ -3829,7 +3893,7 @@ function addWater(ml){
   S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now()});
   addXP(5,'Hydrating!');updStat('health',1);
   if(todayWater()>=S.water.dailyGoalMl&&prev<S.water.dailyGoalMl)addXP(50,'Water goal!');
-  checkAutoQuests();persistSave();var _wel=document.getElementById('screen-water');if(_wel&&currentScreen==='water')renderWater(_wel);else renderScreens();
+  checkAutoQuests();trackChallengeProgress();persistSave();var _wel=document.getElementById('screen-water');if(_wel&&currentScreen==='water')renderWater(_wel);else renderScreens();
 }
 function delW(i){S.water.entries.splice(i,1);persistSave();renderScreens();}
 
@@ -4162,7 +4226,7 @@ function logWorkout(override=null){
     S.burned.push({activity:name,duration,met,weightKg:S.player.weightKg||70,calories:caloriesBurned,date:getTodayStr(),ts:Date.now(),source:'workout'});
   }
   updStat('strength',5);updStat('endurance',2);
-  persistSave();
+  trackChallengeProgress();persistSave();
   checkAchievements();
   const el=document.getElementById('screen-workout');
   if(el&&currentScreen==='workout'){renderWorkout(el);}
@@ -4639,7 +4703,7 @@ function toggleHabit(i){
   }
   // Recalculate streak accurately from dates
   h.streak=calcHabitStreak(h.completedDates);
-  persistSave();
+  trackChallengeProgress();persistSave();
   const el=document.getElementById('screen-habits');
   if(el&&currentScreen==='habits') renderHabits(el);
   else renderScreens();
@@ -6405,17 +6469,23 @@ let _lbTab        = 'friends';
 let _globalRows   = null;
 let _globalFetchedAt = 0;
 let _globalLoading = false;
+let _challengeRefreshing = false;
 
 function renderLeaderboard(el){
   if(!S.partners) S.partners=[];
   const RANK_COLORS_LB={E:'#888',D:'#4cdb8a',C:'#4a9eff',B:'#c084fc',A:'#f5a623',S:'#ff5a5a'};
   let html=`<div class="chart-tab-bar" data-no-swipe>
     <div class="chart-tab${_lbTab==='friends'?' active':''}" onclick="_lbTab='friends';renderLeaderboard(document.getElementById('screen-leaderboard'))">Friends</div>
+    <div class="chart-tab${_lbTab==='challenges'?' active':''}" onclick="_lbTab='challenges';renderLeaderboard(document.getElementById('screen-leaderboard'))">⚔️ Challenges</div>
     <div class="chart-tab${_lbTab==='global'?' active':''}" onclick="_lbTab='global';renderLeaderboard(document.getElementById('screen-leaderboard'))">🌐 Global</div>
   </div>`;
-  html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : buildGlobalTab(RANK_COLORS_LB);
+  html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : _lbTab==='challenges' ? buildChallengesTab() : buildGlobalTab(RANK_COLORS_LB);
   el.innerHTML=html;
   if(_lbTab==='global' && !_globalLoading && _globalRows===null) loadGlobalRows(el);
+  if(_lbTab==='challenges' && !_challengeRefreshing){
+    trackChallengeProgress();
+    checkChallengeCompletions();
+  }
   if(_lbTab==='friends' && S.partners&&S.partners.length&&!_partnersRefreshing){
     const autoRefreshKey='zf_last_partners_fetch_auto';
     const lastAuto=+localStorage.getItem(autoRefreshKey)||0;
@@ -6461,7 +6531,7 @@ function buildFriendsTab(RANK_COLORS){
     h+='<div style="width:36px;height:36px;border-radius:50%;background:'+rc+'22;border:2px solid '+rc+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:'+rc+';flex-shrink:0;overflow:hidden">'+(u.avatar?'<img src="'+u.avatar+'" style="width:100%;height:100%;object-fit:cover" alt="">':u.rank)+'</div>';
     h+='<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:'+(u.isMe?'var(--primary)':'var(--text-primary)')+'">'+u.name+(u.isMe?' (You)':'')+(isLive?' <span style="color:var(--success);font-size:9px">&#9679; LIVE</span>':'')+'</div>';
     h+='<div style="font-size:11px;color:var(--text-muted)">Lv.'+u.level+' &middot; '+u.xp.toLocaleString()+' XP &middot; '+u.streak+'d streak</div></div>';
-    if(!u.isMe){var pi=S.partners.findIndex(function(p){return p.name===u.name;});h+='<button class="btn btn-sm" onclick="viewPartnerStats('+pi+')" style="border-color:var(--info);color:var(--info);font-size:10px;padding:4px 8px">Stats</button><button class="btn btn-icon btn-sm" onclick="removePartner('+pi+')" style="color:var(--danger)">&#215;</button>';}
+    if(!u.isMe){var pi=S.partners.findIndex(function(p){return p.name===u.name;});h+=(u.peerId&&liveIds.includes(u.peerId)?'<button class="btn btn-icon btn-sm" onclick="sendHighFive(\''+u.peerId+'\')" style="color:var(--water);font-size:14px" title="Send high five">✋</button>':'')+'<button class="btn btn-sm" onclick="viewPartnerStats('+pi+')" style="border-color:var(--info);color:var(--info);font-size:10px;padding:4px 8px">Stats</button><button class="btn btn-icon btn-sm" onclick="removePartner('+pi+')" style="color:var(--danger)">&#215;</button>';}
     h+='</div>';return h;
   }
   function buildPendingSection(){
@@ -6485,8 +6555,9 @@ function buildFriendsTab(RANK_COLORS){
   if(peerStatusOk){html+='<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Your ID: <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;color:var(--primary);font-size:11px">'+(S.peerId||'...')+'</code></div><div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" id="peer-connect-id" placeholder="Enter partner Peer ID..." style="flex:1;font-size:12px"><button class="btn btn-primary btn-sm" onclick="connectToPeer(document.getElementById(\'peer-connect-id\').value)">Connect</button></div>';}
   else{html+='<button class="btn btn-primary" onclick="initPeerJS()">Start Live P2P</button>';}
   const sc=getShareCode();
-  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px"><span style="font-size:11px;color:var(--text-muted)">Share code:</span><code style="font-size:10px;background:var(--bg-raised);padding:3px 8px;border-radius:4px;color:var(--water)">'+sc.slice(0,28)+'...</code><button class="btn btn-sm" style="border-color:var(--water);color:var(--water);font-size:11px" onclick="var c=getShareCode();if(navigator.clipboard){navigator.clipboard.writeText(c).then(function(){showNotif(\'Code copied!\',\'OK\');});}else{var t=document.createElement(\'textarea\');t.value=c;document.body.appendChild(t);t.select();document.execCommand(\'copy\');document.body.removeChild(t);showNotif(\'Copied!\',\'OK\');}">Copy</button></div>';
-  html+='<div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="import-code-inp" placeholder="Paste partner share code..." style="flex:1;font-size:11px"><button class="btn btn-sm btn-primary" onclick="sendConnectRequest(document.getElementById(\'import-code-inp\').value)">Send Request</button></div></div>';
+  html+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px"><code style="font-size:10px;background:var(--bg-raised);padding:4px 8px;border-radius:4px;color:var(--water);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sc.slice(0,32)+'...</code><button class="btn btn-sm" style="border-color:var(--water);color:var(--water);font-size:11px;flex-shrink:0" onclick="var c=getShareCode();if(navigator.clipboard){navigator.clipboard.writeText(c).then(function(){showNotif(\'Code copied!\',\'OK\');});}else{var t=document.createElement(\'textarea\');t.value=c;document.body.appendChild(t);t.select();document.execCommand(\'copy\');document.body.removeChild(t);showNotif(\'Copied!\',\'OK\');}">Copy</button>'
+    +(typeof navigator.share==='function'?'<button class="btn btn-sm" style="border-color:var(--primary);color:var(--primary);font-size:11px;flex-shrink:0" onclick="var c=getShareCode();if(navigator.share)navigator.share({title:\'ZenFit Connect\',text:\'Connect with me on ZenFit! Use my friend code:\',url:c})">📤 Share</button>':'')
+    +'</div><div style="display:flex;gap:8px;margin-top:8px"><input type="text" id="import-code-inp" placeholder="Paste friend\'s share code..." style="flex:1;font-size:11px"><button class="btn btn-sm btn-primary" onclick="sendConnectRequest(document.getElementById(\'import-code-inp\').value)">Send Request</button></div></div>';
   html+=buildPendingSection();
   html+=buildLiveSection();
   const lastFetchAgo=_partnersLastFetched?Math.round((Date.now()-_partnersLastFetched)/1000):null;
@@ -6495,7 +6566,20 @@ function buildFriendsTab(RANK_COLORS){
     '<button class="btn btn-sm" onclick="refreshPartnerData()" style="font-size:10px;padding:4px 10px;'+(S.partners&&S.partners.length?'':'opacity:0.5;pointer-events:none')+'" '+(S.partners&&S.partners.length?'':'disabled')+'>'+
     (_partnersRefreshing?'<span style="animation:spin 1s linear infinite;display:inline-block">&#9881;</span>':'&#128260;')+' Refresh</button></div></div>';
   html+=allUsers.map(buildUserRow).join('');
-  if(allUsers.length<=1) html+='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:12px">Add partners via share code or live P2P</div>';
+  if(allUsers.length<=1){
+    const p2pOk=peer&&!peer.destroyed;
+    html+='<div class="card" style="text-align:center;padding:24px 16px;border:1px dashed var(--border-strong)">'+
+      '<div style="font-size:40px;margin-bottom:12px">👥</div>'+
+      '<div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px">No Friends Yet</div>'+
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.5">Connect with friends to compare stats, compete, and stay motivated together!</div>'+
+      '<div style="display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:16px;padding:0 8px">'+
+        '<div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary)"><div style="width:28px;height:28px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">⚡</div><div><strong style="color:var(--text-primary)">Step 1:</strong> Tap "Start Live P2P" to activate</div></div>'+
+        '<div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary)"><div style="width:28px;height:28px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">🔗</div><div><strong style="color:var(--text-primary)">Step 2:</strong> Share your QR code or copy your link</div></div>'+
+        '<div style="display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-secondary)"><div style="width:28px;height:28px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">🔍</div><div><strong style="color:var(--text-primary)">Step 3:</strong> Paste a friend\'s code above to connect</div></div>'+
+      '</div>'+
+      (!p2pOk?'<div style="font-size:11px;color:var(--warning)">⚡ Use the "Start Live P2P" button above to activate</div>':'<div style="font-size:11px;color:var(--success)">✅ P2P is active — share your code above!</div>')+
+    '</div>';
+  }
   return html;
 }
 
@@ -6574,6 +6658,199 @@ function buildGlobalTab(RANK_COLORS){
     </div>`;
   }
   return html;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CHALLENGES SYSTEM
+// ══════════════════════════════════════════════════════════════
+
+function getChallengeTypeMeta(t){
+  return {
+    workouts:{icon:'💪',label:'Workouts',color:'#4cdb8a',cls:'workouts'},
+    habits:{icon:'✅',label:'Habits',color:'#c084fc',cls:'habits'},
+    water:{icon:'💧',label:'Water (days)',color:'#00d4aa',cls:'water'},
+    xp:{icon:'⚡',label:'XP Earned',color:'#f5a623',cls:'xp'}
+  }[t]||{icon:'🏆',label:'Activity',color:'var(--primary)',cls:'xp'};
+}
+
+function buildChallengesTab(){
+  const challenges=S.challenges||[];
+  const active=challenges.filter(c=>c.status==='active');
+  const completed=challenges.filter(c=>c.status==='completed');
+  let html='<div class="card mb12" style="background:linear-gradient(135deg,#0d1a2a,#0a1520);border:1px solid var(--info);text-align:center;padding:14px"><div style="font-size:28px;margin-bottom:6px">⚔️</div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">Weekly Challenges</div><div style="font-size:11px;color:var(--text-muted)">Compete with friends — most '+(active.length?'activity this week wins!':'activity wins!')+'</div></div>';
+  // Create challenge form
+  html+='<div class="card mb12"><div class="section-title">Create Custom Challenge</div>';
+  html+='<input type="text" id="ch-title" placeholder="Challenge title (e.g. \'Most Pushups This Week\')" style="font-size:12px;margin-bottom:8px">';
+  html+='<div style="display:grid;grid-template-columns:1fr auto 80px auto;gap:6px;align-items:center;margin-bottom:8px"><select id="ch-type" style="font-size:12px;width:100%"><option value="workouts">💪 Count Workouts</option><option value="habits">✅ Count Habits</option><option value="water">💧 Count Hydration Days</option><option value="xp">⚡ XP Earned</option></select><span style="font-size:11px;color:var(--text-muted)">for</span><input type="number" id="ch-days" value="7" min="1" max="90" style="width:100%;font-size:12px;text-align:center;padding:6px 2px" title="Duration in days"><span style="font-size:11px;color:var(--text-muted)">days</span></div>';
+  html+='<textarea id="ch-desc" placeholder="Optional: describe the rules or scoring..." style="font-size:11px;min-height:40px;margin-bottom:8px"></textarea>';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">';
+  html+='<div style="font-size:11px;color:var(--text-muted)">Invite friends:</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+  const liveIds=Object.keys(peerConnections);
+  const livePartners=(S.partners||[]).filter(p=>p.peerId&&liveIds.includes(p.peerId));
+  if(livePartners.length){
+    livePartners.forEach(function(p,idx){
+      const safeId=(p.peerId||'').replace(/-/g,'');
+      html+='<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-secondary);background:var(--bg-raised);padding:3px 8px;border-radius:6px;border:1px solid var(--border-mid);cursor:pointer"><input type="checkbox" id="ch-inv-'+safeId+'" value="'+p.peerId+'" checked style="width:12px;height:12px"> '+p.name+'</label>';
+    });
+  } else {
+    html+='<span style="font-size:11px;color:var(--text-muted)">No live partners — invite them from the Friends tab</span>';
+  }
+  html+='</div></div><div style="margin-top:10px"><button class="btn btn-primary btn-full btn-sm" onclick="createChallenge()">⚔️ Start Challenge</button></div></div>';
+  // Active challenges
+  if(active.length){
+    html+='<div class="section-title">Active Challenges ('+active.length+')</div>';
+    active.forEach(function(c){
+      const meta=getChallengeTypeMeta(c.type);
+      const now=Date.now();
+      const total=c.endsAt-c.startsAt;
+      const elapsed=now-c.startsAt;
+      const pct=Math.min(100,Math.max(0,(elapsed/total)*100));
+      const remainingMs=c.endsAt-now;
+      const remainingDays=Math.max(0,Math.ceil(remainingMs/86400000));
+      const sorted=c.participants.slice().sort(function(a,b){return b.progress-a.progress;});
+      const myDeviceId=S.deviceId;
+      const myProgress=c.participants.find(function(p){return p.peerId===myDeviceId;})||{progress:0};
+      const maxProg=Math.max(1,sorted[0]?.progress||1);
+      html+='<div class="challenge-card active"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><span class="challenge-badge challenge-badge-'+meta.cls+'">'+meta.icon+' '+meta.label+'</span><span style="font-size:10px;color:var(--text-muted);margin-left:8px">· '+(c.durationDays||7)+'d</span></div><div style="font-size:10px;color:var(--text-muted)">'+(remainingDays>0?remainingDays+'d remaining':'<span style="color:var(--danger)">Ending</span>')+'</div></div>';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">'+c.title+'</div>';
+      if(c.desc) html+='<div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;line-height:1.4">'+c.desc+'</div>';
+      html+='<div style="margin-bottom:8px">';
+      sorted.forEach(function(p,idx){
+        const isMe=p.peerId===myDeviceId;
+        const pW=Math.round((p.progress/maxProg)*100);
+        html+='<div class="challenge-part-row"><div style="width:18px;font-size:10px;font-weight:700;color:var(--text-muted)">#'+(idx+1)+'</div><div style="flex:1;font-size:12px;color:'+(isMe?'var(--primary)':'var(--text-primary)')+'">'+p.name+(isMe?' <span style="font-size:9px;color:var(--primary)">(You)</span>':'')+'</div><div style="font-size:12px;font-weight:600;color:'+meta.color+'">'+p.progress+'</div></div>';
+        html+='<div class="challenge-progress"><div class="challenge-progress-fill" style="width:'+pW+'%;background:'+meta.color+'"></div></div>';
+      });
+      html+='</div></div>';
+    });
+  } else {
+    html+='<div class="card" style="text-align:center;padding:24px;border:1px dashed var(--border-mid)"><div style="font-size:32px;margin-bottom:8px">🏁</div><div style="font-size:13px;color:var(--text-muted)">No active challenges</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">Start a challenge above and invite friends!</div></div>';
+  }
+  // Completed
+  if(completed.length){
+    html+='<div class="section-title" style="margin-top:12px">Past Challenges</div>';
+    completed.forEach(function(c){
+      const meta=getChallengeTypeMeta(c.type);
+      const winner=c.participants.find(function(p){return p.peerId===c.winnerId;});
+      html+='<div class="challenge-card" style="opacity:0.7"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="challenge-badge challenge-badge-'+meta.cls+'">'+meta.icon+' '+meta.label+'</span><span style="font-size:10px;color:var(--text-muted)">Completed</span></div><div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:4px">'+c.title+'</div><div style="font-size:11px;color:var(--success)">🏆 Winner: '+(winner?winner.name:'—')+'</div></div>';
+    });
+  }
+  // Auto-sync hint
+  if(S.partners&&S.partners.length){
+    const liveCount=Object.keys(peerConnections).length;
+    html+='<div style="font-size:10px;color:var(--text-muted);margin-top:12px;text-align:center">Challenge progress updates in real-time over P2P. '+(liveCount?'<span style="color:var(--success)">'+liveCount+' partner(s) live</span>':'<span style="color:var(--warning)">Connect P2P for live sync</span>')+'</div>';
+  }
+  return html;
+}
+
+function createChallenge(){
+  const type=document.getElementById('ch-type')?.value;
+  if(!type){showNotif('Select a challenge type','!');return;}
+  const titleInput=document.getElementById('ch-title')?.value?.trim();
+  const customTitle=titleInput||({workouts:'💪 Most Workouts',habits:'✅ Most Habits',water:'💧 Most Hydration Days',xp:'⚡ Most XP'}[type]||'Challenge');
+  const days=Math.max(1,Math.min(90,+document.getElementById('ch-days')?.value||7));
+  const desc=document.getElementById('ch-desc')?.value?.trim()||'';
+  const invited=[];
+  const liveIds=Object.keys(peerConnections);
+  (S.partners||[]).filter(p=>p.peerId&&liveIds.includes(p.peerId)).forEach(function(p){
+    const safeId=(p.peerId||'').replace(/-/g,'');
+    const cb=document.getElementById('ch-inv-'+safeId);
+    if(cb&&cb.checked) invited.push(p.peerId);
+  });
+  if(!invited.length&&!S.partners?.length){showNotif('Add partners first!','!');return;}
+  const challenge={
+    id:'ch_'+Date.now()+'_'+Math.random().toString(36).slice(2,6),
+    type:type,
+    title:customTitle,
+    desc:desc,
+    durationDays:days,
+    createdBy:S.deviceId,
+    participants:[{peerId:S.deviceId,name:S.player.name||'You',progress:0}],
+    invitedPeerIds:invited,
+    startsAt:Date.now(),
+    endsAt:Date.now()+days*86400000,
+    status:'active',
+    winnerId:null
+  };
+  // Add invited partners as participants (they auto-track when synced)
+  (S.partners||[]).forEach(function(p){
+    if(invited.includes(p.peerId)) challenge.participants.push({peerId:p.peerId,name:p.name,progress:0});
+  });
+  if(!S.challenges) S.challenges=[];
+  S.challenges.push(challenge);
+  persistSave();
+  showNotif('Challenge "'+customTitle+'" created! ('+days+' days)','⚔️');
+  // Notify invited partners via P2P
+  invited.forEach(function(pid){
+    const conn=peerConnections[pid];
+    if(conn&&conn.open){
+      try{conn.send(JSON.stringify({type:'challenge_invite',data:{id:challenge.id,title:customTitle,type:type,desc:desc,durationDays:days,createdBy:S.player.name||'Warrior',deviceId:S.deviceId}}));}catch(e){}
+    }
+  });
+  if(currentScreen==='leaderboard') renderLeaderboard(document.getElementById('screen-leaderboard'));
+}
+
+function trackChallengeProgress(){
+  if(!S.challenges||!S.challenges.length) return;
+  const active=S.challenges.filter(function(c){return c.status==='active';});
+  if(!active.length) return;
+  const deviceId=S.deviceId;
+  active.forEach(function(c){
+    const me=c.participants.find(function(p){return p.peerId===deviceId;});
+    if(!me) return;
+    let val=0;
+    switch(c.type){
+      case 'workouts': val=(S.workouts||[]).filter(function(w){var wd=new Date(w.date||w.timestamp||0).getTime();return wd>=c.startsAt&&wd<=c.endsAt;}).length; break;
+      case 'habits': val=(S.habits||[]).filter(function(h){var done=(h.completedDates||[]).filter(function(d){var hd=new Date(d).getTime();return hd>=c.startsAt&&hd<=c.endsAt;});return done.length;}).length; break;
+      case 'water': val=(S.water?.entries||[]).filter(function(w){var wd=new Date(w.date||w.timestamp||0).getTime();return wd>=c.startsAt&&wd<=c.endsAt;}).reduce(function(a,w){return a+((w.ml||0)>=200?1:0);},0); break;
+      case 'xp': val=(S.player.xp||0); break;
+    }
+    if(val!==me.progress){me.progress=val;persistSave();}
+    // Broadcast progress to live partners
+    const liveIds=Object.keys(peerConnections);
+    c.participants.forEach(function(p){
+      if(p.peerId!==deviceId&&liveIds.includes(p.peerId)){
+        const conn=peerConnections[p.peerId];
+        if(conn&&conn.open){
+          try{conn.send(JSON.stringify({type:'challenge_progress',data:{challengeId:c.id,deviceId:deviceId,progress:val}}));}catch(e){}
+        }
+      }
+    });
+  });
+  checkChallengeCompletions();
+}
+
+function checkChallengeCompletions(){
+  if(!S.challenges) return;
+  var changed=false;
+  S.challenges.forEach(function(c){
+    if(c.status!=='active'||Date.now()<c.endsAt) return;
+    c.status='completed';
+    const sorted=c.participants.slice().sort(function(a,b){return b.progress-a.progress;});
+    if(sorted.length){
+      c.winnerId=sorted[0].peerId;
+      const winner=c.participants.find(function(p){return p.peerId===c.winnerId;});
+      if(winner&&c.winnerId===S.deviceId){
+        S.player.xp=(S.player.xp||0)+100;
+        showNotif('🏆 You won "'+c.title+'"! +100 XP','✅');
+      }
+    }
+    changed=true;
+  });
+  if(changed){persistSave();if(currentScreen==='leaderboard')renderLeaderboard(document.getElementById('screen-leaderboard'));}
+}
+
+// Receive challenge progress from P2P (called from setupConn)
+function handleChallengeProgress(data){
+  if(!data||!data.challengeId||!S.challenges) return;
+  const c=S.challenges.find(function(ch){return ch.id===data.challengeId;});
+  if(!c) return;
+  const id=data.deviceId;
+  const p=c.participants.find(function(part){return part.peerId===id;});
+  if(p) p.progress=data.progress;
+  else c.participants.push({peerId:id,name:data.name||'Partner',progress:data.progress});
+  persistSave();
+  if(currentScreen==='leaderboard') renderLeaderboard(document.getElementById('screen-leaderboard'));
 }
 
 async function loadGlobalRows(el){
@@ -7739,6 +8016,38 @@ function setupConn(conn){
         if(!S.partners) S.partners=[];
         var pi=S.partners.findIndex(function(p){return p.name===pc.name;});
         if(pi>-1){ S.partners[pi]=pc; persistSave(); renderScreens(); }
+      } else if(msg.type==='highfive'){
+        showNotif('✋ '+msg.name+' sent you a high five!','OK');
+        if(!S.partnerStats) S.partnerStats={};
+        if(!S.partnerStats[msg.name]) S.partnerStats[msg.name]={};
+        S.partnerStats[msg.name].highFivesReceived=(S.partnerStats[msg.name].highFivesReceived||0)+1;
+        persistSave();
+        if(currentScreen==='leaderboard') renderScreens();
+      } else if(msg.type==='challenge_invite'){
+        var ci=msg.data||{};
+        if(!S.challenges) S.challenges=[];
+        var exists=S.challenges.some(function(ch){return ch.id===ci.id;});
+        if(!exists){
+          var dur=ci.durationDays||7;
+          S.challenges.push({
+            id:ci.id,
+            type:ci.type||'workouts',
+            title:ci.title||'Challenge',
+            desc:ci.desc||'',
+            durationDays:dur,
+            createdBy:conn.peer||'',
+            participants:[{peerId:ci.deviceId||conn.peer,name:ci.createdBy||'Partner',progress:0},{peerId:S.deviceId,name:S.player.name||'You',progress:0}],
+            startsAt:Date.now(),
+            endsAt:Date.now()+dur*86400000,
+            status:'active',
+            winnerId:null
+          });
+          persistSave();
+          showNotif('⚔️ '+ci.createdBy+' invited you to "'+ci.title+'" ('+dur+' days)!','OK');
+          if(currentScreen==='leaderboard'){_lbTab='challenges';renderLeaderboard(document.getElementById('screen-leaderboard'));}
+        }
+      } else if(msg.type==='challenge_progress'){
+        handleChallengeProgress(msg.data);
       } else if(msg.type==='request_detail'){
         // Only honour detail requests from accepted partners
         var fromName=(msg.from||'');
@@ -7801,6 +8110,19 @@ function requestDetail(peerId){
   var conn=peerConnections[peerId];
   if(conn&&conn.open) conn.send(JSON.stringify({type:'request_detail'}));
   else showNotif('Not connected live — view their shared card','!');
+}
+function sendHighFive(peerId){
+  var conn=peerConnections[peerId];
+  if(!conn||!conn.open){showNotif('Not connected to this partner','!');return;}
+  conn.send(JSON.stringify({type:'highfive',name:S.player.name||'Warrior'}));
+  showNotif('✋ High five sent!','OK');
+  if(!S.partnerStats) S.partnerStats={};
+  var pn=(S.partners||[]).find(function(p){return p.peerId===peerId;});
+  if(pn){
+    if(!S.partnerStats[pn.name]) S.partnerStats[pn.name]={};
+    S.partnerStats[pn.name].highFivesSent=(S.partnerStats[pn.name].highFivesSent||0)+1;
+    persistSave();
+  }
 }
 function getDetailedCard(){
   return Object.assign(getMyCard(),{
@@ -8444,8 +8766,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v7.9';
+var CHANGELOG_VERSION='v8.0';
 var CHANGELOG_ENTRIES=[	
+  'v8.0 Friends & Challenges — custom weekly challenges, high fives, auto-update fix',
   'v7.9 Major Visual Update — complete UI overhaul with enhanced neon aesthetics',
   'RECALIBRATED TABS - NUTRIENT TAB NOW INLCLUDES MEAL PLANNER AND CUSTOM DISH AND WORKOUT TAB NOW INCLUDES BURNED AND PLANS',
   'Rewritten Service Worker — intelligent caching for full offline support',
@@ -8945,17 +9268,17 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js').then(function(reg){
       _swReg = reg;
 
+      // Detect when a new SW finishes installing and takes over
       reg.addEventListener('updatefound', function(){
         var newWorker = reg.installing;
         if(!newWorker) return;
         newWorker.addEventListener('statechange', function(){
           if(newWorker.state==='installed' && navigator.serviceWorker.controller){
             _swUpdatePending = true;
-            showNotif('⚡ Update v7.8 ready — reloading...','');
-            setTimeout(function(){
-              newWorker.postMessage({type:'SKIP_WAITING'});
-            }, 1000);
+            showNotif('⚡ New version available — updating...','OK');
+            // SW already calls skipWaiting() on install, so it'll activate shortly
           }
+          // Once activated, controllerchange will fire and reload
         });
       });
 

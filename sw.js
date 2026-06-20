@@ -160,7 +160,12 @@ self.addEventListener('fetch', e => {
   }
 
   if (url.origin === self.location.origin) {
-    e.respondWith(cacheFirst(e.request));
+    // HTML documents: network-first so users always get fresh content on deploy
+    if (url.pathname === '/' || url.pathname === '/index.html' || /\.html?$/i.test(url.pathname)) {
+      e.respondWith(networkFirst(e.request));
+    } else {
+      e.respondWith(cacheFirst(e.request));
+    }
     return;
   }
 
