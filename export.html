@@ -82,8 +82,9 @@ try{
     }, 1000);
   }
 }catch(err){
+  var errMsg = String(err.message).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});
   document.body.innerHTML =
-    "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + err.message + "</p></div>";
+    "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + errMsg + "</p></div>";
 }
 </script>
 </body>

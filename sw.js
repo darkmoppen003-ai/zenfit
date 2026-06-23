@@ -2,7 +2,7 @@
 // Full offline support + background notifications + auto-update
 
 // ── BUILD INFO (auto-updated by update-build.js) ───
-const SW_BUILD = "2026.06.22.9";
+const SW_BUILD = "2026.06.23.1";
 const SCHEMA_VERSION = 1;
 
 // Cache names derived from build — changes on every deploy
@@ -15,6 +15,7 @@ const BUILD_CACHE = `zenfit-build-${SW_BUILD}`;
 const PRECACHE = [
   './',
   './index.html',
+  './offline.html',
   './manifest.json',
   './zenfit.png',
   './favicon.ico',
@@ -94,16 +95,20 @@ function shouldNeverCache(url) {
 
 // Helper: cache-first strategy
 async function cacheFirst(req) {
-  const cached = await caches.match(req);
+  // Strip query params for cache matching
+  const cacheKey = req.url.includes('?') ? new Request(req.url.split('?')[0], req) : req;
+  const cached = await caches.match(cacheKey);
   if (cached) return cached;
   try {
     const res = await fetch(req);
     if (res && res.status === 200 && res.type !== 'error') {
       const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(req, res.clone());
+      cache.put(cacheKey, res.clone());
     }
     return res;
   } catch {
+    const dest = req.destination;
+    if (dest === 'document' || dest === '') return caches.match('./offline.html');
     return caches.match('./index.html');
   }
 }
@@ -119,17 +124,21 @@ async function networkFirst(req) {
     return res;
   } catch {
     const cached = await caches.match(req);
-    return cached || caches.match('./index.html');
+    if (cached) return cached;
+    const dest = req.destination;
+    if (dest === 'document' || dest === '') return caches.match('./offline.html');
+    return caches.match('./index.html');
   }
 }
 
 // Helper: stale-while-revalidate
 async function staleWhileRevalidate(req) {
-  const cached = await caches.match(req);
+  const cacheKey = req.url.includes('?') ? new Request(req.url.split('?')[0], req) : req;
+  const cached = await caches.match(cacheKey);
   if (cached) {
     fetch(req).then(res => {
       if (res && res.status === 200 && res.type !== 'error') {
-        caches.open(DYNAMIC_CACHE).then(c => c.put(req, res.clone()));
+        caches.open(DYNAMIC_CACHE).then(c => c.put(cacheKey, res.clone()));
       }
     }).catch(() => {});
     return cached;
@@ -138,10 +147,12 @@ async function staleWhileRevalidate(req) {
     const res = await fetch(req);
     if (res && res.status === 200 && res.type !== 'error') {
       const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(req, res.clone());
+      cache.put(cacheKey, res.clone());
     }
     return res;
   } catch {
+    const dest = req.destination;
+    if (dest === 'document' || dest === '') return caches.match('./offline.html');
     return caches.match('./index.html');
   }
 }
@@ -152,7 +163,8 @@ self.addEventListener('fetch', e => {
 
   if (e.request.method !== 'GET' || shouldNeverCache(url)) return;
 
-  const isStaticAsset = STATIC_ASSETS.some(a => e.request.url.includes(a));
+  const reqPath = e.request.url.split('?')[0];
+  const isStaticAsset = STATIC_ASSETS.some(a => reqPath.includes(a));
 
   if (isStaticAsset) {
     e.respondWith(staleWhileRevalidate(e.request));
@@ -161,8 +173,11 @@ self.addEventListener('fetch', e => {
 
   if (url.origin === self.location.origin) {
     // HTML documents: network-first so users always get fresh content on deploy
-    if (url.pathname === '/' || url.pathname === '/index.html' || /\.html?$/i.test(url.pathname)) {
+    if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname === '/offline.html' || /\.html?$/i.test(url.pathname)) {
       e.respondWith(networkFirst(e.request));
+    } else if (/\.css$/i.test(url.pathname)) {
+      // Styles: cache-first for speed
+      e.respondWith(cacheFirst(e.request));
     } else {
       e.respondWith(cacheFirst(e.request));
     }
