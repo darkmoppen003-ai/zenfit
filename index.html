@@ -1702,7 +1702,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.0.1</div>
+  <div class="splash-ver">v8.0.2</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1763,7 +1763,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.0.1";
+const APP_VERSION="v8.0.2";
 const APP_BUILD="2026.06.22.9";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2330,8 +2330,8 @@ function defaultState(){
     customFoods:[],
     customBottomNav:[],
     glassMode:true,
-    glassBlur:12,
-    glassAlpha:0.2,
+    glassBlur:4,
+    glassAlpha:0.1,
   };
 }
 function loadState(){
@@ -5857,7 +5857,7 @@ function renderProfile(el){
         <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.glassMode?'var(--primary-dark)':'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.glassMode?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
       </label>
     </div>
-    ${S.glassMode?('<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Blur</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-blur-val">'+(S.glassBlur??12)+'px</span></div><input type="range" min="0" max="30" value="'+(S.glassBlur??12)+'" oninput="setGlassBlur(+this.value)" class="glass-blur-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px;margin-bottom:8px">'+[0,4,10,16,22,30].map(function(v){return'<div style="position:absolute;left:'+(v/30*100)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassBlur('+v+')"><div class="blur-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round(S.glassBlur??12)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round(S.glassBlur??12)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.55)*100)+'%</span></div><input type="range" min="0" max="100" value="'+Math.round((S.glassAlpha??0.55)*100)+'" oninput="setGlassAlpha(+this.value)" class="glass-alpha-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px">'+[0,20,40,55,75,100].map(function(v){return'<div style="position:absolute;left:'+(v)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassAlpha('+v+')"><div class="alpha-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round((S.glassAlpha??0.55)*100)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round((S.glassAlpha??0.55)*100)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div></div>'):''}
+    ${S.glassMode?('<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Blur</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-blur-val">'+(S.glassBlur??4)+'px</span></div><input type="range" min="0" max="30" value="'+(S.glassBlur??4)+'" oninput="setGlassBlur(+this.value)" class="glass-blur-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px;margin-bottom:8px">'+[0,4,10,16,22,30].map(function(v){return'<div style="position:absolute;left:'+(v/30*100)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassBlur('+v+')"><div class="blur-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round(S.glassBlur??4)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round(S.glassBlur??4)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.1)*100)+'%</span></div><input type="range" min="0" max="100" value="'+Math.round((S.glassAlpha??0.1)*100)+'" oninput="setGlassAlpha(+this.value)" class="glass-alpha-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px">'+[0,20,40,55,75,100].map(function(v){return'<div style="position:absolute;left:'+(v)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassAlpha('+v+')"><div class="alpha-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div></div>'):''}
   </div>
   </div>
   <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();}">Reset All Data</button>`;
@@ -7472,8 +7472,8 @@ function applyTheme(key){
 function applyGlassMode(){
   if(!S)return;
   document.body.classList.toggle('glass-mode',!!S.glassMode);
-  document.documentElement.style.setProperty('--glass-blur',(S.glassBlur??12)+'px');
-  document.documentElement.style.setProperty('--glass-alpha',(S.glassAlpha??0.55).toString());
+  document.documentElement.style.setProperty('--glass-blur',(S.glassBlur??4)+'px');
+  document.documentElement.style.setProperty('--glass-alpha',(S.glassAlpha??0.1).toString());
 }
 function setGlassBlur(v){
   if(v===0)v=0.01;
@@ -8776,8 +8776,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.0.1';
+var CHANGELOG_VERSION='v8.0.2';
 var CHANGELOG_ENTRIES=[	
+  'v8.0.2 Glass defaults, network cache cleanup',
   'v8.0.1 Code clean up and bug fixes',
   'v8.0 Friends & Challenges — custom weekly challenges, high fives, auto-update fix',
   'v7.9 Major Visual Update — complete UI overhaul with enhanced neon aesthetics',
@@ -9303,6 +9304,13 @@ if('serviceWorker' in navigator){
         }).catch(function(){});
       }
     }).catch(function(e){ console.warn('SW registration failed:',e); });
+  });
+
+  // When network comes back online, tell SW to clean old caches
+  window.addEventListener('online', function(){
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_OLD_CACHES' });
+    }
   });
 
   // Listen for controller change to auto-reload

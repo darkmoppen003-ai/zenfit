@@ -2,7 +2,7 @@
 // Full offline support + background notifications + auto-update
 
 // ── BUILD INFO (auto-updated by update-build.js) ───
-const SW_BUILD = "2026.06.23.1";
+const SW_BUILD = "2026.06.23.2";
 const SCHEMA_VERSION = 1;
 
 // Cache names derived from build — changes on every deploy
@@ -190,6 +190,20 @@ self.addEventListener('fetch', e => {
   }
 
   e.respondWith(networkFirst(e.request));
+});
+
+// Clean old caches (from previous builds) when network is available
+async function cleanOldCaches() {
+  try {
+    const keys = await caches.keys();
+    const keep = [CACHE, STATIC_CACHE, DYNAMIC_CACHE, BUILD_CACHE];
+    await Promise.all(keys.filter(k => !keep.includes(k)).map(k => caches.delete(k)));
+  } catch {}
+}
+
+// On network online, sweep old caches
+self.addEventListener('online', () => {
+  cleanOldCaches();
 });
 
 // ── MESSAGE HANDLER (from main thread) ────────────────
