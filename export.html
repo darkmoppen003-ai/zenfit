@@ -54,37 +54,28 @@
 </div>
 <script>
 try{
-  const params =
-    new URLSearchParams(window.location.search);
-  const data =
-    params.get("data");
+  var params = new URLSearchParams(window.location.search);
+  var data = params.get("data");
   if(data){
-    const decoded =
-      decodeURIComponent(data);
-    const blob =
-      new Blob(
-        [decoded],
-        {type:'application/json'}
-      );
-    const url =
-      URL.createObjectURL(blob);
-    const a =
-      document.createElement("a");
+    if(data.length > 52428800){ throw new Error('Data payload too large (max 50MB).'); }
+    var decoded = decodeURIComponent(data);
+    if(decoded.length > 52428800){ throw new Error('Decoded data too large (max 50MB).'); }
+    try{ JSON.parse(decoded); }catch(e){ throw new Error('Invalid JSON data.'); }
+    var blob = new Blob([decoded], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
     a.href = url;
-    a.download =
-      "zenfit_backup.json";
+    a.download = "zenfit_backup.json";
     document.body.querySelector('.container h2').textContent = "Downloading...";
     document.body.querySelector('.container p').textContent = "Your backup file is being downloaded.";
     a.click();
     setTimeout(function(){
-      document.body.innerHTML =
-        "<div class='container'><h2>✓ Success!</h2><p>Your backup has been downloaded to the Downloads folder. You can close this tab.</p></div>";
+      document.body.innerHTML = "<div class='container'><h2>✓ Success!</h2><p>Your backup has been downloaded to the Downloads folder. You can close this tab.</p></div>";
     }, 1000);
   }
 }catch(err){
-  var errMsg = String(err.message).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});
-  document.body.innerHTML =
-    "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + errMsg + "</p></div>";
+  var safeMsg = String(err && err.message ? err.message : 'Unknown error').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});
+  document.body.innerHTML = "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + safeMsg + "</p></div>";
 }
 </script>
 </body>

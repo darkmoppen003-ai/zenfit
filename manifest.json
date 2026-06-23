@@ -1,7 +1,7 @@
 {
   "name": "ZenFit v7.8 — Health RPG",
   "short_name": "ZenFit",
-  "start_url": "/zenfit/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#080A10",
   "theme_color": "#7B5EFF",
@@ -9,7 +9,7 @@
   "lang": "en",
   "id": "com.zenfit.app.v8",
   "dir": "ltr",
-  "scope": "/zenfit/",
+  "scope": "./",
   "orientation": "portrait",
   "categories": ["fitness", "health", "productivity", "utilities", "lifestyle"],
   "display_override": ["standalone", "window-controls-overlay"],
@@ -33,7 +33,7 @@
       "name": "Dashboard",
       "short_name": "Home",
       "description": "Open ZenFit Dashboard",
-      "url": "/zenfit/"
+      "url": "./"
     }
   ]
 }

@@ -19,8 +19,7 @@ const PRECACHE = [
   './manifest.json',
   './zenfit.png',
   './favicon.ico',
-  'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap',
+  // Note: CDN resources are fetched at runtime, not precached, to avoid install failures
 ];
 
 const STATIC_ASSETS = [
