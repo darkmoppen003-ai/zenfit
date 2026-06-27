@@ -1690,7 +1690,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.0.3</div>
+  <div class="splash-ver">v8.0.4</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1728,6 +1728,7 @@ nav::-webkit-scrollbar {
 <nav id="nav"></nav>
 <div id="screens"></div>
 </div>
+<script src="assets/food/worldfooddb.js"></script>
 <script>
 const ZENFIT_LOGO=(document.getElementById('zenfit-logo-data')||{src:''}).src;
 
@@ -1752,7 +1753,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.0.3";
+const APP_VERSION="v8.0.4";
 const APP_BUILD="2026.06.23.12";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -1830,7 +1831,7 @@ const TUTORIAL_STEPS = [
     title: 'Nutrition',
     subtitle: 'Log Meals & Track Macros',
     icon: '🍎',
-    content: 'Log food three ways:\n📝 Text — type "2 chapati, dal" for AI parsing\n📷 Barcode — scan packaged food labels\n✏️ Manual — enter calories and macros directly\n\nUse the Calculator tab to build custom dishes with ingredient-level macros and cooking adjustments. The Meal Plans tab lets you create and reuse full-day meal plans.',
+    content: 'Log food three ways:\n📝 Text — type "2 chapati, dal" or "200g rice, 250ml milk" for AI parsing with unit support\n📷 Barcode — scan packaged food labels\n✏️ Manual — enter calories and macros directly\n\nUse the Calculator tab to build custom dishes with ingredient-level macros and cooking adjustments. The Meal Plans tab lets you create and reuse full-day meal plans.',
     highlights: ['screen-nutrition'],
     action: 'Next'
   },
@@ -2749,51 +2750,6 @@ function checkAutoQuests(){
 }
 function autoQ(id){const q=S.quests.list.find(x=>x.id===id);if(q&&!q.done){q.done=true;S.questsDoneTotal=(S.questsDoneTotal||0)+1;SFX.quest();addXP(q.xp,'Quest complete!');checkAchievements();}}
 
-// ════════════════════════════
-// FOOD DATABASE
-// ════════════════════════════
-const INGR_DB={
-  'chapati':{cal:71,p:2.5,c:15,f:0.5,fi:2.2},'roti':{cal:71,p:2.5,c:15,f:0.5,fi:2.2},
-  'paratha':{cal:150,p:3.5,c:22,f:5.5,fi:2.5},'puri':{cal:103,p:2,c:14,f:4.5,fi:0.8},
-  'naan':{cal:262,p:8.7,c:45,f:5,fi:1.5},'rice':{cal:206,p:4.3,c:45,f:0.4,fi:0.6},
-  'oats':{cal:150,p:5,c:27,f:2.5,fi:4},'poha':{cal:180,p:3.5,c:35,f:3,fi:1.5},
-  'upma':{cal:166,p:4,c:25,f:5,fi:2},'dosa':{cal:168,p:4,c:32,f:3,fi:1.5},
-  'idli':{cal:39,p:2,c:8,f:0.2,fi:0.5},'biryani':{cal:295,p:14,c:42,f:8,fi:2},
-  'khichdi':{cal:180,p:7,c:30,f:4,fi:3},'dal':{cal:116,p:9,c:20,f:0.5,fi:8},
-  'dal tadka':{cal:130,p:9,c:18,f:4,fi:7},'dal makhani':{cal:170,p:8,c:19,f:7,fi:6},
-  'rajma':{cal:127,p:8.7,c:22,f:0.5,fi:7},'chole':{cal:164,p:9,c:27,f:2.6,fi:7.6},
-  'chana dal':{cal:180,p:10,c:28,f:2,fi:8},'moong dal':{cal:104,p:7,c:18,f:0.4,fi:4},
-  'sambar':{cal:68,p:3.5,c:10,f:2,fi:3},
-  'aloo sabzi':{cal:97,p:2.5,c:19,f:2,fi:2.5},'aloo gobi':{cal:95,p:3,c:16,f:3,fi:3.5},
-  'aloo matar':{cal:110,p:4,c:18,f:3,fi:3},'baingan bharta':{cal:80,p:2,c:10,f:3.5,fi:4},
-  'bhindi sabzi':{cal:75,p:2,c:9,f:3.5,fi:3.5},'bhindi ki sabzi':{cal:75,p:2,c:9,f:3.5,fi:3.5},
-  'bhindi masala':{cal:90,p:2.5,c:10,f:4.5,fi:3.5},'lauki sabzi':{cal:55,p:1.5,c:8,f:2,fi:2.5},
-  'lauki ki sabzi':{cal:55,p:1.5,c:8,f:2,fi:2.5},'karela sabzi':{cal:70,p:2,c:8,f:3,fi:3},
-  'methi sabzi':{cal:80,p:3,c:10,f:3,fi:4},'palak sabzi':{cal:70,p:3.5,c:7,f:3,fi:3.5},
-  'palak paneer':{cal:180,p:10,c:8,f:12,fi:2.5},'matar paneer':{cal:185,p:9,c:12,f:12,fi:3},
-  'shahi paneer':{cal:230,p:11,c:10,f:17,fi:1.5},'paneer bhurji':{cal:200,p:13,c:5,f:14,fi:1},
-  'paneer sabzi':{cal:180,p:12,c:8,f:12,fi:2},'kadai paneer':{cal:215,p:11,c:10,f:15,fi:2},
-  'gobi sabzi':{cal:70,p:2.5,c:10,f:2.5,fi:3},'mix veg':{cal:85,p:2.5,c:11,f:3.5,fi:3},
-  'butter chicken':{cal:250,p:26,c:10,f:12,fi:1.5},'chicken curry':{cal:240,p:28,c:8,f:11,fi:2},
-  'egg curry':{cal:200,p:14,c:8,f:13,fi:1.5},'mutton curry':{cal:310,p:30,c:6,f:18,fi:1},
-  'fish curry':{cal:200,p:22,c:7,f:9,fi:1.5},'paneer':{cal:265,p:18,c:1.2,f:21,fi:0},
-  'curd':{cal:98,p:11,c:3.4,f:4.3,fi:0},'dahi':{cal:98,p:11,c:3.4,f:4.3,fi:0},
-  'raita':{cal:70,p:3,c:6,f:3.5,fi:0.5},'lassi':{cal:125,p:4,c:17,f:4.5,fi:0},
-  'milk':{cal:61,p:3.2,c:4.8,f:3.3,fi:0},'ghee':{cal:112,p:0,c:0,f:12.5,fi:0},
-  'samosa':{cal:152,p:3,c:20,f:7,fi:2},'pakora':{cal:90,p:3,c:11,f:4,fi:1.5},
-  'dhokla':{cal:75,p:3.5,c:12,f:1.5,fi:1},'momos':{cal:35,p:2,c:5,f:1,fi:0.5},
-  'maggi':{cal:385,p:9,c:55,f:15,fi:2},'egg':{cal:77,p:6,c:0.6,f:5,fi:0},
-  'boiled egg':{cal:77,p:6,c:0.6,f:5,fi:0},'omelette':{cal:154,p:11,c:1,f:12,fi:0},
-  'chicken':{cal:165,p:31,c:0,f:3.6,fi:0},'banana':{cal:89,p:1.1,c:23,f:0.3,fi:2.6},
-  'apple':{cal:52,p:0.3,c:14,f:0.2,fi:2.4},'mango':{cal:60,p:0.8,c:15,f:0.4,fi:1.6},
-  'chai':{cal:50,p:1.5,c:7,f:1.5,fi:0},'coffee':{cal:5,p:0.3,c:0,f:0,fi:0},
-  'tea':{cal:2,p:0,c:0.5,f:0,fi:0},'water':{cal:0,p:0,c:0,f:0,fi:0},
-  'kheer':{cal:180,p:5,c:30,f:5,fi:0.3},'gulab jamun':{cal:150,p:3,c:25,f:5,fi:0.5},
-  'ladoo':{cal:175,p:4,c:28,f:6,fi:1},'whey protein':{cal:120,p:25,c:3,f:1.5,fi:0},
-  'peanut butter':{cal:94,p:4,c:3,f:8,fi:1},'almonds':{cal:164,p:6,c:6,f:14,fi:3.5},
-  'salad':{cal:50,p:2,c:10,f:0.5,fi:4},'sandwich':{cal:250,p:10,c:35,f:7,fi:3},
-  'pizza':{cal:285,p:12,c:36,f:10,fi:2},'burger':{cal:354,p:20,c:40,f:14,fi:2},
-};
 const ALIASES={
   'bhindi':'bhindi sabzi','okra':'bhindi sabzi','lauki':'lauki sabzi','karela':'karela sabzi',
   'baingan':'baingan sabzi','brinjal':'baingan sabzi','gobi':'gobi sabzi','gobhi':'gobi sabzi',
@@ -2804,31 +2760,107 @@ const ALIASES={
   'machli':'fish curry','murgh makhani':'butter chicken','mix sabzi':'mix veg',
   'kaddu':'pumpkin sabzi','paneer ki sabzi':'paneer sabzi',
 };
+const FOOD_UNIT={
+  // Piece-based (values are per piece / per unit)
+  'apple':{u:'piece',d:1,g:100},'banana':{u:'piece',d:1,g:100},
+  'mango':{u:'piece',d:1,g:150},'orange':{u:'piece',d:1,g:130},
+  'egg':{u:'piece',d:1,g:50},'boiled egg':{u:'piece',d:1,g:50},
+  'omelette':{u:'piece',d:1,g:100},'chapati':{u:'piece',d:1,g:40},
+  'roti':{u:'piece',d:1,g:40},'paratha':{u:'piece',d:1,g:80},
+  'puri':{u:'piece',d:1,g:20},'naan':{u:'piece',d:1,g:90},
+  'dosa':{u:'piece',d:1,g:75},'idli':{u:'piece',d:4,g:20},
+  'momos':{u:'piece',d:6,g:10},'samosa':{u:'piece',d:1,g:50},
+  'dhokla':{u:'piece',d:2,g:35},'pizza':{u:'piece',d:1,g:200},
+  'burger':{u:'piece',d:1,g:150},'sandwich':{u:'piece',d:1,g:150},
+  'gulab jamun':{u:'piece',d:2,g:30},'ladoo':{u:'piece',d:2,g:30},
+  // ml-based (liquids — values per defaultQty ml)
+  'milk':{u:'ml',d:250},'water':{u:'ml',d:250},
+  'lassi':{u:'ml',d:200},'chai':{u:'ml',d:150},
+  'coffee':{u:'ml',d:150},'tea':{u:'ml',d:150},
+  // g-based (by weight — values per defaultQty grams)
+  'rice':{u:'g',d:100},'biryani':{u:'g',d:200},'khichdi':{u:'g',d:150},
+  'oats':{u:'g',d:30},'poha':{u:'g',d:100},'upma':{u:'g',d:150},
+  'paneer':{u:'g',d:100},'curd':{u:'g',d:100},'dahi':{u:'g',d:100},
+  'raita':{u:'g',d:100},'chicken':{u:'g',d:100},
+  'whey protein':{u:'g',d:30},'peanut butter':{u:'g',d:16},
+  'almonds':{u:'g',d:30},'salad':{u:'g',d:100},
+  'dal':{u:'g',d:100},'dal tadka':{u:'g',d:100},'dal makhani':{u:'g',d:100},
+  'rajma':{u:'g',d:100},'chole':{u:'g',d:100},'chana dal':{u:'g',d:100},
+  'moong dal':{u:'g',d:100},'sambar':{u:'g',d:100},
+  'aloo sabzi':{u:'g',d:100},'aloo gobi':{u:'g',d:100},
+  'bhindi sabzi':{u:'g',d:100},'bhindi ki sabzi':{u:'g',d:100},
+  'palak paneer':{u:'g',d:100},'matar paneer':{u:'g',d:100},
+  'butter chicken':{u:'g',d:100},'chicken curry':{u:'g',d:100},
+  'egg curry':{u:'g',d:100},'mutton curry':{u:'g',d:100},
+  'fish curry':{u:'g',d:100},
+  'kheer':{u:'g',d:100},'maggi':{u:'g',d:50},
+};
+function resolveQty(qty,unit,dbKey){
+  const m=FOOD_UNIT[dbKey];if(!m) return {s:qty,dq:qty,du:''};
+  if(!unit){
+    if(m.u==='piece') return {s:qty,dq:qty,du:qty>1?'pieces':'piece'};
+    return {s:qty,dq:qty*m.d,du:m.u};
+  }
+  const u=unit.replace(/s$/,'');
+  if(u==='piece'||u==='pc') return {s:qty,dq:qty,du:qty>1?'pieces':'piece'};
+  if(u==='g'||u==='gram'){
+    if(m.u==='piece'){const p=qty/(m.g||100);return {s:p,dq:qty,du:'g'};}
+    const sv=qty/(m.d||100);return {s:sv,dq:qty,du:'g'};
+  }
+  if(u==='ml'||u==='milliliter'){
+    if(m.u==='ml'){const sv=qty/(m.d||250);return {s:sv,dq:qty,du:'ml'};}
+    return {s:qty,dq:qty,du:'ml'};
+  }
+  if(u==='kg'){const g=qty*1000;
+    if(m.u==='piece'){const p=g/(m.g||100);return {s:p,dq:qty,du:'kg'};}
+    return {s:g/(m.d||100),dq:qty,du:'kg'};
+  }
+  if(u==='cup'){
+    if(m.u==='ml'){const sv=qty*240/(m.d||250);return {s:sv,dq:qty,du:'cup'};}
+    const g=qty*150;
+    if(m.u==='piece'){const p=g/(m.g||100);return {s:p,dq:qty,du:'cup'};}
+    return {s:g/(m.d||100),dq:qty,du:'cup'};
+  }
+  if(u==='glass'){const sv=qty*250/(m.d||250);return {s:sv,dq:qty,du:'glass'};}
+  if(u==='bowl'){const g=qty*150;
+    if(m.u==='piece'){const p=g/(m.g||100);return {s:p,dq:qty,du:'bowl'};}
+    return {s:g/(m.d||100),dq:qty,du:'bowl'};
+  }
+  if(u==='tbsp'){const g=qty*15;
+    if(m.u==='piece'){const p=g/(m.g||100);return {s:p,dq:qty,du:'tbsp'};}
+    return {s:g/(m.d||100),dq:qty,du:'tbsp'};
+  }
+  if(u==='tsp'){const g=qty*5;
+    if(m.u==='piece'){const p=g/(m.g||100);return {s:p,dq:qty,du:'tsp'};}
+    return {s:g/(m.d||100),dq:qty,du:'tsp'};
+  }
+  if(u==='serving') return {s:qty,dq:qty,du:'serving'};
+  return {s:qty,dq:qty,du:u};
+}
 function parseFood(text){
   text=text.toLowerCase().trim().replace(/\b(ki|ka|ke|with|and|&)\b/g,' ').replace(/\s+/g,' ').trim();
-  let qty=1;
-  const nm=text.match(/^(\d+\.?\d*)\s+/);
-  if(nm){qty=parseFloat(nm[1]);text=text.slice(nm[0].length).trim();}
+  let qty=1,unit='';
+  const nm=text.match(/^(\d+\.?\d*)\s*(g|ml|kg|piece|pieces|pc|pcs|cup|cups|glass|glasses|tbsp|tsp|serving|servings|bowl|bowls|slice|slices|gram|grams|milliliter|milliliters|kilogram|kilograms)\b/);
+  if(nm){qty=parseFloat(nm[1]);unit=nm[2].replace(/s$/,'');text=text.slice(nm[0].length).trim();}
   else{const qw={'half':0.5,'one':1,'two':2,'three':3,'four':4,'a ':1,'an ':1};for(const[w,v]of Object.entries(qw)){if(text.startsWith(w)){qty=v;text=text.slice(w.length).trim();break;}}}
-  text=text.replace(/\b(bowl|piece|cup|glass|serving|plate|small|large|medium|full)\b/g,'').trim().replace(/\s+/g,' ');
-  // Check user's personal food database first
+  text=text.replace(/\b(plate|small|large|medium|full)\b/g,'').trim().replace(/\s+/g,' ');
   const cf=S.customFoods||[];
   const userMatch=cf.find(f=>f.name.toLowerCase()===text||text.includes(f.name.toLowerCase())||f.name.toLowerCase().includes(text));
-  if(userMatch)return{name:userMatch.name,qty,nutrients:{cal:userMatch.cal*qty,protein:userMatch.protein*qty,carbs:userMatch.carbs*qty,fat:userMatch.fat*qty,fiber:(userMatch.fiber||0)*qty}};
-  if(ALIASES[text]&&INGR_DB[ALIASES[text]]) return bE(ALIASES[text],text,qty);
-  if(INGR_DB[text]) return bE(text,text,qty);
+  if(userMatch){const r=resolveQty(qty,unit,userMatch.name);return{name:userMatch.name,qty:r.dq,unit:r.du,nutrients:{cal:Math.round(userMatch.cal*r.s),protein:Math.round(userMatch.protein*r.s*10)/10,carbs:Math.round(userMatch.carbs*r.s*10)/10,fat:Math.round(userMatch.fat*r.s*10)/10,fiber:Math.round((userMatch.fiber||0)*r.s*10)/10}};}
+  if(ALIASES[text]&&INGR_DB[ALIASES[text]]) return bE(ALIASES[text],text,qty,unit);
+  if(INGR_DB[text]) return bE(text,text,qty,unit);
   let best=null,bs=0;
   for(const k of Object.keys(ALIASES)){if(text.includes(k)&&k.length>bs){best=k;bs=k.length;}}
-  if(best&&INGR_DB[ALIASES[best]]) return bE(ALIASES[best],text,qty);
+  if(best&&INGR_DB[ALIASES[best]]) return bE(ALIASES[best],text,qty,unit);
   best=null;bs=0;
   for(const k of Object.keys(INGR_DB)){if(text.includes(k)&&k.length>bs){best=k;bs=k.length;}}
-  if(best) return bE(best,text,qty);
-  for(const w of text.split(' ')){if(ALIASES[w]&&INGR_DB[ALIASES[w]]) return bE(ALIASES[w],text,qty);if(INGR_DB[w]) return bE(w,text,qty);}
+  if(best) return bE(best,text,qty,unit);
+  for(const w of text.split(' ')){if(ALIASES[w]&&INGR_DB[ALIASES[w]]) return bE(ALIASES[w],text,qty,unit);if(INGR_DB[w]) return bE(w,text,qty,unit);}
   return null;
 }
-function bE(dbKey,orig,qty){
-  const b=INGR_DB[dbKey];
-  return{name:orig||dbKey,qty,nutrients:{cal:Math.round(b.cal*qty),protein:Math.round(b.p*qty*10)/10,carbs:Math.round(b.c*qty*10)/10,fat:Math.round(b.f*qty*10)/10,fiber:Math.round(b.fi*qty*10)/10}};
+function bE(dbKey,orig,qty,unit){
+  const b=INGR_DB[dbKey],r=resolveQty(qty,unit||'',dbKey);
+  return{name:orig||dbKey,qty:r.dq,unit:r.du,nutrients:{cal:Math.round(b.cal*r.s),protein:Math.round(b.p*r.s*10)/10,carbs:Math.round(b.c*r.s*10)/10,fat:Math.round(b.f*r.s*10)/10,fiber:Math.round(b.fi*r.s*10)/10}};
 }
 function gradeFood(n){
   const s=(n.protein*4)/(n.cal||1)*100+(n.fiber*5)-(n.fat*0.3);
@@ -3518,7 +3550,7 @@ function renderNutrition(el){
       <button class="btn btn-sm${activeTab==='manual'?' btn-primary':''}" onclick="setFT('manual')">✏️ Manual</button>
     </div>
     <div id="ft-text" style="${activeTab==='text'?'':'display:none'}">
-      <input type="text" id="food-input" placeholder="e.g. 2 chapati, 1 bowl bhindi ki sabzi, 1 lassi..." style="margin-bottom:8px">
+      <input type="text" id="food-input" placeholder="e.g. 2 chapati, 200g rice, 250ml milk, 1 bowl dal..." style="margin-bottom:8px">
       <div id="food-res"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-primary" onclick="parseFoodInput()">Parse</button>
@@ -3562,7 +3594,7 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No meals logged.</div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
   }else if(nutritionTab==='calculator'){
     const n=dishIngredients.length>0?calcDishNutrition():null;
     html+=`
@@ -3721,8 +3753,8 @@ function parseFoodInput(){
   parsedFood=res;
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
   if(!r)return;
-  if(!res.length){r.innerHTML=`<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati" or "1 bowl dal".</div>`;return;}
-  r.innerHTML=res.map(f=>`<div class="card-sm mb8 flex gap8"><div class="grade grade-${gradeFood(f.nutrients)}">${gradeFood(f.nutrients)}</div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(f.name)} × ${f.qty}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(f.nutrients.cal)} kcal · P:${nn(f.nutrients.protein||f.nutrients.prot)}g · C:${nn(f.nutrients.carbs)}g</div></div></div>`).join('');
+  if(!res.length){r.innerHTML=`<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "200g rice", or "250ml milk".</div>`;return;}
+  r.innerHTML=res.map(f=>`<div class="card-sm mb8 flex gap8"><div class="grade grade-${gradeFood(f.nutrients)}">${gradeFood(f.nutrients)}</div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(f.name)} × ${f.qty}${f.unit?' '+f.unit:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(f.nutrients.cal)} kcal · P:${nn(f.nutrients.protein||f.nutrients.prot)}g · C:${nn(f.nutrients.carbs)}g</div></div></div>`).join('');
   if(btn)btn.style.display='block';
 }
 function logParsedFood(){
@@ -8778,8 +8810,9 @@ function renderNotifSettings(containerId){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.0.3';
+var CHANGELOG_VERSION='v8.0.4';
 var CHANGELOG_ENTRIES=[	
+  'v8.0.4 Updated food database — now supports more wide variety of food across the world and better quantity handling',
   'v8.0.3 Bug fixes: IndexedDB fallback, CSP, CSS conflict, export validation, manifest, SW robust',
   'v8.0.2 Glass defaults, network cache cleanup',
   'v8.0.1 Code clean up and bug fixes',
