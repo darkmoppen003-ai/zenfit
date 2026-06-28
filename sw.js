@@ -24,29 +24,17 @@ const PRECACHE = [
 
 const STATIC_ASSETS = [
   './assets/male/rank_S_idle.gif',
-  './assets/male/rank_S_action.gif',
   './assets/male/rank_E_idle.gif',
-  './assets/male/rank_E_action.gif',
   './assets/male/rank_D_idle.gif',
-  './assets/male/rank_D_action.gif',
   './assets/male/rank_C_idle.gif',
-  './assets/male/rank_C_action.gif',
   './assets/male/rank_B_idle.gif',
-  './assets/male/rank_B_action.gif',
   './assets/male/rank_A_idle.gif',
-  './assets/male/rank_A_action.gif',
   './assets/female/rank_S_idle.gif',
-  './assets/female/rank_S_action.gif',
   './assets/female/rank_E_idle.gif',
-  './assets/female/rank_E_action.gif',
   './assets/female/rank_D_idle.gif',
-  './assets/female/rank_D_action.gif',
   './assets/female/rank_C_idle.gif',
-  './assets/female/rank_C_action.gif',
   './assets/female/rank_B_idle.gif',
-  './assets/female/rank_B_action.gif',
   './assets/female/rank_A_idle.gif',
-  './assets/female/rank_A_action.gif',
 ];
 
 const NEVER_CACHE_HOSTS = [

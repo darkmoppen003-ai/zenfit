@@ -3593,7 +3593,7 @@ function renderNutrition(el){
     </div>
   </div>
   <div class="section-title">Today (${te.length})</div>
-  ${te.length===0?`<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No meals logged.</div>`:''}
+  ${te.length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No meals logged.</div></div>`:''}
   ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
   }else if(nutritionTab==='calculator'){
     const n=dishIngredients.length>0?calcDishNutrition():null;
@@ -3632,7 +3632,7 @@ function renderNutrition(el){
       </div>
       <button class="btn btn-primary btn-sm" onclick="addDishIngredient()" style="margin-bottom:1px">+ Add</button>
     </div>
-    ${dishIngredients.length===0?'<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px">No ingredients added yet</div>':''}
+    ${dishIngredients.length===0?'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:12px">No ingredients added yet</div></div>':''}
     <div style="display:flex;flex-direction:column;gap:6px">
       ${dishIngredients.map((ing,i)=>{
         const inn=getIngNutrition(ing.name);
@@ -3717,7 +3717,7 @@ function renderNutrition(el){
       </div>
     </div>
     <button class="btn btn-primary btn-full" onclick="saveMealPlan()">Save Meal Plan</button>`:
-    '<div style="color:var(--text-muted);font-size:12px;padding:12px 0">Add food items to build your meal plan</div>'}
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:12px">Add food items to build your meal plan</div></div>'}
   </div>
   ${plans.length>0?`<div class="section-title">Saved Meal Plans (${plans.length})</div>`:''} 
   ${plans.map((mp,i)=>`<div class="card mb10">
@@ -4019,7 +4019,7 @@ function renderWorkout(el){
 
   <!-- Today's log -->
   <div class="section-title">Today's Log (${todayW.length})</div>
-  ${todayW.length===0?'<div style="color:var(--text-muted);font-size:13px;padding:8px 0">No exercises logged today yet.</div>':''}
+  ${todayW.length===0?'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/workout.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No exercises logged today yet.</div></div>':''}
   ${todayW.reverse().slice(0,20).map((w,ri)=>{
     const idx=S.workouts.indexOf(w);
     const cal=w.caloriesBurned||0;
@@ -4684,7 +4684,7 @@ function renderHabits(el){
     <button class="btn btn-primary" onclick="addHabit()">Add Habit</button>
   </div>
   <div class="section-title">My Habits (${S.habits.length})</div>
-  ${S.habits.length===0?`<div style="color:var(--text-muted);font-size:13px">No habits yet. Add your first habit above!</div>`:''}
+  ${S.habits.length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/habits.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No habits yet. Add your first habit above!</div></div>`:''}
   ${S.habits.map((h,i)=>{
     const done=h.completedDates?.includes(today);
     const xpM={easy:20,medium:40,hard:70};
@@ -4853,7 +4853,7 @@ function renderStudy(el){
   </div>
 
   <div class="section-title">Sessions (${totalMins}min today)</div>
-  ${(S.study.sessions||[]).length===0?`<div style="color:var(--text-muted);font-size:13px">No sessions yet.</div>`:''}
+  ${(S.study.sessions||[]).length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/study.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No sessions yet.</div></div>`:''}
   ${[...(S.study.sessions||[])].reverse().slice(0,15).map((s,i)=>`
   <div class="card-sm mb8">
     <div class="flex-between mb4">
@@ -6316,7 +6316,7 @@ function renderCustomDish(el){
       </div>
       <button class="btn btn-primary btn-sm" onclick="addDishIngredient()" style="margin-bottom:1px">+ Add</button>
     </div>
-    ${dishIngredients.length===0?'<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px">No ingredients added yet</div>':''}
+    ${dishIngredients.length===0?'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:12px">No ingredients added yet</div></div>':''}
     <div style="display:flex;flex-direction:column;gap:6px">
       ${dishIngredients.map((ing,i)=>{
         const nn=getIngNutrition(ing.name);
@@ -6477,7 +6477,7 @@ function renderMealPlanner(el){
       </div>
     </div>
     <button class="btn btn-primary btn-full" onclick="saveMealPlan()">Save Meal Plan</button>`:
-    '<div style="color:var(--text-muted);font-size:12px;padding:12px 0">Add food items to build your meal plan</div>'}
+    '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:12px">Add food items to build your meal plan</div></div>'}
   </div>
 
   ${plans.length>0?`<div class="section-title">Saved Meal Plans (${plans.length})</div>`:''} 
@@ -8609,7 +8609,7 @@ function renderTasks(el){
       '<button class="btn btn-primary btn-full" onclick="addTask()">[ + ADD TASK ]</button>'+
     '</div>'+
     '<div class="section-title">Today\'s Tasks ('+dueTasks.length+')</div>'+
-    (dueTasks.length===0?'<div class="insight">No tasks for today. Add a task above to train your discipline.</div>':'')+
+    (dueTasks.length===0?'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/tasks.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div class="insight" style="margin-bottom:0">No tasks for today. Add a task above to train your discipline.</div></div>':'')+
     taskRows+otherRows;
 }
 
@@ -8926,7 +8926,7 @@ function renderCharacterCard(){
           '<div class="char-panel-title">Your Character</div>'+
 
           // Contained avatar frame
-          '<div class="char-avatar-frame" id="charAvatarBox" onclick="charAvatarAct()">'+
+          '<div class="char-avatar-frame" id="charAvatarBox">'+
             '<img id="charAvatarImg" src="'+idleGif+'" alt="character" '+
               'onerror="this.style.display=\'none\';var fb=document.getElementById(\'charAvatarFallback\');if(fb)fb.style.display=\'flex\'">'+
             '<div id="charAvatarFallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:64px;z-index:1">'+rankEmojiFallback+'</div>'+
@@ -8990,37 +8990,6 @@ function renderCharacterCard(){
 
     '</div>';
 
-  // Auto-play action gif on screen entry
-  var img=document.getElementById('charAvatarImg');
-  if(img){
-    var _g=gender,_r=p.rank;
-    img.src='assets/'+_g+'/rank_'+_r+'_action.gif';
-    var box=document.getElementById('charAvatarBox');
-    if(box)box.classList.add('avatar-acting');
-    setTimeout(function(){
-      var im2=document.getElementById('charAvatarImg');
-      var b2=document.getElementById('charAvatarBox');
-      if(im2)im2.src='assets/'+_g+'/rank_'+_r+'_idle.gif';
-      if(b2)b2.classList.remove('avatar-acting');
-    },2000);
-  }
-}
-
-function charAvatarAct(){
-  var p=S.player;
-  var pr=S.profile||{};
-  var gender=pr.gender||'male';
-  var box=document.getElementById('charAvatarBox');
-  var img=document.getElementById('charAvatarImg');
-  if(!img||!box||box.classList.contains('avatar-acting'))return;
-  box.classList.add('avatar-acting');
-  img.src='assets/'+gender+'/rank_'+p.rank+'_action.gif';
-  setTimeout(function(){
-    var im2=document.getElementById('charAvatarImg');
-    var b2=document.getElementById('charAvatarBox');
-    if(im2)im2.src='assets/'+gender+'/rank_'+p.rank+'_idle.gif';
-    if(b2)b2.classList.remove('avatar-acting');
-  },2000);
 }
 
 // ════════════════════════════════════════════════════

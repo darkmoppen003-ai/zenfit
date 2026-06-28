@@ -142,6 +142,7 @@ It runs entirely in the browser and stores all data locally — no login, no bac
 * Bottom navigation (mobile-friendly)
 * Swipe navigation support
 * Smooth animations and transitions
+* Tab-specific mascot illustrations on empty states
 * Dark theme optimized for mobile/webview
 * Android WebView optimizations
 
@@ -184,6 +185,7 @@ This project was built for **practical everyday use**, not precision health trac
 * CSS (custom UI system)
 * JavaScript
 * Chart.js (for analytics)
+* Character GIFs (idle-only, action removed)
 * GitHub Pages (hosting)
 * AppsGeyser (Android wrapper)
 
