@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; connect-src 'self' https: wss:; font-src 'self' https: data:; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; connect-src 'self' https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co wss://*.peerjs.com; font-src 'self' https: data:; worker-src 'self' blob:; frame-ancestors 'none'; form-action 'none'">
 <meta name="theme-color" content="#7B5EFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -110,7 +110,8 @@ textarea{resize:vertical;min-height:50px}
 .quest-card.done{opacity:.65;border-color:var(--success);animation:questPop .25s cubic-bezier(.34,1.56,.64,1)}
 .quest-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border-strong);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .quest-check.done{background:var(--success);border-color:var(--success);color:#000;animation:questPop .25s cubic-bezier(.34,1.56,.64,1)}
-.notif{position:fixed;top:16px;right:16px;background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:12px;padding:12px 16px;font-size:var(--text-sm);font-family:var(--font-ui);z-index:9999;animation:slideIn .3s ease;max-width:280px;pointer-events:none;box-shadow:var(--shadow-md)}
+#notif-container{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;max-height:90vh;overflow-y:hidden}
+.notif{background:var(--bg-surface);border:1px solid var(--border-mid);border-radius:12px;padding:12px 16px;font-size:var(--text-sm);font-family:var(--font-ui);animation:slideIn .3s ease;max-width:280px;max-height:150px;overflow:hidden;pointer-events:none;box-shadow:var(--shadow-md);flex-shrink:0}
 .notif-xp{border-color:var(--primary);box-shadow:var(--shadow-md),var(--glow-primary)}
 .notif-success{border-color:var(--success);box-shadow:var(--shadow-md),var(--glow-success)}
 .notif-danger{border-color:var(--danger);box-shadow:var(--shadow-md),var(--glow-danger)}
@@ -1728,9 +1729,15 @@ nav::-webkit-scrollbar {
 <nav id="nav"></nav>
 <div id="screens"></div>
 </div>
+<div id="notif-container"></div>
 <script src="assets/food/worldfooddb.js"></script>
+<script src="assets/food/rawingredient.js"></script>
 <script>
 const ZENFIT_LOGO=(document.getElementById('zenfit-logo-data')||{src:''}).src;
+var silentLog = function(){};
+function devLog(){if(location.hostname==='localhost'||location.hostname.startsWith('127.')){return console.log.apply(console,arguments);}return silentLog;}
+function devWarn(){if(location.hostname==='localhost'||location.hostname.startsWith('127.')){return console.warn.apply(console,arguments);}return silentLog;}
+function devError(){if(location.hostname==='localhost'||location.hostname.startsWith('127.')){return console.error.apply(console,arguments);}return silentLog;}
 
 function escapeHtml(str) {
   if (str == null) return '';
@@ -1772,10 +1779,10 @@ var schemaMigrations = {};
       try {
         if (typeof schemaMigrations[v] === 'function') {
           schemaMigrations[v]();
-          console.log('[ZF] Schema migrated v' + (v-1) + ' → v' + v);
+          void 0;
         }
       } catch (e) {
-        console.warn('[ZF] Schema migration v' + v + ' failed:', e);
+        devWarn('[ZF] Schema migration v' + v + ' failed:', e);
       }
     }
 
@@ -1790,7 +1797,7 @@ var schemaMigrations = {};
         build: APP_BUILD,
         schemaVersion: currentSchema
       });
-      console.log('[ZF] Notified SW of build ' + APP_BUILD);
+      void 0;
     }
   }
 })();
@@ -2331,7 +2338,7 @@ function loadState(){
       const merged=validateAndMergeData(saved,defaultState());
       return merged;
     }
-  }catch(e){console.warn('ZenFit loadState (localStorage) error:',e);}
+  }catch(e){devWarn('ZenFit loadState (localStorage) error:',e);}
   
   // This is a fresh user
   const fresh = defaultState();
@@ -2429,7 +2436,7 @@ function persistLoad(){
     // Show changelog if version changed
     setTimeout(function(){ checkChangelog(); }, 900);
   }catch(e){
-    console.error('ZenFit render error:',e);
+    devError('ZenFit render error:',e);
   }finally{
     var hide=function(){
       if(typeof hideSplash==="function"){hideSplash();}
@@ -2592,12 +2599,21 @@ function updStat(stat,amt=1){S.player.stats[stat]=Math.min(100,(S.player.stats[s
 // ════════════════════════════
 const RANK_CLASS_NAMES={E:'Novice Hunter',D:'Awakened Hunter',C:'Rising Warrior',B:'Iron Sentinel',A:'Apex Predator',S:'Legendary Sovereign'};
 function showNotif(msg,icon='+'){
-  const el=document.createElement('div');el.className='notif';
-  const iconClass = icon==='XP'?'notif-xp':(icon==='★'?'notif-success':(icon==='!'||icon==='×')?'notif-danger':'');
+  var c=document.getElementById('notif-container')||function(){
+    var d=document.createElement('div');d.id='notif-container';
+    document.body.appendChild(d);return d;
+  }();
+  var el=document.createElement('div');el.className='notif';
+  var iconClass = icon==='XP'?'notif-xp':(icon==='★'?'notif-success':(icon==='!'||icon==='×')?'notif-danger':'');
   if(iconClass) el.classList.add(iconClass);
-  el.innerHTML=`<span style="margin-right:8px;font-size:16px">${icon==='XP'?'⚡':icon==='★'?'🏆':icon==='OK'?'✓':icon==='!'?'⚠️':icon}</span><span>${escapeHtml(msg)}</span>`;
-  document.body.appendChild(el);
-  setTimeout(()=>{el.style.transition='opacity .3s,transform .3s';el.style.opacity='0';el.style.transform='translateX(40px)';setTimeout(()=>el.remove(),350);},2600);
+  el.innerHTML='<span style="margin-right:8px;font-size:16px">'+(icon==='XP'?'⚡':icon==='★'?'🏆':icon==='OK'?'✓':icon==='!'?'⚠️':icon)+'</span><span>'+escapeHtml(msg)+'</span>';
+  c.insertBefore(el,c.firstChild);
+  setTimeout(function(){
+    el.style.transition='opacity .3s,transform .3s,max-height .4s ease-in-out,padding .4s ease-in-out,margin .4s ease-in-out';
+    el.style.opacity='0';el.style.transform='translateX(40px)';
+    el.style.maxHeight='0';el.style.padding='0 16px';el.style.margin='0';el.style.border='0';
+    setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},450);
+  },2600);
   if(icon==='XP') SFX.xp();
   else if(icon==='★') SFX.achievement();
   else SFX.notif();
@@ -3600,7 +3616,6 @@ function renderNutrition(el){
     html+=`
   <div class="card mb12">
     <div class="section-title">Custom Dish Calculator</div>
-    <input type="text" id="dish-name" placeholder="Dish name (e.g. Dal Tadka, Protein Shake)" value="${dishState.name||''}" style="margin-bottom:8px" onchange="saveDishState()">
     <div class="grid2" style="gap:8px;margin-bottom:8px">
       <div>
         <label style="font-size:11px;color:var(--text-muted)">Cooking Method</label>
@@ -3626,9 +3641,21 @@ function renderNutrition(el){
         <input type="text" id="ing-name" placeholder="e.g. Chicken Breast" list="ing-list" style="margin-top:4px">
         <datalist id="ing-list">${COMMON_INGREDIENTS.map(i=>`<option value="${i}">`).join('')}</datalist>
       </div>
-      <div style="width:90px">
-        <label style="font-size:11px;color:var(--text-muted)">Qty (g / ml)</label>
+      <div style="width:80px">
+        <label style="font-size:11px;color:var(--text-muted)">Qty</label>
         <input type="number" id="ing-qty" placeholder="100" min="1" style="margin-top:4px">
+      </div>
+      <div style="width:75px">
+        <label style="font-size:11px;color:var(--text-muted)">Unit</label>
+        <select id="ing-unit" style="margin-top:4px">
+          <option value="g">g</option>
+          <option value="ml">ml</option>
+          <option value="piece">piece(s)</option>
+          <option value="cup">cup</option>
+          <option value="tbsp">tbsp</option>
+          <option value="tsp">tsp</option>
+          <option value="bowl">bowl</option>
+        </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="addDishIngredient()" style="margin-bottom:1px">+ Add</button>
     </div>
@@ -3636,11 +3663,12 @@ function renderNutrition(el){
     <div style="display:flex;flex-direction:column;gap:6px">
       ${dishIngredients.map((ing,i)=>{
         const inn=getIngNutrition(ing.name);
-        const cal=inn?Math.round(inn[0]*ing.qty/100):0;
+        const g=toGrams(ing.qty,ing.unit||'g');
+        const cal=inn?Math.round(inn[0]*g/100):0;
         return`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-raised);border-radius:8px">
           <div style="flex:1">
             <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${ing.name}</span>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:8px">${ing.qty}g</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px">${ing.qty}${ing.unit||'g'}</span>
             ${inn?`<span style="font-size:11px;color:var(--warning);margin-left:8px">${cal} kcal</span>`:`<span style="font-size:11px;color:var(--danger);margin-left:8px">Unknown</span>`}
           </div>
           <button class="btn btn-icon btn-sm" onclick="removeDishIngredient(${i})" style="color:var(--danger)">×</button>
@@ -3664,6 +3692,7 @@ function renderNutrition(el){
       <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1">
       <button class="btn btn-primary" onclick="logCustomDish()">Log to Nutrition</button>
     </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:10px;padding:6px 8px;background:var(--bg-raised);border-radius:6px">💡 This dish is saved to <strong>My Foods</strong> after logging. Later, just type its name in <strong>Log Food</strong> to add it again.</div>
   </div>`:''}
   <div class="card">
     <div class="section-title">About Cooking Methods</div>
@@ -5986,177 +6015,7 @@ const COOKING_METHODS={
   bake:{mult:1.08,label:'Baked'},
   pressure:{mult:0.9,label:'Pressure Cooked'},
 };
-const COMMON_INGREDIENTS=[
-  'Rice (cooked)','Rice (raw)','Chicken Breast','Chicken Thigh','Egg','Egg White',
-  'Milk (whole)','Milk (skim)','Paneer','Tofu','Lentils (cooked)','Chickpeas',
-  'Wheat Flour','Oats','Bread (white)','Bread (whole wheat)',
-  'Potato','Sweet Potato','Broccoli','Spinach','Tomato','Onion','Garlic',
-  'Olive Oil','Coconut Oil','Butter','Ghee','Sunflower Oil',
-  'Whey Protein','Protein Bar','Banana','Apple','Orange',
-  'Almonds','Peanuts','Peanut Butter','Cashews',
-  'Sugar','Honey','Salt','Turmeric','Cumin',
-  'Beef (lean)','Fish (salmon)','Fish (tilapia)','Shrimp','Tuna (canned)',
-  'Yogurt (plain)','Cottage Cheese','Cheddar Cheese','Mozzarella',
-  'Black Beans','Kidney Beans','Green Peas','Corn',
-  'Pasta (cooked)','Quinoa','Barley',
-  // Indian
-  'Dal (cooked)','Dal Tadka','Dal Makhani','Rajma (cooked)','Chana Masala',
-  'Roti (wheat)','Chapati','Paratha (plain)','Naan','Rice (Basmati cooked)',
-  'Khichdi','Idli','Dosa','Upma','Poha',
-  'Curd (Dahi)','Paneer','Paneer Bhurji','Palak Paneer',
-  'Chicken Curry','Mutton Curry','Fish Curry','Egg Curry','Biryani (Chicken)',
-  'Samosa (fried)','Pakora','Puri','Bhatura',
-  'Aloo Sabzi','Mixed Veg Curry','Sambar','Rasam',
-  'Masala Chai (with milk)','Lassi (plain)','Lassi (sweet)','Coconut Water',
-  'Sattu','Flaxseed (Alsi)','Amla (Gooseberry)','Moringa Leaves',
-];
-// Nutrition per 100g (cal, protein, carbs, fat, fiber)
-const INGREDIENT_NUTRITION={
-  'rice (cooked)':[130,2.7,28,0.3,0.4],
-  'rice (raw)':[365,7.1,80,0.7,1.3],
-  'chicken breast':[165,31,0,3.6,0],
-  'chicken thigh':[209,26,0,11,0],
-  'egg':[155,13,1.1,11,0],
-  'egg white':[52,11,0.7,0.2,0],
-  'milk (whole)':[61,3.2,4.8,3.3,0],
-  'milk (skim)':[34,3.4,5,0.1,0],
-  'paneer':[265,18,3.4,20,0],
-  'tofu':[76,8,1.9,4.8,0.3],
-  'lentils (cooked)':[116,9,20,0.4,7.9],
-  'chickpeas':[164,8.9,27,2.6,7.6],
-  'wheat flour':[364,10,76,1,2.7],
-  'oats':[389,17,66,7,10.6],
-  'bread (white)':[265,9,49,3.2,2.7],
-  'bread (whole wheat)':[247,13,41,4.2,6],
-  'potato':[77,2,17,0.1,2.2],
-  'sweet potato':[86,1.6,20,0.1,3],
-  'broccoli':[34,2.8,7,0.4,2.6],
-  'spinach':[23,2.9,3.6,0.4,2.2],
-  'tomato':[18,0.9,3.9,0.2,1.2],
-  'onion':[40,1.1,9.3,0.1,1.7],
-  'garlic':[149,6.4,33,0.5,2.1],
-  'olive oil':[884,0,0,100,0],
-  'coconut oil':[862,0,0,100,0],
-  'butter':[717,0.9,0.1,81,0],
-  'ghee':[900,0,0,100,0],
-  'sunflower oil':[884,0,0,100,0],
-  'whey protein':[370,80,5,5,0],
-  'protein bar':[400,25,40,12,3],
-  'banana':[89,1.1,23,0.3,2.6],
-  'apple':[52,0.3,14,0.2,2.4],
-  'orange':[47,0.9,12,0.1,2.4],
-  'almonds':[579,21,22,50,12.5],
-  'peanuts':[567,26,16,49,8.5],
-  'peanut butter':[588,25,20,50,6],
-  'cashews':[553,18,30,44,3.3],
-  'sugar':[387,0,100,0,0],
-  'honey':[304,0.3,82,0,0.2],
-  'beef (lean)':[250,26,0,15,0],
-  'fish (salmon)':[208,20,0,13,0],
-  'fish (tilapia)':[96,20,0,1.7,0],
-  'shrimp':[99,24,0.2,0.3,0],
-  'tuna (canned)':[116,25.5,0,1,0],
-  'yogurt (plain)':[61,3.5,4.7,3.3,0],
-  'cottage cheese':[98,11,3.4,4.3,0],
-  'cheddar cheese':[402,25,1.3,33,0],
-  'mozzarella':[280,28,3.1,17,0],
-  'black beans':[132,8.9,24,0.5,8.7],
-  'kidney beans':[127,8.7,22,0.5,7.4],
-  'green peas':[81,5.4,14,0.4,5.1],
-  'corn':[86,3.2,19,1.2,2.7],
-  'pasta (cooked)':[158,5.8,31,0.9,1.8],
-  'quinoa':[120,4.4,21,1.9,2.8],
-  'barley':[354,12.5,73,2.3,17.3],
 
-  // ── Indian Foods ──
-  'dal (cooked)':[116,8,20,0.5,8],
-  'dal tadka':[140,9,22,3,7],
-  'rajma (cooked)':[144,9,26,0.6,8],
-  'sambar':[60,3,9,1.5,3],
-  'idli':[58,2.5,12,0.2,0.5],
-  'dosa':[133,3.5,26,2,1.2],
-  'upma':[150,4,28,3,2],
-  'poha':[180,3,38,2,1.5],
-  'roti (wheat)':[240,7,47,4,4],
-  'chapati':[240,7,47,4,4],
-  'paratha (plain)':[300,7,45,11,4],
-  'naan':[310,9,55,7,2],
-  'rice (basmati cooked)':[130,2.7,28,0.3,0.5],
-  'khichdi':[120,5,22,2,3],
-  'curd (dahi)':[60,3.5,4.7,3.2,0],
-  'lassi (plain)':[80,4,9,3,0],
-  'butter milk (chaas)':[40,3,5,1.5,0],
-  'paneer bhurji':[200,14,5,14,1],
-  'palak paneer':[180,11,8,12,3],
-  'dal makhani':[160,9,22,5,7],
-  'chana masala':[175,10,28,4,8],
-  'chicken curry':[220,22,8,12,1.5],
-  'mutton curry':[280,26,5,17,1],
-  'fish curry':[180,22,5,8,1],
-  'egg curry':[180,13,6,12,1],
-  'aloo sabzi':[100,2.5,19,3,2],
-  'mixed veg curry':[90,3,14,3,3],
-  'biryani (chicken)':[250,15,32,8,1.5],
-  'biryani (veg)':[210,6,38,5,2],
-  'pulao':[180,4,36,3,1.5],
-  'samosa (fried)':[260,5,32,13,2],
-  'pakora':[280,6,33,14,2],
-  'puri':[340,6,42,16,2],
-  'bhatura':[350,8,46,14,2],
-  'dhokla':[130,5,22,3,1.5],
-  'kheer':[180,5,28,6,0.5],
-  'halwa (atta)':[350,6,55,13,3],
-  'gulab jamun':[380,5,65,12,0.5],
-  'rasgulla':[186,3.5,43,0.2,0],
-  'jalebi':[370,2,80,7,0.5],
-  'coconut chutney':[180,2,9,15,5],
-  'tamarind chutney':[120,1,30,0.5,2],
-  'green chutney':[50,2,8,1,3],
-  'pickle (mango)':[60,1,5,4,1.5],
-  'papad':[380,20,60,5,4],
-  'murukku':[480,7,60,22,3],
-  'chakli':[480,7,60,22,3],
-  'chivda':[450,10,62,18,4],
-  'mysore pak':[520,6,68,24,1],
-  'payasam':[220,5,38,6,0.5],
-  'pongal (ven)':[180,5,32,4,2],
-  'rasam':[30,1.5,5,0.5,1],
-  'mor kuzhambu':[55,2.5,5,2.5,1],
-  'appam':[175,4,37,2,1],
-  'puttu':[200,4,43,1,3],
-  'kerala fish curry':[200,20,6,10,1],
-  'avial':[100,2.5,11,5,3],
-  'thoran':[120,3,12,7,4],
-  'chole bhature':[580,16,70,24,10],
-  'pav bhaji':[290,8,42,10,5],
-  'vada pav':[350,8,55,12,3],
-  'misal pav':[300,12,48,8,9],
-  'poori sabzi':[420,8,60,17,4],
-  'masala chai (with milk)':[60,2,8,2.5,0],
-  'lassi (sweet)':[120,4,18,3.5,0],
-  'nimbu pani':[30,0.2,8,0.1,0],
-  'coconut water':[19,0.7,3.7,0.2,1.1],
-  'mango lassi':[160,5,28,4,1],
-  'turmeric milk':[110,4,12,5,0.5],
-  'sattu drink':[120,6,20,2,4],
-  'sattu':[406,22.5,65,6,18],
-  'flaxseed (alsi)':[534,18,29,42,27],
-  'sesame seeds (til)':[573,18,23,50,12],
-  'fenugreek seeds (methi)':[323,23,58,6,25],
-  'cumin seeds (jeera)':[375,18,44,22,11],
-  'coriander seeds (dhania)':[298,12,55,18,42],
-  'dry ginger powder (saunth)':[347,9,70,6,15],
-  'amla (gooseberry)':[44,0.9,10,0.6,4.3],
-  'moringa leaves (drumstick)':[64,9.4,8.3,1.4,2],
-  'bitter gourd (karela)':[17,1,3.4,0.2,2.8],
-  'bottle gourd (lauki)':[15,0.6,3.4,0.2,0.5],
-  'ridge gourd (turai)':[20,1.2,3.7,0.2,0.5],
-  'ash gourd (petha)':[13,0.4,3,0.2,0.6],
-  'raw banana (kachha kela)':[89,1.3,23,0.4,2.6],
-  'jackfruit (raw kathal)':[95,1.7,24,0.1,1.5],
-  'drumstick (moringa pod)':[37,2.1,8.5,0.2,3.2],
-  'lotus stem (kamal kakdi)':[74,2.6,17,0.1,4.9],
-};
 function getIngNutrition(name){
   const k=name.toLowerCase().trim();
   if(INGREDIENT_NUTRITION[k]) return INGREDIENT_NUTRITION[k];
@@ -6175,7 +6034,7 @@ function calcDishNutrition(){
   let totalCal=0,totalProt=0,totalCarbs=0,totalFat=0,totalFiber=0;
   let missing=[];
   dishIngredients.forEach(ing=>{
-    const g=parseFloat(ing.qty)||0;
+    const g=toGrams(parseFloat(ing.qty)||0,ing.unit||'g');
     const n=getIngNutrition(ing.name);
     if(n){
       const factor=g/100;
@@ -6195,19 +6054,37 @@ function calcDishNutrition(){
     fiber:Math.round(totalFiber/ps*10)/10,missing
   };
 }
+function toGrams(qty,unit){
+  unit=(unit||'g').replace(/s$/,'');
+  if(unit==='g'||unit==='gram') return qty;
+  if(unit==='ml') return qty;
+  if(unit==='kg') return qty*1000;
+  if(unit==='piece'||unit==='pc') return qty*100;
+  if(unit==='cup') return qty*240;
+  if(unit==='tbsp'||unit==='tablespoon') return qty*15;
+  if(unit==='tsp'||unit==='teaspoon') return qty*5;
+  if(unit==='bowl') return qty*250;
+  if(unit==='glass') return qty*250;
+  if(unit==='serving') return qty*200;
+  if(unit==='slice') return qty*30;
+  return qty;
+}
+
 function addDishIngredient(){
   saveDishState();
   const name=document.getElementById('ing-name')?.value?.trim();
   const qty=parseFloat(document.getElementById('ing-qty')?.value||0);
+  const unit=document.getElementById('ing-unit')?.value||'g';
   if(!name||!qty||qty<=0){showNotif('Enter ingredient name and quantity','!');return;}
-  dishIngredients.push({name,qty});
+  dishIngredients.push({name,qty,unit});
   document.getElementById('ing-name').value='';
   document.getElementById('ing-qty').value='';
+  document.getElementById('ing-unit').value='g';
   renderScreens();
 }
 function removeDishIngredient(i){dishIngredients.splice(i,1);renderScreens();}
 function logCustomDish(){
-  const dishName=document.getElementById('dish-name')?.value?.trim()||'Custom Dish';
+  const dishName=document.getElementById('dish-name-log')?.value?.trim()||'Custom Dish';
   const n=calcDishNutrition();
 
   if(n.cal===0){
@@ -6284,7 +6161,6 @@ function renderCustomDish(el){
   el.innerHTML=`
   <div class="card mb12">
     <div class="section-title">Custom Dish Calculator</div>
-    <input type="text" id="dish-name" placeholder="Dish name (e.g. Dal Tadka, Protein Shake)" value="${dishState.name||''}" style="margin-bottom:8px" onchange="saveDishState()">
     <div class="grid2" style="gap:8px;margin-bottom:8px">
       <div>
         <label style="font-size:11px;color:var(--text-muted)">Cooking Method</label>
@@ -6311,9 +6187,21 @@ function renderCustomDish(el){
         <input type="text" id="ing-name" placeholder="e.g. Chicken Breast" list="ing-list" style="margin-top:4px">
         <datalist id="ing-list">${COMMON_INGREDIENTS.map(i=>`<option value="${i}">`).join('')}</datalist>
       </div>
-      <div style="width:90px">
-        <label style="font-size:11px;color:var(--text-muted)">Qty (g / ml)</label>
+      <div style="width:80px">
+        <label style="font-size:11px;color:var(--text-muted)">Qty</label>
         <input type="number" id="ing-qty" placeholder="100" min="1" style="margin-top:4px">
+      </div>
+      <div style="width:75px">
+        <label style="font-size:11px;color:var(--text-muted)">Unit</label>
+        <select id="ing-unit" style="margin-top:4px">
+          <option value="g">g</option>
+          <option value="ml">ml</option>
+          <option value="piece">piece(s)</option>
+          <option value="cup">cup</option>
+          <option value="tbsp">tbsp</option>
+          <option value="tsp">tsp</option>
+          <option value="bowl">bowl</option>
+        </select>
       </div>
       <button class="btn btn-primary btn-sm" onclick="addDishIngredient()" style="margin-bottom:1px">+ Add</button>
     </div>
@@ -6321,11 +6209,12 @@ function renderCustomDish(el){
     <div style="display:flex;flex-direction:column;gap:6px">
       ${dishIngredients.map((ing,i)=>{
         const nn=getIngNutrition(ing.name);
-        const cal=nn?Math.round(nn[0]*ing.qty/100):0;
+        const g=toGrams(ing.qty,ing.unit||'g');
+        const cal=nn?Math.round(nn[0]*g/100):0;
         return`<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--bg-raised);border-radius:8px">
           <div style="flex:1">
             <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${ing.name}</span>
-            <span style="font-size:11px;color:var(--text-muted);margin-left:8px">${ing.qty}g</span>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:8px">${ing.qty}${ing.unit||'g'}</span>
             ${nn?`<span style="font-size:11px;color:var(--warning);margin-left:8px">${cal} kcal</span>`:`<span style="font-size:11px;color:var(--danger);margin-left:8px">Unknown</span>`}
           </div>
           <button class="btn btn-icon btn-sm" onclick="removeDishIngredient(${i})" style="color:var(--danger)">×</button>
@@ -6350,6 +6239,7 @@ function renderCustomDish(el){
       <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1">
       <button class="btn btn-primary" onclick="logCustomDish()">Log to Nutrition</button>
     </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:10px;padding:6px 8px;background:var(--bg-raised);border-radius:6px">💡 This dish is saved to <strong>My Foods</strong> after logging. Later, just type its name in <strong>Log Food</strong> to add it again.</div>
   </div>`:''}
 
   <div class="card">
@@ -6976,7 +6866,7 @@ async function refreshPartnerData(){
     }
     _partnersLastFetched=Date.now();
   }catch(e){
-    console.warn('refreshPartnerData error:',e);
+    devWarn('refreshPartnerData error:',e);
   }
   _partnersRefreshing=false;
   if(currentScreen==='leaderboard') renderLeaderboard(document.getElementById('screen-leaderboard'));
@@ -7958,11 +7848,13 @@ function closePartnerStats(){
   if(m) m.remove();
 }
 
-// PeerJS for real-time (loads dynamically)
+// PeerJS for real-time (loads dynamically with SRI)
 function initPeerJS(){
   if(typeof Peer==='undefined'){
     var script=document.createElement('script');
     script.src='https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js';
+    script.integrity='sha384-PMNj1TmCgXfW24/rfIyxYSAWwj2mffkMfguUWv08iNFcy0kTC0JN7E/tE+pJ7+fa';
+    script.crossOrigin='anonymous';
     script.onload=function(){startPeer();};
     document.head.appendChild(script);
   } else {startPeer();}
@@ -8205,13 +8097,12 @@ function importData(){
           showNotif('Invalid backup file','!');
           return;
         }
-        // Deep merge - preserve new keys, restore old data
-        S=Object.assign({},S,imported);
-        // CRITICAL: restore the device ID from backup so friends + leaderboard still work
-        if(imported.deviceId){
-          localStorage.setItem(STORAGE_KEYS.DEVICE_ID, imported.deviceId);
-          S.deviceId=imported.deviceId;
-        }
+        // Schema validation — reject unknown keys, deep-validate types
+        var cleaned=validateAndMergeData(imported,defaultState());
+        // Preserve current device ID and peer ID (don't restore from backup)
+        cleaned.deviceId=S.deviceId;
+        cleaned.peerId=S.peerId;
+        S=cleaned;
         persistSave();
         renderScreens();
         showNotif('Data restored! Welcome back, '+imported.player.name+'!','OK');
@@ -8372,20 +8263,22 @@ function exportDataFileBrowser(){
   }
 }
 
-// METHOD 3: ANDROID EXPORT (Opens in system browser)
+// METHOD 3: ANDROID EXPORT (Uses Blob download directly — no URL query string)
 function exportDataFileAndroid(){
   try{
-    const encoded =
-      encodeURIComponent(
-        JSON.stringify(S)
-      );
-    const url =
-      "https://darkmoppen003-ai.github.io/zenfit/export.html?data="
-      + encoded;
-    
-    // Use '_system' to open in external system browser (Chrome)
-    window.open(url, '_system');
-    showNotif('Opening in Chrome...', 'OK');
+    var json = JSON.stringify(S, null, 2);
+    var blob = new Blob([json], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'zenfit_backup_' + getTodayStr() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){
+      try{document.body.removeChild(a);}catch(e){}
+      URL.revokeObjectURL(url);
+    }, 1000);
+    showNotif('Download started!', 'OK');
   }catch(err){
     showNotif('Export error: ' + err.message, '!');
     exportDataFileManual();
@@ -8482,13 +8375,11 @@ function completeTask(taskId){
   if(t.completedAt&&Date.now()-t.completedAt<86400000){showNotif('Already completed!','✓');return;}
   var now=Date.now();
   var overdue=t.deadlineTs&&now>t.deadlineTs;
-  t.completedAt=now;t.overdueCharged=false;
-  var xpEarned=overdue?Math.floor(TASK_XP[t.difficulty]*0.5):TASK_XP[t.difficulty];
-  addXP(xpEarned,'Task: '+t.title);updStat('discipline',overdue?1:3);persistSave();
-  if(overdue)showNotif('[ TASK COMPLETE ] Late — +'+xpEarned+' XP (half reward)','⚡');
-  else showNotif('[ TASK COMPLETE ] +'+xpEarned+' XP — Discipline +3','⚔️');
-  var el=document.getElementById('screen-tasks');
-  if(el&&currentScreen==='tasks')renderTasks(el);else renderScreens();
+  t.completedAt=now;t.xpAwarded=overdue?Math.floor(TASK_XP[t.difficulty]*0.5):TASK_XP[t.difficulty];t.overdueCharged=false;
+  addXP(t.xpAwarded,'Task: '+t.title);updStat('discipline',overdue?1:3);persistSave();
+  if(overdue)showNotif('[ TASK COMPLETE ] Late — +'+t.xpAwarded+' XP (half reward)','⚡');
+  else showNotif('[ TASK COMPLETE ] +'+t.xpAwarded+' XP — Discipline +3','⚔️');
+  renderScreens();
 }
 
 function deleteTask(taskId){
@@ -8509,7 +8400,8 @@ function renderTasks(el){
   var now=Date.now();
   var dueTasks=getTasksDueToday();
   var allTasks=S.tasks||[];
-  var completedToday=dueTasks.filter(function(t){return t.completedAt&&now-t.completedAt<86400000;}).length;
+  var todayCompletedTasks=allTasks.filter(function(t){return t.completedAt&&now-t.completedAt<86400000;});
+  var completedToday=todayCompletedTasks.length;
   var pendingCount=dueTasks.filter(function(t){return !t.completedAt||now-t.completedAt>=86400000;}).length;
   var overdueCount=dueTasks.filter(function(t){return !t.completedAt&&t.deadlineTs&&now>t.deadlineTs;}).length;
 
@@ -8547,7 +8439,6 @@ function renderTasks(el){
           '</div>'+
         '</div>'+
         '<div style="display:flex;gap:5px;flex-shrink:0">'+
-          (!isDone?'<button class="btn btn-sm btn-green" onclick="completeTask(\''+t.id+'\')" style="padding:5px 10px">✓</button>':'')+
           '<button class="btn btn-icon btn-sm" onclick="deleteTask(\''+t.id+'\')" style="color:var(--danger)">×</button>'+
         '</div>'+
       '</div>'+
@@ -8611,7 +8502,18 @@ function renderTasks(el){
     '</div>'+
     '<div class="section-title">Today\'s Tasks ('+dueTasks.length+')</div>'+
     (dueTasks.length===0?'<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/tasks.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div class="insight" style="margin-bottom:0">No tasks for today. Add a task above to train your discipline.</div></div>':'')+
-    taskRows+otherRows;
+    taskRows+otherRows+
+    '<div class="section-title" style="margin-top:16px">Completed Today ('+todayCompletedTasks.length+')</div>'+
+    (todayCompletedTasks.length===0?'<div style="padding:12px;font-size:12px;color:var(--text-muted);text-align:center">No tasks completed yet today.</div>':
+    todayCompletedTasks.map(function(t){
+      var dc=TASK_DIFF_COLORS[t.difficulty]||'var(--text-secondary)';
+      var xp=isNaN(t.xpAwarded)?TASK_XP[t.difficulty]:t.xpAwarded;
+      return '<div class="card-sm" style="display:flex;align-items:center;gap:10px;opacity:.85;border:1px solid var(--success);background:var(--bg-raised)">'+
+        '<div style="width:28px;height:28px;border-radius:50%;background:var(--success);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0">✓</div>'+
+        '<div style="flex:1"><div style="font-size:12px;font-weight:600;color:var(--text-primary)">'+t.title+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted)">Difficulty: <span style="color:'+dc+'">'+TASK_DIFF_LABELS[t.difficulty]+'</span> · +'+xp+' XP</div></div>'+
+      '</div>';
+    }).join(''));
 }
 
 // ════════════════════════════════════════════════════
@@ -9216,12 +9118,12 @@ const LeaderboardAPI=(function(){
           rank:calcRank(S.player),
           streak:topStreak,
           avatar_b64:S.profilePic||null,
-          opted_in:true,
+          opted_in:!!S.globalLeaderboardOptIn,
           updated_at:new Date().toISOString()
         };
         const res=await fetch(`${URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
         return res.ok||res.status===201||res.status===200;
-      }catch(e){console.warn('LeaderboardAPI.sync:',e);return false;}
+      }catch(e){devWarn('LeaderboardAPI.sync:',e);return false;}
     },
     async syncFriendProfile(){
       try{
@@ -9240,14 +9142,14 @@ const LeaderboardAPI=(function(){
         };
         const res=await fetch(`${URL}/rest/v1/${TABLE}`,{method:'POST',headers:hdr(),body:JSON.stringify(body)});
         return res.ok||res.status===201||res.status===200;
-      }catch(e){console.warn('LeaderboardAPI.syncFriendProfile:',e);return false;}
+      }catch(e){devWarn('LeaderboardAPI.syncFriendProfile:',e);return false;}
     },
     async fetch(){
       try{
         const res=await fetch(`${URL}/rest/v1/${TABLE}?opted_in=eq.true&order=level.desc,xp.desc&limit=200`,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
         if(!res.ok)return null;
         return await res.json();
-      }catch(e){console.warn('LeaderboardAPI.fetch:',e);return null;}
+      }catch(e){devWarn('LeaderboardAPI.fetch:',e);return null;}
     },
     async fetchByDeviceIds(ids){
       if(!ids||!ids.length) return [];
@@ -9258,14 +9160,14 @@ const LeaderboardAPI=(function(){
         const res=await fetch(`${URL}/rest/v1/${TABLE}?or=(${q})&order=level.desc,xp.desc&limit=200`,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
         if(!res.ok)return [];
         return await res.json();
-      }catch(e){console.warn('LeaderboardAPI.fetchByDeviceIds:',e);return [];}
+      }catch(e){devWarn('LeaderboardAPI.fetchByDeviceIds:',e);return [];}
     },
     async optOut(){
       try{
         const id=S.deviceId||S.peerId||'unknown';
         const res=await fetch(`${URL}/rest/v1/${TABLE}?device_id=eq.${encodeURIComponent(id)}`,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
         return res.ok;
-      }catch(e){console.warn('LeaderboardAPI.optOut:',e);return false;}
+      }catch(e){devWarn('LeaderboardAPI.optOut:',e);return false;}
     }
   };
 })();
@@ -9309,7 +9211,7 @@ if('serviceWorker' in navigator){
           minInterval: 60 * 60 * 1000
         }).catch(function(){});
       }
-    }).catch(function(e){ console.warn('SW registration failed:',e); });
+    }).catch(function(e){ devWarn('SW registration failed:',e); });
   });
 
   // When network comes back online, tell SW to clean old caches
@@ -9334,7 +9236,7 @@ function subscribeToPush(reg) {
     if(sub) return;
     // For production, generate VAPID keys and pass applicationServerKey
     reg.pushManager.subscribe({userVisibleOnly:true}).then(function(subscription){
-      console.log('Push subscription active:', JSON.stringify(subscription));
+      void 0;
     }).catch(function(e){
       if(e.code===20||e.name==='AbortError') return; // VAPID required on HTTPS
     });
@@ -9559,9 +9461,12 @@ persistLoad();
             showNotif('Invalid backup','!');
             return;
           }
-          S = Object.assign({}, S, imported);
+          var cleaned = validateAndMergeData(imported, defaultState());
+          cleaned.deviceId = S.deviceId;
+          cleaned.peerId = S.peerId;
+          S = cleaned;
         } catch(err){
-          console.error(err);
+          showNotif('Import failed: '+err.message,'!');
         }
       };
       reader.readAsText(file);

@@ -53,30 +53,38 @@
   <p>Preparing your backup for download.</p>
 </div>
 <script>
-try{
-  var params = new URLSearchParams(window.location.search);
-  var data = params.get("data");
-  if(data){
-    if(data.length > 52428800){ throw new Error('Data payload too large (max 50MB).'); }
-    var decoded = decodeURIComponent(data);
-    if(decoded.length > 52428800){ throw new Error('Decoded data too large (max 50MB).'); }
-    try{ JSON.parse(decoded); }catch(e){ throw new Error('Invalid JSON data.'); }
-    var blob = new Blob([decoded], {type:'application/json'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "zenfit_backup.json";
-    document.body.querySelector('.container h2').textContent = "Downloading...";
-    document.body.querySelector('.container p').textContent = "Your backup file is being downloaded.";
-    a.click();
-    setTimeout(function(){
-      document.body.innerHTML = "<div class='container'><h2>✓ Success!</h2><p>Your backup has been downloaded to the Downloads folder. You can close this tab.</p></div>";
-    }, 1000);
+;(function(){
+  var msg = document.querySelector('.container p');
+  var h2 = document.querySelector('.container h2');
+  try{
+    // Try sessionStorage first (set by the app before opening this page)
+    var stored = sessionStorage.getItem('zenfit_export_data');
+    if(stored){
+      sessionStorage.removeItem('zenfit_export_data');
+      try{ JSON.parse(stored); }catch(e){ throw new Error('Invalid JSON data.'); }
+      if(stored.length > 52428800){ throw new Error('Data too large (max 50MB).'); }
+      var blob = new Blob([stored], {type:'application/json'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "zenfit_backup.json";
+      h2.textContent = "Downloading...";
+      msg.textContent = "Your backup file is being downloaded.";
+      a.click();
+      setTimeout(function(){
+        document.body.innerHTML = "<div class='container'><h2>✓ Success!</h2><p>Backup downloaded. You can close this tab.</p></div>";
+      }, 1000);
+      return;
+    }
+    // No data found — show instructions
+    h2.textContent = "No data received";
+    msg.innerHTML = "Use the <strong>Export</strong> feature inside the ZenFit app to create a backup. This page is not used directly.";
+    document.querySelector('.spinner').style.display = 'none';
+  }catch(err){
+    var safeMsg = String(err && err.message ? err.message : 'Unknown error').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});
+    document.body.innerHTML = "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + safeMsg + "</p></div>";
   }
-}catch(err){
-  var safeMsg = String(err && err.message ? err.message : 'Unknown error').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c;});
-  document.body.innerHTML = "<div class='container'><h2>✗ Export Failed</h2><p>Error: " + safeMsg + "</p></div>";
-}
+})();
 </script>
 </body>
 </html>

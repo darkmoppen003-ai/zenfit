@@ -1,2 +1,33 @@
+# Tutorial files
 tutorial-demo.html
 tutorial.txt
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# IDE / editor
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.iml
+
+# Node / build artifacts
+node_modules/
+dist/
+build/
+*.log
+
+# Temp
+*.tmp
+*.temp
