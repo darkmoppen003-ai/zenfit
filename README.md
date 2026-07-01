@@ -143,7 +143,7 @@ It runs entirely in the browser and stores all data locally — no login, no bac
 * Swipe navigation support
 * Smooth animations and transitions
 * Tab-specific mascot illustrations on empty states
-* Dark theme optimized for mobile/webview
+* Dark & Light theme support
 * Android WebView optimizations
 
 ---
