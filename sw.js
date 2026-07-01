@@ -35,6 +35,23 @@ const STATIC_ASSETS = [
   './assets/female/rank_C_idle.gif',
   './assets/female/rank_B_idle.gif',
   './assets/female/rank_A_idle.gif',
+  './assets/mascot/med.gif',
+  './assets/mascot/habits.png',
+  './assets/mascot/nutrition.png',
+  './assets/mascot/study.png',
+  './assets/mascot/tasks.png',
+  './assets/mascot/water.png',
+  './assets/mascot/workout.png',
+  './assets/zen/campfire.mp3',
+  './assets/zen/chime.mp3',
+  './assets/zen/forest morning.mp3',
+  './assets/zen/heavy rain.mp3',
+  './assets/zen/ocean.mp3',
+  './assets/zen/Rain puddle.mp3',
+  './assets/zen/rainy forest.mp3',
+  './assets/zen/river.mp3',
+  './assets/zen/soul frequencies.mp3',
+  './assets/zen/thunder.mp3',
 ];
 
 const NEVER_CACHE_HOSTS = [
