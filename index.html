@@ -323,6 +323,7 @@ body.home-active .app{padding:0!important;max-width:100vw!important;width:100vw!
 body.home-active #screens{width:100vw;height:100vh;height:100dvh;overflow:hidden}
 body.home-active #screen-home{height:100vh;height:100dvh;padding:0!important;margin:0!important;overflow:hidden}
 body.home-active nav#nav{position:fixed;top:0;left:0;right:0;z-index:100}
+body.home-active #bottom-nav{display:none!important}
 .aw-ring1{position:absolute;width:51.85%;height:51.85%;border-radius:50%;
   border:1px solid rgba(124,111,255,.18);top:50%;left:50%;
   transform:translate(-50%,-50%);pointer-events:none;
@@ -1675,7 +1676,126 @@ nav::-webkit-scrollbar {
   animation: highFivePop 0.5s cubic-bezier(.34,1.56,.64,1);
 }
 
-</style>
+/* ── ZEN SESSION OVERLAY ── */
+.zen-overlay {
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(6,8,14,0.92);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  display:flex;align-items:center;justify-content:center;
+  animation:zenFadeIn 0.5s cubic-bezier(.34,1.56,.64,1);
+  overflow:hidden;
+}
+@keyframes zenFadeIn {
+  from{opacity:0;backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
+  to{opacity:1;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+}
+.zen-overlay-inner {
+  display:flex;flex-direction:column;align-items:center;
+  gap:8px;padding:24px;max-width:400px;width:100%;
+  animation:zenScaleIn 0.6s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes zenScaleIn {
+  from{opacity:0;transform:scale(0.85) translateY(20px)}
+  to{opacity:1;transform:scale(1) translateY(0)}
+}
+/* ── Orb ── */
+.zen-orb-wrap {
+  position:relative;width:220px;height:220px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:4px;
+}
+.zen-progress-ring {
+  position:absolute;inset:0;
+  transform:rotate(-90deg);
+}
+.zen-orb-circle {
+  width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#2a1a60,#0d0a1f);
+  border:2px solid rgba(123,94,255,0.3);
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;z-index:2;
+  box-shadow:0 0 40px rgba(123,94,255,0.2),inset 0 0 40px rgba(123,94,255,0.05);
+  animation:zenOrbPulse 3s ease-in-out infinite;
+}
+@keyframes zenOrbPulse {
+  0%,100%{box-shadow:0 0 40px rgba(123,94,255,0.2),inset 0 0 40px rgba(123,94,255,0.05);border-color:rgba(123,94,255,0.3);transform:scale(1)}
+  50%{box-shadow:0 0 60px rgba(123,94,255,0.45),inset 0 0 60px rgba(123,94,255,0.12);border-color:rgba(123,94,255,0.6);transform:scale(1.04)}
+}
+.zen-orb-gif {
+  width:100%;height:100%;object-fit:cover;
+  border-radius:50%;display:block;
+}
+/* ── Cycle + Phase ── */
+.zen-cycle-display {
+  font-size:14px;font-weight:700;color:var(--text-secondary);
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+.zen-cycle-num {color:var(--primary)}
+.zen-phase-display {
+  font-size:20px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  transition:color 0.3s;
+}
+.zen-timer-display {
+  font-size:42px;font-weight:800;font-family:var(--font-display);
+  background:linear-gradient(135deg,#fff,rgba(255,255,255,0.6));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-variant-numeric:tabular-nums;letter-spacing:3px;
+  line-height:1;
+}
+/* ── Sound Dial ── */
+.zen-sound-section {
+  width:100%;margin-top:8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:16px;padding:12px 16px;
+}
+.zen-sound-dial-label {
+  font-size:10px;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;text-align:center;
+}
+.zen-dial-row {
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.zen-dial-arrow {
+  width:36px;height:36px;border-radius:50%;
+  border:1px solid rgba(255,255,255,0.1);
+  background:rgba(255,255,255,0.04);
+  color:var(--text-secondary);font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all 0.25s cubic-bezier(.34,1.56,.64,1);flex-shrink:0;
+}
+.zen-dial-arrow:hover {background:rgba(255,255,255,0.1);color:var(--text-primary);border-color:rgba(123,94,255,0.3)}
+.zen-dial-arrow:active {transform:scale(0.9)}
+.zen-dial-center {
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  min-width:140px;cursor:pointer;transition:all 0.3s;
+  padding:6px 12px;border-radius:10px;
+  background:rgba(123,94,255,0.06);border:1px solid rgba(123,94,255,0.12);
+}
+.zen-dial-center:hover {background:rgba(123,94,255,0.1)}
+.zen-dial-icon {font-size:28px;line-height:1;filter:drop-shadow(0 0 8px rgba(123,94,255,0.3))}
+.zen-dial-name {font-size:13px;font-weight:600;color:var(--text-primary)}
+.zen-dial-track {
+  display:flex;justify-content:center;gap:5px;margin-top:6px;
+}
+.zen-dial-dot {
+  width:6px;height:6px;border-radius:50%;
+  background:rgba(255,255,255,0.15);transition:all 0.3s;
+}
+.zen-dial-dot.active {background:var(--primary);width:18px;border-radius:3px}
+/* ── Controls ── */
+.zen-controls {
+  display:flex;gap:10px;width:100%;justify-content:center;margin-top:6px;
+}
+.zen-controls .btn {
+  flex:1;max-width:160px;padding:10px;font-size:14px;
+  border-radius:12px;transition:all 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+.zen-controls .btn:active {transform:scale(0.95)}
+.zen-pause-btn {background:var(--bg-raised);border:1px solid var(--border-mid);color:var(--text-primary)}
+.zen-pause-btn:hover {border-color:var(--primary);background:var(--bg-overlay)}
+.zen-pause-btn.paused {background:var(--primary-dim);border-color:var(--primary);color:var(--primary)}</style>
 </head>
 <body>
 <img id="zenfit-logo-data" src="zenfit.png" style="display:none" alt="">
@@ -4817,7 +4937,7 @@ function delHabit(i){S.habits.splice(i,1);persistSave();var _hel=document.getEle
 // ════════════════════════════
 // MIND TAB — ZEN / STUDY / SCREENTIME
 // ════════════════════════════
-let _zenTimer=null,_zenRunning=false,_zenPhase='idle',_zenCycle=0,_zenTotalCycles=1,_zenElapsed=0,_zenStartTime=0,_zenTick=0,_zenPhaseDuration=0;
+let _zenTimer=null,_zenRunning=false,_zenPaused=false,_zenPhase='idle',_zenCycle=0,_zenTotalCycles=1,_zenElapsed=0,_zenStartTime=0,_zenTick=0,_zenPhaseDuration=0;
 let _zenSoundSrc=null,_zenMode='equal';
 const ZEN_MODES={
   equal:{label:'Equal Breathing',desc:'Inhale & exhale for equal duration',inhale:4,hold1:0,exhale:4,hold2:0,cycles:113,color:'#7B5EFF'},
@@ -4976,6 +5096,15 @@ function formatZenTime(sec){
   var m=Math.floor(sec/60);var s=sec%60;
   return m>0?m+':'+(s<10?'0':'')+s:'0:'+(s<10?'0':'')+s;
 }
+// ── Zen Chime ──
+function playZenChime(){
+  try{
+    var a=new Audio('assets/zen/chime.mp3');
+    a.volume=0.25;
+    a.play().catch(function(){});
+  }catch(e){}
+}
+
 // ── Zen Breathing Engine ──
 function startZen(){
   if(_zenRunning)return;
@@ -4988,6 +5117,7 @@ function startZen(){
   }
   updateZenCard();
   SFX.xp();
+  showZenOverlay();
   if(_zenMode==='hold'){runHoldTest();return;}
   _zenTick=0;_zenPhaseDuration=getPhaseDuration();
   _zenTimer=setInterval(zenTick,1000);
@@ -5003,11 +5133,11 @@ function getPhaseDuration(){
 function zenTick(){
   if(!_zenRunning){return clearInterval(_zenTimer);}
   _zenTick++;_zenElapsed=Math.round((Date.now()-_zenStartTime)/1000);
-  updateZenCard();
+  if(document.getElementById('zen-overlay'))updateZenOverlay();else updateZenCard();
   if(_zenTick>=_zenPhaseDuration){
     clearInterval(_zenTimer);
     if(!_zenRunning)return;
-    SFX.nav();
+    playZenChime();
     if(_zenPhase==='inhale'){
       var md=_zenMode==='custom'?null:ZEN_MODES[_zenMode];
       if(md&&md.hold1>0){_zenPhase='hold1';_zenTick=0;_zenPhaseDuration=getPhaseDuration();_zenTimer=setInterval(zenTick,1000);return;}
@@ -5032,32 +5162,37 @@ function nextCycle(){
 function runHoldTest(){
   _zenPhase='hold';_zenElapsed=0;
   SFX.xp();
-  updateZenCard();
+  showZenOverlay();
   _zenTimer=setInterval(function(){
     if(!_zenRunning){clearInterval(_zenTimer);return;}
     _zenElapsed++;
-    var pct=Math.min(100,Math.round(_zenElapsed/120*100));
-    var ring=document.getElementById('zen-progress-ring');
-    if(ring)ring.setAttribute('stroke-dashoffset',628*(1-pct/100));
-    var el=document.getElementById('zen-breath-circle');
-    if(el){el.style.transform='scale('+Math.max(0.3,1-_zenElapsed/120)+')';}
-    var tEl=document.getElementById('zen-timer');
-    if(tEl)tEl.textContent=formatZenTime(_zenElapsed);
-    var pEl=document.getElementById('zen-phase');
-    if(pEl)pEl.textContent='Hold';
-    var cEl=document.querySelector('#zen-breath-circle div');
-    if(cEl)cEl.textContent='Hold';
+    if(document.getElementById('zen-overlay')){
+      updateZenOverlay();
+    }else{
+      var pct2=Math.min(100,Math.round(_zenElapsed/120*100));
+      var ring2=document.getElementById('zen-progress-ring');
+      if(ring2)ring2.setAttribute('stroke-dashoffset',628*(1-pct2/100));
+      var el2=document.getElementById('zen-breath-circle');
+      if(el2){el2.style.transform='scale('+Math.max(0.3,1-_zenElapsed/120)+')';}
+      var tEl2=document.getElementById('zen-timer');
+      if(tEl2)tEl2.textContent=formatZenTime(_zenElapsed);
+      var pEl2=document.getElementById('zen-phase');
+      if(pEl2)pEl2.textContent='Hold';
+      var cEl2=document.querySelector('#zen-breath-circle div');
+      if(cEl2)cEl2.textContent='Hold';
+    }
   },1000);
 }
 function stopZen(){
   if(!_zenRunning&&_zenPhase==='idle')return;
   if(_zenPhase==='hold'&&_zenRunning){completeHoldTest();return;}
-  _zenRunning=false;clearInterval(_zenTimer);stopZenSound();
+  _zenRunning=false;_zenPaused=false;clearInterval(_zenTimer);stopZenSound();
   _zenPhase='idle';_zenTimer=null;
+  hideZenOverlay();
   updateZenCard();
 }
 function stopZenSession(){
-  if(_zenRunning||_zenPhase!=='idle'){_zenRunning=false;clearInterval(_zenTimer);stopZenSound();_zenPhase='idle';_zenTimer=null;}
+  if(_zenRunning||_zenPhase!=='idle'){_zenRunning=false;_zenPaused=false;clearInterval(_zenTimer);stopZenSound();_zenPhase='idle';_zenTimer=null;hideZenOverlay();}
 }
 function updateZenContent(){
   var el=document.getElementById('zen-content');
@@ -5070,6 +5205,134 @@ function updateZenCard(){
   if(!_zenRunning&&_zenPhase==='idle'){el.innerHTML=buildControlsHTML(curMode);return;}
   el.innerHTML=buildInProgressHTML(curMode);
 }
+// ── Zen Session Overlay ──
+var _zenDialIndex=0;
+
+function getZenSoundList(){
+  return _zenSoundList.length?_zenSoundList:ZEN_SOUNDS;
+}
+function showZenOverlay(){
+  if(document.getElementById('zen-overlay'))return;
+  var ov=document.createElement('div');
+  ov.id='zen-overlay';
+  ov.className='zen-overlay';
+  _zenDialIndex=0;
+  var sounds=getZenSoundList();
+  var curSound=sounds[_zenDialIndex]||sounds[0];
+  var dotsHtml='';
+  for(var i=0;i<Math.min(sounds.length,12);i++){
+    dotsHtml+='<div class="zen-dial-dot'+(i===_zenDialIndex?' active':'')+'"></div>';
+  }
+  ov.innerHTML='<div class="zen-overlay-inner">'+
+    '<div class="zen-cycle-display"><span class="zen-cycle-num" id="zo-cycle-num">1</span><span id="zo-cycle-total">/'+_zenTotalCycles+'</span></div>'+
+
+    '<div class="zen-orb-wrap">'+
+      '<svg class="zen-progress-ring" width="220" height="220">'+
+        '<circle cx="110" cy="110" r="100" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/>'+
+        '<circle id="zo-ring" cx="110" cy="110" r="100" fill="none" stroke="#7B5EFF" stroke-width="4" stroke-linecap="round" stroke-dasharray="628" stroke-dashoffset="628"/>'+
+      '</svg>'+
+      '<div class="zen-orb-circle" id="zo-orb">'+
+        '<img src="assets/mascot/med.gif" class="zen-orb-gif" alt="meditate">'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="zen-timer-display" id="zo-timer">0:00</div>'+
+    '<div class="zen-phase-display" id="zo-phase" style="color:#7B5EFF">Ready</div>'+
+
+    '<div class="zen-sound-section">'+
+      '<div class="zen-sound-dial-label">🔊 Ambient</div>'+
+      '<div class="zen-dial-row">'+
+        '<button class="zen-dial-arrow" onclick="zenDialPrev()">◀</button>'+
+        '<div class="zen-dial-center" onclick="zenDialNext()">'+
+          '<span class="zen-dial-icon" id="zo-sound-icon">'+(curSound.icon||'🎵')+'</span>'+
+          '<span class="zen-dial-name" id="zo-sound-name">'+(curSound.label||'Silence')+'</span>'+
+        '</div>'+
+        '<button class="zen-dial-arrow" onclick="zenDialNext()">▶</button>'+
+      '</div>'+
+      '<div class="zen-dial-track" id="zo-dial-track">'+dotsHtml+'</div>'+
+    '</div>'+
+
+    '<div class="zen-controls">'+
+      '<button class="btn zen-pause-btn" id="zo-pause-btn" onclick="zenTogglePause()">⏸ Pause</button>'+
+      '<button class="btn btn-danger" onclick="stopZen()">⏹ Stop</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+}
+function hideZenOverlay(){
+  var ov=document.getElementById('zen-overlay');
+  if(ov){
+    ov.style.opacity='0';
+    ov.style.backdropFilter='blur(0px)';
+    ov.style.transition='opacity 0.35s ease,backdrop-filter 0.35s ease';
+    setTimeout(function(){if(ov&&ov.parentNode)ov.parentNode.removeChild(ov);},360);
+  }
+}
+function updateZenOverlay(){
+  var ov=document.getElementById('zen-overlay');
+  if(!ov)return;
+  var m=ZEN_MODES[_zenMode]||ZEN_MODES.equal;
+  var phaseLabel=_zenPhase==='inhale'?'Inhale':_zenPhase==='hold1'?'Hold':_zenPhase==='exhale'?'Exhale':_zenPhase==='hold2'?'Hold':_zenPhase==='hold'?'Hold':'Ready';
+  var phaseColor=_zenPhase==='inhale'||_zenPhase==='hold'?m.color:_zenPhase==='exhale'?'#F0A000':_zenPhase==='hold1'||_zenPhase==='hold2'?'#4CDB8A':'#888';
+  var pct=_zenMode==='hold'?Math.min(100,Math.round(_zenElapsed/120*100)):(_zenPhaseDuration>0?Math.min(100,Math.round(_zenTick/_zenPhaseDuration*100)):0);
+  var isPaused=_zenPaused;
+  (document.getElementById('zo-cycle-num')||{}).textContent=_zenCycle;
+  (document.getElementById('zo-cycle-total')||{}).textContent='/'+_zenTotalCycles;
+  var ring=document.getElementById('zo-ring');
+  if(ring)ring.setAttribute('stroke-dashoffset',628*(1-pct/100));
+  var timerEl=document.getElementById('zo-timer');
+  if(timerEl)timerEl.textContent=formatZenTime(_zenElapsed);
+  var phaseEl=document.getElementById('zo-phase');
+  if(phaseEl){phaseEl.textContent=isPaused?'⏸ Paused':phaseLabel;phaseEl.style.color=phaseColor;}
+  var pauseBtn=document.getElementById('zo-pause-btn');
+  if(pauseBtn){pauseBtn.textContent=isPaused?'▶ Resume':'⏸ Pause';pauseBtn.className='btn '+(isPaused?'zen-pause-btn paused':'zen-pause-btn');}
+}
+function zenTogglePause(){
+  if(_zenPhase==='hold')return;
+  if(_zenPaused){
+    _zenPaused=false;
+    _zenRunning=true;
+    _zenStartTime=Date.now()-_zenElapsed*1000;
+    _zenTimer=setInterval(zenTick,1000);
+    updateZenOverlay();
+  }else{
+    _zenPaused=true;
+    _zenRunning=false;
+    clearInterval(_zenTimer);
+    updateZenOverlay();
+  }
+}
+function zenDialPrev(){
+  var sounds=getZenSoundList();
+  _zenDialIndex=(_zenDialIndex-1+sounds.length)%sounds.length;
+  var s=sounds[_zenDialIndex];
+  toggleZenSound(s.id);
+  var iconEl=document.getElementById('zo-sound-icon');
+  var nameEl=document.getElementById('zo-sound-name');
+  if(iconEl)iconEl.textContent=s.icon||'🎵';
+  if(nameEl)nameEl.textContent=s.label||'Silence';
+  var track=document.getElementById('zo-dial-track');
+  if(track){
+    var dots=track.querySelectorAll('.zen-dial-dot');
+    dots.forEach(function(d,i){d.className='zen-dial-dot'+(i===_zenDialIndex?' active':'');});
+  }
+}
+function zenDialNext(){
+  var sounds=getZenSoundList();
+  _zenDialIndex=(_zenDialIndex+1)%sounds.length;
+  var s=sounds[_zenDialIndex];
+  toggleZenSound(s.id);
+  var iconEl=document.getElementById('zo-sound-icon');
+  var nameEl=document.getElementById('zo-sound-name');
+  if(iconEl)iconEl.textContent=s.icon||'🎵';
+  if(nameEl)nameEl.textContent=s.label||'Silence';
+  var track=document.getElementById('zo-dial-track');
+  if(track){
+    var dots=track.querySelectorAll('.zen-dial-dot');
+    dots.forEach(function(d,i){d.className='zen-dial-dot'+(i===_zenDialIndex?' active':'');});
+  }
+}
+
 // ── Completion & Rewards ──
 function completeZen(){
   _zenRunning=false;clearInterval(_zenTimer);stopZenSound();
@@ -5098,6 +5361,7 @@ function completeZen(){
   addXP(xp,'Zen: '+modeLabel+' ('+mins+' min)');updStat('discipline',2);updStat('wisdom',3);
   persistSave();
   _zenPhase='idle';_zenTimer=null;
+  hideZenOverlay();
   showNotif('🧘 Zen session complete! +'+xp+' XP','OK');
   updateZenContent();
 }
@@ -5113,6 +5377,7 @@ function completeHoldTest(){
   addXP(xp,'Zen: Breath Hold ('+sec+'s)');updStat('discipline',3);updStat('wisdom',2);
   persistSave();
   _zenPhase='idle';_zenTimer=null;
+  hideZenOverlay();
   showNotif('🫁 Breath held for '+sec+'s! +'+xp+' XP','OK');
   updateZenContent();
 }
@@ -9149,6 +9414,7 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 var CHANGELOG_VERSION='v8.1';
 var CHANGELOG_ENTRIES=[	
+  'v8.1 Zen session overhaul — full-screen immersive breathing overlay with med.gif, ambient sound dial, pause/resume, phase chime, and per-breath progress ring',
   'v8.1 Fixed home screen orb positioning, added Mind analytics tab with zen session tracking',
   'v8.0.5 Added mascot illustrations to empty states, removed action character GIFs, various UI improvements',
   'v8.0.4 Updated food database — now supports more wide variety of food across the world and better quantity handling',
