@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; connect-src 'self' https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co wss://*.peerjs.com; font-src 'self' https: data:; worker-src 'self' blob:; frame-ancestors 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self'https://oeytdfhwtxpwkzyaubad.supabase.cohttps://*.supabase.cowss://*.peerjs.com;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
 <meta name="theme-color" content="#7B5EFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1822,7 +1823,7 @@ nav::-webkit-scrollbar {
 </div>
 <script>
 (function(){
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.startsWith('192.168.') && !location.hostname.startsWith('10.') && !location.hostname.startsWith('127.') && !location.hostname.startsWith('file:')) {
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.startsWith('192.168.') && !location.hostname.startsWith('10.') && !location.hostname.startsWith('127.') && !location.protocol.startsWith('file')) {
     location.href = 'https:' + location.href.substring(location.protocol.length);
   }
 })();
@@ -5212,8 +5213,9 @@ function showZenOverlay(){
   var ov=document.createElement('div');
   ov.id='zen-overlay';
   ov.className='zen-overlay';
-  _zenDialIndex=0;
   var sounds=getZenSoundList();
+  _zenDialIndex=_zenSoundSrc?sounds.findIndex(s=>s.id===_zenSoundSrc):sounds.findIndex(s=>s.id==='silence');
+  if(_zenDialIndex<0)_zenDialIndex=0;
   var curSound=sounds[_zenDialIndex]||sounds[0];
   var dotsHtml='';
   for(var i=0;i<Math.min(sounds.length,12);i++){
@@ -9380,12 +9382,13 @@ function renderNotifSettings(containerId){
 }
 
 // ── MIND ────────────────────────────────────────────────
+function getZenSessions(){return S.zen?.sessions||S.zenSessions||[];}
 function renderAnMind(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
   const periodLabel=analyticsPeriod==='7d'?'7 Days':analyticsPeriod==='30d'?'30 Days':'12 Months';
-  const zenSessions=S.zenSessions||[];
+  const zenSessions=getZenSessions();
   const sessionCount=zenSessions.length;
-  const totalMinutes=zenSessions.reduce((s,z)=>s+(z.duration||0),0);
+  const totalMinutes=zenSessions.reduce((s,z)=>s+(z.minutes||z.duration||0),0);
   const avgSession=sessionCount?Math.round(totalMinutes/sessionCount):0;
   const recent=zenSessions.filter(z=>{
     const d=new Date(z.date);
@@ -9412,7 +9415,7 @@ function renderAnMind(el,periodTabs){
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;font-family:var(--font-display);color:#7B5EFF">${sessionCount}</div>
     </div>
     <div style="flex:1">
-      <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">${sessionCount?sessionsCount+' zen sessions':'Begin your mindfulness journey'}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:6px">${sessionCount?sessionCount+' zen sessions':'Begin your mindfulness journey'}</div>
       <div style="font-size:11px;color:var(--text-muted)">${totalMinutes} total minutes · ${avgSession} min avg · ${streak} day streak</div>
     </div>
   </div>
@@ -9441,13 +9444,13 @@ function renderAnMind(el,periodTabs){
     const czen=document.getElementById('c_zen');
     if(!czen)return;
     const labels=recent.length?recent.map(z=>z.date):[];
-    const values=recent.length?recent.map(z=>z.duration||0):[];
+    const values=recent.length?recent.map(z=>z.minutes||z.duration||0):[];
     if(!labels.length){czen.parentElement.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Complete zen sessions to see your mindfulness trends.</div>';return;}
     charts.c_zen=new Chart(czen,{type:'bar',data:{labels,datasets:[{label:'Minutes',data:values,backgroundColor:'rgba(123,94,255,.4)',borderColor:'#7B5EFF',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10}}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}}});
   },50);
 }
 function calcZenStreak(){
-  const sessions=S.zenSessions||[];
+  const sessions=getZenSessions();
   if(!sessions.length)return 0;
   const days=[...new Set(sessions.map(s=>s.date))].sort().reverse();
   let streak=1;
@@ -9461,7 +9464,7 @@ function calcZenStreak(){
   return streak;
 }
 function getTopZenSounds(){
-  const sessions=S.zenSessions||[];
+  const sessions=getZenSessions();
   const counts={};
   sessions.forEach(s=>{(s.sounds||[]).forEach(sound=>{counts[sound]=(counts[sound]||0)+1;})});
   return Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(e=>e[0]);
