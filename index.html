@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy"
-content="default-src 'self';script-src 'self' 'unsafe-inline';style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self'https://oeytdfhwtxpwkzyaubad.supabase.cohttps://*.supabase.cowss://*.peerjs.com;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
+content="default-src 'self';script-src 'self' 'unsafe-inline' https://unpkg.com;style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self' https://world.openfoodfacts.org https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co wss://*.peerjs.com;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
 <meta name="theme-color" content="#7B5EFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1885,7 +1885,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.1.1";
+const APP_VERSION="v8.1.2";
 const APP_BUILD="2026.07.02.10";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -8976,7 +8976,7 @@ function getTasksDueToday(){
   return (S.tasks||[]).filter(function(t){
     if(t.completedAt){var age=Date.now()-t.completedAt;if(age<86400000)return false;}
     var repeat=t.repeat||'once';
-    if(repeat==='once') return t.createdDate===today||(!t.createdDate);
+    if(repeat==='once') return !t.completedAt||t.createdDate===today||!t.createdDate;
     if(repeat==='daily') return true;
     if(repeat==='weekdays') return dow>=1&&dow<=5;
     if(repeat==='altdays'){
@@ -9473,8 +9473,11 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.1.1';
+var CHANGELOG_VERSION='v8.1.2';
 var CHANGELOG_ENTRIES=[	
+  'v8.1.2 Fixed CSP — added world.openfoodfacts.org + unpkg.com to connect-src/script-src, fixed malformed token spacing',
+  'v8.1.2 Tasks no longer disappear after one day — incomplete tasks now persist until completed; overdue tasks show in red',
+  'v8.1.2 Renamed MP3 files (spaces → underscores) for reliable SW static asset caching',
   'v8.1.1 Light theme support — all UI elements now use CSS variables; fixed hardcoded dark backgrounds across nav, overlays, badges, grades, leaderboard, modals, orbs, and stat cards',
   'v8.1.1 Optimized med.gif — 40-frame spritesheet at 2x speed with transparent background (1.3MB)',
   'v8.0.5 Added mascot illustrations to empty states, removed action character GIFs, various UI improvements',
