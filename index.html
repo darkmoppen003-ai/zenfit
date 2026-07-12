@@ -9868,7 +9868,7 @@ const SFX = (function(){
 // ════════════════════════════════════════════════════
 const LeaderboardAPI=(function(){
   const URL  ='https://oeytdfhwtxpwkzyaubad.supabase.co';
-  const KEY  ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9leXRkZmh3dHhwd2t6eWF1YmFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyOTQ3NTAsImV4cCI6MjA5NTg3MDc1MH0.j0uvvUf1t7jYT-oUN6m9CN6YxLBgt43O-31czvujdjo';
+  const KEY  ='sb_publishable_MitCTTt3KSLN8GvBqjRiRg_ONXQcpil';
   const TABLE='global_leaderboard';
   function hdr(){return{'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY,'Prefer':'resolution=merge-duplicates,return=minimal'};}
   return{
@@ -9921,8 +9921,11 @@ const LeaderboardAPI=(function(){
       try{
         const unique=[...new Set(ids.filter(Boolean))];
         if(!unique.length) return [];
-        const q=unique.map(id=>`device_id.eq.${encodeURIComponent(id)}`).join(',');
-        const res=await fetch(`${URL}/rest/v1/${TABLE}?or=(${q})&order=level.desc,xp.desc&limit=200`,{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
+        const res=await fetch(`${URL}/rest/v1/rpc/get_friend_profiles`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY},
+          body:JSON.stringify({ids: unique})
+        });
         if(!res.ok)return [];
         return await res.json();
       }catch(e){devWarn('LeaderboardAPI.fetchByDeviceIds:',e);return [];}
