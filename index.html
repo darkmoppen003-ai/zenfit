@@ -71,7 +71,8 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .card-raised{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:14px;padding:16px;box-shadow:var(--shadow-md)}
 @keyframes glassBgFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 body.glass-mode .screen.active{background:linear-gradient(135deg,var(--app-bg,#0d0f14),var(--bg-surface,#100d1a),var(--app-bg,#0d0f14))!important;background-size:200% 200%!important;animation:glassBgFlow 14s ease infinite}
-body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised{background:rgba(13,15,20,var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3);transition:background .15s ease,backdrop-filter .15s ease,-webkit-backdrop-filter .15s ease}
+body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3);transition:background .15s ease,backdrop-filter .15s ease,-webkit-backdrop-filter .15s ease}
+body.glass-mode .char-card-box,body.glass-mode .char-avatar-col,body.glass-mode .char-stats-col,body.glass-mode .char-avatar-frame{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;border-color:rgba(255,255,255,0.07)!important;transition:background .15s ease}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -135,6 +136,17 @@ textarea{resize:vertical;min-height:50px}
 .grade{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .grade-A{background:var(--grade-a-bg,#0a3d22);color:#4cdb8a}.grade-B{background:var(--grade-b-bg,#0a2a4d);color:#4a9eff}
 .grade-C{background:var(--grade-c-bg,#3d2800);color:#f5a623}.grade-D{background:var(--grade-d-bg,#3d1a00);color:#ff8c42}.grade-E{background:var(--grade-e-bg,#3d0a0a);color:#ff5a5a}
+.grade-bc{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;box-shadow:0 0 14px rgba(255,255,255,0.06)}
+.grade-bc-label{font-size:8px;color:var(--text-muted);letter-spacing:0.8px;font-weight:600;text-transform:uppercase;margin-top:2px;line-height:1;text-align:center}
+.grade-tap{cursor:pointer;transition:transform .15s}
+.grade-tap:active{transform:scale(.88)}
+.food-detail-grade{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 4px;box-shadow:0 0 20px rgba(255,255,255,0.08)}
+.food-detail-label{font-size:9px;color:var(--text-muted);letter-spacing:1px;font-weight:600;text-transform:uppercase;text-align:center}
+.food-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.food-detail-item{background:var(--bg-raised);border-radius:8px;padding:10px;text-align:center}
+.food-detail-item .fdv{font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--text-primary)}
+.food-detail-item .fdl{font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+.bc-hint{font-size:9px;color:var(--text-muted);margin-top:2px;line-height:1;text-align:center}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-day{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;background:var(--bg-raised);border:1px solid var(--border-mid)}
 .cal-day.done{background:var(--cal-day-done-bg,#0a3d22);border-color:var(--cal-day-done-border,#1a6d3a);color:#4cdb8a}
@@ -160,7 +172,7 @@ hr{border:none;border-top:1px solid var(--border-mid);margin:16px 0}
 .char-wrap{position:relative;width:140px;height:200px;margin:0 auto}
 /* CHARACTER CARD NEW */
 /* CHARACTER CARD */
-.char-card-box{border-radius:14px;border:1px solid var(--border-mid);background:var(--bg-surface);overflow:hidden;padding:0}
+.char-card-box{border-radius:14px;border:1px solid var(--border-mid);background:var(--bg-surface);overflow:hidden;padding:0;backface-visibility:hidden}
 .char-top-row{display:grid;grid-template-columns:1fr 1.4fr}
 .char-avatar-col{background:var(--bg-raised);border-right:1px solid var(--border-mid);display:flex;flex-direction:column;align-items:center;padding:0px 0px 0px}
 .char-panel-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;text-align:center}
@@ -1885,8 +1897,8 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.1.2";
-const APP_BUILD="2026.07.12.12";
+const APP_VERSION="v8.1.3";
+const APP_BUILD="2026.07.13.01";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
 var schemaMigrations = {};
@@ -3013,6 +3025,7 @@ function gradeFood(n){
   const s=(n.protein*4)/(n.cal||1)*100+(n.fiber*5)-(n.fat*0.3);
   return s>60?'A':s>40?'B':s>20?'C':s>5?'D':'E';
 }
+function gradeLabel(g){return{A:'EXCELLENT',B:'GOOD',C:'AVERAGE',D:'FAIR',E:'POOR'}[g]||''}
 function todayNutrition(){
   return S.nutrition.entries.filter(e=>e.date===getTodayStr()).reduce((a,e)=>{
     const n=e.nutrients||{};
@@ -3741,7 +3754,7 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No meals logged.</div></div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(e.nutrients)}" onclick='showFoodDetails(${JSON.stringify({name:e.name,qty:e.qty,unit:e.unit||'',nutrients:e.nutrients}).replace(/'/g,"&#39;")})'>${gradeFood(e.nutrients)}</div><div class="bc-hint">tap</div></div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
   }else if(nutritionTab==='calculator'){
     const n=dishIngredients.length>0?calcDishNutrition():null;
     html+=`
@@ -3914,7 +3927,7 @@ function parseFoodInput(){
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
   if(!r)return;
   if(!res.length){r.innerHTML=`<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "200g rice", or "250ml milk".</div>`;return;}
-  r.innerHTML=res.map(f=>`<div class="card-sm mb8 flex gap8"><div class="grade grade-${gradeFood(f.nutrients)}">${gradeFood(f.nutrients)}</div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(f.name)} × ${f.qty}${f.unit?' '+f.unit:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(f.nutrients.cal)} kcal · P:${nn(f.nutrients.protein||f.nutrients.prot)}g · C:${nn(f.nutrients.carbs)}g</div></div></div>`).join('');
+  r.innerHTML=res.map(f=>{const fd=JSON.stringify({name:f.name,qty:f.qty,unit:f.unit||'',nutrients:f.nutrients}).replace(/'/g,"&#39;");return`<div class="card-sm mb8 flex gap8"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(f.nutrients)}" onclick="showFoodDetails(${fd})">${gradeFood(f.nutrients)}</div><div class="bc-hint">tap</div></div><div><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(f.name)} × ${f.qty}${f.unit?' '+f.unit:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(f.nutrients.cal)} kcal · P:${nn(f.nutrients.protein||f.nutrients.prot)}g · C:${nn(f.nutrients.carbs)}g</div></div></div>`;}).join('');
   if(btn)btn.style.display='block';
 }
 function logParsedFood(){
@@ -3931,7 +3944,30 @@ async function doBC(){
     if(d.status!==1){if(r)r.innerHTML=`<div style="color:var(--danger)">Not found.</div>`;return;}
     const p=d.product,n=p.nutriments||{};
     const e={name:p.product_name||'Product',qty:1,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10}};
-    if(r)r.innerHTML=`<div class="card-sm flex gap12"><div class="grade grade-${gradeFood(e.nutrients)}">${gradeFood(e.nutrients)}</div><div style="flex:1"><div style="font-size:13px;font-weight:500">${escapeHtml(e.name)}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal</div></div><button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button></div>`;
+    if(!r)return;
+    const hasData=e.nutrients.cal||e.nutrients.protein||e.nutrients.carbs||e.nutrients.fat;
+    if(!hasData){
+      r.innerHTML=`<div class="card-sm" style="display:flex;align-items:center;gap:12px;border-color:var(--warning)">
+        <div style="width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;background:var(--badge-amber-bg,#3D2800);color:var(--warning);flex-shrink:0">⚠️</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary)">${escapeHtml(e.name)}</div>
+          <div style="font-size:11px;color:var(--warning);margin-top:2px">Found but lacks nutrition data — use manual log</div>
+        </div>
+      </div>`;
+    }else{
+      const g=gradeFood(e.nutrients);
+      r.innerHTML=`<div class="card-sm" style="display:flex;align-items:center;gap:12px">
+        <div style="text-align:center;flex-shrink:0">
+          <div class="grade-bc grade-${g}">${g}</div>
+          <div class="grade-bc-label">${gradeLabel(g)}</div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nn(e.nutrients.cal)} kcal · P ${nn(e.nutrients.protein)}g · C ${nn(e.nutrients.carbs)}g · F ${nn(e.nutrients.fat)}g</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button>
+      </div>`;
+    }
   }catch(ex){if(r)r.innerHTML=`<div style="color:var(--danger)">Lookup failed.</div>`;}
 }
 let _bcStream=null,_bcDetecting=false;
@@ -3990,6 +4026,29 @@ function stopBCCamera(){
   if(btn)btn.style.display='';
 }
 function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr()});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
+function showFoodDetails(e){
+  var g=gradeFood(e.nutrients),l=gradeLabel(g),n=e.nutrients;
+  var cal=nn(n.cal),prot=nn(n.protein||n.prot),carbs=nn(n.carbs),fat=nn(n.fat),fiber=nn(n.fiber);
+  var ov=document.createElement('div');ov.className='overlay';
+  ov.onclick=function(ev){if(ev.target===ov)ov.remove();};
+  ov.innerHTML='<div class="overlay-box" onclick="event.stopPropagation()">\
+    <div style="text-align:right;margin-bottom:6px">\
+      <button onclick="this.closest(\'.overlay\').remove()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px">✕</button></div>\
+    <div class="food-detail-grade grade-'+g+'">'+g+'</div>\
+    <div class="food-detail-label">'+l+'</div>\
+    <div style="font-size:16px;font-weight:600;text-align:center;margin:10px 0 2px;color:var(--text-primary)">'+escapeHtml(e.name)+'</div>\
+    <div style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:2px">'+(e.qty||1)+(e.unit?' '+e.unit:'')+'</div>\
+    <div class="food-detail-grid">\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--warning)">'+cal+'</div><div class="fdl">Calories</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--success)">'+prot+'g</div><div class="fdl">Protein</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--info)">'+carbs+'g</div><div class="fdl">Carbs</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--energy)">'+fat+'g</div><div class="fdl">Fat</div></div>\
+      <div class="food-detail-item" style="grid-column:1/-1"><div class="fdv" style="color:var(--primary)">'+fiber+'g</div><div class="fdl">Fiber</div></div>\
+    </div>\
+    <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="this.closest(\'.overlay\').remove()">Close</button>\
+  </div>';
+  document.body.appendChild(ov);
+}
 function logMF(){
   const name=(document.getElementById('m-name')?.value?.trim())||'Custom';
   const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0};
@@ -7994,11 +8053,12 @@ function hexToRgba(hex,a){
   var r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
   return'rgba('+r+','+g+','+b+','+a+')';
 }
+function hexToRgb(hex){hex=hex.replace('#','');if(hex.length===3)hex=hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];return parseInt(hex.slice(0,2),16)+','+parseInt(hex.slice(2,4),16)+','+parseInt(hex.slice(4,6),16);}
 function applyTheme(key){
   const t=THEMES[key];if(!t)return;
   S.theme=key;persistSave();
   const r=(document.documentElement||document.body||{}).style||{};
-  r.setProperty('--bg-base',t.bgBase);r.setProperty('--bg-surface',t.bgSurface);
+  r.setProperty('--bg-base',t.bgBase);r.setProperty('--bg-surface',t.bgSurface);r.setProperty('--glass-bg-rgb',hexToRgb(t.bgSurface));
   r.setProperty('--bg-raised',t.bgRaised);r.setProperty('--bg-overlay',t.bgOverlay);
   r.setProperty('--border-mid',t.borderMid);r.setProperty('--primary',t.primary);
   r.setProperty('--text-primary',t.textPrimary);r.setProperty('--text-secondary',t.textSecondary);
@@ -9473,8 +9533,11 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.1.2';
+var CHANGELOG_VERSION='v8.1.3';
 var CHANGELOG_ENTRIES=[	
+  'v8.1.3 Barcode scan — redesigned result card with prominent grade + label + full macros; tap grade badges in parse results & log history for detail modal',
+  'v8.1.3 Barcode scan — products found but missing nutrition data now show a clear warning card instead of a misleading E grade',
+  'v8.1.3 Glass mode — character card block now respects theme color & opacity slider; fixed hardcoded RGB causing cards to turn black on non-dark themes',
   'v8.1.2 Fixed CSP — added world.openfoodfacts.org + unpkg.com to connect-src/script-src, fixed malformed token spacing',
   'v8.1.2 Tasks no longer disappear after one day — incomplete tasks now persist until completed; overdue tasks show in red',
   'v8.1.2 Renamed MP3 files (spaces → underscores) for reliable SW static asset caching',
