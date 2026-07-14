@@ -2735,6 +2735,11 @@ function addXP(amount,reason){
   showNotif(`+${amount} XP — ${reason}`,'XP');
   trackChallengeProgress();persistSave();
 }
+function deductXP(amount,reason){
+  S.player.xp=Math.max(0,S.player.xp-amount);
+  showNotif('-'+amount+' XP \u2014 '+reason,'XP');
+  persistSave();
+}
 function updStat(stat,amt=1){S.player.stats[stat]=Math.min(100,(S.player.stats[stat]||10)+amt);}
 
 // ════════════════════════════
@@ -3932,7 +3937,7 @@ function parseFoodInput(){
 }
 function logParsedFood(){
   if(!parsedFood?.length)return;
-  parsedFood.forEach(f=>S.nutrition.entries.push({...f,date:getTodayStr()}));
+  parsedFood.forEach(f=>S.nutrition.entries.push({...f,date:getTodayStr(),xpAwarded:30}));
   updStat('health',parsedFood.length);addXP(30*parsedFood.length,'Meals logged!');checkAutoQuests();checkAchievements();parsedFood=null;renderScreens();
 }
 async function doBC(){
@@ -4025,7 +4030,7 @@ function stopBCCamera(){
   if(wrap)wrap.style.display='none';
   if(btn)btn.style.display='';
 }
-function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr()});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
+function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr(),xpAwarded:30});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
 function showFoodDetails(e){
   var g=gradeFood(e.nutrients),l=gradeLabel(g),n=e.nutrients;
   var cal=nn(n.cal),prot=nn(n.protein||n.prot),carbs=nn(n.carbs),fat=nn(n.fat),fiber=nn(n.fiber);
@@ -4052,7 +4057,7 @@ function showFoodDetails(e){
 function logMF(){
   const name=(document.getElementById('m-name')?.value?.trim())||'Custom';
   const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0};
-  S.nutrition.entries.push({name,qty:1,nutrients:n,date:getTodayStr()});
+  S.nutrition.entries.push({name,qty:1,nutrients:n,date:getTodayStr(),xpAwarded:30});
   // Save to personal food db if checkbox checked
   const shouldSave=document.getElementById('m-save-food')?.checked!==false;
   if(shouldSave&&name&&name!=='Custom'){
@@ -4084,7 +4089,7 @@ function showMyFoods(){
 }
 function quickLogMyFood(i){
   const f=(S.customFoods||[])[i];if(!f)return;
-  S.nutrition.entries.push({name:f.name,qty:1,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0},date:getTodayStr()});
+  S.nutrition.entries.push({name:f.name,qty:1,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0},date:getTodayStr(),xpAwarded:30});
   updStat('health');addXP(30,'Meal logged!');checkAutoQuests();persistSave();renderScreens();
   showNotif(f.name+' logged','OK');
 }
@@ -4096,10 +4101,11 @@ function deleteMyFood(i){
 function delN(i){
   if(typeof i!=='number' || i<0 || i>=S.nutrition.entries.length) return;
 
+  const xp=S.nutrition.entries[i].xpAwarded||0;
   S.nutrition.entries.splice(i,1);
+  if(xp>0)deductXP(xp,'Meal removed');
 
   persistSave();
-  showNotif('Removed','OK');
 
   const el=document.getElementById('screen-nutrition');
   if(el && currentScreen==='nutrition'){
@@ -4154,12 +4160,17 @@ function addWater(ml){
   if(!ml||ml<=0)return;
   SFX.water();
   const prev=todayWater();
-  S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now()});
+  S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now(),xpAwarded:5});
   addXP(5,'Hydrating!');updStat('health',1);
   if(todayWater()>=S.water.dailyGoalMl&&prev<S.water.dailyGoalMl)addXP(50,'Water goal!');
   checkAutoQuests();trackChallengeProgress();persistSave();var _wel=document.getElementById('screen-water');if(_wel&&currentScreen==='water')renderWater(_wel);else renderScreens();
 }
-function delW(i){S.water.entries.splice(i,1);persistSave();renderScreens();}
+function delW(i){
+  const xp=(S.water.entries[i]&&S.water.entries[i].xpAwarded)||0;
+  S.water.entries.splice(i,1);
+  if(xp>0)deductXP(xp,'Water removed');
+  persistSave();renderScreens();
+}
 
 // ════════════════════════════
 // WORKOUT
@@ -4476,12 +4487,13 @@ function logWorkout(override=null){
   if(!duration&&sets>0) duration=Math.round(sets*(wt>0?2.5:1.5));
   const met=lookupMET(name,type);
   const caloriesBurned=duration>0?calcBurn(met,duration,S.player.weightKg||70):0;
+  const xpW=caloriesBurned>0?15:8;
   const entry={
     name,type,sets,
     reps:override?.reps||+document.getElementById('w-reps')?.value||0,
     weight:wt,duration,
     notes:override?.notes||document.getElementById('w-notes')?.value||'',
-    date:getTodayStr(),ts:Date.now(),caloriesBurned
+    date:getTodayStr(),ts:Date.now(),caloriesBurned,xpAwarded:xpW
   };
   S.workouts.push(entry);
   if(S._pendingWorkout) S._pendingWorkout='';
@@ -4492,14 +4504,16 @@ function logWorkout(override=null){
   updStat('strength',5);updStat('endurance',2);
   trackChallengeProgress();persistSave();
   checkAchievements();
+  addXP(xpW,'Exercise logged');
   const el=document.getElementById('screen-workout');
   if(el&&currentScreen==='workout'){renderWorkout(el);}
   else{renderScreens();}
-  addXP(caloriesBurned>0?15:8,'Exercise logged');
   return entry;
 }
 function delW2(i){
+  const xp=(S.workouts[i]&&S.workouts[i].xpAwarded)||0;
   S.workouts.splice(i,1);persistSave();
+  if(xp>0)deductXP(xp,'Workout removed');
   var el=document.getElementById('screen-workout');
   if(el&&currentScreen==='workout')renderWorkout(el);else renderScreens();
 }
@@ -4874,14 +4888,19 @@ function previewAct(){
 function logAct(){
   if(!pendingActivity?.calories)return;
   if(!S.burned)S.burned=[];
-  S.burned.push({activity:pendingActivity.text||pendingActivity.actName,duration:pendingActivity.duration,met:pendingActivity.met,weightKg:pendingActivity.weightKg,calories:pendingActivity.calories,date:getTodayStr(),ts:Date.now(),source:'activity',inclineDeg:pendingActivity.inclineDeg,speedKmh:pendingActivity.speedKmh});
-  updStat('endurance',3);addXP(Math.max(10,Math.round(pendingActivity.calories/5)),'Activity burned!');
+  const xpA=Math.max(10,Math.round(pendingActivity.calories/5));
+  S.burned.push({activity:pendingActivity.text||pendingActivity.actName,duration:pendingActivity.duration,met:pendingActivity.met,weightKg:pendingActivity.weightKg,calories:pendingActivity.calories,date:getTodayStr(),ts:Date.now(),source:'activity',inclineDeg:pendingActivity.inclineDeg,speedKmh:pendingActivity.speedKmh,xpAwarded:xpA});
+  updStat('endurance',3);addXP(xpA,'Activity burned!');
   checkAutoQuests();checkAchievements();pendingActivity=null;persistSave();renderScreens();
 }
 function delAct(i){
   const ma=(S.burned||[]).filter(e=>e.date===getTodayStr()&&e.source!=='workout');
   const gi=(S.burned||[]).indexOf(ma[i]);
-  if(gi>-1)S.burned.splice(gi,1);
+  if(gi>-1){
+    const xp=(S.burned[gi].xpAwarded)||0;
+    S.burned.splice(gi,1);
+    if(xp>0)deductXP(xp,'Activity removed');
+  }
   persistSave();renderScreens();
 }
 
@@ -4959,6 +4978,8 @@ function toggleHabit(i){
   const wasDone=h.completedDates.includes(today);
   if(wasDone){
     h.completedDates=h.completedDates.filter(d=>d!==today);
+    const xM={easy:20,medium:40,hard:70};
+    deductXP(xM[h.difficulty]||20,'Habit: '+h.name);
   } else {
     h.completedDates.push(today);
     const xM={easy:20,medium:40,hard:70};
@@ -5642,7 +5663,12 @@ function logStudySession(){
   if(!S.study.subjects.includes(subject))S.study.subjects.push(subject);
   updStat('discipline',3);addXP(xp,'Study session logged!');checkAutoQuests();checkAchievements();persistSave();renderScreens();
 }
-function delStudy(i){S.study.sessions.splice(i,1);persistSave();renderScreens();}
+function delStudy(i){
+  const xp=(S.study.sessions[i]&&S.study.sessions[i].xp)||0;
+  S.study.sessions.splice(i,1);
+  if(xp>0)deductXP(xp,'Study removed');
+  persistSave();renderScreens();
+}
 
 // ════════════════════════════
 // QUESTS
@@ -6646,6 +6672,7 @@ function renderProfile(el){
   versionDiv.innerHTML=
     '<div style="margin-bottom:4px;font-weight:600;color:var(--text-secondary)">ZenFit Health RPG</div>'+
     '<div>'+APP_VERSION+' &middot; Build '+APP_BUILD+'</div>'+
+    '<button class="btn btn-sm" onclick="checkForUpdate()" style="margin-top:8px;border-color:var(--primary);color:var(--primary);font-size:11px">\ud83d\udd04 Check for Update</button>'+
     '<div style="margin-top:6px;font-size:10px;opacity:.6">Made with Claude AI &middot; Powered by ZenFit Engine</div>';
   el.appendChild(versionDiv);
 
@@ -7068,7 +7095,7 @@ function renderMealPlanner(el){
 // ════════════════════════════════════════════════════
 // LEADERBOARD
 // ════════════════════════════════════════════════════
-let _lbTab        = 'friends';
+let _lbTab        = 'global';
 let _globalRows   = null;
 let _globalFetchedAt = 0;
 let _globalLoading = false;
@@ -7078,9 +7105,9 @@ function renderLeaderboard(el){
   if(!S.partners) S.partners=[];
   const RANK_COLORS_LB={E:'#888',D:'#4cdb8a',C:'#4a9eff',B:'#c084fc',A:'#f5a623',S:'#ff5a5a'};
   let html=`<div class="chart-tab-bar" data-no-swipe>
+    <div class="chart-tab${_lbTab==='global'?' active':''}" onclick="_lbTab='global';renderLeaderboard(document.getElementById('screen-leaderboard'))">🌐 Global</div>
     <div class="chart-tab${_lbTab==='friends'?' active':''}" onclick="_lbTab='friends';renderLeaderboard(document.getElementById('screen-leaderboard'))">Friends</div>
     <div class="chart-tab${_lbTab==='challenges'?' active':''}" onclick="_lbTab='challenges';renderLeaderboard(document.getElementById('screen-leaderboard'))">⚔️ Challenges</div>
-    <div class="chart-tab${_lbTab==='global'?' active':''}" onclick="_lbTab='global';renderLeaderboard(document.getElementById('screen-leaderboard'))">🌐 Global</div>
   </div>`;
   html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : _lbTab==='challenges' ? buildChallengesTab() : buildGlobalTab(RANK_COLORS_LB);
   el.innerHTML=html;
@@ -9114,7 +9141,9 @@ function completeTask(taskId){
 }
 
 function deleteTask(taskId){
-  S.tasks=(S.tasks||[]).filter(function(t){return t.id!==taskId;});
+  var t=(S.tasks||[]).find(function(x){return x.id===taskId;});
+  if(t&&t.completedAt&&t.xpAwarded)deductXP(t.xpAwarded,'Task: '+t.title);
+  S.tasks=(S.tasks||[]).filter(function(x){return x.id!==taskId;});
   persistSave();
   var el=document.getElementById('screen-tasks');
   if(el&&currentScreen==='tasks')renderTasks(el);else renderScreens();
@@ -10010,6 +10039,22 @@ setTimeout(function(){checkAchievements();},200);
 setTimeout(function(){syncGlobalIfOptedIn();},1500);
 // Sync friend-visible profile if user has partners (even without global opt-in)
 setTimeout(function(){syncFriendProfileIfHasPartners();},2000);
+
+function checkForUpdate(){
+  if(!('serviceWorker' in navigator)||!_swReg){
+    showNotif('Update check not available','!');
+    return;
+  }
+  showNotif('Checking for updates...','\ud83d\udd04');
+  var updateFound=false;
+  function _onUpdate(){updateFound=true;}
+  _swReg.addEventListener('updatefound',_onUpdate);
+  setTimeout(function(){
+    _swReg.removeEventListener('updatefound',_onUpdate);
+    if(!updateFound)showNotif('Already up to date! ('+APP_BUILD+')','\u2713');
+  },10000);
+  _swReg.update().catch(function(){showNotif('Update check failed','!');});
+}
 
 // ── SERVICE WORKER REGISTRATION ──────────────────────
 var _swReg = null;
