@@ -72,7 +72,7 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 @keyframes glassBgFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 body.glass-mode .screen.active{background:linear-gradient(135deg,var(--app-bg,#0d0f14),var(--bg-surface,#100d1a),var(--app-bg,#0d0f14))!important;background-size:200% 200%!important;animation:glassBgFlow 14s ease infinite}
 body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3);transition:background .15s ease,backdrop-filter .15s ease,-webkit-backdrop-filter .15s ease}
-body.glass-mode .char-card-box,body.glass-mode .char-avatar-col,body.glass-mode .char-stats-col,body.glass-mode .char-avatar-frame{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;border-color:rgba(255,255,255,0.07)!important;transition:background .15s ease}
+body.glass-mode .char-card-box,body.glass-mode .char-avatar-col,body.glass-mode .char-stats-col{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;border-color:rgba(255,255,255,0.07)!important;transition:background .15s ease}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -172,28 +172,23 @@ hr{border:none;border-top:1px solid var(--border-mid);margin:16px 0}
 .char-wrap{position:relative;width:140px;height:200px;margin:0 auto}
 /* CHARACTER CARD NEW */
 /* CHARACTER CARD */
-.char-card-box{border-radius:14px;border:1px solid var(--border-mid);background:var(--bg-surface);overflow:hidden;padding:0;backface-visibility:hidden}
-.char-top-row{display:grid;grid-template-columns:1fr 1.4fr}
-.char-avatar-col{background:var(--bg-raised);border-right:1px solid var(--border-mid);display:flex;flex-direction:column;align-items:center;padding:0px 0px 0px}
-.char-panel-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px;text-align:center}
-.char-avatar-frame{position:relative;width:100%;max-width:250px;aspect-ratio:480/853;border-radius:10px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay);cursor:pointer;flex-shrink:0}
-#charAvatarImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;display:block;transition:filter .3s}
-@keyframes avatarGlow{0%,100%{filter:drop-shadow(0 0 8px var(--primary))}50%{filter:drop-shadow(0 0 22px var(--primary)) brightness(1.15)}}
+.char-card-box{border-radius:12px;border:1px solid var(--border-mid);background:var(--bg-surface);overflow:hidden;padding:0;backface-visibility:hidden}
+.char-top-row{display:grid;grid-template-columns:1fr 1.5fr}
+.char-avatar-col{background:var(--bg-raised);border-right:1px solid var(--border-mid);display:flex;flex-direction:column;padding:0;min-height:240px}
+.char-avatar-frame{position:relative;flex:1;width:100%;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#charAvatarImg{width:100%;height:100%;object-fit:contain;display:block;transition:filter .3s}
+@keyframes avatarGlow{0%,100%{filter:drop-shadow(0 0 6px var(--primary))}50%{filter:drop-shadow(0 0 16px var(--primary)) brightness(1.12)}}
 .avatar-acting #charAvatarImg{animation:avatarGlow .6s ease}
-.char-name-block{margin-top:12px;text-align:center}
-.char-name-text{font-size:15px;font-weight:700;color:var(--text-primary);line-height:1.2}
-.char-rank-sub{font-size:11px;color:var(--text-muted);margin-top:3px}
-.char-class-sub{font-size:11px;color:var(--text-muted);margin-top:1px}
-.char-stats-col{background:var(--bg-surface);display:flex;flex-direction:column;padding:16px 18px}
-.char-stat-bar-wrap{background:var(--bg-overlay);border-radius:4px;height:5px;margin-top:4px;overflow:hidden}
-.char-stat-bar-fill{height:100%;border-radius:4px}
-.char-bottom-row{border-top:1px solid var(--border-mid);padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.char-evo-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;width:100%}
-.char-evo-step{background:var(--bg-overlay);border:1px solid var(--border-mid);border-radius:7px;padding:6px 4px;text-align:center;opacity:.32;transition:all .3s;min-width:0;overflow:hidden}
+.char-stats-col{background:var(--bg-surface);display:flex;flex-direction:column;padding:12px 14px}
+.char-stat-bar-wrap{background:var(--bg-overlay);border-radius:3px;height:4px;margin-top:3px;overflow:hidden}
+.char-stat-bar-fill{height:100%;border-radius:3px}
+.char-bottom-row{border-top:1px solid var(--border-mid);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.char-evo-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;width:100%}
+.char-evo-step{background:var(--bg-overlay);border:1px solid var(--border-mid);border-radius:6px;padding:4px 3px;text-align:center;opacity:.32;transition:all .3s;min-width:0;overflow:hidden}
 .char-evo-step.evo-past{opacity:.42}
 .char-evo-step.evo-current{opacity:1;background:var(--bg-raised)}
-.char-evo-rank{font-size:13px;font-weight:700;line-height:1;margin-bottom:3px;white-space:nowrap}
-.char-evo-name{font-size:8px;color:var(--text-muted);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.char-evo-rank{font-size:12px;font-weight:700;line-height:1;margin-bottom:2px;white-space:nowrap}
+.char-evo-name{font-size:7px;color:var(--text-muted);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ANALYTICS SECTIONS */
 .an-sec-bar{display:flex;gap:3px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
 .an-sec-bar::-webkit-scrollbar{display:none}
@@ -207,6 +202,12 @@ hr{border:none;border-top:1px solid var(--border-mid);margin:16px 0}
 .hm-2{background:var(--hm-2-bg,rgba(76,219,138,0.47));border-color:var(--hm-2-border,rgba(76,219,138,0.53))}
 .hm-3{background:var(--hm-3-bg,#4cdb8a);border-color:var(--hm-3-border,#4cdb8a)}
 /* ACHIEVEMENTS */
+/* ── DASHBOARD INTERACTIONS ── */
+.grid3 .card-sm{transition:transform .2s ease,box-shadow .2s ease}
+.grid3 .card-sm:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+.quest-card{transition:transform .2s ease,box-shadow .2s ease}
+.quest-card:hover{transform:translateX(3px)}
+
 .ach-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .ach-card{background:var(--bg-raised);border:1px solid var(--border-mid);border-radius:10px;padding:10px 8px;text-align:center;transition:all .3s}
 .ach-card.earned{border-color:var(--warning);background:linear-gradient(135deg,var(--ach-earned-glow,rgba(61,40,0,0.07)),var(--bg-raised))}
@@ -1828,7 +1829,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.1.3</div>
+  <div class="splash-ver">v8.2</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1897,7 +1898,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.1.3";
+const APP_VERSION="v8.2";
 const APP_BUILD="2026.07.14.4";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2470,6 +2471,7 @@ function defaultState(){
     totalSessions:0,totalMinutes:0,currentStreak:0,bestStreak:0,
     lastSessionDate:null,sessions:[],history:{}
   },
+  mood:{entries:[]},
 };
 }
 function loadState(){
@@ -2637,6 +2639,23 @@ const ACHIEVEMENTS=[
   // Weight log
   {id:'weightlog1',icon:'⚖️',name:'Scale Watcher',desc:'Log your weight for the first time',xp:50,cat:'Progress'},
   {id:'weightlog7',icon:'📉',name:'Tracking Pro',desc:'Log weight 7 times',xp:100,cat:'Progress'},
+  {id:'weightlog30',icon:'📊',name:'Data Scientist',desc:'Log weight 30 times',xp:250,cat:'Progress'},
+  // Social
+  {id:'social1',icon:'🤝',name:'Social Butterfly',desc:'Add your first partner',xp:50,cat:'Social'},
+  {id:'social5',icon:'👥',name:'Networker',desc:'Add 5 partners',xp:150,cat:'Social'},
+  // Challenges
+  {id:'chal1',icon:'🏆',name:'Challenger',desc:'Complete your first challenge',xp:75,cat:'Social'},
+  {id:'chal10',icon:'🥇',name:'Champion',desc:'Complete 10 challenges',xp:300,cat:'Social'},
+  // Mood
+  {id:'mood1',icon:'😊',name:'Self Aware',desc:'Log your first mood',xp:25,cat:'Mindfulness'},
+  {id:'mood7',icon:'📝',name:'Emotional Tracker',desc:'Log mood 7 days',xp:100,cat:'Mindfulness'},
+  {id:'mood30',icon:'🧘',name:'Mindful Master',desc:'Log mood 30 days',xp:300,cat:'Mindfulness'},
+  // Task mastery
+  {id:'tasks50',icon:'✅',name:'Task Crusher',desc:'Complete 50 tasks',xp:100,cat:'Productivity'},
+  {id:'tasks200',icon:'⚡',name:'Productivity Beast',desc:'Complete 200 tasks',xp:400,cat:'Productivity'},
+  // Journey milestones
+  {id:'lvl50',icon:'👑',name:'Legend',desc:'Reach Level 50',xp:2000,cat:'Level'},
+  {id:'lvl100',icon:'🌌',name:'Transcendent',desc:'Reach Level 100',xp:5000,cat:'Level'},
 ];
 
 function checkAchievements(){
@@ -2704,6 +2723,22 @@ function checkAchievements(){
       case 'stat100':  met=Object.values(S.player.stats||{}).some(v=>v>=100); break;
       case 'weightlog1': met=(S.weightLog||[]).length>=1; break;
       case 'weightlog7': met=(S.weightLog||[]).length>=7; break;
+      case 'weightlog30': met=(S.weightLog||[]).length>=30; break;
+      case 'social1': met=(S.partners||[]).length>=1; break;
+      case 'social5': met=(S.partners||[]).length>=5; break;
+      case 'chal1': met=(S.challenges||[]).filter(c=>c.done).length>=1; break;
+      case 'chal10': met=(S.challenges||[]).filter(c=>c.done).length>=10; break;
+      case 'mood1': met=(S.mood?.entries||[]).length>=1; break;
+      case 'mood7': met=new Set((S.mood?.entries||[]).map(e=>e.date)).size>=7; break;
+      case 'mood30': met=new Set((S.mood?.entries||[]).map(e=>e.date)).size>=30; break;
+      case 'tasks50':{
+        const now2=Date.now(); met=(S.tasks||[]).filter(t=>t.completedAt&&now2-t.completedAt<86400000*365).length>=50; break;
+      }
+      case 'tasks200':{
+        const now3=Date.now(); met=(S.tasks||[]).filter(t=>t.completedAt&&now3-t.completedAt<86400000*365).length>=200; break;
+      }
+      case 'lvl50': met=S.player.level>=50; break;
+      case 'lvl100': met=S.player.level>=100; break;
     }
     if(met)newOnes.push(a);
   });
@@ -3471,7 +3506,12 @@ function renderHome(el){
   const studyMins=(S.study.sessions||[]).filter(s=>s.date===today).reduce((a,b)=>a+b.duration,0);
   const now=Date.now();
   const dueTasks=getTasksDueToday();
-  const doneT=dueTasks.filter(t=>t.completedAt&&now-t.completedAt<86400000).length;
+  const doneT = (S.tasks||[]).filter(t => {
+    if(!t.completedAt) return false;
+    const age = now - t.completedAt;
+    return age < 86400000 && age >= 0;
+  }).length;
+  const totalDue = dueTasks.length + doneT;
   // Quest logic: show incomplete first, then bonus when all done
   const incompleteQ=S.quests.list.filter(q=>!q.done);
   const bonusQ=(S.bonusTasks&&S.bonusTasks.list||[]).filter(q=>!q.done);
@@ -3481,113 +3521,185 @@ function renderHome(el){
   const rc=RANK_COLORS[p.rank];
   const hr=new Date().getHours();
   const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  // Today's Progress goals
+  const goalWater = water >= S.water.dailyGoalMl;
+  const goalCal = nut.cal >= S.nutrition.dailyGoal.cal * 0.8;
+  const goalHabits = (S.habits||[]).some(h => h.completedDates?.includes(today));
+  const goalTasks = doneT > 0;
+  const goalWorkout = (S.workouts||[]).some(w => w.date === today);
+  const zenToday = (S.zen?.history||{})[today]||0;
+  const goalMind = studyMins >= 1 || zenToday >= 1;
+  const goals = [goalWater, goalCal, goalHabits, goalTasks, goalWorkout, goalMind];
+  const goalCount = goals.filter(Boolean).length;
+  const goalPct = Math.round((goalCount/6)*100);
+  // Achievement ring
+  const earnedCount = (S.achievements||[]).length;
+  const totalAchs = (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS) ? ACHIEVEMENTS.length : 999;
+  const achPct = totalAchs > 0 ? Math.round(earnedCount/totalAchs*100) : 0;
+  const achCircum = 314; // 2*PI*50
+  const achDash = Math.round(achPct/100*achCircum);
+  // Best streak
+  const bestStreak = (S.habits||[]).reduce((a,h)=>Math.max(a,h.streak||0),0);
+  // Mood
+  const todayMood = getTodayMood();
+  // Collapsible character card - reset to collapsed on new day
+  if(!_charCardCollapsed && localStorage.getItem('zenfit_charCardDay') !== today){
+    _charCardCollapsed = true;
+    localStorage.setItem('zenfit_charCardDay', today);
+  }
   el.innerHTML=`
-  <!-- GREETING -->
+  <!-- 1. GREETING -->
 <div class="flex-between mb12">
   <div>
     <div style="font-size:11px;color:var(--text-muted)">
       ${greet} 👋
     </div>
-
     <div style="font-size:19px;font-weight:700;font-family:var(--font-display);color:var(--text-primary)">
       ${escapeHtml(p.name||'Hunter')}
     </div>
   </div>
-
   <div style="display:flex;align-items:center;gap:10px">
-
     <div style="text-align:right">
-      <div style="font-size:10px;color:var(--text-muted)">
-        Level ${p.level}
-      </div>
-
-      <div style="font-size:15px;font-weight:800;color:${rc}">
-        RANK ${p.rank}
+      <div style="font-size:10px;color:var(--text-muted)">Level ${p.level}</div>
+      <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
+        ${bestStreak>0?`<div style="font-size:15px;font-weight:800;color:var(--warning)">STREAK ${bestStreak}🔥</div>`:''}
+        <div style="font-size:15px;font-weight:800;color:${rc}">RANK ${p.rank}</div>
       </div>
     </div>
-
-    <div
-      onclick="switchScreen('profile')"
-      style="
-        width:42px;
-        height:42px;
-        border-radius:50%;
-        overflow:hidden;
-        border:2px solid ${rc};
-        cursor:pointer;
-        flex-shrink:0;
-      ">
-
+    <div onclick="switchScreen('profile')" style="width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid ${rc};cursor:pointer;flex-shrink:0">
       ${S.profilePic
-        ? `<img src="${S.profilePic}"
-             style="width:100%;height:100%;object-fit:cover">`
-        : `<div style="
-             width:100%;
-             height:100%;
-             background:${rc}22;
-             display:flex;
-             align-items:center;
-             justify-content:center;
-             font-size:16px;
-             font-weight:700;
-             color:${rc}">
-             ${(p.name||'H').charAt(0).toUpperCase()}
-           </div>`
+        ? '<img src="'+S.profilePic+'" style="width:100%;height:100%;object-fit:cover">'
+        : '<div style="width:100%;height:100%;background:'+rc+'22;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:'+rc+'">'+(p.name||'H').charAt(0).toUpperCase()+'</div>'
       }
     </div>
-
   </div>
 </div>
-  <!-- CHARACTER CARD -->
-  <div id="charCardMount" class="mb12"></div>
 
-  <!-- TODAY'S STATS -->
-  <div class="section-title">Today</div>
-  <div class="grid3 mb12">
-    <div class="card-sm" onclick="switchScreen('water')" style="cursor:pointer">
-      <div class="flex-between mb5"><span style="font-size:11px;color:var(--water)">💧 Water</span><span style="font-size:11px;color:var(--water)">${Math.round(water/100)/10}/${S.water.dailyGoalMl/1000}L</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${waterP}%;background:var(--water)"></div></div>
+  <!-- 2. LEVEL XP RING + TODAY'S PROGRESS (side by side) -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <!-- Level XP Ring square -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:14px;gap:4px;text-align:center">
+      <svg width="76" height="76" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#2a3050" stroke-width="10"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="10"
+          stroke-dasharray="${Math.max(1,Math.round(xpP/100*314))} 314"
+          stroke-linecap="round" transform="rotate(-90 60 60)"/>
+        <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="800" fill="var(--text-primary)">${p.level}</text>
+      </svg>
+      <div style="font-size:10px;color:var(--text-muted);font-weight:500">Level ${p.level}</div>
+      <div style="font-size:9px;color:var(--text-secondary)">${p.xp} / ${xpN} XP</div>
     </div>
-    <div class="card-sm" onclick="switchScreen('nutrition')" style="cursor:pointer">
-      <div class="flex-between mb5"><span style="font-size:11px;color:var(--warning)">🍽️ Cal</span><span style="font-size:11px;color:var(--warning)">${nut.cal}/${S.nutrition.dailyGoal.cal}</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${calP}%;background:var(--warning)"></div></div>
-    </div>
-    <div class="card-sm" onclick="switchScreen('workout','burn')" style="cursor:pointer">
-      <div style="font-size:11px;color:var(--text-muted)">🔥 Net Cal</div>
-      <div style="font-size:16px;font-weight:700;color:${net<=0?'var(--success)':'var(--danger)'};">${net>0?'+':''}${net}</div>
-    </div>
-    <div class="card-sm" onclick="switchScreen('habits')" style="cursor:pointer">
-      <div style="font-size:11px;color:var(--text-muted)">✅ Habits</div>
-      <div style="font-size:16px;font-weight:700;color:var(--success)">${doneH}<span style="font-size:11px;color:var(--text-muted)">/${S.habits.length}</span></div>
-    </div>
-    <div class="card-sm" onclick="switchScreen('tasks')" style="cursor:pointer">
-      <div style="font-size:11px;color:var(--text-muted)">⚔️ Tasks</div>
-      <div style="font-size:16px;font-weight:700;color:var(--danger)">${doneT}<span style="font-size:11px;color:var(--text-muted)">/${dueTasks.length}</span></div>
-    </div>
-    <div class="card-sm" onclick="switchScreen('mind')" style="cursor:pointer">
-      <div style="font-size:11px;color:var(--text-muted)">🧘 Mind</div>
-      <div style="font-size:14px;font-weight:700;color:var(--primary)">${(S.zen?.history||{})[today]||0}<span style="font-size:10px;color:var(--text-muted)"> zen  </span>${studyMins}<span style="font-size:10px;color:var(--text-muted)"> study</span></div>
+    <!-- Today's Progress square -->
+    <div class="card" style="display:flex;flex-direction:column;padding:14px;gap:6px">
+      <div style="font-size:12px;font-weight:600;color:var(--text-primary)">⚡ Today's Progress</div>
+      <div style="font-size:34px;font-weight:800;color:var(--primary);line-height:1">${goalCount}<span style="font-size:16px;color:var(--text-muted)">/6</span></div>
+      <div class="xp-bar-wrap" style="height:8px">
+        <div class="xp-bar" style="width:${goalPct}%;background:linear-gradient(90deg,var(--primary),var(--success))"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;font-size:11px">
+        <div style="display:flex;align-items:center;gap:4px;color:var(--water)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalWater?'var(--success)':'transparent'};border:1.5px solid ${goalWater?'var(--success)':'currentColor'};color:${goalWater?'#000':'transparent'};flex-shrink:0">${goalWater?'✓':''}</span>Water</div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--warning)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalCal?'var(--success)':'transparent'};border:1.5px solid ${goalCal?'var(--success)':'currentColor'};color:${goalCal?'#000':'transparent'};flex-shrink:0">${goalCal?'✓':''}</span>Calories</div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--success)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalHabits?'var(--success)':'transparent'};border:1.5px solid ${goalHabits?'var(--success)':'currentColor'};color:${goalHabits?'#000':'transparent'};flex-shrink:0">${goalHabits?'✓':''}</span>Habits</div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--danger)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalTasks?'var(--success)':'transparent'};border:1.5px solid ${goalTasks?'var(--success)':'currentColor'};color:${goalTasks?'#000':'transparent'};flex-shrink:0">${goalTasks?'✓':''}</span>Tasks</div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--energy)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalWorkout?'var(--success)':'transparent'};border:1.5px solid ${goalWorkout?'var(--success)':'currentColor'};color:${goalWorkout?'#000':'transparent'};flex-shrink:0">${goalWorkout?'✓':''}</span>Workout</div>
+        <div style="display:flex;align-items:center;gap:4px;color:var(--primary)"><span style="width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:${goalMind?'var(--success)':'transparent'};border:1.5px solid ${goalMind?'var(--success)':'currentColor'};color:${goalMind?'#000':'transparent'};flex-shrink:0">${goalMind?'✓':''}</span>Mind</div>
+      </div>
     </div>
   </div>
 
-  <!-- QUESTS -->
-  <div class="flex-between mb8">
-    <div class="section-title" style="margin-bottom:0">${questLabel} ${allQDone?'<span style="font-size:10px;color:var(--success)">✓ All done!</span>':''}</div>
-    <button class="btn btn-sm" style="font-size:11px" onclick="switchScreen('quests')">View all</button>
+  <!-- 3. TODAY'S QUICK STATS -->
+  <div>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+      <div class="section-title" style="margin-bottom:0">Today</div>
+      <span style="font-size:9px;color:var(--text-muted)">tap a block →</span>
+    </div>
+    <div class="grid3 mb12">
+      <div class="card-sm" onclick="switchScreen('water')" style="cursor:pointer">
+        <div class="flex-between mb5"><span style="font-size:11px;color:var(--water)">💧 Water</span><span style="font-size:11px;color:var(--water)">${Math.round(water/100)/10}/${S.water.dailyGoalMl/1000}L</span></div>
+        <div class="xp-bar-wrap"><div class="xp-bar" style="width:${waterP}%;background:var(--water)"></div></div>
+      </div>
+      <div class="card-sm" onclick="switchScreen('nutrition')" style="cursor:pointer">
+        <div class="flex-between mb5"><span style="font-size:11px;color:var(--warning)">🍽️ Cal</span><span style="font-size:11px;color:var(--warning)">${nut.cal}/${S.nutrition.dailyGoal.cal}</span></div>
+        <div class="xp-bar-wrap"><div class="xp-bar" style="width:${calP}%;background:var(--warning)"></div></div>
+      </div>
+      <div class="card-sm" onclick="switchScreen('workout','burn')" style="cursor:pointer">
+        <div style="font-size:11px;color:var(--text-muted)">🔥 Net Cal</div>
+        <div style="font-size:16px;font-weight:700;color:${net<=0?'var(--success)':'var(--danger)'}">${net>0?'+':''}${net}</div>
+      </div>
+      <div class="card-sm" onclick="switchScreen('habits')" style="cursor:pointer">
+        <div style="font-size:11px;color:var(--text-muted)">✅ Habits</div>
+        <div style="font-size:16px;font-weight:700;color:var(--success)">${doneH}<span style="font-size:11px;color:var(--text-muted)">/${S.habits.length}</span></div>
+      </div>
+      <div class="card-sm" onclick="switchScreen('tasks')" style="cursor:pointer">
+        <div style="font-size:11px;color:var(--text-muted)">⚔️ Tasks</div>
+        <div style="font-size:16px;font-weight:700;color:var(--danger)">${doneT}<span style="font-size:11px;color:var(--text-muted)">/${totalDue}</span></div>
+      </div>
+      <div class="card-sm" onclick="switchScreen('mind')" style="cursor:pointer">
+        <div style="font-size:11px;color:var(--text-muted)">🧘 Mind</div>
+        <div style="font-size:14px;font-weight:700;color:var(--primary)">${(S.zen?.history||{})[today]||0}<span style="font-size:10px;color:var(--text-muted)"> zen  </span>${studyMins}<span style="font-size:10px;color:var(--text-muted)"> study</span></div>
+      </div>
+    </div>
   </div>
-  ${showQ.length===0?`<div class="card-sm" style="text-align:center;padding:14px;color:var(--success)">🎉 All quests and bonus tasks completed today!</div>`:''}
-  ${showQ.map((q,qi)=>{
-    const isBonus=allQDone;
-    const listKey=isBonus?'bonusTasks':'quests';
-    const realIdx=isBonus?(S.bonusTasks.list||[]).indexOf(q):S.quests.list.indexOf(q);
-    return`<div class="quest-card" onclick="dashCompleteQuest('${listKey}',${realIdx})" style="cursor:pointer;transition:all .2s;${q.done?'opacity:.5':''}">
-      <span style="font-size:18px;width:24px">${q.icon||'⚡'}</span>
-      <div style="flex:1"><div style="font-size:13px">${q.title}</div><div style="font-size:11px;color:var(--text-muted)">+${q.xp} XP</div></div>
-      <div class="quest-check${q.done?' done':''}" style="flex-shrink:0">${q.done?'✓':''}</div>
-    </div>`;
-  }).join('')}`;
-  // Render character card after innerHTML is set
-  renderCharacterCard();
+
+  <!-- 4. QUESTS -->
+  <div>
+    <div class="flex-between mb8">
+      <div class="section-title" style="margin-bottom:0">${questLabel} ${allQDone?'<span style="font-size:10px;color:var(--success)">✓ All done!</span>':''}</div>
+      <button class="btn btn-sm" style="font-size:11px" onclick="switchScreen('quests')">View all</button>
+    </div>
+    ${showQ.length===0?'<div class="card-sm" style="text-align:center;padding:10px;color:var(--success);font-size:12px">🎉 All done!</div>':''}
+    ${showQ.map((q,qi)=>{
+      const isBonus=allQDone;
+      const listKey=isBonus?'bonusTasks':'quests';
+      const realIdx=isBonus?(S.bonusTasks.list||[]).indexOf(q):S.quests.list.indexOf(q);
+      return'<div class="quest-card" onclick="dashCompleteQuest(\''+listKey+'\','+realIdx+')" style="cursor:pointer;transition:all .2s;'+(q.done?'opacity:.5':'')+'">'+
+        '<span style="font-size:18px;width:24px">'+(q.icon||'⚡')+'</span>'+
+        '<div style="flex:1"><div style="font-size:13px">'+escapeHtml(q.title)+'</div><div style="font-size:11px;color:var(--text-muted)">+'+q.xp+' XP</div></div>'+
+        '<div class="quest-check'+(q.done?' done':'')+'" style="flex-shrink:0">'+(q.done?'✓':'')+'</div>'+
+      '</div>';
+    }).join('')}
+  </div>
+
+  <!-- 5. ACHIEVEMENT RING + MOOD LOG (side by side) -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+    <!-- Achievement square -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center">
+      <svg width="64" height="64" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#2a3050" stroke-width="10"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--warning)" stroke-width="10"
+          stroke-dasharray="${Math.max(1,achDash)} ${achCircum}"
+          stroke-linecap="round" transform="rotate(-90 60 60)"/>
+      </svg>
+      <div style="font-size:12px;font-weight:700;color:var(--text-primary)">🏆 ${earnedCount}/${totalAchs}</div>
+      <div style="font-size:10px;color:var(--text-muted)">${achPct}% complete</div>
+    </div>
+    <!-- Mood square -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;gap:6px;text-align:center">
+      <div style="font-size:9px;color:var(--text-muted);font-weight:600;letter-spacing:.3px;line-height:1.3">How was your<br>overall mood today?</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">
+        ${MOODS.map(m => {
+          const sel = todayMood === m.key;
+          return '<button onclick="logMood(\''+m.key+'\')" style="font-size:22px;width:40px;height:40px;border-radius:10px;border:2px solid '+(sel?m.color:'var(--border-mid)')+';background:'+(sel?m.color+'22':'transparent')+';cursor:pointer;transition:all .15s;padding:0;line-height:40px">'+m.emoji+'</button>';
+        }).join('')}
+      </div>
+      ${todayMood ? '<div style="font-size:9px;color:var(--text-muted)">Logged ✓</div>' : '<div style="font-size:9px;color:var(--text-muted)">+5 XP</div>'}
+    </div>
+  </div>
+
+  <!-- 6. CHARACTER CARD (collapsible) -->
+  <div class="card mb12" style="padding:0;overflow:hidden">
+    <div onclick="toggleCharCard()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px">👤</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text-primary)">Character Card</span>
+        <span class="badge" style="background:var(--primary-dim);color:var(--primary);font-size:9px;padding:1px 6px">Rank ${p.rank}</span>
+      </div>
+      <span style="font-size:11px;color:var(--text-muted);transition:transform .3s;${_charCardCollapsed?'':'transform:rotate(180deg)'}">▼</span>
+    </div>
+    <div id="charCardMount" style="${_charCardCollapsed?'display:none':'display:block'}"></div>
+  </div>`;
+  // If expanded, render character card after innerHTML
+  if(!_charCardCollapsed)renderCharacterCard();
 }
 function showRankInfo(targetRank){
   var RANK_LEVELS={
@@ -3747,9 +3859,12 @@ function renderNutrition(el){
         <input type="number" id="m-fat" placeholder="Fat (g)">
         <input type="number" id="m-fiber" placeholder="Fiber (g)">
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <input type="checkbox" id="m-save-food" checked style="width:auto;flex-shrink:0">
-        <label for="m-save-food" style="font-size:12px;color:var(--text-secondary)">Save to My Foods for future use</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer" onclick="toggleSaveFood()">
+        <div id="m-save-toggle" style="width:36px;height:20px;border-radius:10px;background:var(--success);transition:background .2s;position:relative;flex-shrink:0;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)">
+          <div id="m-save-knob" style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;left:18px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>
+        </div>
+        <input type="checkbox" id="m-save-food" checked style="display:none">
+        <label for="m-save-food" style="font-size:12px;color:var(--text-secondary);cursor:pointer">Save to My Foods for future use</label>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-primary" onclick="logMF()">Log Food</button>
@@ -4069,6 +4184,15 @@ function logMF(){
     }
   }
   updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();
+}
+function toggleSaveFood(){
+  const cb=document.getElementById('m-save-food');
+  const tog=document.getElementById('m-save-toggle');
+  const knob=document.getElementById('m-save-knob');
+  if(!cb||!tog||!knob)return;
+  cb.checked=!cb.checked;
+  tog.style.background=cb.checked?'var(--success)':'var(--border-mid)';
+  knob.style.left=cb.checked?'18px':'2px';
 }
 function showMyFoods(){
   if(!S.customFoods||!S.customFoods.length)return;
@@ -5701,6 +5825,7 @@ function renderAnalytics(el){
     {id:'progress',label:'Progress'},
     {id:'insights',label:'Insights'},
     {id:'gamification',label:'Gamification'},
+    {id:'mood',label:'Mood'},
   ];
   const periodTabs=`
   <div class="chart-tab-bar">
@@ -5727,6 +5852,7 @@ function renderAnalytics(el){
     case 'progress':    renderAnProgress(content); break;
     case 'insights':    renderAnInsights(content,periodTabs); break;
     case 'gamification':renderAnGamification(content); break;
+    case 'mood':        renderAnMood(content,periodTabs); break;
     default:            renderAnOverview(content,periodTabs);
   }
 }
@@ -6208,6 +6334,77 @@ function renderAnGamification(el){
       </div>`).join('')}
     </div>`;
   }).join('')}`;
+}
+
+// ── MOOD ANALYTICS ──────────────────────────────────────────
+function getAnalyticsMoodData(period){
+  const count=period==='7d'?7:period==='30d'?30:365;
+  const data=[];
+  for(let i=count-1;i>=0;i--){
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);
+    const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const entry=(S.mood?.entries||[]).find(e=>e.date===ds);
+    data.push({date:ds,mood:entry?entry.key:null,label:d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})});
+  }
+  return data;
+}
+function renderAnMood(el,periodTabs){
+  const data=getAnalyticsMoodData(analyticsPeriod);
+  const moods=[{key:'great',emoji:'😄',color:'#4cdb8a'},{key:'good',emoji:'🙂',color:'#4a9eff'},{key:'okay',emoji:'😐',color:'#f5a623'},{key:'bad',emoji:'😢',color:'#ff8c42'},{key:'awful',emoji:'😫',color:'#ff5a5a'}];
+  const logged=data.filter(d=>d.mood);
+  const moodCounts={};
+  data.forEach(d=>{if(d.mood)moodCounts[d.mood]=(moodCounts[d.mood]||0)+1;});
+  const total=logged.length;
+  const pct=m=>total?Math.round(((moodCounts[m]||0)/total)*100):0;
+  const recent20=data.slice(-20);
+
+  el.innerHTML=`
+  ${periodTabs}
+  <div class="section-title">Mood Distribution</div>
+  <div class="card mb12">
+    <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
+      ${moods.map(m=>`<div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span>${m.emoji} ${m.label}</span>
+          <span style="color:var(--text-muted)">${moodCounts[m.key]||0} (${pct(m.key)}%)</span>
+        </div>
+        <div class="xp-bar-wrap"><div class="xp-bar" style="width:${pct(m.key)}%;background:${m.color};height:8px"></div></div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="section-title">Recent Moods (last 20)</div>
+  <div class="card mb12" style="padding:12px">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
+      ${recent20.map(d=>{
+        const m=moods.find(x=>x.key===d.mood);
+        return '<div style="font-size:22px;padding:4px 8px;border-radius:8px;background:'+(m?m.color+'22':'var(--bg-overlay)')+';border:1px solid '+(m?m.color+'55':'var(--border-mid)')+'">'+(m?m.emoji:'—')+'</div>';
+      }).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:6px">
+      <span>${recent20.length?recent20[0].label:''}</span>
+      <span>${recent20.length?recent20[recent20.length-1].label:''}</span>
+    </div>
+  </div>
+
+  <div class="section-title">Mood Streak</div>
+  <div class="card-sm mb12" style="padding:12px;text-align:center">
+    ${(()=>{
+      const allEntries=(S.mood?.entries||[]).sort((a,b)=>b.ts-a.ts);
+      if(allEntries.length===0)return '<div style="font-size:12px;color:var(--text-muted)">No mood data yet. Log your mood from the dashboard!</div>';
+      let streak=0;
+      const today2=new Date();today2.setHours(0,0,0,0);
+      for(let i=0;i<allEntries.length;i++){
+        const d=new Date(allEntries[i].ts);d.setHours(0,0,0,0);
+        const diff=(today2-d)/86400000;
+        if(diff===streak)streak++;
+        else break;
+      }
+      const favMood=moods.reduce((a,b)=>(moodCounts[b.key]||0)>(moodCounts[a.key]||0)?b:a,moods[0]);
+      return '<div style="font-size:13px;color:var(--text-primary)">🔥 Current streak: <strong>'+streak+'</strong> day'+(streak!==1?'s':'')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">Total logs: '+allEntries.length+' &middot; Most frequent: '+favMood.emoji+' '+favMood.label+'</div>';
+    })()}
+  </div>`;
 }
 
 // ── HELPER FUNCTIONS ────────────────────────────────────────────
@@ -9562,11 +9759,11 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.1.3';
+var CHANGELOG_VERSION='v8.2';
 var CHANGELOG_ENTRIES=[	
-  'v8.1.3 Barcode scan — redesigned result card with prominent grade + label + full macros; tap grade badges in parse results & log history for detail modal',
-  'v8.1.3 Barcode scan — products found but missing nutrition data now show a clear warning card instead of a misleading E grade',
-  'v8.1.3 Glass mode — character card block now respects theme color & opacity slider; fixed hardcoded RGB causing cards to turn black on non-dark themes',
+  'v8.2 Dashboard redesign — new layout hierarchy with Today\'s Progress bar, Achievement ring, Quick Mood log, collapsible Character Card',
+  'v8.2 Mood system — daily mood logging with +5 XP, once-per-day, Analytics → Mood tab with distribution, streak, and recent moods',
+  'v8.2 Level XP Ring — circular SVG progress ring on dashboard replacing horizontal bar; Progress + XP side by side as compact squares',
   'v8.1.2 Fixed CSP — added world.openfoodfacts.org + unpkg.com to connect-src/script-src, fixed malformed token spacing',
   'v8.1.2 Tasks no longer disappear after one day — incomplete tasks now persist until completed; overdue tasks show in red',
   'v8.1.2 Renamed MP3 files (spaces → underscores) for reliable SW static asset caching',
@@ -9631,31 +9828,56 @@ function dismissChangelog(){
 }
 
 // ════════════════════════════════════════════════════
+// MOOD SYSTEM
+// ════════════════════════════════════════════════════
+const MOODS = [
+  {key:'great', emoji:'😄', label:'Great', color:'#4cdb8a'},
+  {key:'good',  emoji:'🙂', label:'Good',  color:'#4a9eff'},
+  {key:'okay',  emoji:'😐', label:'Okay',  color:'#f5a623'},
+  {key:'bad',   emoji:'😢', label:'Bad',   color:'#ff8c42'},
+  {key:'awful', emoji:'😫', label:'Awful', color:'#ff5a5a'},
+];
+function getTodayMood(){
+  const today = getTodayStr();
+  return (S.mood?.entries || []).find(e => e.date === today)?.key || null;
+}
+function logMood(mood){
+  const today = getTodayStr();
+  if (!S.mood) S.mood = {entries:[]};
+  if (S.mood.entries.some(e => e.date === today)) {
+    return showNotif('Already logged your mood today! Tap Analytics → Mood to review.','🙂');
+  }
+  S.mood.entries.push({mood, note: '', date: today, ts: Date.now()});
+  addXP(5, 'Mood Log');
+  persistSave();
+  showNotif('Mood logged: ' + (MOODS.find(m=>m.key===mood)?.label||mood), MOODS.find(m=>m.key===mood)?.emoji||'');
+  const el=document.getElementById('screen-dashboard');
+  if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
+}
+function toggleCharCard(){
+  _charCardCollapsed = !_charCardCollapsed;
+  if (!_charCardCollapsed) {
+    const mount = document.getElementById('charCardMount');
+    if(mount)mount.style.display = 'block';
+    renderCharacterCard();
+  } else {
+    const mount = document.getElementById('charCardMount');
+    if(mount)mount.style.display = 'none';
+  }
+}
+// ════════════════════════════════════════════════════
 // CHARACTER CARD (NEW)
 // ════════════════════════════════════════════════════
+let _charCardCollapsed = true;
 function renderCharacterCard(){
   var mount=document.getElementById('charCardMount');
   if(!mount)return;
   var p=S.player;
-  var pr=S.profile||{};
   var rc=RANK_COLORS[p.rank]||'#888';
   var xpNeeded=xpForLevel(p.level);
   var xpPct=xpNeeded>0?Math.min(100,Math.round((p.xp/xpNeeded)*100)):0;
-  var gender=pr.gender||'male';
+  var gender=(S.profile||{}).gender||'male';
 
-  var RANK_DESCS={
-    E:'Novice Hunter. Weak and inexperienced.',
-    D:'Awakened Hunter. Beginning to show potential.',
-    C:'Rising Warrior. Power is starting to show.',
-    B:'Iron Sentinel. A force to be reckoned with.',
-    A:'Apex Predator. Near the peak of human limits.',
-    S:'Legendary Sovereign. Beyond mortal boundaries.'
-  };
-  var RANK_TITLES={E:'Shadow Initiate',D:'Iron Seeker',C:'Jade Warrior',B:'Silver Vanguard',A:'Gold Sovereign',S:'Crimson Legend'};
-
-  var className=RANK_CLASS_NAMES[p.rank]||'Hunter';
-  var classDesc=RANK_DESCS[p.rank]||'';
-  var currentTitle=RANK_TITLES[p.rank]||'Hunter';
   var stats=p.stats||{};
   var RANKS_ORDER=['E','D','C','B','A','S'];
   var idleGif='assets/'+gender+'/rank_'+p.rank+'_idle.gif';
@@ -9682,34 +9904,22 @@ function renderCharacterCard(){
       // ── TOP ROW ────────────────────────────────────────
       '<div class="char-top-row">'+
 
-        // LEFT: Avatar column
+        // LEFT: Full-height avatar GIF
         '<div class="char-avatar-col">'+
-          '<div class="char-panel-title">Your Character</div>'+
-
-          // Contained avatar frame
-          '<div class="char-avatar-frame" id="charAvatarBox">'+
-            '<img id="charAvatarImg" src="'+idleGif+'" alt="character" '+
+          '<div class="char-avatar-frame" id="charAvatarBox" style="max-width:none;height:100%;aspect-ratio:auto;border-radius:0;border:none;background:none">'+
+            '<img id="charAvatarImg" src="'+idleGif+'" alt="character" style="object-fit:contain;max-height:100%" '+
               'onerror="this.style.display=\'none\';var fb=document.getElementById(\'charAvatarFallback\');if(fb)fb.style.display=\'flex\'">'+
             '<div id="charAvatarFallback" style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:64px;z-index:1">'+rankEmojiFallback+'</div>'+
-            // Rank pip badge bottom-right
-            '<div class="char-rank-pip" style="color:'+rc+';border-color:'+rc+'55">'+p.rank+'</div>'+
-          '</div>'+
-
-          // Name / rank / class text below avatar
-          '<div class="char-name-block">'+
-            '<div class="char-name-text">'+(pr.name||'Hunter')+'</div>'+
-            '<div class="char-rank-sub">Rank '+p.rank+' · Level '+p.level+'</div>'+
-            '<div class="char-class-sub" style="color:'+rc+'">'+className+'</div>'+
           '</div>'+
         '</div>'+
 
         // RIGHT: Stats column
         '<div class="char-stats-col">'+
-          '<div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text-muted);text-transform:uppercase;margin-bottom:14px">Player Stats</div>'+
+          '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-muted);text-transform:uppercase;margin-bottom:10px">Player Stats</div>'+
 
           // XP bar
-          '<div style="margin-bottom:16px">'+
-            '<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">'+
+          '<div style="margin-bottom:10px">'+
+            '<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">'+
               '<span style="color:var(--text-muted);letter-spacing:.5px">XP</span>'+
               '<span style="color:var(--text-secondary)">'+p.xp+' / '+xpNeeded+'</span>'+
             '</div>'+
@@ -9726,10 +9936,10 @@ function renderCharacterCard(){
           ].map(function(s){
             var v=stats[s.key]||10;
             var pct=Math.min(100,v);
-            return '<div style="margin-bottom:12px">'+
-              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
-                '<span style="font-size:13px;color:var(--text-primary)">'+s.icon+' '+s.label+'</span>'+
-                '<span style="font-size:13px;font-weight:700;color:'+s.color+'">'+v+'</span>'+
+            return '<div style="margin-bottom:8px">'+
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">'+
+                '<span style="font-size:12px;color:var(--text-primary)">'+s.icon+' '+s.label+'</span>'+
+                '<span style="font-size:12px;font-weight:700;color:'+s.color+'">'+v+'</span>'+
               '</div>'+
               '<div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" style="width:'+pct+'%;background:'+s.color+'"></div></div>'+
             '</div>';
@@ -9738,14 +9948,8 @@ function renderCharacterCard(){
         '</div>'+
       '</div>'+
 
-      // ── BOTTOM ROW ─────────────────────────────────────
-      '<div style="border-top:1px solid var(--border-mid);padding:10px 16px 8px">'+
-        // Row 1: Current title
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
-          '<span style="font-size:10px;color:var(--text-muted);letter-spacing:1.2px;text-transform:uppercase;font-weight:700;white-space:nowrap">Current Title</span>'+
-          '<span class="badge" style="background:var(--primary-dim);border:1px solid var(--primary);color:var(--primary);font-size:10px;white-space:nowrap">'+currentTitle+'</span>'+
-        '</div>'+
-        // Row 2: Evolution path
+      // ── BOTTOM: Evolution path only ─────────────────────
+      '<div style="border-top:1px solid var(--border-mid);padding:6px 14px">'+
         '<div class="char-evo-bar">'+evoSteps+'</div>'+
       '</div>'+
 
