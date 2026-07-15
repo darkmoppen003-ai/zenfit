@@ -76,6 +76,7 @@ body.glass-mode .char-card-box,body.glass-mode .char-avatar-col,body.glass-mode 
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .flex{display:flex;align-items:center}
 .flex-between{display:flex;align-items:center;justify-content:space-between}
 .mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
@@ -133,6 +134,26 @@ textarea{resize:vertical;min-height:50px}
 .overlay{position:fixed;inset:0;background:var(--overlay-scrim,rgba(0,0,0,0.85));display:flex;align-items:center;justify-content:center;z-index:9998}
 .overlay-box{background:var(--bg-surface);border:2px solid var(--primary);border-radius:16px;padding:28px;text-align:center;animation:popIn .4s ease;max-width:360px;width:90%;box-shadow:var(--shadow-lg)}
 @keyframes popIn{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes moodPop{0%{transform:scale(1)}40%{transform:scale(1.25)}60%{transform:scale(0.95)}100%{transform:scale(1)}}
+.mood-btn{font-size:24px;width:48px;height:48px;border-radius:12px;border:2px solid var(--border-mid);background:transparent;cursor:pointer;padding:0;line-height:48px;transition:transform .12s cubic-bezier(.34,1.56,.64,1),border-color .15s,background .15s;position:relative;overflow:hidden}
+.mood-btn img{width:30px;height:30px;display:block;margin:9px auto;pointer-events:none;vertical-align:top}
+.mood-btn:hover{transform:scale(1.2);z-index:2}
+.mood-btn:active{animation:moodPop .35s cubic-bezier(.34,1.56,.64,1)}
+.mood-btn.sel{border-color:var(--mood-c);background:var(--mood-bg);transform:scale(1.1)}
+.mood-btn.sel:hover{transform:scale(1.2)}
+.mood-btn.sel:active{animation:moodPop .35s cubic-bezier(.34,1.56,.64,1)}
+.mood-card{display:flex;flex-direction:column;align-items:center;padding:12px 16px;gap:4px;margin-bottom:12px}
+.mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:320px;margin:0 auto}
+.mood-popup-btns{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.mood-slider{width:100%;max-width:280px;margin:12px auto;-webkit-appearance:none;appearance:none;height:10px;border-radius:6px;outline:none;cursor:pointer;transition:background .2s ease;position:relative}
+.mood-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:32px;height:32px;border-radius:50%;background:white;cursor:pointer;border:3px solid var(--primary);box-shadow:0 2px 12px rgba(0,0,0,0.35);transition:transform .12s ease,box-shadow .12s ease,background .15s ease}
+.mood-slider::-webkit-slider-thumb:hover{transform:scale(1.2);box-shadow:0 4px 16px rgba(0,0,0,0.45)}
+.mood-slider::-webkit-slider-thumb:active{transform:scale(0.9);transition-duration:.05s}
+.mood-slider::-moz-range-thumb{width:32px;height:32px;border-radius:50%;background:white;cursor:pointer;border:3px solid var(--primary);box-shadow:0 2px 12px rgba(0,0,0,0.35)}
+.mood-slider::-moz-range-track{height:10px;border-radius:6px;background:#333}
+.mood-slider::-moz-range-progress{height:10px;border-radius:6px;background:var(--primary)}
+.screen-locked{overflow:hidden !important;touch-action:none}
+@media(max-width:600px){.mood-card{text-align:center;gap:4px}.mood-grid{max-width:280px;grid-template-columns:repeat(5,1fr);gap:4px}}
 .grade{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .grade-A{background:var(--grade-a-bg,#0a3d22);color:#4cdb8a}.grade-B{background:var(--grade-b-bg,#0a2a4d);color:#4a9eff}
 .grade-C{background:var(--grade-c-bg,#3d2800);color:#f5a623}.grade-D{background:var(--grade-d-bg,#3d1a00);color:#ff8c42}.grade-E{background:var(--grade-e-bg,#3d0a0a);color:#ff5a5a}
@@ -142,7 +163,7 @@ textarea{resize:vertical;min-height:50px}
 .grade-tap:active{transform:scale(.88)}
 .food-detail-grade{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;margin:0 auto 4px;box-shadow:0 0 20px rgba(255,255,255,0.08)}
 .food-detail-label{font-size:9px;color:var(--text-muted);letter-spacing:1px;font-weight:600;text-transform:uppercase;text-align:center}
-.food-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.food-detail-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
 .food-detail-item{background:var(--bg-raised);border-radius:8px;padding:10px;text-align:center}
 .food-detail-item .fdv{font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--text-primary)}
 .food-detail-item .fdl{font-size:9px;color:var(--text-muted);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
@@ -225,7 +246,7 @@ hr{border:none;border-top:1px solid var(--border-mid);margin:16px 0}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg-base)}
 ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px}
-@media(max-width:600px){.grid4{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid4{grid-template-columns:1fr 1fr}.grid5{grid-template-columns:1fr 1fr 1fr}.grid3{grid-template-columns:1fr 1fr}}
 
 /*  WEBVIEW ANDROID FIXES  */
 html,body,.app,.screen{background-color:var(--app-bg,#0d0f14)!important}
@@ -1830,7 +1851,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.2.2</div>
+  <div class="splash-ver">v8.2.3</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1899,7 +1920,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.2.2";
+const APP_VERSION="v8.2.3";
 const APP_BUILD="2026.07.15.7";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2342,6 +2363,7 @@ const SCHEMA={
   glassMode:'boolean',
   glassBlur:'number',
   glassAlpha:'number',
+  steps:'array',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2450,9 +2472,10 @@ function defaultState(){
     deviceId:getDeviceId(),
     player:{name:'Hunter',level:1,xp:0,rank:'E',weightKg:70,
       stats:{strength:10,discipline:10,health:10,endurance:10,wisdom:10}},
+    steps:[],
     profile:{filled:false,name:'',age:0,gender:'male',heightCm:170,weightKg:70,
       activityLevel:'moderate',goal:'maintain',waistCm:0,hipCm:0,country:''},
-    nutrition:{entries:[],dailyGoal:{cal:2000,protein:150,carbs:250,fat:65}},
+    nutrition:{entries:[],dailyGoal:{cal:2000,protein:150,carbs:250,fat:65,fiber:25,sugar:25}},
     water:{entries:[],dailyGoalMl:3000},
     workouts:[],burned:[],habits:[],tasks:[],
     study:{sessions:[],subjects:[]},
@@ -3101,7 +3124,7 @@ const FOOD_UNIT={
 function resolveQty(qty,unit,dbKey){
   const m=FOOD_UNIT[dbKey];if(!m) return {s:qty,dq:qty,du:''};
   if(!unit){
-    if(m.u==='piece') return {s:qty,dq:qty,du:qty>1?'pieces':'piece'};
+    if(m.u==='piece') return {s:qty,dq:qty,du:'piece'};
     return {s:qty,dq:qty*m.d,du:m.u};
   }
   const u=unit.replace(/s$/,'');
@@ -3146,6 +3169,8 @@ function parseFood(text){
   const nm=text.match(/^(\d+\.?\d*)\s*(g|ml|kg|piece|pieces|pc|pcs|cup|cups|glass|glasses|tbsp|tsp|serving|servings|bowl|bowls|slice|slices|gram|grams|milliliter|milliliters|kilogram|kilograms)\b/);
   if(nm){qty=parseFloat(nm[1]);unit=nm[2].replace(/s$/,'');text=text.slice(nm[0].length).trim();}
   else{const qw={'half':0.5,'one':1,'two':2,'three':3,'four':4,'a ':1,'an ':1};for(const[w,v]of Object.entries(qw)){if(text.startsWith(w)){qty=v;text=text.slice(w.length).trim();break;}}}
+  // if no explicit unit, try extracting a leading number as quantity (e.g. "2 chapati")
+  if(!nm){const dm=text.match(/^(\d+\.?\d*)\s+/);if(dm){qty=parseFloat(dm[1]);text=text.slice(dm[0].length).trim();}}
   text=text.replace(/\b(plate|small|large|medium|full)\b/g,'').trim().replace(/\s+/g,' ');
   const cf=S.customFoods||[];
   const userMatch=cf.find(f=>f.name.toLowerCase()===text||text.includes(f.name.toLowerCase())||f.name.toLowerCase().includes(text));
@@ -3198,8 +3223,9 @@ function todayNutrition(){
     a.carbs+= +n.carbs ||0;
     a.fat  += +n.fat   ||0;
     a.fiber+= +n.fiber ||0;
+    a.sugar+= +n.sugar ||0;
     return a;
-  },{cal:0,protein:0,carbs:0,fat:0,fiber:0});
+  },{cal:0,protein:0,carbs:0,fat:0,fiber:0,sugar:0});
 }
 function todayWater(){return (S.water.entries||[]).filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.ml,0);}
 function todayBurned(){return(S.burned||[]).filter(e=>e.date===getTodayStr()).reduce((a,e)=>a+e.calories,0);}
@@ -3288,37 +3314,44 @@ function macroSplit(tdee,goal){
   if(goal==='recomp'){return{cal:tdee,
     protein:Math.round(tdee*0.38/4),
     carbs:Math.round(tdee*0.40/4),
-    fat:Math.round(tdee*0.22/9)};}
+    fat:Math.round(tdee*0.22/9),
+    sugar:25};}
   // Aggressive cut: -750 kcal/day for higher BF%
   if(goal==='lose_aggressive'){var cal=Math.round(Math.max(tdee-750,1200));return{cal,
     protein:Math.round(cal*0.40/4),
     carbs:Math.round(cal*0.35/4),
-    fat:Math.round(cal*0.25/9)};}
+    fat:Math.round(cal*0.25/9),
+    sugar:25};}
   // Standard weight loss: -500 kcal/day
   if(goal==='lose'){var cal=Math.round(tdee-500);return{cal,
     protein:Math.round(cal*0.35/4),
     carbs:Math.round(cal*0.40/4),
-    fat:Math.round(cal*0.25/9)};}
+    fat:Math.round(cal*0.25/9),
+    sugar:25};}
   // Lean bulk / muscle gain: +350 kcal surplus
   if(goal==='gain'){var cal=Math.round(tdee+350);return{cal,
     protein:Math.round(cal*0.28/4),
     carbs:Math.round(cal*0.50/4),
-    fat:Math.round(cal*0.22/9)};}
+    fat:Math.round(cal*0.22/9),
+    sugar:25};}
   // Athletic performance: +150 kcal, carb-dominant
   if(goal==='performance'){var cal=Math.round(tdee+150);return{cal,
     protein:Math.round(cal*0.25/4),
     carbs:Math.round(cal*0.55/4),
-    fat:Math.round(cal*0.20/9)};}
+    fat:Math.round(cal*0.20/9),
+    sugar:25};}
   // Cardiovascular health: maintenance, balanced
   if(goal==='heart'){return{cal:tdee,
     protein:Math.round(tdee*0.20/4),
     carbs:Math.round(tdee*0.55/4),
-    fat:Math.round(tdee*0.25/9)};}
+    fat:Math.round(tdee*0.25/9),
+    sugar:25};}
   // Maintenance default
   return{cal:tdee,
     protein:Math.round(tdee*0.25/4),
     carbs:Math.round(tdee*0.50/4),
-    fat:Math.round(tdee*0.25/9)};
+    fat:Math.round(tdee*0.25/9),
+    sugar:25};
 }
 function goalLabel(g){
   return{
@@ -3686,7 +3719,7 @@ function renderHome(el){
     localStorage.setItem('zenfit_charCardDay', today);
   }
   el.innerHTML=`
-  <!-- 1. GREETING -->
+  <!-- 1. GREETING + STREAK -->
 <div class="flex-between mb12">
   <div>
     <div style="font-size:11px;color:var(--text-muted)">
@@ -3696,11 +3729,14 @@ function renderHome(el){
       ${escapeHtml(p.name||'Hunter')}
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg-raised);border-radius:8px">
+      <span style="font-size:16px">🔥</span>
+      <span style="font-size:16px;font-weight:800;font-family:var(--font-display);color:var(--warning)">${bestStreak}<span style="font-size:11px;color:var(--text-muted)">d</span></span>
+    </div>
     <div style="text-align:right">
       <div style="font-size:10px;color:var(--text-muted)">Level ${p.level}</div>
       <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
-        ${bestStreak>0?`<div style="font-size:15px;font-weight:800;color:var(--warning)">STREAK ${bestStreak}🔥</div>`:''}
         <div style="font-size:15px;font-weight:800;color:${rc}">RANK ${p.rank}</div>
       </div>
     </div>
@@ -3796,10 +3832,27 @@ function renderHome(el){
     }).join('')}
   </div>
 
-  <!-- 5. ACHIEVEMENT RING + MOOD LOG (side by side) -->
+  <!-- 5. MOOD LOG - 10 emotions in grid -->
+  <div class="card mood-card">
+    <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text-primary);font-weight:600">How was your mood today?</div>
+      <div style="font-size:9px;color:var(--text-muted)">${todayMood ? 'Logged ✓' : '+5 XP'}</div>
+    </div>
+    <div class="mood-grid">
+      ${MOODS.map(m => {
+        const sel = todayMood === m.key;
+        return '<button class="mood-btn'+(sel?' sel':'')+'" onclick="logMood(\''+m.key+'\')" style="'+(sel?'--mood-c:'+m.color+';--mood-bg:'+m.color+'22':'')+'" title="'+m.label+'"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/'+m.cp+'/512.webp" alt="'+m.emoji+'" loading="lazy"></button>';
+      }).join('')}
+    </div>
+    <div style="text-align:center;margin-top:6px">
+      <button class="btn btn-sm" onclick="switchScreen('analytics')" style="font-size:10px;padding:4px 12px">📊 Mood Analytics</button>
+    </div>
+  </div>
+
+  <!-- 6. ACHIEVEMENT RING + STEP COUNTER (side by side) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <!-- Achievement square -->
-    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center;cursor:pointer" onclick="switchScreen('analytics')">
       <svg width="64" height="64" viewBox="0 0 120 120">
         <circle cx="60" cy="60" r="50" fill="none" stroke="#2a3050" stroke-width="10"/>
         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--warning)" stroke-width="10"
@@ -3809,20 +3862,23 @@ function renderHome(el){
       <div style="font-size:12px;font-weight:700;color:var(--text-primary)">🏆 ${earnedCount}/${totalAchs}</div>
       <div style="font-size:10px;color:var(--text-muted)">${achPct}% complete</div>
     </div>
-    <!-- Mood square -->
-    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 8px;gap:6px;text-align:center">
-      <div style="font-size:9px;color:var(--text-muted);font-weight:600;letter-spacing:.3px;line-height:1.3">How was your<br>overall mood today?</div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">
-        ${MOODS.map(m => {
-          const sel = todayMood === m.key;
-          return '<button onclick="logMood(\''+m.key+'\')" style="font-size:22px;width:40px;height:40px;border-radius:10px;border:2px solid '+(sel?m.color:'var(--border-mid)')+';background:'+(sel?m.color+'22':'transparent')+';cursor:pointer;transition:all .15s;padding:0;line-height:40px">'+m.emoji+'</button>';
-        }).join('')}
-      </div>
-      ${todayMood ? '<div style="font-size:9px;color:var(--text-muted)">Logged ✓</div>' : '<div style="font-size:9px;color:var(--text-muted)">+5 XP</div>'}
+    <!-- Steps counter - always shows total + input to add more -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:6px;text-align:center;position:relative">
+      ${(()=>{
+        const todaySteps=(S.steps||[]).find(e=>e.date===today);
+        const total=todaySteps?todaySteps.steps:0;
+        return`
+        <div style="font-size:11px;color:var(--text-muted)">🚶 Steps Today</div>
+        <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--energy);margin:2px 0">${total}<span style="font-size:14px;color:var(--text-muted)"> steps</span></div>
+        <div style="font-size:10px;color:var(--text-muted)">~${Math.round(total*0.04)} kcal burned</div>
+        <div style="display:flex;gap:6px;width:100%;max-width:180px;margin-top:2px">
+          <input type="number" id="steps-input" placeholder="add steps" min="0" step="1" style="flex:1;text-align:center;font-size:13px;padding:4px 6px" onkeydown="if(event.key==='Enter')dashLogSteps()">
+          <button class="btn btn-primary" style="font-size:10px;padding:4px 12px" onclick="dashLogSteps()">+Add</button>
+        </div>`;})()}
     </div>
   </div>
 
-  <!-- Rest Day + Weight squares (side by side, like achievement+mood) -->
+  <!-- 7. Rest Day + Weight squares (side by side) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <!-- Rest Day square -->
     <div class="card-sm" style="text-align:center">
@@ -3849,14 +3905,14 @@ function renderHome(el){
         <div style="font-size:11px;color:var(--text-muted)">⚖️ Log Today's Weight</div>
         <div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--text-muted);margin:4px 0">— kg</div>
         <div style="display:flex;gap:6px">
-          <input type="number" id="dw-input" placeholder="kg" step="0.1" min="20" max="400" style="flex:1;text-align:center;font-size:12px;padding:3px 6px">
+          <input type="number" id="dw-input" placeholder="kg" step="0.1" min="20" max="400" style="flex:1;text-align:center;font-size:12px;padding:3px 6px" onkeydown="if(event.key==='Enter')dashLogWeight()">
           <button class="btn btn-primary" style="font-size:9px;padding:3px 10px" onclick="dashLogWeight()">Log</button>
         </div>
       </div>`;
     })()}
   </div>
 
-  <!-- 6. CHARACTER CARD (collapsible) -->
+  <!-- 8. CHARACTER CARD (collapsible) -->
   <div class="card mb12" style="padding:0;overflow:hidden">
     <div onclick="toggleCharCard()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none">
       <div style="display:flex;align-items:center;gap:8px">
@@ -4111,7 +4167,7 @@ function renderNutrition(el){
   </div>`;
   if(nutritionTab==='today'){
     html+=`
-  <div class="grid4 mb16">${mCard('Calories',nut.cal,g.cal,'kcal','var(--warning)')}${mCard('Protein',nut.protein,g.protein,'g','var(--danger)')}${mCard('Carbs',nut.carbs,g.carbs,'g','var(--info)')}${mCard('Fat',nut.fat,g.fat,'g','var(--primary)')}</div>
+  <div class="grid5 mb16">${mCard('Calories',nut.cal,g.cal,'kcal','var(--warning)')}${mCard('Protein',nut.protein,g.protein,'g','var(--danger)')}${mCard('Carbs',nut.carbs,g.carbs,'g','var(--info)')}${mCard('Fat',nut.fat,g.fat,'g','var(--primary)')}${mCard('Sugar',nut.sugar,g.sugar,'g','var(--energy)')}</div>
   <div class="card mb16">
     <div class="section-title">Log Food</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
@@ -4120,7 +4176,7 @@ function renderNutrition(el){
       <button class="btn btn-sm${activeTab==='manual'?' btn-primary':''}" onclick="setFT('manual')">✏️ Manual</button>
     </div>
     <div id="ft-text" style="${activeTab==='text'?'':'display:none'}">
-      <input type="text" id="food-input" placeholder="e.g. 2 chapati, 200g rice, 250ml milk, 1 bowl dal..." style="margin-bottom:8px">
+      <input type="text" id="food-input" placeholder="e.g. 2 chapati, 3 eggs, 200g rice, 250ml milk, 1 bowl dal..." style="margin-bottom:8px" onkeydown="if(event.key==='Enter')parseFoodInput()">
       <div id="food-res"></div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-primary" onclick="parseFoodInput()">Parse</button>
@@ -4137,7 +4193,7 @@ function renderNutrition(el){
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <button class="btn btn-primary" onclick="startBCCamera()" id="bc-camera-btn">📷 Scan Barcode</button>
-        <input type="number" id="bc-input" placeholder="Or enter barcode..." style="flex:1">
+        <input type="number" id="bc-input" placeholder="Or enter barcode..." style="flex:1" onkeydown="if(event.key==='Enter')doBC()">
         <button class="btn" onclick="doBC()">Lookup</button>
       </div>
       <div id="bc-res" style="margin-top:10px"></div>
@@ -4151,6 +4207,7 @@ function renderNutrition(el){
         <input type="number" id="m-carbs" placeholder="Carbs (g)">
         <input type="number" id="m-fat" placeholder="Fat (g)">
         <input type="number" id="m-fiber" placeholder="Fiber (g)">
+        <input type="number" id="m-sugar" placeholder="Sugar (g)">
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--bg-raised);border-radius:8px">
         <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">Serving size:</span>
@@ -4182,7 +4239,7 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No meals logged.</div></div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(e.nutrients)}" onclick='showFoodDetails(${JSON.stringify({name:e.name,qty:e.qty,unit:e.unit||'',nutrients:e.nutrients}).replace(/'/g,"&#39;")})'>${gradeFood(e.nutrients)}</div><div class="bc-hint">tap</div></div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(e.nutrients)}" onclick='showFoodDetails(${JSON.stringify({name:e.name,qty:e.qty,unit:e.unit||'',nutrients:e.nutrients}).replace(/'/g,"&#39;")})'>${gradeFood(e.nutrients)}</div><div class="bc-hint">tap</div></div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g · S:${nn(e.nutrients.sugar)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
   }else if(nutritionTab==='calculator'){
     const n=dishIngredients.length>0?calcDishNutrition():null;
     html+=`
@@ -4258,10 +4315,11 @@ function renderNutrition(el){
     <div style="display:flex;gap:16px;justify-content:center;margin-bottom:12px">
       <span style="font-size:12px;color:var(--text-secondary)">Fat: ${n.fat}g</span>
       <span style="font-size:12px;color:var(--text-secondary)">Fiber: ${n.fiber}g</span>
+      <span style="font-size:12px;color:var(--text-secondary)">Sugar: ${n.sugar||0}g</span>
     </div>
     ${n.missing.length?`<div style="font-size:11px;color:var(--danger);margin-bottom:8px">Unknown: ${n.missing.join(', ')} — estimated as 0</div>`:''}
     <div style="display:flex;gap:8px">
-      <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1">
+      <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1" onkeydown="if(event.key==='Enter')logCustomDish()">
       <button class="btn btn-primary" onclick="logCustomDish()">Log to Nutrition</button>
     </div>
     <div style="font-size:10px;color:var(--text-muted);margin-top:10px;padding:6px 8px;background:var(--bg-raised);border-radius:6px">💡 This dish is saved to <strong>My Foods</strong> after logging. Later, just type its name in <strong>Log Food</strong> to add it again.</div>
@@ -4358,16 +4416,24 @@ function parseFoodInput(){
     const pc=p.nutrients?.cal||0;
     const per1g=(pu==='g'||pu==='gram'||pu==='kg')?pc/pq:0;
     const per1ml=(pu==='ml'||pu==='milliliter')?pc/pq:0;
-    const perPiece=(pu==='piece'||pu==='pc')?pc/pq:0;
+    const isPiece=pu==='piece'||pu==='pc'||pu==='pieces';
+    const perPiece=isPiece?pc/pq:0;
     const gPerUnit={'cup':150,'tbsp':15,'tsp':5,'bowl':150};
     const per1gAlt=gPerUnit[pu]?pc/(pq*gPerUnit[pu]):0;
-    p._edit={baseQty:pq,baseUnit:pu,per1g:per1g||per1gAlt,per1ml:per1ml||per1g,perPiece:perPiece};
+    // for piece-based foods, derive per1g from FOOD_UNIT weight (e.g. chapati=40g/piece)
+    let per1gFromPiece=0;
+    if(isPiece&&perPiece){
+      const fuKey=Object.keys(FOOD_UNIT).find(k=>p.name.includes(k)||k.includes(p.name));
+      const fu=fuKey?FOOD_UNIT[fuKey]:null;
+      if(fu&&fu.u==='piece'&&fu.g)per1gFromPiece=perPiece/fu.g;
+    }
+    p._edit={baseQty:pq,baseUnit:pu,per1g:(per1g||per1gAlt||per1gFromPiece),per1ml:per1ml||per1g,perPiece:perPiece};
     return p;
   }).filter(Boolean);
   parsedFood=items;
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
   if(!r)return;
-  if(!items.length){r.innerHTML='<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "200g rice", or "250ml milk".</div>';return;}
+  if(!items.length){r.innerHTML='<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "3 eggs", "200g rice", or "250ml milk".</div>';return;}
   renderFoodPreview();
 }
 function renderFoodPreview(){
@@ -4414,7 +4480,13 @@ function recalcFood(f,newQty,newUnit){
   const b=f._edit,nu=newUnit.replace(/s$/,'');
   let cal=0;
   if(nu==='piece'||nu==='pc'){
-    cal=b.perPiece?newQty*b.perPiece:f.nutrients.cal*newQty/(f.qty||1);
+    if(b.perPiece){cal=newQty*b.perPiece;}
+    else if(b.per1g){
+      const fuKey=Object.keys(FOOD_UNIT).find(k=>f.name.includes(k)||k.includes(f.name));
+      const fu=fuKey?FOOD_UNIT[fuKey]:null;
+      const gPerPiece=fu&&fu.u==='piece'&&fu.g?fu.g:50;
+      cal=newQty*gPerPiece*b.per1g;
+    }else{cal=f.nutrients.cal*newQty/(f.qty||1);}
   }else{
     let g=0;
     if(nu==='g'||nu==='gram')g=newQty;
@@ -4425,8 +4497,15 @@ function recalcFood(f,newQty,newUnit){
     else if(nu==='tsp')g=newQty*5;
     else if(nu==='bowl')g=newQty*150;
     else g=0;
-    if(g>0&&b.per1g>0){cal=g*b.per1g;}
-    else{cal=f.nutrients.cal*newQty/(f.qty||1);}
+    if(g>0){
+      if(b.per1g>0){cal=g*b.per1g;}
+      else if(b.perPiece){
+        const fuKey=Object.keys(FOOD_UNIT).find(k=>f.name.includes(k)||k.includes(f.name));
+        const fu=fuKey?FOOD_UNIT[fuKey]:null;
+        const gPerPiece=fu&&fu.u==='piece'&&fu.g?fu.g:50;
+        cal=g/gPerPiece*b.perPiece;
+      }else{cal=f.nutrients.cal*g/(f.qty||1);}
+    }else{cal=f.nutrients.cal*newQty/(f.qty||1);}
   }
   const ratio=cal/(f.nutrients.cal||1);
   return{
@@ -4466,7 +4545,7 @@ async function doBC(){
     const d=await res.json();
     if(d.status!==1){if(r)r.innerHTML=`<div style="color:var(--danger)">Not found.</div>`;return;}
     const p=d.product,n=p.nutriments||{};
-    const e={name:p.product_name||'Product',qty:1,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10}};
+    const e={name:p.product_name||'Product',qty:1,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10,sugar:Math.round((n['sugars_100g']||0)*10)/10}};
     if(!r)return;
     const hasData=e.nutrients.cal||e.nutrients.protein||e.nutrients.carbs||e.nutrients.fat;
     if(!hasData){
@@ -4486,7 +4565,7 @@ async function doBC(){
         </div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nn(e.nutrients.cal)} kcal · P ${nn(e.nutrients.protein)}g · C ${nn(e.nutrients.carbs)}g · F ${nn(e.nutrients.fat)}g</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nn(e.nutrients.cal)} kcal · P ${nn(e.nutrients.protein)}g · C ${nn(e.nutrients.carbs)}g · F ${nn(e.nutrients.fat)}g · S ${nn(e.nutrients.sugar)}g</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button>
       </div>`;
@@ -4551,7 +4630,7 @@ function stopBCCamera(){
 function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr(),xpAwarded:30});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
 function showFoodDetails(e){
   var g=gradeFood(e.nutrients),l=gradeLabel(g),n=e.nutrients;
-  var cal=nn(n.cal),prot=nn(n.protein||n.prot),carbs=nn(n.carbs),fat=nn(n.fat),fiber=nn(n.fiber);
+  var cal=nn(n.cal),prot=nn(n.protein||n.prot),carbs=nn(n.carbs),fat=nn(n.fat),fiber=nn(n.fiber),sugar=nn(n.sugar);
   var ov=document.createElement('div');ov.className='overlay';
   ov.onclick=function(ev){if(ev.target===ov)ov.remove();};
   ov.innerHTML='<div class="overlay-box" onclick="event.stopPropagation()">\
@@ -4565,8 +4644,9 @@ function showFoodDetails(e){
       <div class="food-detail-item"><div class="fdv" style="color:var(--warning)">'+cal+'</div><div class="fdl">Calories</div></div>\
       <div class="food-detail-item"><div class="fdv" style="color:var(--success)">'+prot+'g</div><div class="fdl">Protein</div></div>\
       <div class="food-detail-item"><div class="fdv" style="color:var(--info)">'+carbs+'g</div><div class="fdl">Carbs</div></div>\
-      <div class="food-detail-item"><div class="fdv" style="color:var(--energy)">'+fat+'g</div><div class="fdl">Fat</div></div>\
-      <div class="food-detail-item" style="grid-column:1/-1"><div class="fdv" style="color:var(--primary)">'+fiber+'g</div><div class="fdl">Fiber</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--primary)">'+fat+'g</div><div class="fdl">Fat</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--energy)">'+sugar+'g</div><div class="fdl">Sugar</div></div>\
+      <div class="food-detail-item"><div class="fdv" style="color:var(--water)">'+fiber+'g</div><div class="fdl">Fiber</div></div>\
     </div>\
     <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="this.closest(\'.overlay\').remove()">Close</button>\
   </div>';
@@ -4574,7 +4654,7 @@ function showFoodDetails(e){
 }
 function logMF(){
   const name=(document.getElementById('m-name')?.value?.trim())||'Custom';
-  const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0};
+  const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0,sugar:+document.getElementById('m-sugar')?.value||0};
   const servingSize=+document.getElementById('m-ss')?.value||100;
   const servingUnit=document.getElementById('m-su')?.value||'g';
   S.nutrition.entries.push({name,qty:servingSize,unit:servingUnit,nutrients:n,date:getTodayStr(),xpAwarded:30});
@@ -4583,7 +4663,7 @@ function logMF(){
     if(!S.customFoods)S.customFoods=[];
     const exists=S.customFoods.some(f=>f.name.toLowerCase()===name.toLowerCase());
     if(!exists){
-      S.customFoods.push({name,cal:n.cal,protein:n.protein,carbs:n.carbs,fat:n.fat,fiber:n.fiber,source:'manual',servingSize,servingUnit});
+      S.customFoods.push({name,cal:n.cal,protein:n.protein,carbs:n.carbs,fat:n.fat,fiber:n.fiber,sugar:n.sugar,source:'manual',servingSize,servingUnit});
       showNotif('"'+name+'" saved to My Foods','📌');
     }
   }
@@ -4591,7 +4671,7 @@ function logMF(){
 }
 function saveFood(){
   const name=(document.getElementById('m-name')?.value?.trim())||'';
-  const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0};
+  const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0,sugar:+document.getElementById('m-sugar')?.value||0};
   const servingSize=+document.getElementById('m-ss')?.value||100;
   const servingUnit=document.getElementById('m-su')?.value||'g';
   if(!name)return showNotif('Enter a food name','!');
@@ -4599,7 +4679,7 @@ function saveFood(){
   if(!S.customFoods)S.customFoods=[];
   const exists=S.customFoods.some(f=>f.name.toLowerCase()===name.toLowerCase());
   if(exists)return showNotif('"'+name+'" already exists in My Foods','!');
-  S.customFoods.push({name,cal:n.cal,protein:n.protein,carbs:n.carbs,fat:n.fat,fiber:n.fiber,source:'manual',servingSize,servingUnit});
+  S.customFoods.push({name,cal:n.cal,protein:n.protein,carbs:n.carbs,fat:n.fat,fiber:n.fiber,sugar:n.sugar,source:'manual',servingSize,servingUnit});
   const cb=document.getElementById('m-save-food');
   if(cb)cb.checked=false;
   toggleSaveFood();
@@ -4623,7 +4703,7 @@ function showMyFoods(){
     ${S.customFoods.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${f.name}</div>
-        <div style="font-size:10px;color:var(--text-muted)">${f.cal} kcal · P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g</div>
+        <div style="font-size:10px;color:var(--text-muted)">${f.cal} kcal · P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g · S:${f.sugar||0}g</div>
         <div style="font-size:9px;color:var(--text-muted);margin-top:1px">${f.servingSize||100}${f.servingUnit||'g'} per serving</div>
       </div>
       <button class="btn btn-primary btn-sm" onclick="quickLogMyFood(${i});this.closest('.overlay').remove()">Log</button>
@@ -4636,7 +4716,7 @@ function showMyFoods(){
 function quickLogMyFood(i){
   const f=(S.customFoods||[])[i];if(!f)return;
   const sq=f.servingSize||100;const su=f.servingUnit||'g';
-  S.nutrition.entries.push({name:f.name,qty:sq,unit:su,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0},date:getTodayStr(),xpAwarded:30});
+  S.nutrition.entries.push({name:f.name,qty:sq,unit:su,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0,sugar:f.sugar||0},date:getTodayStr(),xpAwarded:30});
   updStat('health');addXP(30,'Meal logged!');checkAutoQuests();persistSave();renderScreens();
   showNotif(f.name+' logged','OK');
 }
@@ -4696,7 +4776,7 @@ function renderWater(el){
       <button class="btn btn-primary" onclick="addWater(1000)">1L</button>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <input type="number" id="cw" placeholder="Custom ml...">
+      <input type="number" id="cw" placeholder="Custom ml..." onkeydown="if(event.key==='Enter')addWater(+this.value)">
       <button class="btn btn-primary" onclick="addWater(+document.getElementById('cw').value)" style="white-space:nowrap">Add</button>
     </div>
   </div>
@@ -6408,7 +6488,7 @@ function renderAnNutrition(el,periodTabs){
   <div class="card mb12" style="display:flex;align-items:center;gap:16px;padding:16px">
     <div style="position:relative;width:110px;height:110px;flex-shrink:0"><canvas id="c6"></canvas></div>
     <div style="flex:1">
-      ${[{n:'🥩 Protein',v:macros.protein,c:'#4a9eff',g:S.nutrition.dailyGoal.protein},{n:'🍞 Carbs',v:macros.carbs,c:'#f5a623',g:S.nutrition.dailyGoal.carbs},{n:'🥑 Fat',v:macros.fat,c:'#ff5a5a',g:S.nutrition.dailyGoal.fat}].map(m=>`
+      ${[{n:'🥩 Protein',v:macros.protein,c:'#4a9eff',g:S.nutrition.dailyGoal.protein},{n:'🍞 Carbs',v:macros.carbs,c:'#f5a623',g:S.nutrition.dailyGoal.carbs},{n:'🥑 Fat',v:macros.fat,c:'#ff5a5a',g:S.nutrition.dailyGoal.fat},{n:'🍬 Sugar',v:macros.sugar,c:'#7c3aed',g:S.nutrition.dailyGoal.sugar||25}].map(m=>`
         <div style="margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${m.n}</span><span style="font-weight:700;color:${m.c}">${m.v}g</span></div>
           <div class="stat-bar-wrap"><div class="stat-bar" style="width:${m.g?Math.min(100,Math.round(m.v/m.g/(analyticsPeriod==='7d'?7:analyticsPeriod==='30d'?30:365)*100)):50}%;background:${m.c}"></div></div>
@@ -6790,13 +6870,19 @@ function getAnalyticsMoodData(period){
 }
 function renderAnMood(el,periodTabs){
   const data=getAnalyticsMoodData(analyticsPeriod);
-  const moods=[{key:'great',emoji:'😄',color:'#4cdb8a'},{key:'good',emoji:'🙂',color:'#4a9eff'},{key:'okay',emoji:'😐',color:'#f5a623'},{key:'bad',emoji:'😢',color:'#ff8c42'},{key:'awful',emoji:'😫',color:'#ff5a5a'}];
+  const moods=MOODS;
   const logged=data.filter(d=>d.mood);
   const moodCounts={};
   data.forEach(d=>{if(d.mood)moodCounts[d.mood]=(moodCounts[d.mood]||0)+1;});
   const total=logged.length;
   const pct=m=>total?Math.round(((moodCounts[m]||0)/total)*100):0;
   const recent20=data.slice(-20);
+
+  // Intensity & Energy averages
+  const allEntries=(S.mood?.entries||[]).filter(e=>e.intensity!=null);
+  const avgIntensity = allEntries.length ? Math.round(allEntries.reduce((a,e)=>a+e.intensity,0)/allEntries.length) : 0;
+  const avgEnergy = allEntries.length ? Math.round(allEntries.reduce((a,e)=>a+e.energy,0)/allEntries.length) : 0;
+  const todayEntry = (S.mood?.entries||[]).find(e=>e.date===getTodayStr());
 
   el.innerHTML=`
   ${periodTabs}
@@ -6813,12 +6899,44 @@ function renderAnMood(el,periodTabs){
     </div>
   </div>
 
+  <div class="section-title">Intensity & Energy</div>
+  <div class="card mb12" style="padding:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Intensity</div>
+        <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--warning)">${avgIntensity}<span style="font-size:13px;color:var(--text-muted)">/10</span></div>
+        <div class="xp-bar-wrap" style="margin-top:4px"><div class="xp-bar" style="width:${avgIntensity*10}%;background:linear-gradient(to right,#f5a623,#ff6b35);height:6px;border-radius:4px"></div></div>
+      </div>
+      <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Energy</div>
+        <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${avgEnergy}<span style="font-size:13px;color:var(--text-muted)">/10</span></div>
+        <div class="xp-bar-wrap" style="margin-top:4px"><div class="xp-bar" style="width:${avgEnergy*10}%;background:linear-gradient(to right,#4a9eff,#f97316);height:6px;border-radius:4px"></div></div>
+      </div>
+    </div>
+    ${todayEntry && todayEntry.intensity!=null ? `
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border-mid)">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:6px">Today's Mood</div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:center">
+        <span style="font-size:28px">${moods.find(m=>m.key===todayEntry.mood)?.emoji||''}</span>
+        <div style="flex:1;max-width:150px">
+          <div style="font-size:10px;color:var(--text-muted)">Intensity ${todayEntry.intensity}/10</div>
+          <div class="xp-bar-wrap"><div class="xp-bar" style="width:${todayEntry.intensity*10}%;background:${(moods.find(m=>m.key===todayEntry.mood)||{}).color||'var(--warning)'};height:5px"></div></div>
+          <div style="font-size:10px;color:var(--text-muted);margin-top:3px">Energy ${todayEntry.energy}/10</div>
+          <div class="xp-bar-wrap"><div class="xp-bar" style="width:${todayEntry.energy*10}%;background:linear-gradient(to right,#4a9eff,#f97316);height:5px"></div></div>
+        </div>
+      </div>
+    </div>`:''}
+  </div>
+
   <div class="section-title">Recent Moods (last 20)</div>
   <div class="card mb12" style="padding:12px">
     <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">
       ${recent20.map(d=>{
         const m=moods.find(x=>x.key===d.mood);
-        return '<div style="font-size:22px;padding:4px 8px;border-radius:8px;background:'+(m?m.color+'22':'var(--bg-overlay)')+';border:1px solid '+(m?m.color+'55':'var(--border-mid)')+'">'+(m?m.emoji:'—')+'</div>';
+        const entry=(S.mood?.entries||[]).find(e=>e.date===d.date);
+        const tooltip=entry&&entry.intensity!=null ? 'I:'+entry.intensity+' E:'+entry.energy : '';
+        const badge=entry&&entry.intensity!=null ? '<div style="font-size:8px;color:var(--text-muted);text-align:center;margin-top:1px">'+entry.intensity+'/'+entry.energy+'</div>' : '';
+        return '<div style="display:flex;flex-direction:column;align-items:center;gap:0" title="'+tooltip+'"><div style="font-size:22px;padding:4px 8px;border-radius:8px;background:'+(m?m.color+'22':'var(--bg-overlay)')+';border:1px solid '+(m?m.color+'55':'var(--border-mid)')+'">'+(m?m.emoji:'—')+'</div>'+badge+'</div>';
       }).join('')}
     </div>
     <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-top:6px">
@@ -7101,6 +7219,58 @@ function dashLogWeight(){
   const el=document.getElementById('screen-dashboard');
   if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
 }
+function dashLogSteps(){
+  const inp=document.getElementById('steps-input');
+  if(!inp)return;
+  const steps=parseInt(inp.value);
+  if(!steps||steps<0||steps>200000)return showNotif('Enter a valid step count','!');
+  if(!S.steps)S.steps=[];
+  const today=getTodayStr();
+  const existing=S.steps.findIndex(e=>e.date===today);
+  if(existing>=0){
+    S.steps[existing].steps += steps;
+  } else {
+    S.steps.push({date:today,steps});
+  }
+  // Auto-log burned calories from steps (approx 0.04 kcal/step)
+  if(!S.burned)S.burned=[];
+  const totalSteps=existing>=0 ? S.steps[existing].steps : steps;
+  const bi=S.burned.findIndex(e=>e.date===today&&e.source==='steps');
+  if(bi>=0){
+    S.burned[bi].calories=Math.round(totalSteps*0.04);
+    S.burned[bi].duration=Math.round(totalSteps/100);
+  } else {
+    S.burned.push({
+      activity:'Walking (steps)',duration:Math.round(steps/100),met:3.5,
+      weightKg:S.player.weightKg||70,
+      calories:Math.round(steps*0.04),
+      date:today,ts:Date.now(),source:'steps'
+    });
+  }
+  inp.value='';
+  persistSave();
+  showNotif('+'+steps+' steps (total: '+totalSteps+', ~'+Math.round(totalSteps*0.04)+' kcal burned)','🚶');
+  const el=document.getElementById('screen-dashboard');
+  if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
+}
+function editSteps(){
+  const entry=(S.steps||[]).find(e=>e.date===getTodayStr());
+  if(!entry)return;
+  const newSteps=prompt('Edit today\'s step count:',entry.steps);
+  if(!newSteps||isNaN(newSteps)||newSteps<0||newSteps>200000)return;
+  entry.steps=parseInt(newSteps);
+  // Update the corresponding burned entry
+  const bi=(S.burned||[]).findIndex(e=>e.date===getTodayStr()&&e.source==='steps');
+  if(bi>=0){
+    const dur=Math.round(parseInt(newSteps)/100);
+    S.burned[bi].duration=dur;
+    S.burned[bi].calories=Math.round(parseInt(newSteps)*0.04);
+  }
+  persistSave();
+  showNotif('Steps updated to '+newSteps,'🚶');
+  const el=document.getElementById('screen-dashboard');
+  if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
+}
 function logWeight(){
   const inp=document.getElementById('wl-input');
   if(!inp)return;
@@ -7223,11 +7393,12 @@ function renderProfile(el){
     </div>`:'<div></div>'}
   </div>
   <div class="section-title">Recommended Macros (for ${goalLabel(pr.goal||'maintain')})</div>
-  <div class="grid4 mb16">
+  <div class="grid5 mb16">
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Calories</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--warning);margin:4px 0">${macros.cal}</div><div style="font-size:10px;color:var(--text-muted)">kcal/day</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Protein</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--danger);margin:4px 0">${macros.protein}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Carbs</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--info);margin:4px 0">${macros.carbs}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Fat</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--primary);margin:4px 0">${macros.fat}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
+    <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Sugar</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:#7c3aed;margin:4px 0">${macros.sugar}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
   </div>
   <div style="text-align:right;margin-bottom:12px"><button class="btn btn-sm btn-primary" onclick="applyMacros(${macros.cal},${macros.protein},${macros.carbs},${macros.fat})">Apply These Macros to Goals →</button></div>
   `:'<div class="insight">Fill in your profile above to see body analytics and recommended macros.</div>'}
@@ -7243,6 +7414,8 @@ function renderProfile(el){
   <div class="card mb16">
     <div class="flex-between mb10"><span style="font-size:13px">Daily Calorie Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.cal}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.cal=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">kcal</span></div></div>
     <div class="flex-between mb10"><span style="font-size:13px">Protein Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.protein}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.protein=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
+    <div class="flex-between mb10"><span style="font-size:13px">Fiber Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.fiber||25}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.fiber=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
+    <div class="flex-between mb10"><span style="font-size:13px">Sugar Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.sugar||25}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.sugar=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
     <div class="flex-between"><span style="font-size:13px">Water Goal</span><div class="flex gap8"><input type="number" value="${S.water.dailyGoalMl}" style="width:90px;text-align:right" onchange="S.water.dailyGoalMl=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">ml</span></div></div>
   <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)">
   <button class="btn btn-full btn-primary"
@@ -7376,21 +7549,30 @@ const COOKING_METHODS={
 
 function getIngNutrition(name){
   const k=name.toLowerCase().trim();
-  if(INGREDIENT_NUTRITION[k]) return INGREDIENT_NUTRITION[k];
-  // Fuzzy match
-  for(const[key,val] of Object.entries(INGREDIENT_NUTRITION)){
-    if(k.includes(key)||key.includes(k)) return val;
+  let val;
+  if(INGREDIENT_NUTRITION[k]) val=INGREDIENT_NUTRITION[k];
+  else {
+    for(const[key,v] of Object.entries(INGREDIENT_NUTRITION)){
+      if(k.includes(key)||key.includes(k)){val=v;break;}
+    }
+  }
+  if(val){
+    // val = [cal, prot, carbs, fat, fiber, sugar?]
+    const s=val[5]!==undefined ? val[5] : Math.round((val[2]||0)*0.2*10)/10;
+    return [val[0],val[1],val[2],val[3],val[4],s];
   }
   // Fallback to custom foods
   const cf=(S.customFoods||[]).find(f=>f.name.toLowerCase().trim()===k);
   if(cf){
     const sz=cf.servingSize||100;
+    const carbs100=(cf.carbs||0)/sz*100;
     return [
       (cf.cal||0)/sz*100,
       (cf.protein||0)/sz*100,
-      (cf.carbs||0)/sz*100,
+      carbs100,
       (cf.fat||0)/sz*100,
-      (cf.fiber||0)/sz*100
+      (cf.fiber||0)/sz*100,
+      (cf.sugar!==undefined ? (cf.sugar||0)/sz*100 : Math.round(carbs100*0.2*10)/10)
     ];
   }
   // Try API via nutritionix estimate if online
@@ -7401,7 +7583,7 @@ function calcDishNutrition(){
   const oilG=dishState.oil||0;
   const servings=dishState.servings||1;
   const mult=COOKING_METHODS[method]?.mult||1;
-  let totalCal=0,totalProt=0,totalCarbs=0,totalFat=0,totalFiber=0;
+  let totalCal=0,totalProt=0,totalCarbs=0,totalFat=0,totalFiber=0,totalSugar=0;
   let missing=[];
   dishIngredients.forEach(ing=>{
     const g=toGrams(parseFloat(ing.qty)||0,ing.unit||'g');
@@ -7410,6 +7592,7 @@ function calcDishNutrition(){
       const factor=g/100;
       totalCal+=n[0]*factor;totalProt+=n[1]*factor;
       totalCarbs+=n[2]*factor;totalFat+=n[3]*factor;totalFiber+=n[4]*factor;
+      totalSugar+=n[5]*factor;
     } else { missing.push(ing.name); }
   });
   // Add oil calories
@@ -7421,7 +7604,7 @@ function calcDishNutrition(){
   return{
     cal:Math.round(totalCal/ps),prot:Math.round(totalProt/ps*10)/10,
     carbs:Math.round(totalCarbs/ps*10)/10,fat:Math.round(totalFat/ps*10)/10,
-    fiber:Math.round(totalFiber/ps*10)/10,missing
+    fiber:Math.round(totalFiber/ps*10)/10,sugar:Math.round(totalSugar/ps*10)/10,missing
   };
 }
 function toGrams(qty,unit){
@@ -7475,7 +7658,8 @@ function logCustomDish(){
       protein:n.prot||n.protein||0,
       carbs:n.carbs,
       fat:n.fat,
-      fiber:n.fiber||0
+      fiber:n.fiber||0,
+      sugar:n.sugar||0
     }
   });
 
@@ -7608,7 +7792,7 @@ function renderCustomDish(el){
     </div>
     ${n.missing.length?`<div style="font-size:11px;color:var(--danger);margin-bottom:8px">Unknown: ${n.missing.join(', ')} — estimated as 0</div>`:''}
     <div style="display:flex;gap:8px">
-      <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1">
+      <input type="text" id="dish-name-log" placeholder="Dish name for log..." style="flex:1" onkeydown="if(event.key==='Enter')logCustomDish()">
       <button class="btn btn-primary" onclick="logCustomDish()">Log to Nutrition</button>
     </div>
     <div style="font-size:10px;color:var(--text-muted);margin-top:10px;padding:6px 8px;background:var(--bg-raised);border-radius:6px">💡 This dish is saved to <strong>My Foods</strong> after logging. Later, just type its name in <strong>Log Food</strong> to add it again.</div>
@@ -8475,7 +8659,9 @@ function getMacroTotals(period){
   return{
     protein:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.protein||0),0)),
     carbs:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.carbs||0),0)),
-    fat:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.fat||0),0))
+    fat:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.fat||0),0)),
+    fiber:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.fiber||0),0)),
+    sugar:Math.round(entries.reduce((a,e)=>a+(e.nutrients&&e.nutrients.sugar||0),0))
   };
 }
 
@@ -10243,8 +10429,14 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.2.2';
+var CHANGELOG_VERSION='v8.2.3';
 var CHANGELOG_ENTRIES=[	
+  'v8.2.3 Mood block redesigned — 10 emotions in grid layout with intensity (1-10) and energy (1-10) sliders via popup chain, animated gradient-filled sliders, screen-lock while logging',
+  'v8.2.3 Mood Analytics now shows Intensity & Energy averages with animated colored bars, today\'s mood preview with per-dimension bars, and I/E badges on recent mood cells',
+  'v8.2.3 Profile tab — Sugar goal now correctly displays "25g" in recommended macros (was showing "undefined g")',
+  'v8.2.3 Food parser now handles piece-based items correctly — "2 chapati" and "3 eggs" properly parse the count; changing unit between piece/g/kg correctly recalculates nutrients using food weight data',
+  'v8.2.3 Improved mood slider interaction — smooth gradient fill proportional to value, larger thumb, screen scroll locked behind popup',
+  'v8.2.3 Emoji refresh — Excited 🥳 (partying face), Confused 😵‍💫 (dizzy face), Tired 🥱 (yawning face)',
   'v8.2.2 Quest page now uses smart auto-log (same as dashboard); q2 meals checks meal plans before auto-logging',
   'v8.2.1 Rest Day system — mark rest days (max 3/week, Sun auto), no XP deduction, blue heatmap cells, one-way toggle',
   'v8.2.1 Rest & Weight dashboard squares — side-by-side cards below achievement with Syne display font, 28px weight value',
@@ -10312,15 +10504,23 @@ function dismissChangelog(){
 // MOOD SYSTEM
 // ════════════════════════════════════════════════════
 const MOODS = [
-  {key:'great', emoji:'😄', label:'Great', color:'#4cdb8a'},
-  {key:'good',  emoji:'🙂', label:'Good',  color:'#4a9eff'},
-  {key:'okay',  emoji:'😐', label:'Okay',  color:'#f5a623'},
-  {key:'bad',   emoji:'😢', label:'Bad',   color:'#ff8c42'},
-  {key:'awful', emoji:'😫', label:'Awful', color:'#ff5a5a'},
+  {key:'ecstatic', emoji:'😄', label:'Ecstatic', color:'#ffd700', cp:'1f604', type:'positive'},
+  {key:'happy', emoji:'🙂', label:'Happy', color:'#4cdb8a', cp:'1f642', type:'positive'},
+  {key:'excited', emoji:'🥳', label:'Excited', color:'#ffaa00', cp:'1f973', type:'positive'},
+  {key:'neutral', emoji:'😐', label:'Neutral', color:'#8b95a5', cp:'1f610', type:'neutral'},
+  {key:'confused', emoji:'😵‍💫', label:'Confused', color:'#c084fc', cp:'1f635_200d_1f4ab', type:'neutral'},
+  {key:'tired', emoji:'🥱', label:'Tired', color:'#a78bfa', cp:'1fae9', type:'neutral'},
+  {key:'anxious', emoji:'😰', label:'Anxious', color:'#f97316', cp:'1f630', type:'negative'},
+  {key:'sad', emoji:'😢', label:'Sad', color:'#ff8c42', cp:'1f622', type:'negative'},
+  {key:'frustrated', emoji:'😫', label:'Frustrated', color:'#ef4444', cp:'1f62b', type:'negative'},
+  {key:'angry', emoji:'😡', label:'Angry', color:'#dc2626', cp:'1f620', type:'negative'},
 ];
 function getTodayMood(){
   const today = getTodayStr();
   return (S.mood?.entries || []).find(e => e.date === today)?.mood || null;
+}
+function unlockScreen(){
+  document.body.classList.remove('screen-locked');
 }
 function logMood(mood){
   const today = getTodayStr();
@@ -10328,12 +10528,117 @@ function logMood(mood){
   if (S.mood.entries.some(e => e.date === today)) {
     return showNotif('Already logged your mood today! Tap Analytics → Mood to review.','🙂');
   }
-  S.mood.entries.push({mood, note: '', date: today, ts: Date.now()});
-  addXP(5, 'Mood Log');
-  persistSave();
-  showNotif('Mood logged: ' + (MOODS.find(m=>m.key===mood)?.label||mood), MOODS.find(m=>m.key===mood)?.emoji||'');
-  const el=document.getElementById('screen-dashboard');
-  if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
+  const m = MOODS.find(x=>x.key===mood);
+  if(!m) return;
+  const mc = m.color;
+
+  // POPUP 1 — Intensity slider
+  const ov1 = document.createElement('div'); ov1.className = 'overlay'; ov1.style.zIndex = '9999';
+  document.body.classList.add('screen-locked');
+  ov1.addEventListener('click',function(e){if(e.target===this)unlockScreen()});
+  ov1.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
+    <div style="font-size:72px;margin:0 auto 8px;display:block">${m.emoji}</div>
+    <div style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:4px">${m.label}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How intense was this feeling?</div>
+    <div style="position:relative;padding:0 8px">
+      <input type="range" min="1" max="10" value="5" step="1" id="mood-int-slider"
+        class="mood-slider" style="background:linear-gradient(to right,${mc}44,#333 0%,#333)">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
+        <span>Mild</span><span id="mood-int-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>Intense</span>
+      </div>
+    </div>
+    <div class="mood-popup-btns">
+      <button class="btn" onclick="unlockScreen();this.closest('.overlay').remove()">Cancel</button>
+      <button class="btn btn-primary" id="mood-int-next" style="background:${mc};border-color:${mc}">Next →</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov1);
+
+  // wire intensity slider — smooth gradient fill proportional to value
+  const intSl = ov1.querySelector('#mood-int-slider');
+  const intVal = ov1.querySelector('#mood-int-val');
+  function updateIntSlider(){
+    const v = +intSl.value;
+    const pct = ((v-1)/9)*100;
+    intVal.textContent = v;
+    const hex=mc.replace('#','');
+    const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
+    const dim=`rgba(${r},${g},${b},.2)`, mid=`rgba(${r},${g},${b},.65)`, full=`rgba(${r},${g},${b},1)`;
+    intSl.style.background = `linear-gradient(to right,${dim} 0%,${mid} ${pct*.7}%,${full} ${pct}%,#333 ${pct}%,#333 100%)`;
+    intSl.style.setProperty('--primary',mc);
+  }
+  intSl.addEventListener('input', updateIntSlider);
+  updateIntSlider();
+
+  // Next → POPUP 2 — Energy slider
+  ov1.querySelector('#mood-int-next').addEventListener('click', function(){
+    const intensity = +intSl.value;
+    ov1.remove();
+    const ov2 = document.createElement('div'); ov2.className = 'overlay'; ov2.style.zIndex = '9999';
+    ov2.addEventListener('click',function(e){if(e.target===this)unlockScreen()});
+    ov2.innerHTML = `<div class="overlay-box" style="border-color:var(--energy);max-width:340px">
+      <div style="font-size:48px;margin:0 auto 4px;display:block">${m.emoji}</div>
+      <div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:2px">${m.label} · Intensity ${intensity}/10</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How's your energy level?</div>
+      <div style="position:relative;padding:0 8px">
+        <input type="range" min="1" max="10" value="5" step="1" id="mood-en-slider"
+          class="mood-slider" style="background:linear-gradient(to right,#4a9eff 0%,#333 0%)">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
+          <span>😴 Low</span><span id="mood-en-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--energy)">5</span><span>⚡ High</span>
+        </div>
+      </div>
+      <div class="mood-popup-btns">
+        <button class="btn" id="mood-en-back">← Back</button>
+        <button class="btn btn-primary" id="mood-en-save" style="background:var(--energy);border-color:var(--energy)">Log Mood ✓</button>
+      </div>
+    </div>`;
+    document.body.appendChild(ov2);
+
+    // wire energy slider — smooth cool→warm gradient
+    const enSl = ov2.querySelector('#mood-en-slider');
+    const enVal = ov2.querySelector('#mood-en-val');
+    const enStops=[
+      {p:0,c:'#4a9eff'},{p:15,c:'#5ba3ff'},{p:30,c:'#7cb8ff'},{p:45,c:'#a8d4ff'},
+      {p:55,c:'#ffe08a'},{p:70,c:'#f5a623'},{p:85,c:'#ef6c22'},{p:100,c:'#f97316'}
+    ];
+    function updateEnSlider(){
+      const v=+enSl.value;
+      const pct=((v-1)/9)*100;
+      enVal.textContent=v;
+      const s=enStops.slice().reverse().find(s=>pct>=s.p)||enStops[0];
+      enVal.style.color=s.c;
+      const stops=enStops.map((st,i)=>{
+        const next=enStops[i+1];
+        const end=next?Math.min(next.p,pct):pct;
+        if(pct<st.p)return'';
+        return `${st.c} ${Math.max(0,st.p)}%,${st.c} ${end}%`;
+      }).filter(Boolean).join(',');
+      const fill=stops||`${enStops[0].c} 0%`;
+      enSl.style.background=`linear-gradient(to right,${fill},#333 ${pct}%,#333 100%)`;
+    }
+    enSl.addEventListener('input', updateEnSlider);
+    updateEnSlider();
+
+    // Back button
+    ov2.querySelector('#mood-en-back').addEventListener('click', function(){
+      ov2.remove();
+      document.body.appendChild(ov1);
+      updateIntSlider();
+    });
+
+    // Save button
+    ov2.querySelector('#mood-en-save').addEventListener('click', function(){
+      const energy = +enSl.value;
+      ov2.remove();
+      unlockScreen();
+      S.mood.entries.push({mood, note: '', date: today, ts: Date.now(), intensity, energy});
+      addXP(5, 'Mood Log');
+      persistSave();
+      showNotif('Mood logged: ' + m.label + ' ('+intensity+'/10 · '+energy+'/10)', m.emoji);
+      const el=document.getElementById('screen-dashboard');
+      if(el&&currentScreen==='dashboard')renderHome(el); else renderScreens();
+    });
+  });
 }
 function toggleCharCard(){
   _charCardCollapsed = !_charCardCollapsed;
