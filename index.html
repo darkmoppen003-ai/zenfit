@@ -1830,7 +1830,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.2.1</div>
+  <div class="splash-ver">v8.2.2</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1899,7 +1899,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.2.1";
+const APP_VERSION="v8.2.2";
 const APP_BUILD="2026.07.15.6";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -4009,25 +4009,23 @@ function dashCompleteQuest(listKey,idx){
     else showNotif('Water goal already met!','💧');
     return;
   }else if(q.id==='q2'){
-    // Log 3 meals → auto-log quick meals
-    q.done=true;
-    const todayMeals=S.nutrition.entries.filter(e=>e.date===getTodayStr()).length;
-    const needed=Math.max(0,3-todayMeals);
-    for(let mi=0;mi<needed;mi++){
-      S.nutrition.entries.push({name:'Quick meal',qty:1,unit:'',nutrients:{cal:400,protein:20,carbs:40,fat:15},date:getTodayStr(),xpAwarded:30});
+    // Log 3 meals → log from meal plans if available
+    const mealPlans=S.mealPlans||[];
+    if(mealPlans.length===0){
+      showNotif('No predefined meals. Please add a meal from Meal Planner!','🍽️');
+      return; // Don't mark done — user needs a meal plan first
+    }else if(mealPlans.length===1){
+      logMealPlan(0); // logMealPlan handles XP, persist, render
+      return;
+    }else{
+      // Multiple meal plans → show popup to pick one
+      const ov=document.createElement('div');ov.className='overlay';
+      ov.innerHTML='<div class="overlay-box"><div class="section-title">Select Meal Plan</div>'+
+        mealPlans.map((p,pi)=>'<button class="btn btn-full mb8" onclick="this.closest(\'.overlay\').remove();logMealPlan('+pi+')">'+escapeHtml(p.name||'Meal '+(pi+1))+'</button>').join('')+
+        '<button class="btn btn-full" style="margin-top:4px;border-color:var(--border-mid);color:var(--text-muted)" onclick="this.closest(\'.overlay\').remove()">Cancel</button></div>';
+      document.body.appendChild(ov);
+      return; // Don't mark done yet — logMealPlan will handle it
     }
-    if(needed>0){addXP(needed*30,'Meals auto-logged!');updStat('health',needed);}
-    showNotif('Auto-logged '+needed+' quick meal'+(needed!==1?'s':'')+'!','🍽️');
-    // Mark quest done and finish
-    S.questsDoneTotal=(S.questsDoneTotal||0)+1;
-    SFX.quest();
-    addXP(q.xp,'Quest: '+q.title);
-    checkAchievements();
-    persistSave();
-    const el2=document.getElementById('screen-dashboard');
-    if(el2&&currentScreen==='dashboard')renderHome(el2);
-    else renderScreens();
-    return;
   }else if(q.id==='q3'){
     // Complete a workout → log from plans if available
     const plans=S.workoutPlans||[];
@@ -6227,7 +6225,7 @@ function delStudy(i){
 function renderQuests(el){
   el.innerHTML=`
   <div class="section-title">Daily Quests</div>
-  ${S.quests.list.map(q=>`<div class="quest-card${q.done?' done':''}"><span style="font-size:18px;width:24px">${q.icon}</span><div style="flex:1"><div style="font-size:13px;font-weight:500">${q.title}</div><div style="font-size:11px;color:var(--text-muted)">+${q.xp} XP</div></div><div class="quest-check${q.done?' done':''}" onclick="manualQ('${q.id}')">${q.done?'✓':''}</div></div>`).join('')}
+   ${S.quests.list.map((q,qi)=>`<div class="quest-card${q.done?' done':''}"><span style="font-size:18px;width:24px">${q.icon}</span><div style="flex:1"><div style="font-size:13px;font-weight:500">${q.title}</div><div style="font-size:11px;color:var(--text-muted)">+${q.xp} XP</div></div><div class="quest-check${q.done?' done':''}" onclick="dashCompleteQuest('quests',${qi})">${q.done?'✓':''}</div></div>`).join('')}
   <div class="insight mt8">💡 Most quests auto-complete as you track. Manual complete only if needed.</div>
   <hr>
   <div class="section-title" style="margin-top:16px">Bonus Tasks — ${(S.bonusTasks.list||[]).filter(b=>b.done).length}/${(S.bonusTasks.list||[]).length} done</div>
@@ -7695,6 +7693,7 @@ function logMealPlan(i){
   });
   persistSave();
   showNotif(`${mp.name} logged — ${mp.totalCal} kcal total`,'OK');
+  autoQ('q2');checkAutoQuests();checkAchievements();
   renderScreens();
 }
 function deleteMealPlan(i){(S.mealPlans||[]).splice(i,1);persistSave();renderScreens();}
@@ -10244,8 +10243,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.2.1';
+var CHANGELOG_VERSION='v8.2.2';
 var CHANGELOG_ENTRIES=[	
+  'v8.2.2 Quest page now uses smart auto-log (same as dashboard); q2 meals checks meal plans before auto-logging',
   'v8.2.1 Rest Day system — mark rest days (max 3/week, Sun auto), no XP deduction, blue heatmap cells, one-way toggle',
   'v8.2.1 Rest & Weight dashboard squares — side-by-side cards below achievement with Syne display font, 28px weight value',
   'v8.2.1 Smart quests — q4 habits popup picker with toggle, q5 study auto-log remaining time to 30 min (like water)',
