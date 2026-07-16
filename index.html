@@ -137,6 +137,10 @@ textarea{resize:vertical;min-height:50px}
 @keyframes moodPop{0%{transform:scale(1)}40%{transform:scale(1.25)}60%{transform:scale(0.95)}100%{transform:scale(1)}}
 .mood-btn{font-size:24px;width:48px;height:48px;border-radius:12px;border:2px solid var(--border-mid);background:transparent;cursor:pointer;padding:0;line-height:48px;transition:transform .12s cubic-bezier(.34,1.56,.64,1),border-color .15s,background .15s;position:relative;overflow:hidden}
 .mood-btn img{width:30px;height:30px;display:block;margin:9px auto;pointer-events:none;vertical-align:top}
+.mood-static{width:30px;height:30px;display:block;margin:9px auto;pointer-events:none}
+.mood-anim{display:none;width:30px;height:30px;margin:9px auto;pointer-events:none}
+.mood-btn:hover .mood-static{display:none}
+.mood-btn:hover .mood-anim{display:block}
 .mood-btn:hover{transform:scale(1.2);z-index:2}
 .mood-btn:active{animation:moodPop .35s cubic-bezier(.34,1.56,.64,1)}
 .mood-btn.sel{border-color:var(--mood-c);background:var(--mood-bg);transform:scale(1.1)}
@@ -151,7 +155,7 @@ textarea{resize:vertical;min-height:50px}
 .mood-slider::-webkit-slider-thumb:active{transform:scale(0.9);transition-duration:.05s}
 .mood-slider::-moz-range-thumb{width:32px;height:32px;border-radius:50%;background:white;cursor:pointer;border:3px solid var(--primary);box-shadow:0 2px 12px rgba(0,0,0,0.35)}
 .mood-slider::-moz-range-track{height:10px;border-radius:6px;background:#333}
-.mood-slider::-moz-range-progress{height:10px;border-radius:6px;background:var(--primary)}
+.mood-slider::-moz-range-progress{height:10px;border-radius:6px;background:var(--slider-bg,#333)}
 .screen-locked{overflow:hidden !important;touch-action:none}
 @media(max-width:600px){.mood-card{text-align:center;gap:4px}.mood-grid{max-width:280px;grid-template-columns:repeat(5,1fr);gap:4px}}
 .grade{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
@@ -3737,7 +3741,7 @@ function renderHome(el){
     <div style="text-align:right">
       <div style="font-size:10px;color:var(--text-muted)">Level ${p.level}</div>
       <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end">
-        <div style="font-size:15px;font-weight:800;color:${rc}">RANK ${p.rank}</div>
+        <div style="font-size:15px;font-weight:800;font-family:var(--font-display);color:${rc}">RANK ${p.rank}</div>
       </div>
     </div>
     <div onclick="switchScreen('profile')" style="width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid ${rc};cursor:pointer;flex-shrink:0">
@@ -3758,7 +3762,7 @@ function renderHome(el){
         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="10"
           stroke-dasharray="${Math.max(1,Math.round(xpP/100*314))} 314"
           stroke-linecap="round" transform="rotate(-90 60 60)"/>
-        <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="800" fill="var(--text-primary)">${p.level}</text>
+        <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="700" font-family="var(--font-display)" fill="var(--text-primary)">${p.level}</text>
       </svg>
       <div style="font-size:10px;color:var(--text-muted);font-weight:500">Level ${p.level}</div>
       <div style="font-size:9px;color:var(--text-secondary)">${p.xp} / ${xpN} XP</div>
@@ -3841,7 +3845,7 @@ function renderHome(el){
     <div class="mood-grid">
       ${MOODS.map(m => {
         const sel = todayMood === m.key;
-        return '<button class="mood-btn'+(sel?' sel':'')+'" onclick="logMood(\''+m.key+'\')" style="'+(sel?'--mood-c:'+m.color+';--mood-bg:'+m.color+'22':'')+'" title="'+m.label+'"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/'+m.cp+'/512.webp" alt="'+m.emoji+'" loading="lazy"></button>';
+        return '<button class="mood-btn'+(sel?' sel':'')+'" onclick="logMood(\''+m.key+'\')" style="'+(sel?'--mood-c:'+m.color+';--mood-bg:'+m.color+'22':'')+'" title="'+m.label+'"><img class="mood-static" src="https://fonts.gstatic.com/s/e/notoemoji/latest/'+m.cp+'/512.png" alt="'+m.emoji+'"><img class="mood-anim" src="https://fonts.gstatic.com/s/e/notoemoji/latest/'+m.cp+'/512.webp" alt="'+m.emoji+'"></button>';
       }).join('')}
     </div>
     <div style="text-align:center;margin-top:6px">
@@ -7363,7 +7367,7 @@ function renderProfile(el){
   <div class="grid3 mb16">
     <div class="card-sm" style="text-align:center">
       <div style="font-size:11px;color:var(--text-muted)">BMI</div>
-      <div style="font-size:26px;font-weight:700;color:${bmiCat.color};margin:4px 0">${bmi}</div>
+      <div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:${bmiCat.color};margin:4px 0">${bmi}</div>
       <div style="font-size:12px;color:${bmiCat.color};font-weight:500">${bmiCat.label}</div>
     </div>
     <div class="card-sm" style="text-align:center">
@@ -8491,7 +8495,7 @@ function aB(icon,label,val){return`<div class="card-sm" style="text-align:center
     // Ignore swipe if touch starts inside a horizontally scrollable element
     // (analytics section bar, chart tab bar, nav, etc.)
     const target = e.target;
-    const scrollable = target.closest('.an-sec-bar, .chart-tab-bar, nav, .bottom-nav, [data-no-swipe]');
+    const scrollable = target.closest('.an-sec-bar, .chart-tab-bar, nav, .bottom-nav, .mood-slider, input[type="range"], input[type="number"], [data-no-swipe]');
     if (scrollable) { locked = true; return; }
 
     sx = t.clientX;
@@ -9928,7 +9932,7 @@ function getTasksDueToday(){
   var todayDate=new Date();
   var dow=todayDate.getDay();
   return (S.tasks||[]).filter(function(t){
-    if(t.completedAt){var age=Date.now()-t.completedAt;if(age<86400000)return false;}
+    if(t.completedAt&&t.completedDate===getTodayStr())return false;
     var repeat=t.repeat||'once';
     if(repeat==='once') return !t.completedAt||t.createdDate===today||!t.createdDate;
     if(repeat==='daily') return true;
@@ -9965,7 +9969,7 @@ function checkOverdueTasks(){
   });
   (S.tasks||[]).forEach(function(t){
     if(t.repeat&&t.repeat!=='once'&&t.lastResetDate!==today){
-      t.overdueCharged=false;t.completedAt=null;t.lastResetDate=today;
+      t.overdueCharged=false;t.completedAt=null;t.completedDate=null;t.lastResetDate=today;
       if(t.allocatedHours){var midnight=new Date();midnight.setHours(0,0,0,0);t.deadlineTs=midnight.getTime()+(t.allocatedHours*3600000);}
     }
   });
@@ -9997,10 +10001,10 @@ function addTask(){
 function completeTask(taskId){
   var t=(S.tasks||[]).find(function(x){return x.id===taskId;});
   if(!t)return;
-  if(t.completedAt&&Date.now()-t.completedAt<86400000){showNotif('Already completed!','✓');return;}
+  if(t.completedAt&&t.completedDate===getTodayStr()){showNotif('Already completed!','✓');return;}
   var now=Date.now();
   var overdue=t.deadlineTs&&now>t.deadlineTs;
-  t.completedAt=now;t.xpAwarded=overdue?Math.floor(TASK_XP[t.difficulty]*0.5):TASK_XP[t.difficulty];t.overdueCharged=false;
+  t.completedAt=now;t.completedDate=getTodayStr();t.xpAwarded=overdue?Math.floor(TASK_XP[t.difficulty]*0.5):TASK_XP[t.difficulty];t.overdueCharged=false;
   addXP(t.xpAwarded,'Task: '+t.title);updStat('discipline',overdue?1:3);persistSave();
   if(overdue)showNotif('[ TASK COMPLETE ] Late — +'+t.xpAwarded+' XP (half reward)','⚡');
   else showNotif('[ TASK COMPLETE ] +'+t.xpAwarded+' XP — Discipline +3','⚔️');
@@ -10027,9 +10031,9 @@ function renderTasks(el){
   var now=Date.now();
   var dueTasks=getTasksDueToday();
   var allTasks=S.tasks||[];
-  var todayCompletedTasks=allTasks.filter(function(t){return t.completedAt&&now-t.completedAt<86400000;});
+  var todayCompletedTasks=allTasks.filter(function(t){return t.completedAt&&t.completedDate===getTodayStr();});
   var completedToday=todayCompletedTasks.length;
-  var pendingCount=dueTasks.filter(function(t){return !t.completedAt||now-t.completedAt>=86400000;}).length;
+  var pendingCount=dueTasks.filter(function(t){return !t.completedAt||t.completedDate!==getTodayStr();}).length;
   var overdueCount=dueTasks.filter(function(t){return !t.completedAt&&t.deadlineTs&&now>t.deadlineTs;}).length;
 
   function timeLeft(t){
@@ -10048,7 +10052,7 @@ function renderTasks(el){
 
   var dayNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var taskRows=dueTasks.map(function(t){
-    var isDone=t.completedAt&&now-t.completedAt<86400000;
+    var isDone=t.completedAt&&t.completedDate===getTodayStr();
     var isOverdue=!isDone&&t.deadlineTs&&now>t.deadlineTs;
     var dc=TASK_DIFF_COLORS[t.difficulty]||'var(--text-secondary)';
     return '<div class="task-card task-diff-'+t.difficulty+(isDone?' task-completed':isOverdue?' task-overdue':'')+'">'+
@@ -10519,6 +10523,7 @@ function getTodayMood(){
   const today = getTodayStr();
   return (S.mood?.entries || []).find(e => e.date === today)?.mood || null;
 }
+
 function unlockScreen(){
   document.body.classList.remove('screen-locked');
 }
@@ -10537,12 +10542,12 @@ function logMood(mood){
   document.body.classList.add('screen-locked');
   ov1.addEventListener('click',function(e){if(e.target===this)unlockScreen()});
   ov1.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
-    <div style="font-size:72px;margin:0 auto 8px;display:block">${m.emoji}</div>
+    <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${m.emoji}" style="width:72px;height:72px;display:block;margin:0 auto 8px">
     <div style="font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:4px">${m.label}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How intense was this feeling?</div>
     <div style="position:relative;padding:0 8px">
       <input type="range" min="1" max="10" value="5" step="1" id="mood-int-slider"
-        class="mood-slider" style="background:linear-gradient(to right,${mc}44,#333 0%,#333)">
+        class="mood-slider" style="background:linear-gradient(to right,${mc}88,#333 44%,#333)">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
         <span>Mild</span><span id="mood-int-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>Intense</span>
       </div>
@@ -10563,8 +10568,9 @@ function logMood(mood){
     intVal.textContent = v;
     const hex=mc.replace('#','');
     const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
-    const dim=`rgba(${r},${g},${b},.2)`, mid=`rgba(${r},${g},${b},.65)`, full=`rgba(${r},${g},${b},1)`;
-    intSl.style.background = `linear-gradient(to right,${dim} 0%,${mid} ${pct*.7}%,${full} ${pct}%,#333 ${pct}%,#333 100%)`;
+    const fill=`linear-gradient(to right,rgba(${r},${g},${b},.35) 0%,rgba(${r},${g},${b},.75) ${pct*.6}%,${mc} ${pct}%,#333 ${pct}%,#333 100%)`;
+    intSl.style.background=fill;
+    intSl.style.setProperty('--slider-bg',fill);
     intSl.style.setProperty('--primary',mc);
   }
   intSl.addEventListener('input', updateIntSlider);
@@ -10576,45 +10582,37 @@ function logMood(mood){
     ov1.remove();
     const ov2 = document.createElement('div'); ov2.className = 'overlay'; ov2.style.zIndex = '9999';
     ov2.addEventListener('click',function(e){if(e.target===this)unlockScreen()});
-    ov2.innerHTML = `<div class="overlay-box" style="border-color:var(--energy);max-width:340px">
-      <div style="font-size:48px;margin:0 auto 4px;display:block">${m.emoji}</div>
+    ov2.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
+      <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${m.emoji}" style="width:48px;height:48px;display:block;margin:0 auto 4px">
       <div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:2px">${m.label} · Intensity ${intensity}/10</div>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How's your energy level?</div>
       <div style="position:relative;padding:0 8px">
         <input type="range" min="1" max="10" value="5" step="1" id="mood-en-slider"
-          class="mood-slider" style="background:linear-gradient(to right,#4a9eff 0%,#333 0%)">
+          class="mood-slider" style="background:linear-gradient(to right,${mc}88,#333 44%,#333)">
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
-          <span>😴 Low</span><span id="mood-en-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--energy)">5</span><span>⚡ High</span>
+          <span>😴 Low</span><span id="mood-en-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>⚡ High</span>
         </div>
       </div>
       <div class="mood-popup-btns">
         <button class="btn" id="mood-en-back">← Back</button>
-        <button class="btn btn-primary" id="mood-en-save" style="background:var(--energy);border-color:var(--energy)">Log Mood ✓</button>
+        <button class="btn btn-primary" id="mood-en-save" style="background:${mc};border-color:${mc}">Log Mood ✓</button>
       </div>
     </div>`;
     document.body.appendChild(ov2);
 
-    // wire energy slider — smooth cool→warm gradient
+    // wire energy slider — mood-matched gradient fill
     const enSl = ov2.querySelector('#mood-en-slider');
     const enVal = ov2.querySelector('#mood-en-val');
-    const enStops=[
-      {p:0,c:'#4a9eff'},{p:15,c:'#5ba3ff'},{p:30,c:'#7cb8ff'},{p:45,c:'#a8d4ff'},
-      {p:55,c:'#ffe08a'},{p:70,c:'#f5a623'},{p:85,c:'#ef6c22'},{p:100,c:'#f97316'}
-    ];
+    const hex=mc.replace('#','');
+    const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
     function updateEnSlider(){
       const v=+enSl.value;
       const pct=((v-1)/9)*100;
       enVal.textContent=v;
-      const s=enStops.slice().reverse().find(s=>pct>=s.p)||enStops[0];
-      enVal.style.color=s.c;
-      const stops=enStops.map((st,i)=>{
-        const next=enStops[i+1];
-        const end=next?Math.min(next.p,pct):pct;
-        if(pct<st.p)return'';
-        return `${st.c} ${Math.max(0,st.p)}%,${st.c} ${end}%`;
-      }).filter(Boolean).join(',');
-      const fill=stops||`${enStops[0].c} 0%`;
-      enSl.style.background=`linear-gradient(to right,${fill},#333 ${pct}%,#333 100%)`;
+      enVal.style.color=mc;
+      const fill=`linear-gradient(to right,rgba(${r},${g},${b},.35) 0%,rgba(${r},${g},${b},.7) ${pct*.6}%,${mc} ${pct}%,#333 ${pct}%,#333 100%)`;
+      enSl.style.background=fill;
+      enSl.style.setProperty('--slider-bg',fill);
     }
     enSl.addEventListener('input', updateEnSlider);
     updateEnSlider();
