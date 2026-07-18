@@ -1855,7 +1855,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.2.3</div>
+  <div class="splash-ver">v8.3.1</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1924,8 +1924,8 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.2.3";
-const APP_BUILD="2026.07.16.9";
+const APP_VERSION="v8.3.1";
+const APP_BUILD="2026.07.18.0";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
 var schemaMigrations = {};
@@ -2310,7 +2310,7 @@ window.restartTutorial = function() {
 // ════════════════════════════════════════════════════════════════════════════
 // FUTURE-PROOF CONFIGURATION & CONSTANTS
 // ════════════════════════════════════════════════════════════════════════════
-const DATA_VERSION=4;
+const DATA_VERSION=5;
 const STORAGE_KEYS={
   STATE:'zenfit_v1',
   DEVICE_ID:'zenfit_device_id',
@@ -2359,6 +2359,7 @@ const SCHEMA={
   weightLog:'array',
   questsDoneTotal:'number',
   soundEnabled:'boolean',
+  notificationsEnabled:'boolean',
   globalLeaderboardOptIn:'boolean',
   customFoods:'array',
   customBottomNav:'array',
@@ -2423,6 +2424,11 @@ function migrateData(saved){
     saved.dataVersion=4;
   }
   
+  if(version<5){
+    if(!saved.steps)saved.steps=[];
+    saved.dataVersion=5;
+  }
+  
   return saved;
 }  
 function validateAndMergeData(saved,def){
@@ -2457,8 +2463,13 @@ function validateAndMergeData(saved,def){
 // 
 let S=loadState();
 let charts={};
-let analyticsPeriod=S._analyticsPeriod||'7d';
+let analyticsPeriod=S._analyticsPeriod||'1w';
+if(analyticsPeriod==='7d')analyticsPeriod='1w';
+if(analyticsPeriod==='30d')analyticsPeriod='1m';
+if(analyticsPeriod==='1y')analyticsPeriod='1y';
+let analyticsCompare=false;
 let analyticsSection=S._analyticsSection||'overview';
+var _habitCalOffset=0;
 let activeTab='text';
 let nutritionTab='today';
 let workoutTab='log';
@@ -2502,6 +2513,7 @@ function defaultState(){
     weightLog:[],
     questsDoneTotal:0,
     soundEnabled:true,
+    notificationsEnabled:true,
     globalLeaderboardOptIn:false,
     customFoods:[],
     customBottomNav:[],
@@ -3495,6 +3507,7 @@ function switchScreen(id,subTab){
   if(id==='nutrition')nutritionTab=subTab||'today';
   if(id==='workout')workoutTab=subTab||'log';
   if(id==='mind')mindTab=subTab||'zen';
+  if(id==='analytics'){analyticsSection=subTab||S._analyticsSection||analyticsSection;S._analyticsSection=analyticsSection;persistSave();}
   if(id==='home'){
     _toggleHomeBody(true);
     document.getElementById('nav').style.display='none';
@@ -3849,14 +3862,14 @@ function renderHome(el){
       }).join('')}
     </div>
     <div style="text-align:center;margin-top:6px">
-      <button class="btn btn-sm" onclick="switchScreen('analytics')" style="font-size:10px;padding:4px 12px">📊 Mood Analytics</button>
+      <button class="btn btn-sm" onclick="switchScreen('analytics','mood')" style="font-size:10px;padding:4px 12px">📊 Mood Analytics</button>
     </div>
   </div>
 
   <!-- 6. ACHIEVEMENT RING + STEP COUNTER (side by side) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <!-- Achievement square -->
-    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center;cursor:pointer" onclick="switchScreen('analytics')">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center;cursor:pointer" onclick="switchScreen('analytics','gamification')">
       <svg width="64" height="64" viewBox="0 0 120 120">
         <circle cx="60" cy="60" r="50" fill="none" stroke="#2a3050" stroke-width="10"/>
         <circle cx="60" cy="60" r="50" fill="none" stroke="var(--warning)" stroke-width="10"
@@ -3899,7 +3912,7 @@ function renderHome(el){
     ${(()=>{
       const twEntry=(S.weightLog||[]).find(e=>e.date===today);
       if(twEntry){
-        return`<div class="card-sm" style="text-align:center;cursor:pointer" onclick="switchScreen('analytics');setAnalyticsSection('progress');renderScreens();">
+        return`<div class="card-sm" style="text-align:center;cursor:pointer" onclick="switchScreen('analytics','progress')">
           <div style="font-size:11px;color:var(--text-muted)">⚖️ Today's Weight</div>
           <div style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--success);margin:4px 0">${twEntry.kg}<span style="font-size:28px;font-weight:700;font-family:var(--font-display);color:var(--text-muted)"> kg</span></div>
           <div style="font-size:11px;color:var(--text-muted)">Tap for details →</div>
@@ -5674,7 +5687,7 @@ function renderMind(el){
   if(mindTab==='screentime'){var st=document.getElementById('mind-screentime-container');if(st)renderScreenTime(st);}
 }
 function buildMindHTML(){
-  var html='<div class="chart-tab-bar" style="display:flex;gap:2px;margin-bottom:14px;overflow-x:auto">'+
+  var html='<div class="chart-tab-bar" data-no-swipe style="display:flex;gap:2px;margin-bottom:14px;overflow-x:auto">'+
     ['zen','study','screentime'].map(function(t){var a=mindTab===t?' active':'';var l=t==='zen'?'🧘 ZEN':t==='study'?'📚 Study':'📱 Screen Time';return'<div class="chart-tab'+a+'" onclick="mindTab=\''+t+'\';renderScreens()">'+l+'</div>';}).join('')+
   '</div>';
   if(mindTab==='zen') return html+'<div id="zen-content">'+buildZenContent()+'</div>';
@@ -5685,23 +5698,63 @@ function buildMindHTML(){
 function buildZenContent(modeOverride){
   var curMode=modeOverride||(_zenRunning||_zenPhase!=='idle'?_zenMode:(document.getElementById('zen-mode')||{}).value||'equal');
   var modeData=ZEN_MODES[curMode];
-  var html='<div class="grid2" style="gap:8px;margin-bottom:14px">';
+  var z=S.zen||{};
+  var today=getTodayStr();
+  var todayMin=z.history&&z.history[today]?z.history[today]:0;
+  var totalSess=z.totalSessions||0;
+  var totalMin=z.totalMinutes||0;
+  var streak=z.currentStreak||0;
+  var bestStreak=z.bestStreak||0;
+  // Hero stats bar
+  var html='<div class="card mb12" style="padding:12px;display:flex;gap:10px;justify-content:space-around;text-align:center;border:1px solid var(--primary-dim)">'+
+    '<div><div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--primary)">'+todayMin+'</div><div style="font-size:9px;color:var(--text-muted)">TODAY min</div></div>'+
+    '<div style="width:1px;background:var(--border-mid)"></div>'+
+    '<div><div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--success)">'+streak+'</div><div style="font-size:9px;color:var(--text-muted)">STREAK</div></div>'+
+    '<div style="width:1px;background:var(--border-mid)"></div>'+
+    '<div><div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--info)">'+totalSess+'</div><div style="font-size:9px;color:var(--text-muted)">SESSIONS</div></div>'+
+    '<div style="width:1px;background:var(--border-mid)"></div>'+
+    '<div><div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--warning)">'+totalMin+'</div><div style="font-size:9px;color:var(--text-muted)">TOTAL min</div></div>'+
+  '</div>';
+  // Mode selector
+  html+='<div class="mb12"><div class="section-title">Breathing Mode</div>'+
+    '<div class="grid2" style="gap:6px">';
   Object.keys(ZEN_MODES).forEach(function(k){
     var m=ZEN_MODES[k];var a=curMode===k?' active':'';
-    html+='<div class="zen-mode-card'+a+'" onclick="if(!_zenRunning){document.getElementById(\'zen-mode\').value=\''+k+'\';renderScreens()}">'+
-      '<div style="font-size:24px;margin-bottom:4px">'+(k==='equal'?'⚖️':k==='box'?'⬜':k==='4-7-8'?'🔢':k==='hold'?'🫁':k==='custom'?'🎛️':'🧘')+'</div>'+
-      '<div style="font-size:11px;font-weight:600;color:'+m.color+'">'+m.label+'</div></div>';
+    html+='<div class="zen-mode-card'+a+'" style="padding:10px 6px;border-radius:10px;border:2px solid '+(a?'var(--primary)':'var(--border-mid)')+';cursor:pointer;text-align:center;transition:all .2s;background:'+(a?m.color+'18':'transparent')+'" onclick="if(!_zenRunning){document.getElementById(\'zen-mode\').value=\''+k+'\';renderScreens()}">'+
+      '<div style="font-size:22px;margin-bottom:2px">'+(k==='equal'?'⚖️':k==='box'?'⬜':k==='4-7-8'?'🔢':k==='hold'?'🫁':k==='custom'?'🎛️':'🧘')+'</div>'+
+      '<div style="font-size:10px;font-weight:700;color:'+(a?m.color:'var(--text-secondary)')+'">'+m.label+'</div>'+
+      (a?'<div style="font-size:8px;color:'+m.color+';margin-top:2px">● active</div>':'')+
+    '</div>';
   });
-  html+='</div><input type="hidden" id="zen-mode" value="'+curMode+'">';
-  html+='<div id="zen-card" class="card mb12" style="text-align:center;border:1px solid '+(modeData?modeData.color+'44':'var(--border-mid)')+'">';
+  html+='</div></div><input type="hidden" id="zen-mode" value="'+curMode+'">';
+  // Main card
+  html+='<div id="zen-card" class="card mb12" style="text-align:center;border:1px solid '+(modeData?modeData.color+'44':'var(--border-mid)')+';border-radius:14px;overflow:hidden">'+
+    '<div style="background:'+(modeData?modeData.color+'11':'transparent')+';padding:4px 0 0 0">';
   if(curMode==='custom'&&!_zenRunning){
     html+=buildCustomPatternEditor();
   } else {
     html+=buildBreathingControls(curMode);
   }
-  html+='</div>';
-  html+=buildZenStats();
+  html+='</div></div>';
+  // Sound selector
   html+=loadSoundSelector();
+  // Session history preview (recent 5 sessions)
+  var sessions=(S.zen&&S.zen.sessions)||S.zenSessions||[];
+  var recent5=sessions.slice(-5).reverse();
+  if(recent5.length>0){
+    html+='<div class="section-title">Recent Sessions</div><div class="card mb12" style="padding:8px 12px">';
+    recent5.forEach(function(s){
+      var d=s.date||'—';
+      var mins=s.minutes||s.duration||0;
+      var sound=s.sounds&&s.sounds[0]?s.sounds[0]:'—';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-mid);font-size:11px">'+
+        '<span style="color:var(--text-muted)">'+d+'</span>'+
+        '<span style="font-weight:600;color:var(--primary)">'+mins+' min</span>'+
+        '<span style="color:var(--text-muted);font-size:10px">'+sound+'</span>'+
+      '</div>';
+    });
+    html+='<div style="text-align:center;padding:6px 0 2px;font-size:10px;color:var(--text-muted)">Best streak: '+bestStreak+' days</div></div>';
+  }
   return html;
 }
 function buildBreathingControls(mode){
@@ -5754,32 +5807,33 @@ function loadSoundSelector(){
       if(data&&data.length){_zenSoundList=data;if(document.getElementById('zen-content'))updateZenContent();}
     }).catch(function(){});
   }
-  var html='<div class="card mb12"><div class="section-title">🔊 Ambient Sound</div><div id="zen-sound-bar" style="display:flex;gap:6px;flex-wrap:wrap">';
+  var html='<div class="card mb12"><div class="section-title" style="display:flex;align-items:center;gap:8px"><span>🔊 Ambient</span><span style="font-size:9px;color:var(--text-muted);font-weight:400">Soundscape</span></div><div id="zen-sound-bar" style="display:flex;gap:4px;flex-wrap:wrap">';
   (_zenSoundList.length?_zenSoundList:ZEN_SOUNDS).forEach(function(s){
     if(s.id==='silence')return;
     var active=_zenSoundSrc&&_zenSoundSrc===s.id?' active':'';
     var icon=s.icon||'🎵';
-    html+='<div class="zen-sound-btn'+active+'" onclick="toggleZenSound(\''+s.id+'\')">'+icon+' '+s.label+'</div>';
+    html+='<div class="zen-sound-btn'+active+'" onclick="toggleZenSound(\''+s.id+'\')" style="padding:5px 10px;border-radius:8px;font-size:11px;border:1px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:'+(active?'var(--primary-dark)':'transparent')+';cursor:pointer;transition:all .2s">'+icon+' '+s.label+'</div>';
   });
   var silActive=_zenSoundSrc===null?' active':'';
-  html+='<div class="zen-sound-btn'+silActive+'" onclick="toggleZenSound(\'silence\')">🔇 Silence</div>';
-  return html+'</div></div>';
+  html+='<div class="zen-sound-btn'+silActive+'" onclick="toggleZenSound(\'silence\')" style="padding:5px 10px;border-radius:8px;font-size:11px;border:1px solid '+(silActive?'var(--danger)':'var(--border-mid)')+';background:'+(silActive?'var(--bg-overlay)':'transparent')+';cursor:pointer;transition:all .2s">🔇 Mute</div>';
+  return html+'<div style="font-size:9px;color:var(--text-muted);margin-top:6px">Sounds play locally while meditating</div></div></div>';
 }
 function buildControlsHTML(mode){
   var m=ZEN_MODES[mode];if(!m)return'';
   var totalCycle=m.inhale+m.hold1+m.exhale+m.hold2;
   var totalTime=m.cycles*totalCycle;
-  if(mode==='custom')return'<div style="padding:8px"><button class="btn btn-primary btn-full" onclick="startZen()">▶ Start Session</button></div>';
-  if(mode==='hold')return'<div style="padding:8px"><button class="btn btn-primary btn-full" onclick="startZen()">▶ Start Breath Hold Test</button></div>';
-  return'<div style="padding:16px"><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">'+
-    '<div><label style="font-size:10px;color:var(--text-muted)">Inhale (s)</label><input type="number" id="zen-inhale" value="'+m.inhale+'" min="1" max="20" style="width:60px;text-align:center" oninput="updateTimeEstimate()"></div>'+
-    (m.hold1>0?'<div><label style="font-size:10px;color:var(--text-muted)">Hold (s)</label><input type="number" id="zen-hold1" value="'+m.hold1+'" min="0" max="30" style="width:60px;text-align:center" oninput="updateTimeEstimate()"></div>':'')+
-    '<div><label style="font-size:10px;color:var(--text-muted)">Exhale (s)</label><input type="number" id="zen-exhale" value="'+m.exhale+'" min="1" max="20" style="width:60px;text-align:center" oninput="updateTimeEstimate()"></div>'+
-    (m.hold2>0?'<div><label style="font-size:10px;color:var(--text-muted)">Hold (s)</label><input type="number" id="zen-hold2" value="'+m.hold2+'" min="0" max="30" style="width:60px;text-align:center" oninput="updateTimeEstimate()"></div>':'')+
-  '</div><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:12px">'+
-    '<div><label style="font-size:10px;color:var(--text-muted)">Cycles</label><input type="number" id="zen-cycles" value="'+m.cycles+'" min="1" max="500" style="width:70px;text-align:center" oninput="updateTimeEstimate()"></div>'+
-    '<div style="display:flex;align-items:flex-end"><div id="zen-time-estimate" style="font-size:11px;color:var(--text-muted)">~'+calcTimeStr(m)+'</div></div>'+
-  '</div><button class="btn btn-primary btn-full" onclick="startZen()">▶ Start</button></div>';
+  var mc=m.color||'var(--primary)';
+  if(mode==='custom')return'<div style="padding:12px"><button class="btn btn-primary btn-full" style="padding:12px;font-size:15px;border-radius:10px" onclick="startZen()">▶ Begin Custom Session</button></div>';
+  if(mode==='hold')return'<div style="padding:12px"><button class="btn btn-primary btn-full" style="padding:12px;font-size:15px;border-radius:10px" onclick="startZen()">▶ Start Breath Hold Test</button></div>';
+  return'<div style="padding:14px 16px 16px"><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:10px">'+
+    '<div style="background:var(--bg-overlay);padding:8px 10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px">Inhale</div><input type="number" id="zen-inhale" value="'+m.inhale+'" min="1" max="20" style="width:50px;text-align:center;font-size:14px;font-weight:700;border:1px solid '+mc+'44" oninput="updateTimeEstimate()"><div style="font-size:9px;color:'+mc+'">s</div></div>'+
+    (m.hold1>0?'<div style="background:var(--bg-overlay);padding:8px 10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px">Hold</div><input type="number" id="zen-hold1" value="'+m.hold1+'" min="0" max="30" style="width:50px;text-align:center;font-size:14px;font-weight:700;border:1px solid var(--success)44" oninput="updateTimeEstimate()"><div style="font-size:9px;color:var(--success)">s</div></div>':'')+
+    '<div style="background:var(--bg-overlay);padding:8px 10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px">Exhale</div><input type="number" id="zen-exhale" value="'+m.exhale+'" min="1" max="20" style="width:50px;text-align:center;font-size:14px;font-weight:700;border:1px solid var(--warning)44" oninput="updateTimeEstimate()"><div style="font-size:9px;color:var(--warning)">s</div></div>'+
+    (m.hold2>0?'<div style="background:var(--bg-overlay);padding:8px 10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--text-muted);margin-bottom:2px">Hold</div><input type="number" id="zen-hold2" value="'+m.hold2+'" min="0" max="30" style="width:50px;text-align:center;font-size:14px;font-weight:700;border:1px solid var(--success)44" oninput="updateTimeEstimate()"><div style="font-size:9px;color:var(--success)">s</div></div>':'')+
+  '</div><div style="display:flex;gap:12px;justify-content:center;align-items:center;margin-bottom:14px">'+
+    '<div style="background:var(--bg-overlay);padding:6px 14px;border-radius:8px;display:flex;align-items:center;gap:8px"><span style="font-size:9px;color:var(--text-muted)">Cycles</span><input type="number" id="zen-cycles" value="'+m.cycles+'" min="1" max="500" style="width:50px;text-align:center;font-size:13px;font-weight:600" oninput="updateTimeEstimate()"></div>'+
+    '<div id="zen-time-estimate" style="font-size:11px;color:var(--text-muted);background:var(--bg-overlay);padding:6px 12px;border-radius:8px">~'+calcTimeStr(m)+'</div>'+
+  '</div><button class="btn btn-primary btn-full" style="padding:14px;font-size:16px;font-weight:700;border-radius:10px;background:'+mc+';border-color:'+mc+'" onclick="startZen()">▶ Start '+(mode==='hold'?'Breath Hold':'Session')+'</button></div>';
 }
 function buildInProgressHTML(mode){
   var m=ZEN_MODES[mode]||ZEN_MODES.equal;
@@ -5787,19 +5841,22 @@ function buildInProgressHTML(mode){
   var phaseColor=_zenPhase==='inhale'||_zenPhase==='hold'?m.color:_zenPhase==='exhale'?'#F0A000':_zenPhase==='hold1'||_zenPhase==='hold2'?'#4CDB8A':'#888';
   var pct=_zenMode==='hold'?Math.min(100,Math.round(_zenElapsed/120*100)):0;
   var circleScale=_zenPhase==='inhale'?'1':_zenPhase==='exhale'?'0.6':_zenPhase==='hold1'||_zenPhase==='hold2'?'0.85':_zenPhase==='hold'?Math.max(0.3,1-_zenElapsed/120):'0.5';
-  return'<div style="padding:16px 0">'+
-    '<div id="zen-timer" class="zen-timer">'+formatZenTime(_zenElapsed)+'</div>'+
-    '<div id="zen-phase" class="zen-phase" style="color:'+phaseColor+'">'+phaseLabel+'</div>'+
-    '<div style="margin:12px auto;position:relative;width:220px;height:220px;display:flex;align-items:center;justify-content:center">'+
-      '<svg width="220" height="220" style="position:absolute;transform:rotate(-90deg)">'+
-        '<circle cx="110" cy="110" r="100" fill="none" stroke="var(--border-mid)" stroke-width="4"/>'+
-        '<circle id="zen-progress-ring" cx="110" cy="110" r="100" fill="none" stroke="'+phaseColor+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="628" stroke-dashoffset="'+(628*(1-pct/100))+'"/>'+
+  return'<div style="padding:20px 0 16px">'+
+    '<div id="zen-timer" class="zen-timer" style="font-size:48px;font-weight:300;letter-spacing:4px;font-family:var(--font-display);color:'+phaseColor+'">'+formatZenTime(_zenElapsed)+'</div>'+
+    '<div id="zen-phase" class="zen-phase" style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:3px;color:'+phaseColor+';margin-top:2px">'+phaseLabel+'</div>'+
+    '<div style="margin:16px auto;position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center">'+
+      '<svg width="200" height="200" style="position:absolute;transform:rotate(-90deg)">'+
+        '<circle cx="100" cy="100" r="90" fill="none" stroke="var(--border-mid)" stroke-width="3"/>'+
+        '<circle id="zen-progress-ring" cx="100" cy="100" r="90" fill="none" stroke="'+phaseColor+'" stroke-width="3" stroke-linecap="round" stroke-dasharray="565" stroke-dashoffset="'+(565*(1-pct/100))+'"/>'+
       '</svg>'+
-      '<div class="zen-circle" id="zen-breath-circle" style="width:160px;height:160px;background:radial-gradient(circle,'+phaseColor+'22,'+phaseColor+'08);border:2px solid '+phaseColor+'44;transform:scale('+circleScale+');transition:transform 0.8s cubic-bezier(.4,0,.2,1)">'+
-        '<div style="font-size:28px;font-weight:700;color:'+phaseColor+'">'+_zenCycle+'/'+_zenTotalCycles+'</div>'+
+      '<div class="zen-circle" id="zen-breath-circle" style="width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,'+phaseColor+'22,'+phaseColor+'08);border:2px solid '+phaseColor+'44;transform:scale('+circleScale+');transition:transform 0.8s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;justify-content:center;flex-direction:column">'+
+        '<div style="font-size:32px;font-weight:700;font-family:var(--font-display);color:'+phaseColor+'">'+_zenCycle+'/'+_zenTotalCycles+'</div>'+
+        '<div style="font-size:9px;color:var(--text-muted);margin-top:2px">cycle</div>'+
       '</div>'+
     '</div>'+
-    '<button class="btn btn-danger" onclick="stopZen()" style="margin-top:4px">⏹ Stop</button>'+
+    '<div style="display:flex;gap:8px;justify-content:center;margin-top:4px">'+
+      '<button class="btn" onclick="stopZen()" style="border-color:var(--danger);color:var(--danger);padding:8px 20px;border-radius:8px">⏹ Stop</button>'+
+    '</div>'+
   '</div>';
 }
 function formatZenTime(sec){
@@ -6321,12 +6378,70 @@ function completeBonus(id){const b=(S.bonusTasks.list||[]).find(x=>x.id===id);if
 // ════════════════════════════
 // ANALYTICS
 // ════════════════════════════
-function setAnalyticsSection(s){analyticsSection=s;S._analyticsSection=s;persistSave();renderScreens();}
-function setAnalyticsPeriod(p){analyticsPeriod=p;S._analyticsPeriod=p;persistSave();renderScreens();}
+function setAnalyticsSection(s){switchAnalyticsSection(s);}
+function switchAnalyticsSection(s){
+  analyticsSection=s;
+  S._analyticsSection=s;
+  persistSave();
+  document.querySelectorAll('.an-sec-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-section')===s);});
+  var c=document.getElementById('an-section-content');
+  if(c){
+    const tabs=getAnalyticsTabsHTML();
+    switch(s){
+      case 'overview':renderAnOverview(c,tabs);break;
+      case 'habits':renderAnHabits(c,tabs);break;
+      case 'nutrition':renderAnNutrition(c,tabs);break;
+      case 'training':renderAnTraining(c,tabs);break;
+      case 'health':renderAnHealth(c,tabs);break;
+      case 'mind':renderAnMind(c,tabs);break;
+      case 'progress':renderAnProgress(c);break;
+      case 'insights':renderAnInsights(c,tabs);break;
+      case 'gamification':renderAnGamification(c);break;
+      case 'mood':renderAnMood(c,tabs);break;
+      default:renderAnOverview(c,tabs);
+    }
+  }
+}
+function getAnalyticsTabsHTML(){
+  return'<div data-no-swipe style="display:flex;align-items:center;gap:6px;margin-bottom:10px;overflow-x:auto"><div class="chart-tab-bar" style="flex:1;margin-bottom:0">'+[['1w','1W'],['2w','2W'],['1m','1M'],['3m','3M'],['6m','6M'],['1y','1Y'],['all','All']].map(function(p){return'<div class="chart-tab'+(analyticsPeriod===p[0]?' active':'')+'" onclick="setAnalyticsPeriod(\''+p[0]+'\')">'+p[1]+'</div>';}).join('')+'</div><button class="btn btn-sm" onclick="toggleAnalyticsCompare()" style="border:1px solid '+(analyticsCompare?'var(--primary)':'var(--border-mid)')+';color:'+(analyticsCompare?'var(--primary)':'var(--text-muted)')+';padding:4px 10px;font-size:11px;white-space:nowrap" title="Compare two periods">⇄ '+(analyticsCompare?'On':'Compare')+'</button></div>';
+}
+function setAnalyticsPeriod(p){
+  analyticsPeriod=p;
+  S._analyticsPeriod=p;
+  persistSave();
+  if(currentScreen==='analytics'){var c=document.getElementById('an-section-content');if(c)switchAnalyticsSection(analyticsSection);}
+  else renderScreens();
+}
+function toggleAnalyticsCompare(){
+  analyticsCompare=!analyticsCompare;
+  if(currentScreen==='analytics'){var c=document.getElementById('an-section-content');if(c)switchAnalyticsSection(analyticsSection);}
+  else renderScreens();
+}
+
+function getAnalyticsPeriodLabel(p){
+  const map={'1w':'Week','2w':'2 Weeks','1m':'Month','3m':'3 Months','6m':'6 Months','1y':'Year','all':'All Time'};
+  return map[p]||p;
+}
+function getComparisonData(period){
+  const cfg=getAnalyticsPeriodConfig(period);
+  return{current:getAnalyticsData(period,0),previous:getAnalyticsData(period,cfg.count),count:cfg.count};
+}
+function deltaPct(cur,prev){
+  if(!prev||prev===0)return cur>0?'↑ NEW':'';
+  const p=Math.round((cur-prev)/prev*100);
+  if(p>0)return '↑'+p+'%';
+  if(p<0)return '↓'+Math.abs(p)+'%';
+  return '→ 0%';
+}
+function renderCompareSummary(label,cur,prev,unit){
+  if(!analyticsCompare)return'<div style="font-size:'+(unit==='%'?'20px':'16px')+';font-weight:700;color:var(--text-primary)">'+cur+unit+'</div>';
+  return'<div><div style="font-size:16px;font-weight:700;color:var(--text-primary)">'+cur+unit+'</div><div style="font-size:10px;color:'+(cur>prev?'var(--success)':cur<prev?'var(--danger)':'var(--text-muted)')+'">'+deltaPct(cur,prev)+' vs prev</div></div>';
+}
 
 function renderAnalytics(el){
   const sections=[
     {id:'overview',label:'Overview'},
+    {id:'habits',label:'Habits'},
     {id:'nutrition',label:'Nutrition'},
     {id:'training',label:'Training'},
     {id:'health',label:'Health'},
@@ -6336,39 +6451,18 @@ function renderAnalytics(el){
     {id:'gamification',label:'Gamification'},
     {id:'mood',label:'Mood'},
   ];
-  const periodTabs=`
-  <div class="chart-tab-bar">
-    <div class="chart-tab${analyticsPeriod==='7d'?' active':''}" onclick="setAnalyticsPeriod('7d')">7 Days</div>
-    <div class="chart-tab${analyticsPeriod==='30d'?' active':''}" onclick="setAnalyticsPeriod('30d')">30 Days</div>
-    <div class="chart-tab${analyticsPeriod==='1y'?' active':''}" onclick="setAnalyticsPeriod('1y')">12 Months</div>
-  </div>`;
 
-  el.innerHTML=`
-  <div class="an-sec-bar">
-    ${sections.map(s=>`<div class="an-sec-btn${analyticsSection===s.id?' active':''}" onclick="setAnalyticsSection('${s.id}')">${s.label}</div>`).join('')}
-  </div>
-  <div id="an-section-content"></div>`;
+  el.innerHTML='<div class="an-sec-bar" data-no-swipe>'+sections.map(function(s){return'<div class="an-sec-btn'+(analyticsSection===s.id?' active':'')+'" data-section="'+s.id+'" onclick="switchAnalyticsSection(\''+s.id+'\')">'+s.label+'</div>';}).join('')+'</div><div id="an-section-content"></div>';
 
-  const content=document.getElementById('an-section-content');
-  if(!content)return;
-
-  switch(analyticsSection){
-    case 'overview':    renderAnOverview(content,periodTabs); break;
-    case 'nutrition':   renderAnNutrition(content,periodTabs); break;
-    case 'training':    renderAnTraining(content,periodTabs); break;
-    case 'health':      renderAnHealth(content,periodTabs); break;
-    case 'mind':        renderAnMind(content,periodTabs); break;
-    case 'progress':    renderAnProgress(content); break;
-    case 'insights':    renderAnInsights(content,periodTabs); break;
-    case 'gamification':renderAnGamification(content); break;
-    case 'mood':        renderAnMood(content,periodTabs); break;
-    default:            renderAnOverview(content,periodTabs);
-  }
+  var c=document.getElementById('an-section-content');
+  if(c)switchAnalyticsSection(analyticsSection);
 }
 
 // ── OVERVIEW ────────────────────────────────────────────
 function renderAnOverview(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
+  const compData=analyticsCompare?getComparisonData(analyticsPeriod):null;
+  const prevSummary=compData?getAnalyticsSummary(compData.previous):null;
   const tdee=getTDEEfromProfile();
   const summary=getAnalyticsSummary(data);
   const fitnessScore=calcFitnessScore();
@@ -6380,6 +6474,7 @@ function renderAnOverview(el,periodTabs){
 
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare&&compData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+getAnalyticsPeriodLabel(analyticsPeriod)+'</strong> vs previous</span><span style="color:var(--success)">'+deltaPct(summary.consistency,prevSummary?prevSummary.consistency:0)+' consistency</span></div>'):''}
 
   <!-- FITNESS SCORE -->
   <div class="section-title">Fitness Score</div>
@@ -6397,8 +6492,8 @@ function renderAnOverview(el,periodTabs){
       <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px">${fitnessScore>=80?'Excellent':fitnessScore>=60?'Good':fitnessScore>=40?'Fair':'Building'}</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Composite score from training, nutrition, hydration, habits & consistency</div>
       <div class="grid2" style="gap:6px">
-        <div class="card-sm" style="text-align:center;padding:6px"><div style="font-size:14px;font-weight:700;color:var(--warning)">${summary.consistency}%</div><div style="font-size:9px;color:var(--text-muted)">CONSISTENCY</div></div>
-        <div class="card-sm" style="text-align:center;padding:6px"><div style="font-size:14px;font-weight:700;color:var(--success)">${summary.topStreak}</div><div style="font-size:9px;color:var(--text-muted)">BEST STREAK</div></div>
+        <div class="card-sm" style="text-align:center;padding:6px">${renderCompareSummary('CONSISTENCY',summary.consistency,prevSummary?prevSummary.consistency:0,'%')}<div style="font-size:9px;color:var(--text-muted);margin-top:2px">CONSISTENCY</div></div>
+        <div class="card-sm" style="text-align:center;padding:6px">${renderCompareSummary('BEST STREAK',summary.topStreak,prevSummary?prevSummary.topStreak:0,'')}<div style="font-size:9px;color:var(--text-muted);margin-top:2px">BEST STREAK</div></div>
       </div>
     </div>
   </div>
@@ -6420,49 +6515,135 @@ function renderAnOverview(el,periodTabs){
     </div>
   </div>
 
-  <!-- WEEKLY TRENDS -->
-  <div class="section-title">Weekly Trends</div>
+  <!-- CALORIE TRENDS -->
+  <div class="section-title">Calorie Trends</div>
   <div class="card mb12"><div style="position:relative;height:200px"><canvas id="c1"></canvas></div></div>
-  <div class="card mb12"><div style="position:relative;height:160px"><canvas id="c2"></canvas></div></div>
 
   <!-- SUMMARY STATS -->
   <div class="grid4 mb12">
-    <div class="card-sm" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--warning)">${summary.avgCal}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG CAL</div></div>
-    <div class="card-sm" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--danger)">${summary.avgBurned}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG BURNED</div></div>
+    <div class="card-sm" style="text-align:center">${renderCompareSummary('AVG CAL',summary.avgCal,prevSummary?prevSummary.avgCal:0,'')}<div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG CAL</div></div>
+    <div class="card-sm" style="text-align:center">${renderCompareSummary('AVG BURNED',summary.avgBurned,prevSummary?prevSummary.avgBurned:0,'')}<div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG BURNED</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--info)">${(S.workouts||[]).filter(w=>w.date===getTodayStr()).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--success)">${(S.habits||[]).filter(h=>(h.completedDates||[]).includes(getTodayStr())).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">HABITS DONE</div></div>
   </div>`;
 
   const tdee2=getTDEEfromProfile();
   setTimeout(()=>{
-    ['c1','c2'].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}}});
+    if(charts.c1){try{charts.c1.destroy();}catch(e){}}
     const L=data.map(d=>d.label);
     const opts=()=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}});
     const c1el=document.getElementById('c1');
-    if(c1el)charts.c1=new Chart(c1el,{type:'bar',data:{labels:L,datasets:[
-      {label:'Consumed',data:data.map(d=>d.cal),backgroundColor:'#f5a62344',borderColor:'#f5a623',borderWidth:1.5,borderRadius:3},
-      {label:'Burned',data:data.map(d=>d.burned),backgroundColor:'#ff5a5a44',borderColor:'#ff5a5a',borderWidth:1.5,borderRadius:3},
-      {label:'TDEE',data:data.map(()=>tdee2),type:'line',borderColor:'#4a9eff',borderDash:[5,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
-    ]},options:opts()});
-    const c2el=document.getElementById('c2');
-    if(c2el)charts.c2=new Chart(c2el,{type:'line',data:{labels:L,datasets:[
-      {label:'Water (L)',data:data.map(d=>d.water),borderColor:'#00d4aa',backgroundColor:'#00d4aa18',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#00d4aa'},
-      {label:'Habits',data:data.map(d=>d.habits),borderColor:'#4cdb8a',backgroundColor:'#4cdb8a11',tension:.4,yAxisID:'y2',pointRadius:3,pointBackgroundColor:'#4cdb8a'}
-    ]},options:{...opts(),scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}},y2:{position:'right',grid:{drawOnChartArea:false},ticks:{color:'#4cdb8a',font:{size:9}}}}}});
+    if(c1el){
+      const ds=[
+        {label:'Consumed',data:data.map(d=>d.cal),backgroundColor:'#f5a62344',borderColor:'#f5a623',borderWidth:1.5,borderRadius:3},
+        {label:'Burned',data:data.map(d=>d.burned),backgroundColor:'#ff5a5a44',borderColor:'#ff5a5a',borderWidth:1.5,borderRadius:3},
+        {label:'TDEE',data:data.map(()=>tdee2),type:'line',borderColor:'#4a9eff',borderDash:[5,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
+      ];
+      if(analyticsCompare&&compData){
+        ds.push({label:'Prev Consumed',data:compData.previous.map(d=>d.cal),backgroundColor:'#f5a62322',borderColor:'#f5a62344',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});
+        ds.push({label:'Prev Burned',data:compData.previous.map(d=>d.burned),backgroundColor:'#ff5a5a22',borderColor:'#ff5a5a44',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});
+      }
+      charts.c1=new Chart(c1el,{type:'bar',data:{labels:L,datasets:ds},options:opts()});
+    }
+  },50);
+}
+
+// ── HABITS ──────────────────────────────────────────────
+function renderAnHabits(el,periodTabs){
+  const data=getAnalyticsData(analyticsPeriod);
+  const compData=analyticsCompare?getComparisonData(analyticsPeriod):null;
+  const habits=S.habits||[];
+  const periodLabel=getAnalyticsPeriodLabel(analyticsPeriod);
+  const totalActs=data.reduce((a,d)=>a+d.habits,0);
+  const avgHabits=data.length?Math.round(totalActs/data.length*10)/10:0;
+  const habitNames=habits.map(h=>h.name);
+
+  el.innerHTML=`
+  ${periodTabs}
+  ${analyticsCompare&&compData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+periodLabel+'</strong> vs previous</span><span style="color:var(--success)">'+deltaPct(data.reduce((a,d)=>a+d.habits,0),compData.previous.reduce((a,d)=>a+d.habits,0))+' habits</span></div>'):''}
+
+  <div class="section-title">Habit Completions — ${periodLabel}</div>
+  <div class="card mb12"><div style="position:relative;height:180px"><canvas id="c_habits_overview"></canvas></div></div>
+
+  <div class="section-title">Habit Breakdown</div>
+  <div class="card mb12">
+    ${habits.length?habits.map((h,i)=>{
+      const done=h.completedDates||[];
+      const pDone=done.filter(d=>{const dd=new Date(d);const n=new Date();const cfg=getAnalyticsPeriodConfig(analyticsPeriod);return n-dd<=cfg.count*864e5;}).length;
+      const streak=h.streak||0;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:'+(i<habits.length-1?'1px solid var(--border-mid)':'none')+'">'+
+        '<div style="width:4px;height:32px;border-radius:2px;background:'+habitColor(i)+'"></div>'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text-primary)">'+h.name+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted)">'+pDone+' completions this period</div></div>'+
+        '<div style="text-align:right"><div style="font-size:14px;font-weight:700;color:var(--text-primary)">'+streak+'</div><div style="font-size:9px;color:var(--text-muted)">day streak</div></div>'+
+        '<div style="text-align:right;margin-left:8px"><div style="font-size:14px;font-weight:700;color:'+(h.icon==='✅'?'var(--success)':'var(--primary)')+'">'+done.length+'</div><div style="font-size:9px;color:var(--text-muted)">total</div></div>'+
+      '</div>';
+    }).join(''):'<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px">No habits created yet. Add habits in the Habits tab.</div>'}
+  </div>
+
+  <div class="section-title" style="margin-top:20px">Habit Calendar
+    <span style="font-size:9px;color:var(--text-muted);font-weight:400">${(()=>{const d=new Date();d.setDate(d.getDate()-_habitCalOffset*7);return d.toLocaleDateString([],{month:'long',year:'numeric'});})()} · Week ${_habitCalOffset+1}</span>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+    <button class="btn btn-sm" onclick="_habitCalOffset++;renderScreens()" style="padding:4px 10px;font-size:10px">◀ Prev</button>
+    <button class="btn btn-sm" onclick="_habitCalOffset=0;renderScreens()" style="${_habitCalOffset===0?'background:var(--primary-dark);border-color:var(--primary)':''}padding:4px 10px;font-size:10px">This Week</button>
+    <button class="btn btn-sm" onclick="_habitCalOffset>0?_habitCalOffset--:null;renderScreens()" style="${_habitCalOffset<=0?'opacity:.4;pointer-events:none':''}padding:4px 10px;font-size:10px">Next ▶</button>
+  </div>
+  <div class="card mb12" data-no-swipe style="overflow-x:auto;padding:8px">
+    ${(()=>{
+      const offset=_habitCalOffset*7;
+      const today=getTodayStr();
+      const calDays=[];
+      for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i-offset);const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');calDays.push({ds,label:d.toLocaleDateString([],{weekday:'short',day:'numeric'}),isToday:ds===today});}
+      if(!habits.length)return'<div style="text-align:center;padding:12px;font-size:12px;color:var(--text-muted)">No habits to display</div>';
+      let html='<table style="border-collapse:collapse;font-size:10px;width:100%"><thead><tr><th style="text-align:left;padding:2px 8px 6px 2px;color:var(--text-muted);font-weight:500;width:80px">Habit</th>';
+      calDays.forEach(d=>{html+='<th style="text-align:center;padding:2px 1px 6px;color:var(--text-muted);font-weight:'+(d.isToday?'700':'400')+';font-size:8px;min-width:28px">'+(d.isToday?'<span style="color:var(--primary)">':'')+d.label+(d.isToday?'</span>':'')+'</th>';});
+      html+='</tr></thead><tbody>';
+      habits.forEach((h,i)=>{
+        const done=(h.completedDates||[]).filter(d=>calDays.some(cd=>cd.ds===d));
+        html+='<tr><td style="padding:4px 8px 4px 2px;border-top:1px solid var(--border-mid);color:var(--text-primary);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px">'+(h.icon||'✅')+' '+h.name+'</td>';
+        calDays.forEach(cd=>{
+          const isDone=done.includes(cd.ds);
+          html+='<td style="text-align:center;padding:4px 1px;border-top:1px solid var(--border-mid)"><div style="width:18px;height:18px;border-radius:4px;margin:0 auto;background:'+(isDone?habitColor(i):'var(--bg-overlay)')+';'+(isDone?'box-shadow:0 0 4px '+habitColor(i)+'66':'border:1px solid var(--border-mid)')+';transition:all .2s"></div></td>';
+        });
+        html+='</tr>';
+      });
+      html+='</tbody></table>';
+      return html;
+    })()}
+  </div>
+
+  <div class="section-title">Weekly Comparison</div>
+  <div class="grid2 mb12" style="gap:8px">
+    <div class="card-sm" style="text-align:center;padding:10px"><div style="font-size:20px;font-weight:700;font-family:var(--font-display);color:var(--success)">${avgHabits}</div><div style="font-size:10px;color:var(--text-muted)">Avg Habits/Day</div></div>
+    <div class="card-sm" style="text-align:center;padding:10px"><div style="font-size:20px;font-weight:700;font-family:var(--font-display);color:var(--primary)">${Math.round(totalActs)}</div><div style="font-size:10px;color:var(--text-muted)">Total This Period</div></div>
+  </div>`;
+
+  setTimeout(()=>{
+    if(charts.c_habits_overview){try{charts.c_habits_overview.destroy();}catch(e){}}
+    const cel=document.getElementById('c_habits_overview');
+    if(!cel)return;
+    const L=data.map(d=>d.label);
+    const ds=[{label:'Habits Done',data:data.map(d=>d.habits),backgroundColor:'#4cdb8a44',borderColor:'#4cdb8a',borderWidth:1.5,borderRadius:3,fill:true,tension:.3}];
+    if(analyticsCompare&&compData)ds.push({label:'Prev Habits',data:compData.previous.map(d=>d.habits),backgroundColor:'#4cdb8a22',borderColor:'#4cdb8a44',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});
+    charts.c_habits_overview=new Chart(cel,{type:'line',data:{labels:L,datasets:ds},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}}});
   },50);
 }
 
 // ── NUTRITION ────────────────────────────────────────────
 function renderAnNutrition(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
+  const compData=analyticsCompare?getComparisonData(analyticsPeriod):null;
   const macros=getMacroTotals(analyticsPeriod);
+  const prevMacros=compData?getMacroTotals(analyticsPeriod):null;
   const tdee=getTDEEfromProfile();
-  const periodLabel=analyticsPeriod==='7d'?'7 Days':analyticsPeriod==='30d'?'30 Days':'12 Months';
+  const periodLabel=getAnalyticsPeriodLabel(analyticsPeriod);
   const nutScore=calcNutritionScore();
   const mealTiming=getMealTimingStats();
 
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare&&compData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+periodLabel+'</strong> vs previous</span><span style="color:var(--info)">'+deltaPct(macros.protein,prevMacros?prevMacros.protein:0)+' protein</span></div>'):''}
   <!-- NUTRITION SCORE -->
   <div class="section-title">Nutrition Score</div>
   <div class="card mb12" style="display:flex;align-items:center;gap:14px;padding:14px">
@@ -6495,7 +6676,7 @@ function renderAnNutrition(el,periodTabs){
       ${[{n:'🥩 Protein',v:macros.protein,c:'#4a9eff',g:S.nutrition.dailyGoal.protein},{n:'🍞 Carbs',v:macros.carbs,c:'#f5a623',g:S.nutrition.dailyGoal.carbs},{n:'🥑 Fat',v:macros.fat,c:'#ff5a5a',g:S.nutrition.dailyGoal.fat},{n:'🍬 Sugar',v:macros.sugar,c:'#7c3aed',g:S.nutrition.dailyGoal.sugar||25}].map(m=>`
         <div style="margin-bottom:8px">
           <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span>${m.n}</span><span style="font-weight:700;color:${m.c}">${m.v}g</span></div>
-          <div class="stat-bar-wrap"><div class="stat-bar" style="width:${m.g?Math.min(100,Math.round(m.v/m.g/(analyticsPeriod==='7d'?7:analyticsPeriod==='30d'?30:365)*100)):50}%;background:${m.c}"></div></div>
+          <div class="stat-bar-wrap"><div class="stat-bar" style="width:${m.g?Math.min(100,Math.round(m.v/m.g/(analyticsPeriod==='1w'?7:analyticsPeriod==='2w'?14:analyticsPeriod==='1m'?30:analyticsPeriod==='3m'?90:analyticsPeriod==='6m'?180:analyticsPeriod==='1y'?365:730)*100)):50}%;background:${m.c}"></div></div>
         </div>`).join('')}
       ${macros.protein===0?`<div style="font-size:10px;color:var(--text-muted)">Log meals to see macros</div>`:''}
     </div>
@@ -6519,16 +6700,26 @@ function renderAnNutrition(el,periodTabs){
     const L=data.map(d=>d.label);
     const opts=()=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}});
     const c1el=document.getElementById('c1');
-    if(c1el)charts.c1=new Chart(c1el,{type:'bar',data:{labels:L,datasets:[
-      {label:'Consumed',data:data.map(d=>d.cal),backgroundColor:'#f5a62344',borderColor:'#f5a623',borderWidth:1.5,borderRadius:3},
-      {label:'Burned',data:data.map(d=>d.burned),backgroundColor:'#ff5a5a44',borderColor:'#ff5a5a',borderWidth:1.5,borderRadius:3},
-      {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#4a9eff',borderDash:[5,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
-    ]},options:opts()});
+    if(c1el){
+      const ds=[
+        {label:'Consumed',data:data.map(d=>d.cal),backgroundColor:'#f5a62344',borderColor:'#f5a623',borderWidth:1.5,borderRadius:3},
+        {label:'Burned',data:data.map(d=>d.burned),backgroundColor:'#ff5a5a44',borderColor:'#ff5a5a',borderWidth:1.5,borderRadius:3},
+        {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#4a9eff',borderDash:[5,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
+      ];
+      if(analyticsCompare&&compData){
+        ds.push({label:'Prev Consumed',data:compData.previous.map(d=>d.cal),backgroundColor:'#f5a62322',borderColor:'#f5a62344',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});
+        ds.push({label:'Prev Burned',data:compData.previous.map(d=>d.burned),backgroundColor:'#ff5a5a22',borderColor:'#ff5a5a44',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});
+      }
+      charts.c1=new Chart(c1el,{type:'bar',data:{labels:L,datasets:ds},options:opts()});
+    }
     const c4el=document.getElementById('c4');
-    if(c4el){const nets=data.map(d=>d.cal-d.burned);charts.c4=new Chart(c4el,{type:'bar',data:{labels:L,datasets:[
-      {label:'Net Cal',data:nets,backgroundColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a44':n<=0?'#4a9eff44':'#ff5a5a44'),borderColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a':n<=0?'#4a9eff':'#ff5a5a'),borderWidth:1.5,borderRadius:3},
-      {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#f5a623',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
-    ]},options:opts()});}
+    if(c4el){const nets=data.map(d=>d.cal-d.burned);
+      const ds4=[
+        {label:'Net Cal',data:nets,backgroundColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a44':n<=0?'#4a9eff44':'#ff5a5a44'),borderColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a':n<=0?'#4a9eff':'#ff5a5a'),borderWidth:1.5,borderRadius:3},
+        {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#f5a623',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
+      ];
+      if(analyticsCompare&&compData){const pn=compData.previous.map(d=>d.cal-d.burned);ds4.push({label:'Prev Net',data:pn,backgroundColor:'#88888822',borderColor:'#88888844',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});}
+      charts.c4=new Chart(c4el,{type:'bar',data:{labels:L,datasets:ds4},options:opts()});}
     const c6el=document.getElementById('c6');
     if(c6el&&(macros.protein>0||macros.carbs>0||macros.fat>0))charts.c6=new Chart(c6el,{type:'doughnut',data:{labels:['Protein','Carbs','Fat'],datasets:[{data:[macros.protein,macros.carbs,macros.fat],backgroundColor:['#4a9eff88','#f5a62388','#ff5a5a88'],borderColor:['#4a9eff','#f5a623','#ff5a5a'],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
   },50);
@@ -6537,12 +6728,16 @@ function renderAnNutrition(el,periodTabs){
 // ── TRAINING ────────────────────────────────────────────
 function renderAnTraining(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
+  const compData=analyticsCompare?getComparisonData(analyticsPeriod):null;
   const prs=getPersonalRecords();
   const muscleData=getMuscleDistribution();
   const volData=getWorkoutVolume(data);
 
+  const curTrainDays=new Set((S.workouts||[]).filter(w=>{const d=compData?compData.current.find(c=>c.slotDates.includes(w.date)):[];return d;}).size);
+  const prevTrainDays=compData?new Set((S.workouts||[]).filter(w=>{const d=compData.previous.find(c=>c.slotDates.includes(w.date));return d;}).size):0;
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare&&compData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+getAnalyticsPeriodLabel(analyticsPeriod)+'</strong> vs previous</span><span style="color:'+(curTrainDays>prevTrainDays?'var(--success)':'var(--text-muted)')+'">'+deltaPct(curTrainDays,prevTrainDays)+' training days</span></div>'):''}
   <!-- WORKOUT VOLUME -->
   <div class="section-title">Workout Volume (kg·reps per day)</div>
   <div class="card mb12">
@@ -6615,12 +6810,17 @@ function renderAnTraining(el,periodTabs){
 // ── HEALTH ────────────────────────────────────────────
 function renderAnHealth(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
+  const compData=analyticsCompare?getComparisonData(analyticsPeriod):null;
   const recovery=calcRecoveryStats();
+  const tdee=getTDEEfromProfile();
+  const goalL=(S.water.dailyGoalMl||3000)/1000;
+  const avgWater=data.length?Math.round(data.reduce((a,d)=>a+d.water,0)/data.length*10)/10:0;
 
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare&&compData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+getAnalyticsPeriodLabel(analyticsPeriod)+'</strong> vs previous</span></div>'):''}
   <!-- HYDRATION -->
-  <div class="section-title">Hydration Trend</div>
+  <div class="section-title">Hydration Trend <span style="color:var(--text-muted);font-size:10px;font-weight:400">(avg ${avgWater}L/day · goal ${goalL}L)</span></div>
   <div class="card mb12"><div style="position:relative;height:180px"><canvas id="c_water"></canvas></div></div>
 
   <!-- RECOVERY -->
@@ -6636,7 +6836,7 @@ function renderAnHealth(el,periodTabs){
         <div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG REST BETWEEN</div>
       </div>
       <div class="card-sm" style="text-align:center">
-        <div style="font-size:18px;font-weight:700;font-family:var(--font-display)${recovery.score>=70?'var(--success)':recovery.score>=40?'var(--warning)':'var(--danger)'}">${recovery.score}</div>
+        <div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${recovery.score>=70?'var(--success)':recovery.score>=40?'var(--warning)':'var(--danger)'}">${recovery.score}</div>
         <div style="font-size:9px;color:var(--text-muted);margin-top:2px">RECOVERY SCORE</div>
       </div>
     </div>
@@ -6649,6 +6849,20 @@ function renderAnHealth(el,periodTabs){
   <div class="section-title">Energy Balance (Net Calories)</div>
   <div class="card mb12"><div style="position:relative;height:160px"><canvas id="c_energy"></canvas></div></div>
 
+  <!-- WEIGHT PROGRESSION -->
+  <div class="section-title">Weight Progression</div>
+  <div class="card mb12" style="${(S.weightLog||[]).length<2?'text-align:center;padding:16px':'padding:6px'}">
+    ${(S.weightLog||[]).length>=2?('<div style="position:relative;height:180px"><canvas id="c_weight"></canvas></div>'):
+    '<div><div style="font-size:24px;margin-bottom:8px">⚖️</div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">Log weight to see progression</div><div style="font-size:11px;color:var(--text-muted)">Record your weight daily in the Dashboard → Weight card</div></div>'}
+  </div>
+
+  <!-- DAILY STEPS -->
+  <div class="section-title">Daily Steps</div>
+  <div class="card mb12" style="${(S.steps||[]).length?'padding:6px':'text-align:center;padding:16px'}">
+    ${(S.steps||[]).length?('<div style="position:relative;height:160px"><canvas id="c_steps"></canvas></div>'):
+    '<div><div style="font-size:24px;margin-bottom:8px">🚶</div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">No step data yet</div><div style="font-size:11px;color:var(--text-muted)">Track steps via the Dashboard → Steps card</div></div>'}
+  </div>
+
   <!-- SLEEP -->
   <div class="section-title">Sleep Tracking</div>
   <div class="card mb12" style="text-align:center;padding:20px">
@@ -6658,21 +6872,40 @@ function renderAnHealth(el,periodTabs){
   </div>`;
 
   setTimeout(()=>{
-    ['c_water','c_energy'].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}}});
+    ['c_water','c_energy','c_weight','c_steps'].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}}});
     const L=data.map(d=>d.label);
     const opts=()=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}});
     const cwel=document.getElementById('c_water');
     const tdee=getTDEEfromProfile();
     const goalL=(S.water.dailyGoalMl||3000)/1000;
-    if(cwel)charts.c_water=new Chart(cwel,{type:'line',data:{labels:L,datasets:[
-      {label:'Water (L)',data:data.map(d=>d.water),borderColor:'#00d4aa',backgroundColor:'#00d4aa18',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#00d4aa'},
-      {label:'Goal',data:data.map(()=>goalL),type:'line',borderColor:'#00d4aa66',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}
-    ]},options:opts()});
+    if(cwel){
+      const wds=[{label:'Water (L)',data:data.map(d=>d.water),borderColor:'#00d4aa',backgroundColor:'#00d4aa18',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#00d4aa'},
+        {label:'Goal',data:data.map(()=>goalL),type:'line',borderColor:'#00d4aa66',borderDash:[4,3],borderWidth:1.5,pointRadius:0,fill:false}];
+      if(analyticsCompare&&compData)wds.push({label:'Prev Water',data:compData.previous.map(d=>d.water),borderColor:'#00d4aa44',borderDash:[3,3],tension:.4,fill:false,pointRadius:2});
+      charts.c_water=new Chart(cwel,{type:'line',data:{labels:L,datasets:wds},options:opts()});
+    }
     const ceel=document.getElementById('c_energy');
-    if(ceel){const nets=data.map(d=>d.cal-d.burned);charts.c_energy=new Chart(ceel,{type:'bar',data:{labels:L,datasets:[
-      {label:'Net Cal',data:nets,backgroundColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a44':n<=0?'#4a9eff44':'#ff5a5a44'),borderColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a':n<=0?'#4a9eff':'#ff5a5a'),borderWidth:1.5,borderRadius:3},
-      {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#f5a623',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false,tension:0}
-    ]},options:opts()});}
+    if(ceel){const nets=data.map(d=>d.cal-d.burned);
+      const eds=[{label:'Net Cal',data:nets,backgroundColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a44':n<=0?'#4a9eff44':'#ff5a5a44'),borderColor:nets.map(n=>n>0&&n<tdee?'#4cdb8a':n<=0?'#4a9eff':'#ff5a5a'),borderWidth:1.5,borderRadius:3},
+        {label:'TDEE',data:data.map(()=>tdee),type:'line',borderColor:'#f5a623',borderDash:[4,3],borderWidth:2,pointRadius:0,fill:false,tension:0}];
+      if(analyticsCompare&&compData){const pn=compData.previous.map(d=>d.cal-d.burned);eds.push({label:'Prev Net',data:pn,backgroundColor:'#88888822',borderColor:'#88888844',borderWidth:1,borderRadius:3,borderDash:[3,3],pointRadius:2});}
+      charts.c_energy=new Chart(ceel,{type:'bar',data:{labels:L,datasets:eds},options:opts()});}
+    const cwel2=document.getElementById('c_weight');
+    if(cwel2){
+      const wl=(S.weightLog||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const wLabels=wl.map(w=>w.date);
+      const wVals=wl.map(w=>w.kg);
+      charts.c_weight=new Chart(cwel2,{type:'line',data:{labels:wLabels,datasets:[{label:'Weight (kg)',data:wVals,borderColor:'#f472b6',backgroundColor:'#f472b618',tension:.3,fill:true,pointRadius:4,pointBackgroundColor:'#f472b6'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:9},boxWidth:8}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:8},maxRotation:45,maxTicksLimit:10}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}}});
+    }
+    const csel=document.getElementById('c_steps');
+    if(csel){
+      const stepsData=(S.steps||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const sLabels=stepsData.map(s=>s.date);
+      const sVals=stepsData.map(s=>s.steps);
+      if(sLabels.length){
+        charts.c_steps=new Chart(csel,{type:'bar',data:{labels:sLabels,datasets:[{label:'Steps',data:sVals,backgroundColor:'#4a9eff44',borderColor:'#4a9eff',borderWidth:1.5,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:9},boxWidth:8}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:8},maxRotation:45,maxTicksLimit:10}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}}});
+      }
+    }
   },50);
 }
 
@@ -6780,7 +7013,7 @@ function renderAnInsights(el,periodTabs){
   ${periodTabs}
   <!-- AI COACH -->
   <div class="section-title">AI Coach Insights</div>
-  ${insights.length?insights.map(i=>`<div class="insight">${i}</div>`).join(''):`<div class="insight">📊 Keep logging consistently to unlock trend-based insights.</div>`}
+  ${insights.length?insights.map(i=>`<div class="insight" style="border-left:3px solid ${i.color||'var(--primary)'};border-radius:0 8px 8px 0"><strong>${i.icon} ${i.title}</strong><br>${i.body}</div>`).join(''):`<div class="insight">📊 Keep logging consistently to unlock trend-based insights.</div>`}
 
   <!-- CORRELATIONS -->
   <div class="section-title" style="margin-top:16px">Correlations</div>
@@ -6862,7 +7095,8 @@ function renderAnGamification(el){
 
 // ── MOOD ANALYTICS ──────────────────────────────────────────
 function getAnalyticsMoodData(period){
-  const count=period==='7d'?7:period==='30d'?30:365;
+  const cfg=getAnalyticsPeriodConfig(period);
+  const count=cfg.count;
   const data=[];
   for(let i=count-1;i>=0;i--){
     const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);
@@ -6887,9 +7121,11 @@ function renderAnMood(el,periodTabs){
   const avgIntensity = allEntries.length ? Math.round(allEntries.reduce((a,e)=>a+e.intensity,0)/allEntries.length) : 0;
   const avgEnergy = allEntries.length ? Math.round(allEntries.reduce((a,e)=>a+e.energy,0)/allEntries.length) : 0;
   const todayEntry = (S.mood?.entries||[]).find(e=>e.date===getTodayStr());
+  const prevMoodData=analyticsCompare?getAnalyticsMoodData(analyticsPeriod):null;
 
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare&&prevMoodData?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+getAnalyticsPeriodLabel(analyticsPeriod)+'</strong> vs previous</span></div>'):''}
   <div class="section-title">Mood Distribution</div>
   <div class="card mb12">
     <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
@@ -6999,7 +7235,7 @@ function calcFitnessScore(){
 }
 
 function calcNutritionScore(){
-  const days=analyticsPeriod==='7d'?7:analyticsPeriod==='30d'?30:365;
+  const days=getAnalyticsPeriodConfig(analyticsPeriod).count;
   function localDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   let calHits=0,protHits=0,logDays=0;
   for(let i=0;i<days;i++){
@@ -7019,7 +7255,7 @@ function calcNutritionScore(){
 }
 
 function getMealTimingStats(){
-  const days=analyticsPeriod==='7d'?7:analyticsPeriod==='30d'?30:365;
+  const days=getAnalyticsPeriodConfig(analyticsPeriod).count;
   function localDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   const dates=[];
   for(let i=0;i<days;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);dates.push(localDs(d));}
@@ -7084,7 +7320,7 @@ function getWorkoutDaysThisWeek(){
 
 function calcRecoveryStats(){
   function localDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-  const days=analyticsPeriod==='7d'?7:analyticsPeriod==='30d'?30:365;
+  const days=getAnalyticsPeriodConfig(analyticsPeriod).count;
   const dates=[];for(let i=days-1;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);dates.push(localDs(d));}
   const workoutDates=new Set((S.workouts||[]).filter(w=>dates.includes(w.date)).map(w=>w.date));
   const restDays=dates.filter(ds=>!workoutDates.has(ds)).length;
@@ -7292,9 +7528,6 @@ function logWeight(){
   renderAnProgress(document.getElementById('an-section-content'));
 }
 
-function initCharts(data){['c1','c2','c3','c4','c5','c6'].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}}});}
-function initChartsEnhanced(data,tdee,macros){}
-
 // ════════════════════════════
 // PROFILE
 // ════════════════════════════
@@ -7439,7 +7672,7 @@ function renderProfile(el){
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Futuristic system sounds for notifications, achievements & navigation</div>
       </div>
       <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">
-        <input type="checkbox" id="sound-toggle" ${S.soundEnabled!==false?'checked':''} onchange="S.soundEnabled=this.checked;persistSave();if(this.checked)SFX.nav();" style="opacity:0;width:0;height:0">
+        <input type="checkbox" id="sound-toggle" ${S.soundEnabled!==false?'checked':''} onchange="S.soundEnabled=this.checked;persistSave();if(this.checked)SFX.nav();renderScreens();" style="opacity:0;width:0;height:0">
         <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.soundEnabled!==false?'var(--primary-dark)':'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.soundEnabled!==false?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
       </label>
     </div>
@@ -8566,33 +8799,49 @@ function aB(icon,label,val){return`<div class="card-sm" style="text-align:center
 // ════════════════════════════
 // MONTHLY / YEARLY DATA
 // ════════════════════════════
-function getAnalyticsData(period){
+function getAnalyticsPeriodConfig(period){
+  const cfg={count:7,step:1};
+  if(period==='1w'){cfg.count=7;cfg.step=1;}
+  else if(period==='2w'){cfg.count=14;cfg.step=1;}
+  else if(period==='1m'){cfg.count=30;cfg.step=1;}
+  else if(period==='3m'){cfg.count=90;cfg.step=3;}
+  else if(period==='6m'){cfg.count=180;cfg.step=7;}
+  else if(period==='1y'){cfg.count=365;cfg.step=7;}
+  else if(period==='all'){cfg.count=730;cfg.step=7;}
+  return cfg;
+}
+function getAnalyticsData(period, offsetDays){
   function localDs(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
   const days=[];
-  const count=period==='7d'?7:period==='30d'?30:365;
-  const step=period==='1y'?7:1;
-  const isYear=period==='1y';
+  const cfg=getAnalyticsPeriodConfig(period);
+  const count=cfg.count, step=cfg.step;
+  const offset=offsetDays||0;
   const totalSlots=Math.ceil(count/step);
   for(let i=totalSlots-1;i>=0;i--){
-    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i*step);
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i*step-offset);
     const ds=localDs(d);
-    const label=period==='7d'?d.toLocaleDateString([],{weekday:'short'}):d.toLocaleDateString([],{month:'short',day:'numeric'});
+    const label=period==='1w'?d.toLocaleDateString([],{weekday:'short'}):period==='2w'?d.toLocaleDateString([],{month:'short',day:'numeric'}):d.toLocaleDateString([],{month:'short',day:'numeric'});
     const slotDates=[];
     for(let j=0;j<step;j++){const dd=new Date(d);dd.setDate(dd.getDate()-j);slotDates.push(localDs(dd));}
-    let cal=0,burned=0,waterL=0,study=0,habits=0;
+    let cal=0,burned=0,waterL=0,study=0,habits=0,steps=0,screentime=0;
     slotDates.forEach(function(dds){
       cal+=S.nutrition.entries.filter(e=>e.date===dds).reduce((a,e)=>a+(e.nutrients&&e.nutrients.cal||0),0);
       burned+=(S.burned||[]).filter(e=>e.date===dds).reduce((a,e)=>a+e.calories,0);
       waterL+=(S.water.entries||[]).filter(e=>e.date===dds).reduce((a,e)=>a+e.ml,0)/1000;
       study+=(S.study.sessions||[]).filter(s=>s.date===dds).reduce((a,b)=>a+b.duration,0);
       habits+=(S.habits||[]).filter(h=>h.completedDates&&h.completedDates.includes(dds)).length;
+      const stepEntry=(S.steps||[]).find(e=>e.date===dds);
+      if(stepEntry)steps+=stepEntry.steps;
+      screentime+=(S.screenTime||{})[dds]||0;
     });
     days.push({label,ds,slotDates,
       cal:Math.round(cal),
       burned:Math.round(burned),
       water:Math.round(waterL/step*10)/10,
       study:Math.round(study),
-      habits:Math.round(habits/step*10)/10
+      habits:Math.round(habits/step*10)/10,
+      steps:Math.round(steps/step),
+      screentime:Math.round(screentime/step)
     });
   }
   return days;
@@ -8656,7 +8905,8 @@ function getAnalyticsSummary(data){
 
 function getMacroTotals(period){
   function localDs(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
-  const days=period==='7d'?7:period==='30d'?30:365;
+  const cfg=getAnalyticsPeriodConfig(period);
+  const days=cfg.count;
   const dates=[];
   for(let i=0;i<days;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);dates.push(localDs(d));}
   const entries=S.nutrition.entries.filter(e=>dates.includes(e.date));
@@ -8681,30 +8931,40 @@ function getInsights(data){
   const tdee=getTDEEfromProfile();
   const goalL=Math.round((S.water.dailyGoalMl||3000)/100)/10;
 
-  if(avgCal>0&&avgCal<tdee*0.85)ins.push(`📉 Avg calories this week (${avgCal} kcal) are well below your TDEE — ensure this is intentional.`);
-  else if(avgCal>tdee*1.15)ins.push(`⚠️ Avg calories this week (${avgCal} kcal) are above your maintenance. Adjust if cutting.`);
-  else if(avgCal>0)ins.push(`✅ Calorie average this week (${avgCal} kcal) is close to your TDEE — well balanced.`);
+  if(avgCal>0&&avgCal<tdee*0.85)ins.push({icon:'📉',title:'Low Calorie Intake',body:`Avg calories this period (${avgCal} kcal) are well below your TDEE. Ensure this is intentional — prolonged deficits can impact recovery.`,color:'var(--warning)'});
+  else if(avgCal>tdee*1.15)ins.push({icon:'⚠️',title:'Excess Calories',body:`Avg calories (${avgCal} kcal) are above maintenance. Adjust portions if cutting.`,color:'var(--danger)'});
+  else if(avgCal>0)ins.push({icon:'✅',title:'Calorie Balance',body:`Avg ${avgCal} kcal/day — well aligned with your TDEE of ${tdee} kcal.`,color:'var(--success)'});
 
-  if(avgWaterL>0&&avgWaterL<goalL*0.7)ins.push(`💧 Avg hydration this week (${avgWaterL}L) is below your ${goalL}L goal. Try drinking a glass every 2 hours.`);
-  else if(avgWaterL>=goalL)ins.push(`💧 Hydration on point! Averaging ${avgWaterL}L/day this week.`);
+  if(avgWaterL>0&&avgWaterL<goalL*0.7)ins.push({icon:'💧',title:'Low Hydration',body:`Averaging ${avgWaterL}L/day vs ${goalL}L goal. Try a glass every 2 hours.`,color:'var(--info)'});
+  else if(avgWaterL>=goalL)ins.push({icon:'💧',title:'Hydration Goal Met',body:`On track at ${avgWaterL}L/day.`,color:'var(--success)'});
 
   const habits=S.habits||[];
   const topStreak=habits.reduce((a,h)=>Math.max(a,h.streak||0),0);
   const activeStreaks=habits.filter(h=>(h.streak||0)>=3);
-  if(topStreak>=14)ins.push(`🔥 ${topStreak}-day streak! You're building a serious discipline engine.`);
-  else if(topStreak>=7)ins.push(`🔥 ${topStreak}-day streak on your best habit. Keep the chain going.`);
-  if(activeStreaks.length>=3)ins.push(`✦ ${activeStreaks.length} habits with 3+ day streaks. Momentum is building.`);
+  if(topStreak>=14)ins.push({icon:'🔥',title:'Serious Momentum',body:`${topStreak}-day streak! You're building a discipline engine.`,color:'var(--primary)'});
+  else if(topStreak>=7)ins.push({icon:'🔥',title:'Streak Going Strong',body:`${topStreak}-day streak on your best habit. Keep the chain alive.`,color:'var(--primary)'});
 
+  // Streak risk warning — habits slipping
   const last7dates=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);last7dates.push(localDs(d));}
+  const slippingHabits=habits.filter(h=>{
+    const recent=h.completedDates?last7dates.filter(d=>h.completedDates.includes(d)).length:0;
+    return (h.streak||0)>=3&&recent<2;
+  });
+  if(slippingHabits.length>0){
+    const names=slippingHabits.slice(0,2).map(h=>h.name).join(', ');
+    ins.push({icon:'⚠️',title:'Streak at Risk',body:`"${names}" ${slippingHabits.length>1?'streaks are':'streak is'} slipping — only ${last7dates.filter(d=>slippingHabits.some(h=>h.completedDates&&h.completedDates.includes(d))).length} day${last7dates.filter(d=>slippingHabits.some(h=>h.completedDates&&h.completedDates.includes(d))).length!==1?'s':''} this week. Complete today to protect your streak.`,color:'var(--danger)'});
+  }
+  if(activeStreaks.length>=3)ins.push({icon:'✦',title:'Momentum Building',body:`${activeStreaks.length} habits with 3+ day streaks.`,color:'var(--success)'});
+
   const workoutsThisWeek=new Set((S.workouts||[]).filter(w=>last7dates.includes(w.date)).map(w=>w.date)).size;
-  if(workoutsThisWeek>=4)ins.push(`🏋️ ${workoutsThisWeek} active days this week — excellent consistency.`);
-  else if(workoutsThisWeek===0&&last7WithCal.length>2)ins.push(`🏃 No workouts logged this week. Even a 20-min walk counts.`);
+  if(workoutsThisWeek>=4)ins.push({icon:'🏋️',title:'Training Consistency',body:`${workoutsThisWeek} active training days this week.`,color:'var(--success)'});
+  else if(workoutsThisWeek===0&&last7WithCal.length>2)ins.push({icon:'🏃',title:'No Workouts Logged',body:'Even a 20-min walk counts. Progress is built one day at a time.',color:'var(--warning)'});
 
   const studyThisWeek=(S.study.sessions||[]).filter(s=>last7dates.includes(s.date)).reduce((a,b)=>a+b.duration,0);
-  if(studyThisWeek>=300)ins.push(`📚 ${Math.round(studyThisWeek/60*10)/10}h of focused work this week — great output.`);
+  if(studyThisWeek>=300)ins.push({icon:'📚',title:'Focused Mind',body:`${Math.round(studyThisWeek/60*10)/10}h of focused work this week.`,color:'var(--info)'});
 
   const nut=todayNutrition();
-  if(nut.protein>0&&nut.protein<(S.nutrition.dailyGoal.protein||150)*0.5)ins.push(`🥩 Protein low today (${nut.protein}g). Aim for ${S.nutrition.dailyGoal.protein||150}g daily.`);
+  if(nut.protein>0&&nut.protein<(S.nutrition.dailyGoal.protein||150)*0.5)ins.push({icon:'🥩',title:'Low Protein Today',body:`${nut.protein}g of ${S.nutrition.dailyGoal.protein||150}g goal. Try adding eggs or legumes.`,color:'var(--info)'});
 
   return ins;
 }
@@ -9702,16 +9962,133 @@ function getDetailedCard(){
 }
 
 // ════════════════════════════════════════════════════
+// ZIP UTILITIES — lightweight store-method ZIP creator/parser
+// ════════════════════════════════════════════════════
+function makeZip(files){
+  var localHeaders=[], centralEntries=[], offset=0;
+  for(var name in files){
+    var data=typeof files[name]==='string'?new TextEncoder().encode(files[name]):new Uint8Array(files[name]);
+    var crc=crc32(data);
+    var compSize=data.byteLength, uncompSize=data.byteLength;
+    var nameBytes=new TextEncoder().encode(name);
+    // Local file header
+    var lh=new ArrayBuffer(30+nameBytes.byteLength);
+    var lv=new DataView(lh);
+    lv.setUint32(0,0x04034b50,true); // signature
+    lv.setUint16(4,20,true); // version needed
+    lv.setUint16(6,0,true); // flags
+    lv.setUint16(8,0,true); // compression: stored
+    lv.setUint16(10,0,true); // mod time
+    lv.setUint16(12,0,true); // mod date
+    lv.setUint32(14,crc,true);
+    lv.setUint32(18,compSize,true);
+    lv.setUint32(22,uncompSize,true);
+    lv.setUint16(26,nameBytes.byteLength,true);
+    lv.setUint16(28,0,true); // extra field length
+    new Uint8Array(lh,30).set(nameBytes);
+    localHeaders.push({bytes:lh,offset:offset,size:30+nameBytes.byteLength+data.byteLength});
+    // Central directory entry
+    var ce=new ArrayBuffer(46+nameBytes.byteLength);
+    var cv=new DataView(ce);
+    cv.setUint32(0,0x02014b50,true);
+    cv.setUint16(4,20,true);
+    cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true);
+    cv.setUint16(10,0,true);
+    cv.setUint16(12,0,true);
+    cv.setUint16(14,0,true);
+    cv.setUint32(16,crc,true);
+    cv.setUint32(20,compSize,true);
+    cv.setUint32(24,uncompSize,true);
+    cv.setUint16(28,nameBytes.byteLength,true);
+    cv.setUint16(30,0,true);
+    cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true);
+    cv.setUint16(36,0,true);
+    cv.setUint32(38,0,true); // external attrs
+    cv.setUint32(42,offset,true); // local header offset
+    new Uint8Array(ce,46).set(nameBytes);
+    centralEntries.push(ce);
+    offset+=30+nameBytes.byteLength+data.byteLength;
+  }
+  // Combine: all local headers+data, then central directory, then EOCD
+  var totalLocal=localHeaders.reduce(function(a,h){return a+h.size;},0);
+  var totalCentral=centralEntries.reduce(function(a,c){return a+c.byteLength;},0);
+  var zipLen=totalLocal+totalCentral+22;
+  var zip=new Uint8Array(zipLen);
+  var pos=0;
+  localHeaders.forEach(function(h,i){
+    zip.set(new Uint8Array(h.bytes),pos); pos+=h.bytes.byteLength;
+    var name=Object.keys(files)[i];
+    var data=typeof files[name]==='string'?new TextEncoder().encode(files[name]):new Uint8Array(files[name]);
+    zip.set(data,pos); pos+=data.byteLength;
+  });
+  centralEntries.forEach(function(ce){
+    zip.set(new Uint8Array(ce),pos); pos+=ce.byteLength;
+  });
+  // EOCD
+  var eocd=new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0,0x06054b50,true);
+  eocd.setUint16(4,0,true);
+  eocd.setUint16(6,0,true);
+  eocd.setUint16(8,centralEntries.length,true);
+  eocd.setUint16(10,centralEntries.length,true);
+  eocd.setUint32(12,totalCentral,true);
+  eocd.setUint32(16,totalLocal,true);
+  eocd.setUint16(20,0,true);
+  zip.set(new Uint8Array(eocd.buffer),pos);
+  return zip.buffer;
+}
+function crc32(data){
+  var table=crc32.table||(crc32.table=function(){
+    var t=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1?0xEDB88320^c>>>1:c>>>1);t[n]=c;}return t;
+  }());
+  var crc=0xFFFFFFFF;
+  for(var i=0;i<data.length;i++)crc=table[(crc^data[i])&0xFF]^(crc>>>8);
+  return (crc^0xFFFFFFFF)>>>0;
+}
+function parseZip(buf){
+  var bytes=new Uint8Array(buf);
+  var pos=bytes.length-22;
+  // Find EOCD signature
+  while(pos>=0&&!(bytes[pos]==0x50&&bytes[pos+1]==0x4B&&bytes[pos+2]==0x05&&bytes[pos+3]==0x06))pos--;
+  if(pos<0)return null;
+  var cdOffset=(bytes[pos+16]|bytes[pos+17]<<8|bytes[pos+18]<<16|bytes[pos+19]<<24);
+  var cdEntries=(bytes[pos+10]|bytes[pos+11]<<8);
+  var result={};
+  var cdPos=cdOffset;
+  for(var e=0;e<cdEntries;e++){
+    var sig=bytes[cdPos]|bytes[cdPos+1]<<8|bytes[cdPos+2]<<16|bytes[cdPos+3]<<24;
+    if(sig!==0x02014b50)break;
+    var nameLen=bytes[cdPos+28]|bytes[cdPos+29]<<8;
+    var extraLen=bytes[cdPos+30]|bytes[cdPos+31]<<8;
+    var commentLen=bytes[cdPos+32]|bytes[cdPos+33]<<8;
+    var compSize=bytes[cdPos+20]|bytes[cdPos+21]<<8|bytes[cdPos+22]<<16|bytes[cdPos+23]<<24;
+    var uncompSize=bytes[cdPos+24]|bytes[cdPos+25]<<8|bytes[cdPos+26]<<16|bytes[cdPos+27]<<24;
+    var localOffset=bytes[cdPos+42]|bytes[cdPos+43]<<8|bytes[cdPos+44]<<16|bytes[cdPos+45]<<24;
+    var name='';
+    for(var ni=0;ni<nameLen;ni++)name+=String.fromCharCode(bytes[cdPos+46+ni]);
+    // Find local file header and read file data
+    var lhPos=localOffset;
+    var lhNameLen=bytes[lhPos+26]|bytes[lhPos+27]<<8;
+    var lhExtraLen=bytes[lhPos+28]|bytes[lhPos+29]<<8;
+    var dataStart=lhPos+30+lhNameLen+lhExtraLen;
+    var fileData=bytes.slice(dataStart,dataStart+compSize);
+    result[name]=fileData;
+    cdPos+=46+nameLen+extraLen+commentLen;
+  }
+  return result;
+}
+
+// ════════════════════════════════════════════════════
 // IMPORT DATA - works on both browser and Android
 // ════════════════════════════════════════════════════
 function importData(){
-  // Try to use a persistent hidden input (more reliable on iOS/browser)
   var existing=document.getElementById('zenfit-import-inp');
   if(existing){existing.click();return;}
-  // Create fresh input each time as fallback
   var inp=document.createElement('input');
   inp.type='file';
-  inp.accept='.json,application/json,text/plain';
+  inp.accept='.json,.zip,application/json,application/zip';
   inp.style.cssText='position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px';
   inp.id='zenfit-import-inp';
   inp.onchange=function(e){
@@ -9720,32 +10097,121 @@ function importData(){
     var reader=new FileReader();
     reader.onload=function(ev){
       try{
-        var text=ev.target.result;
-        var imported=JSON.parse(text);
-        if(!imported.player||!imported.nutrition){
+        var imported=null, profilePicBytes=null;
+        // Detect ZIP by extension or content
+        if(file.name.endsWith('.zip')){
+          var zipFiles=parseZip(ev.target.result);
+          if(!zipFiles)throw new Error('Invalid ZIP file');
+          if(!zipFiles['data.json'])throw new Error('ZIP missing data.json');
+          var text=new TextDecoder().decode(zipFiles['data.json']);
+          imported=JSON.parse(text);
+          if(zipFiles['profile.png'])profilePicBytes=zipFiles['profile.png'];
+          if(zipFiles['profile.jpg'])profilePicBytes=zipFiles['profile.jpg'];
+        } else {
+          var text=ev.target.result;
+          imported=JSON.parse(text);
+        }
+        if(!imported||!imported.player||!imported.nutrition){
           showNotif('Invalid backup file','!');
           return;
         }
-        // Schema validation — reject unknown keys, deep-validate types
-        var cleaned=validateAndMergeData(imported,defaultState());
-        // Preserve current device ID and peer ID (don't restore from backup)
-        cleaned.deviceId=S.deviceId;
-        cleaned.peerId=S.peerId;
-        S=cleaned;
-        persistSave();
-        renderScreens();
-        showNotif('Data restored! Welcome back, '+imported.player.name+'!','OK');
+        // Normalize legacy backup format: todos.tasks → tasks flat array
+        if(imported.todos&&Array.isArray(imported.todos.tasks)){
+          if(!Array.isArray(imported.tasks))imported.tasks=imported.todos.tasks;
+          delete imported.todos;
+        }
+        // Chronological merge: merge imported data into current state,
+        // keeping the newer version for each data point
+        var merged=chronologicalMerge(S,imported);
+        merged.deviceId=S.deviceId;
+        merged.peerId=S.peerId;
+        // Store profile picture if included in ZIP
+        if(profilePicBytes&&profilePicBytes.length>0){
+          var blob=new Blob([profilePicBytes],{type:'image/png'});
+          var picReader=new FileReader();
+          picReader.onload=function(){
+            merged.profilePic=picReader.result;
+            finalizeImport(merged,imported);
+          };
+          picReader.readAsDataURL(blob);
+          return;
+        }
+        finalizeImport(merged,imported);
       }catch(err){
         showNotif('Import failed: '+err.message,'!');
       }
-      // Reset input so same file can be imported again
       inp.value='';
     };
     reader.onerror=function(){showNotif('Could not read file','!');};
-    reader.readAsText(file);
+    if(file.name.endsWith('.zip'))reader.readAsArrayBuffer(file);
+    else reader.readAsText(file);
   };
   document.body.appendChild(inp);
   inp.click();
+}
+function finalizeImport(merged,imported){
+  S=merged;
+  persistSave();
+  renderScreens();
+  showNotif('Data restored! Welcome back, '+imported.player.name+'!','OK');
+}
+function chronologicalMerge(existing,incoming){
+  // Start with existing data, then merge incoming
+  var result=JSON.parse(JSON.stringify(existing));
+  // Merge player stats — keep whichever has more XP
+  if(incoming.player&&(incoming.player.xp||0)>(result.player.xp||0)){
+    result.player=JSON.parse(JSON.stringify(incoming.player));
+  }
+  // Merge profile fields & profilePic — incoming overwrites (user importing own data)
+  if(incoming.profile)result.profile=JSON.parse(JSON.stringify(incoming.profile));
+  if(incoming.profilePic)result.profilePic=incoming.profilePic;
+  // Merge fields that grow: entries, sessions, logs — union with dedup by date
+  var dateFields={
+    nutrition:'entries',water:'entries',workouts:'',burned:'',habits:'',
+    tasks:'',steps:'',weightLog:'',mood:'entries',study:'sessions',
+    zen:'sessions',restDays:''
+  };
+  Object.keys(dateFields).forEach(function(key){
+    var subKey=dateFields[key];
+    var existingArr=subKey?(result[key]||{})[subKey]||[]:result[key]||[];
+    var incomingArr=subKey?(incoming[key]||{})[subKey]||[]:incoming[key]||[];
+    if(!incomingArr.length)return;
+    if(key==='zen'){incomingArr=(incoming.zen&&incoming.zen.sessions)||incoming.zenSessions||[];subKey='sessions';}
+    if(key==='mood'){incomingArr=(incoming.mood&&incoming.mood.entries)||[];subKey='entries';}
+    // Merge: add entries not already present (dedup by date+id)
+    var existingSet=new Set(existingArr.map(function(e){return e.date+(e.id||'')+((e.name||e.food||e.mood||e.activity)||'')}));
+    incomingArr.forEach(function(entry){
+      var sig=entry.date+(entry.id||'')+((entry.name||entry.food||entry.mood||entry.activity)||'');
+      if(!existingSet.has(sig)){
+        existingArr.push(entry);
+        existingSet.add(sig);
+      }
+    });
+    // Sort by date
+    existingArr.sort(function(a,b){return(a.date||'').localeCompare(b.date||'')});
+    if(subKey){
+      if(!result[key])result[key]={};
+      result[key][subKey]=existingArr;
+    } else {
+      result[key]=existingArr;
+    }
+  });
+  // Merge simple numeric accumulators — take the max
+  ['questsDoneTotal'].forEach(function(k){
+    if((incoming[k]||0)>(result[k]||0))result[k]=incoming[k];
+  });
+  // Merge achievements and challenges — union by id
+  ['achievements','challenges','customFoods','workoutPlans','plans','mealPlans'].forEach(function(k){
+    var ex=(result[k]||[]).slice();
+    var inArr=incoming[k]||[];
+    var exSet=new Set(ex.map(function(e){return e.id||JSON.stringify(e)}));
+    inArr.forEach(function(e){
+      var sig=e.id||JSON.stringify(e);
+      if(!exSet.has(sig)){ex.push(e);exSet.add(sig);}
+    });
+    result[k]=ex;
+  });
+  return result;
 }
 
 // EXPORT OPTIONS MENU
@@ -9768,7 +10234,18 @@ function showExportOptions(){
   var methodsContainer = document.createElement('div');
   methodsContainer.style.cssText = 'display:flex;flex-direction:column;gap:10px';
   
-  // METHOD 1: Manual Export
+  // METHOD 1: ZIP Export (Recommended)
+  var btn0 = document.createElement('button');
+  btn0.style.cssText = 'padding:14px;background:#0a2a1a;border:2px solid #4cdb8a;border-radius:10px;color:#4cdb8a;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
+  btn0.innerHTML = '<div style="font-size:16px;margin-bottom:4px">📦 ZIP Backup <span style="font-size:9px;background:#4cdb8a22;padding:2px 6px;border-radius:4px;color:#4cdb8a">Recommended</span></div><div style="font-size:11px;color:#2a9a5a">Includes data.json + profile picture + metadata</div>';
+  btn0.onmouseover = function(){ this.style.background='#0f3a2a'; this.style.borderColor='#5aec9a'; };
+  btn0.onmouseout = function(){ this.style.background='#0a2a1a'; this.style.borderColor='#4cdb8a'; };
+  btn0.onclick = function(){
+    overlay.remove();
+    exportDataZip();
+  };
+  
+  // METHOD 2: Manual Export
   var btn1 = document.createElement('button');
   btn1.style.cssText = 'padding:14px;background:var(--bg-overlay,#2a3050);border:2px solid var(--border-mid,#3a4070);border-radius:10px;color:var(--text-primary,#e2e8f8);cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
   btn1.innerHTML = '<div style="font-size:16px;margin-bottom:4px">📋 Manual Export</div><div style="font-size:11px;color:var(--text-muted,#8a94b8)">Copy & paste the data</div>';
@@ -9779,7 +10256,7 @@ function showExportOptions(){
     exportDataFileManual();
   };
   
-  // METHOD 2: Browser Export
+  // METHOD 3: Browser Export
   var btn2 = document.createElement('button');
   btn2.style.cssText = 'padding:14px;background:#2a3050;border:2px solid #3a4070;border-radius:10px;color:#e2e8f8;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
   btn2.innerHTML = '<div style="font-size:16px;margin-bottom:4px">🌐 Browser Export</div><div style="font-size:11px;color:#8a94b8">Use old method (if it works)</div>';
@@ -9790,20 +10267,9 @@ function showExportOptions(){
     exportDataFileBrowser();
   };
   
-  // METHOD 3: Android Export
-  var btn3 = document.createElement('button');
-  btn3.style.cssText = 'padding:14px;background:#0a3d1a;border:2px solid #0f5a2a;border-radius:10px;color:#4cdb8a;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
-  btn3.innerHTML = '<div style="font-size:16px;margin-bottom:4px">🤖 Android Export</div><div style="font-size:11px;color:#2a9a5a">New method for AppSGeyser app</div>';
-  btn3.onmouseover = function(){ this.style.background='#0f5a2a'; this.style.borderColor='#1a7a3a'; };
-  btn3.onmouseout = function(){ this.style.background='#0a3d1a'; this.style.borderColor='#0f5a2a'; };
-  btn3.onclick = function(){
-    overlay.remove();
-    exportDataFileAndroid();
-  };
-  
+  methodsContainer.appendChild(btn0);
   methodsContainer.appendChild(btn1);
   methodsContainer.appendChild(btn2);
-  methodsContainer.appendChild(btn3);
   
   var closeBtn = document.createElement('button');
   closeBtn.style.cssText = 'margin-top:16px;width:100%;padding:10px;background:#2a3050;border:1px solid #3a4070;border-radius:8px;color:#8a94b8;cursor:pointer;font-size:12px';
@@ -9892,26 +10358,52 @@ function exportDataFileBrowser(){
   }
 }
 
-// METHOD 3: ANDROID EXPORT (Uses Blob download directly — no URL query string)
-function exportDataFileAndroid(){
+// METHOD 3: ZIP EXPORT (data.json + profile.png + metadata.json)
+function exportDataZip(){
   try{
-    var json = JSON.stringify(S, null, 2);
-    var blob = new Blob([json], {type:'application/json'});
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'zenfit_backup_' + getTodayStr() + '.json';
+    var files={};
+    files['data.json']=JSON.stringify(S, null, 2);
+    files['metadata.json']=JSON.stringify({
+      exportDate:getTodayStr(),
+      exportTs:Date.now(),
+      appVersion:APP_VERSION,
+      build:APP_BUILD,
+      playerName:S.player.name,
+      playerLevel:S.player.level,
+      playerRank:S.player.rank
+    }, null, 2);
+    // Include profile picture if available
+    if(S.profilePic){
+      var picData=dataUriToBytes(S.profilePic);
+      if(picData)files['profile.png']=picData;
+    }
+    var zipBuf=makeZip(files);
+    var blob=new Blob([zipBuf],{type:'application/zip'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='zenfit_backup_' + getTodayStr() + '.zip';
     document.body.appendChild(a);
     a.click();
     setTimeout(function(){
       try{document.body.removeChild(a);}catch(e){}
       URL.revokeObjectURL(url);
-    }, 1000);
-    showNotif('Download started!', 'OK');
+    },1000);
+    showNotif('ZIP backup downloaded! Contains data.json + profile.','📦');
   }catch(err){
-    showNotif('Export error: ' + err.message, '!');
-    exportDataFileManual();
+    showNotif('ZIP export failed: '+err.message,'!');
+    exportDataFileBrowser();
   }
+}
+function dataUriToBytes(dataUri){
+  if(!dataUri)return null;
+  var comma=dataUri.indexOf(',');
+  if(comma<0)return null;
+  var base64=dataUri.slice(comma+1);
+  var binary=atob(base64);
+  var bytes=new Uint8Array(binary.length);
+  for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+  return bytes;
 }
 
 // Keep old exportDataFile as alias
@@ -10179,6 +10671,7 @@ function requestNotifPermission(){
 }
 
 function fireLocalNotif(title,body){
+  if(typeof S!=='undefined'&&S.notificationsEnabled===false)return;
   if(!('Notification' in window)||Notification.permission!=='granted')return;
    if(navigator.serviceWorker&&navigator.serviceWorker.controller){
      navigator.serviceWorker.controller.postMessage({
@@ -10285,7 +10778,14 @@ function renderNotifSettings(containerId){
   var studyHour=String((ns.study&&ns.study.hour)||20);
   var streakOn=!!(ns.streak&&ns.streak.enabled);
   var streakHour=String((ns.streak&&ns.streak.hour)||21);
-  var html='<div class="section-title">[ LOCAL REMINDERS ]</div>';
+  var notifMaster=typeof S!=='undefined'&&S.notificationsEnabled!==false;
+  var html='<div class="section-title">[ LOCAL REMINDERS ]</div>'+
+    '<div class="card-sm mb8" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px">'+
+    '<div><div style="font-size:13px;font-weight:600">🔔 OS Notifications</div><div style="font-size:10px;color:var(--text-muted)">Master toggle for system alerts</div></div>'+
+    '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0">'+
+    '<input type="checkbox" '+(notifMaster?'checked':'')+' onchange="S.notificationsEnabled=this.checked;persistSave();if(this.checked)initNotifications();else clearAllNotifTimers();renderNotifSettings(\'notif-settings-box\')" style="opacity:0;width:0;height:0">'+
+    '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(notifMaster?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:20px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:\'\';height:16px;width:16px;left:'+(notifMaster?'19px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>'+
+    '</label></div>';
   if(perm==='default'){
     html+='<div class="notif-perm-banner">'+
       '<span style="font-size:20px">🔔</span>'+
@@ -10296,7 +10796,7 @@ function renderNotifSettings(containerId){
       '<button class="btn btn-primary btn-sm" onclick="requestNotifAndSubscribe().then(function(ok){if(ok){initNotifications();renderNotifSettings(\'notif-settings-box\');}})">Enable</button>'+
     '</div>';
   }
-  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  html+='<div style="display:flex;flex-direction:column;gap:10px;'+(notifMaster?'':'opacity:.4;pointer-events:none')+'">';
   // Water
   html+='<div class="card-sm"><div class="flex-between mb8">'+
     '<div><div style="font-size:13px;font-weight:600">💧 Water Reminders</div><div style="font-size:11px;color:var(--text-muted)">Periodic hydration nudges</div></div>'+
@@ -10345,7 +10845,7 @@ function renderNotifSettings(containerId){
 function getZenSessions(){return S.zen?.sessions||S.zenSessions||[];}
 function renderAnMind(el,periodTabs){
   const data=getAnalyticsData(analyticsPeriod);
-  const periodLabel=analyticsPeriod==='7d'?'7 Days':analyticsPeriod==='30d'?'30 Days':'12 Months';
+  const periodLabel=getAnalyticsPeriodLabel(analyticsPeriod);
   const zenSessions=getZenSessions();
   const sessionCount=zenSessions.length;
   const totalMinutes=zenSessions.reduce((s,z)=>s+(z.minutes||z.duration||0),0);
@@ -10353,9 +10853,8 @@ function renderAnMind(el,periodTabs){
   const recent=zenSessions.filter(z=>{
     const d=new Date(z.date);
     const n=new Date();
-    if(analyticsPeriod==='7d')return n-d<=7*864e5;
-    if(analyticsPeriod==='30d')return n-d<=30*864e5;
-    return true;
+    const cfg=getAnalyticsPeriodConfig(analyticsPeriod);
+    return n-d<=cfg.count*864e5;
   });
   const recentCount=recent.length;
   const daysTracked=new Set(recent.map(z=>z.date)).size;
@@ -10363,6 +10862,7 @@ function renderAnMind(el,periodTabs){
 
   el.innerHTML=`
   ${periodTabs}
+  ${analyticsCompare?('<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 10px;background:var(--bg-overlay);border-radius:8px"><span>📊 <strong>'+periodLabel+'</strong> vs previous</span></div>'):''}
   <div class="section-title">Mindfulness Summary</div>
   <div class="card mb12" style="display:flex;align-items:center;gap:14px;padding:14px">
     <div style="position:relative;width:80px;height:80px;flex-shrink:0">
@@ -10391,6 +10891,18 @@ function renderAnMind(el,periodTabs){
     <div class="card-sm" style="text-align:center;padding:10px"><div style="font-size:20px;font-weight:700;font-family:var(--font-display);color:#4a9eff">${streak}</div><div style="font-size:10px;color:var(--text-muted)">Day Streak</div></div>
   </div>
 
+  <div class="section-title">Study Progress — ${periodLabel}</div>
+  <div class="card mb12" style="${(S.study.sessions||[]).length?'padding:6px':'text-align:center;padding:16px'}">
+    ${(S.study.sessions||[]).length?('<div style="position:relative;height:160px"><canvas id="c_study"></canvas></div>'):
+    '<div><div style="font-size:24px;margin-bottom:8px">📚</div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">No study sessions yet</div><div style="font-size:11px;color:var(--text-muted)">Log study time in the Mind tab</div></div>'}
+  </div>
+
+  <div class="section-title">Screen Time — ${periodLabel}</div>
+  <div class="card mb12" style="${Object.keys(S.screenTime||{}).length?'padding:6px':'text-align:center;padding:16px'}">
+    ${Object.keys(S.screenTime||{}).length?('<div style="position:relative;height:160px"><canvas id="c_screentime"></canvas></div>'):
+    '<div><div style="font-size:24px;margin-bottom:8px">📱</div><div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">No screen time data yet</div><div style="font-size:11px;color:var(--text-muted)">Screen time is auto-tracked while you browse</div></div>'}
+  </div>
+
   <div class="section-title">Sound Preferences</div>
   <div class="card mb12" style="padding:12px">
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Your most used zen ambient sounds</div>
@@ -10400,13 +10912,31 @@ function renderAnMind(el,periodTabs){
   </div>`;
 
   setTimeout(()=>{
-    if(charts.c_zen){try{charts.c_zen.destroy();}catch(e){}}
+    ['c_zen','c_study','c_screentime'].forEach(id=>{if(charts[id]){try{charts[id].destroy();}catch(e){}}});
+    const L=data.map(d=>d.label);
+    const opts=()=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10},boxWidth:10}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}});
     const czen=document.getElementById('c_zen');
-    if(!czen)return;
-    const labels=recent.length?recent.map(z=>z.date):[];
-    const values=recent.length?recent.map(z=>z.minutes||z.duration||0):[];
-    if(!labels.length){czen.parentElement.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Complete zen sessions to see your mindfulness trends.</div>';return;}
-    charts.c_zen=new Chart(czen,{type:'bar',data:{labels,datasets:[{label:'Minutes',data:values,backgroundColor:'rgba(123,94,255,.4)',borderColor:'#7B5EFF',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8a94b8',font:{size:10}}}},scales:{x:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9},maxRotation:45}},y:{grid:{color:'#2a305022'},ticks:{color:'#8a94b8',font:{size:9}}}}}});
+    if(czen){
+      const labels=recent.length?recent.map(z=>z.date):[];
+      const values=recent.length?recent.map(z=>z.minutes||z.duration||0):[];
+      if(labels.length){
+        charts.c_zen=new Chart(czen,{type:'bar',data:{labels,datasets:[{label:'Minutes',data:values,backgroundColor:'rgba(123,94,255,.4)',borderColor:'#7B5EFF',borderWidth:1.5,borderRadius:4}]},options:opts()});
+      }else{czen.parentElement.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Complete zen sessions to see your mindfulness trends.</div>';}
+    }
+    const csel=document.getElementById('c_study');
+    if(csel){
+      const studyData=data.map(d=>({label:d.label,study:d.study}));
+      if(studyData.some(s=>s.study>0)){
+        charts.c_study=new Chart(csel,{type:'bar',data:{labels:studyData.map(s=>s.label),datasets:[{label:'Study (min)',data:studyData.map(s=>s.study),backgroundColor:'#4a9eff44',borderColor:'#4a9eff',borderWidth:1.5,borderRadius:3}]},options:opts()});
+      }else{csel.parentElement.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Log study sessions to see your study trends.</div>';}
+    }
+    const cstel=document.getElementById('c_screentime');
+    if(cstel){
+      const stData=data.map(d=>({label:d.label,mins:d.screentime}));
+      if(stData.some(s=>s.mins>0)){
+        charts.c_screentime=new Chart(cstel,{type:'bar',data:{labels:stData.map(s=>s.label),datasets:[{label:'Screen Time (min)',data:stData.map(s=>s.mins),backgroundColor:'#ff5a5a33',borderColor:'#ff5a5a',borderWidth:1.5,borderRadius:3}]},options:opts()});
+      }else{cstel.parentElement.innerHTML='<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Screen time data will appear here as you browse.</div>';}
+    }
   },50);
 }
 function calcZenStreak(){
@@ -10433,8 +10963,15 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.2.3';
-var CHANGELOG_ENTRIES=[	
+var CHANGELOG_VERSION='v8.3.1';
+var CHANGELOG_ENTRIES=[
+  'v8.3.1 Analytics update and new import export implemented and some minor bugs ',
+  'v8.3.0 Android export removed — streamlined export modal with ZIP + Manual + Browser methods only',
+  'v8.3.0 New Habits analytics subtab — habit completion trends, per-habit breakdown with streaks and totals, weekly comparison stats',
+  'v8.3.0 Health analytics — weight progression chart and daily steps chart added to the health subtab',
+  'v8.3.0 Mind analytics — study progress and screen time tracking charts added to the mind subtab',
+  'v8.3.0 Overview streamlined — water/habits charts moved to dedicated Health/Habits subtabs; Overview now focuses on calories and fitness score',
+  'v8.3.0 Data version bumped to v5 with migration for steps array',
   'v8.2.3 Mood block redesigned — 10 emotions in grid layout with intensity (1-10) and energy (1-10) sliders via popup chain, animated gradient-filled sliders, screen-lock while logging',
   'v8.2.3 Mood Analytics now shows Intensity & Energy averages with animated colored bars, today\'s mood preview with per-dimension bars, and I/E badges on recent mood cells',
   'v8.2.3 Profile tab — Sugar goal now correctly displays "25g" in recommended macros (was showing "undefined g")',
@@ -10547,7 +11084,7 @@ function logMood(mood){
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How intense was this feeling?</div>
     <div style="position:relative;padding:0 8px">
       <input type="range" min="1" max="10" value="5" step="1" id="mood-int-slider"
-        class="mood-slider" style="background:linear-gradient(to right,${mc}88,#333 44%,#333)">
+        class="mood-slider" style="background:linear-gradient(to right,var(--slider-color,#888) var(--slider-pct,44%),#333 var(--slider-pct,44%))">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
         <span>Mild</span><span id="mood-int-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>Intense</span>
       </div>
@@ -10559,20 +11096,16 @@ function logMood(mood){
   </div>`;
   document.body.appendChild(ov1);
 
-  // wire intensity slider — smooth gradient fill proportional to value
+  // wire intensity slider — CSS gradient fill via --slider-pct
   const intSl = ov1.querySelector('#mood-int-slider');
   const intVal = ov1.querySelector('#mood-int-val');
   function updateIntSlider(){
     const v = +intSl.value;
     const pct = ((v-1)/9)*100;
     intVal.textContent = v;
-    const hex=mc.replace('#','');
-    const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
-    const fill=`linear-gradient(to right,rgba(${r},${g},${b},.35) 0%,rgba(${r},${g},${b},.75) ${pct*.6}%,${mc} ${pct}%,#333 ${pct}%,#333 100%)`;
-    intSl.style.background=fill;
-    intSl.style.setProperty('--slider-bg',fill);
-    intSl.style.setProperty('--primary',mc);
+    intSl.style.setProperty('--slider-pct', pct+'%');
   }
+  intSl.style.setProperty('--slider-color', mc);
   intSl.addEventListener('input', updateIntSlider);
   updateIntSlider();
 
@@ -10588,7 +11121,7 @@ function logMood(mood){
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How's your energy level?</div>
       <div style="position:relative;padding:0 8px">
         <input type="range" min="1" max="10" value="5" step="1" id="mood-en-slider"
-          class="mood-slider" style="background:linear-gradient(to right,${mc}88,#333 44%,#333)">
+          class="mood-slider" style="background:linear-gradient(to right,var(--slider-color,#888) var(--slider-pct,44%),#333 var(--slider-pct,44%))">
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
           <span>😴 Low</span><span id="mood-en-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>⚡ High</span>
         </div>
@@ -10600,20 +11133,17 @@ function logMood(mood){
     </div>`;
     document.body.appendChild(ov2);
 
-    // wire energy slider — mood-matched gradient fill
+    // wire energy slider — CSS gradient fill via --slider-pct
     const enSl = ov2.querySelector('#mood-en-slider');
     const enVal = ov2.querySelector('#mood-en-val');
-    const hex=mc.replace('#','');
-    const r=parseInt(hex.slice(0,2),16), g=parseInt(hex.slice(2,4),16), b=parseInt(hex.slice(4,6),16);
     function updateEnSlider(){
       const v=+enSl.value;
       const pct=((v-1)/9)*100;
       enVal.textContent=v;
       enVal.style.color=mc;
-      const fill=`linear-gradient(to right,rgba(${r},${g},${b},.35) 0%,rgba(${r},${g},${b},.7) ${pct*.6}%,${mc} ${pct}%,#333 ${pct}%,#333 100%)`;
-      enSl.style.background=fill;
-      enSl.style.setProperty('--slider-bg',fill);
+      enSl.style.setProperty('--slider-pct', pct+'%');
     }
+    enSl.style.setProperty('--slider-color', mc);
     enSl.addEventListener('input', updateEnSlider);
     updateEnSlider();
 
