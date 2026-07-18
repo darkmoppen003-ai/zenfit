@@ -454,224 +454,73 @@ body.home-active #bottom-nav{display:none!important}
   background:var(--primary);border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-size:12px;color:#fff;border:2px solid var(--bg-base)}
 
-/* TUTORIAL SYSTEM */
-.tutorial-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.88);
-
-  z-index: 999999;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 16px;
-
-  animation: fadeInOverlay 0.3s ease;
-
-  overflow-y: auto;
+/* ── ONBOARDING / GUIDE SYSTEM ── */
+.guide-bubble {
+  position: fixed; bottom: 86px; right: 12px; z-index: 99999;
+  display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 12px;
+  pointer-events: none; opacity: 0; transform: translateY(20px);
+  transition: opacity .4s ease, transform .4s ease;
+  max-width: min(360px,calc(100vw - 140px));
 }
-
-@keyframes fadeInOverlay {
-  from { opacity: 0; backdrop-filter: blur(0px); }
-  to { opacity: 1; backdrop-filter: blur(6px); }
+.guide-bubble.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.guide-mascot {
+  width: 125px; height: 185px; flex-shrink: 0;
+  background: url('assets/mascot/mascot.png') no-repeat center/contain;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+  animation: guideFloat 3s ease-in-out infinite;
 }
-
-.tutorial-card {
-  background: var(--tutorial-bg,linear-gradient(135deg, #13161e 0%, #1a1e2a 100%));
-  border: 2px solid var(--primary);
-  border-radius: 16px;
-  padding: 0;
-  max-width: 420px;
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8),
-              0 0 40px rgba(124, 111, 255, 0.3);
-  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+@keyframes guideFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+.guide-speech {
+  background: var(--bg-surface); border: 1px solid var(--primary);
+  border-radius: 16px; padding: 14px 16px; font-size: 13px;
+  color: var(--text-primary); line-height: 1.5; position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(124,111,255,0.2);
+  max-width: 275px; min-width: 155px;
+  margin-bottom: 28px;
 }
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.guide-speech::after {
+  content: ''; position: absolute; bottom: 28px; right: -7px;
+  width: 14px; height: 14px;
+  background: var(--bg-surface); border: 1px solid var(--primary);
+  border-left: none; border-top: none;
+  transform: rotate(-45deg);
 }
+.guide-speech .guide-btns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.guide-speech .guide-btns .btn { pointer-events: auto; font-size: 12px; padding: 6px 12px; }
 
-.tutorial-progress {
-  height: 4px;
-  background: var(--bg-overlay);
-  border-radius: 4px 4px 0 0;
-  overflow: hidden;
+.guide-spotlight {
+  position: fixed; z-index: 99997; pointer-events: none;
+  border: 2px solid var(--primary); border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0,0,0,0.6), inset 0 0 16px rgba(124,111,255,0.2);
+  animation: guidePulse 2s ease-in-out infinite;
+  transition: all .3s ease;
 }
+@keyframes guidePulse { 0%,100%{box-shadow:0 0 0 9999px rgba(0,0,0,0.6),inset 0 0 16px rgba(124,111,255,0.2)} 50%{box-shadow:0 0 0 9999px rgba(0,0,0,0.7),inset 0 0 28px rgba(124,111,255,0.4)} }
 
-.tutorial-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--primary), var(--info));
-  transition: width 0.6s ease;
-  border-radius: 4px;
+.guide-overlay {
+  position: fixed; inset: 0; z-index: 99998;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  animation: guideFadeIn .3s ease;
 }
+@keyframes guideFadeIn { from{opacity:0} to{opacity:1} }
 
-.tutorial-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid var(--border-mid);
-  position: relative;
+.guide-card {
+  position: fixed; z-index: 99999; top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  background: var(--bg-surface); border: 1px solid var(--primary);
+  border-radius: 20px; padding: 28px 24px; max-width: 380px; width: calc(100% - 32px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(124,111,255,0.2);
+  animation: guideCardIn .35s cubic-bezier(.34,1.56,.64,1);
 }
+@keyframes guideCardIn { from{opacity:0;transform:translate(-50%,-50%) scale(.85)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+.guide-card h2 { margin:0 0 4px; font-size:20px; font-weight:700 }
+.guide-card p { margin:0 0 16px; font-size:13px; color:var(--text-secondary); line-height:1.5 }
+.guide-card .guide-mascot-lg { width: 140px; height: 200px; margin: 0 auto 16px; background: url('assets/mascot/mascot.png') no-repeat center/contain; }
 
-.tutorial-icon {
-  font-size: 36px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.tutorial-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.tutorial-subtitle {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-
-.tutorial-close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
-  background: var(--bg-raised);
-  border: 1px solid var(--border-mid);
-  border-radius: 8px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  transition: all 0.2s;
-}
-
-.tutorial-close-btn:hover {
-  background: var(--bg-overlay);
-  color: var(--text-primary);
-  border-color: var(--primary);
-}
-
-.tutorial-content {
-  padding: 20px 16px;
-  min-height: 100px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tutorial-text {
-  font-size: 14px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  word-wrap: break-word;
-}
-
-.tutorial-nav {
-  padding: 16px;
-  border-top: 1px solid var(--border-mid);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tutorial-dots {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.tutorial-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border-strong);
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.tutorial-dot.active {
-  background: var(--primary);
-  width: 24px;
-  border-radius: 4px;
-}
-
-.tutorial-dot:hover {
-  background: #9b8fff;
-}
-
-.tutorial-tip {
-  padding: 10px 16px;
-  background: rgba(245, 166, 35, 0.1);
-  border-top: 1px solid rgba(245, 166, 35, 0.3);
-  font-size: 12px;
-  color: #f5a623;
-  line-height: 1.5;
-}
-
-.tutorial-highlight {
-  animation: tutorialPulse 2s ease-in-out infinite;
-}
-
-@keyframes tutorialPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.6),
-                inset 0 0 20px rgba(124,111,255,0.3);
-  }
-  50% {
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7),
-                inset 0 0 30px rgba(124,111,255,0.5);
-  }
-}
-
-@media (max-width: 500px) {
-  .tutorial-card {
-    max-width: 100%;
-    max-height: 90vh;
-    border-radius: 12px 12px 0 0;
-  }
-
-  .tutorial-header {
-    padding: 12px;
-    gap: 10px;
-  }
-
-  .tutorial-icon {
-    font-size: 28px;
-  }
-
-  .tutorial-title {
-    font-size: 14px;
-  }
-
-  .tutorial-content {
-    padding: 16px 12px;
-  }
-
-  .tutorial-text {
-    font-size: 13px;
-  }
-
-  .tutorial-nav {
-    padding: 12px;
-  }
-}
+.onboarding-field { margin-bottom: 16px; }
+.onboarding-field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-primary); }
+.onboarding-field input, .onboarding-field select { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-strong); background: var(--bg-raised); color: var(--text-primary); font-size: 14px; outline: none; }
+.onboarding-field input:focus, .onboarding-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(124,111,255,0.2); }
 
 /* ── TASKS SCREEN ── */
 .task-card{background:var(--bg-raised);border:1px solid var(--border-mid);border-radius:10px;padding:12px;margin-bottom:8px;transition:all .2s}
@@ -1855,7 +1704,7 @@ nav::-webkit-scrollbar {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.3.1</div>
+  <div class="splash-ver">v8.3.2</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1924,7 +1773,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.3.1";
+const APP_VERSION="v8.3.2";
 const APP_BUILD="2026.07.18.1";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -1966,346 +1815,512 @@ var schemaMigrations = {};
   }
 })();
 
-// TUTORIAL SYSTEM
-// ================
+// ONBOARDING & GUIDE SYSTEM
+// ==========================
 
-const TUTORIAL_STEPS = [
-  {
-    id: 'welcome',
-    title: 'Welcome to ZenFit',
-    subtitle: 'Your Health RPG Journey',
-    icon: '⚔️',
-    content: 'You are a warrior on a health mission. Every meal logged, every workout crushed, every habit built earns XP and levels you up. Train hard, climb ranks from E to S, and dominate the leaderboard.',
-    highlights: [],
-    action: 'Begin'
-  },
-  {
-    id: 'navigation',
-    title: 'Navigation',
-    subtitle: 'Getting Around',
-    icon: '🧭',
-    content: 'Use the bottom nav bar to jump between screens. Swipe left/right on any screen to quickly navigate. The Home button (top-left) returns you to the action wheel at any time.',
-    highlights: ['#bottom-nav'],
-    action: 'Next'
-  },
-  {
-    id: 'dashboard',
-    title: 'Dashboard',
-    subtitle: 'Mission Control',
-    icon: '📊',
-    content: 'Your daily command center. See your level, XP progress toward next rank, today\'s calorie balance, water intake, habit completion, and active quests — all in one place.',
-    highlights: ['screen-dashboard'],
-    action: 'Next'
-  },
-  {
-    id: 'nutrition',
-    title: 'Nutrition',
-    subtitle: 'Log Meals & Track Macros',
-    icon: '🍎',
-    content: 'Log food three ways:\n📝 Text — type "2 chapati, dal" or "200g rice, 250ml milk" for AI parsing with unit support\n📷 Barcode — scan packaged food labels\n✏️ Manual — enter calories and macros directly\n\nUse the Calculator tab to build custom dishes with ingredient-level macros and cooking adjustments. The Meal Plans tab lets you create and reuse full-day meal plans.',
-    highlights: ['screen-nutrition'],
-    action: 'Next'
-  },
-  {
-    id: 'water',
-    title: 'Hydration',
-    subtitle: 'Track Your Water',
-    icon: '💧',
-    content: 'Tap quick-add buttons (100ml–500ml) or enter a custom amount. Watch your water tank fill up as you approach your daily goal. Hit 100% for an XP bonus — stay hydrated, stay sharp.',
-    highlights: ['screen-water'],
-    action: 'Next'
-  },
-  {
-    id: 'workout',
-    title: 'Workouts',
-    subtitle: 'Log Exercises',
-    icon: '🏋️',
-    content: 'Log exercises with sets, reps, weight, and duration. Get live calorie burn estimates. Use the Plans tab to create structured workout routines and track completion over time.',
-    highlights: ['screen-workout'],
-    action: 'Next'
-  },
-  {
-    id: 'habits',
-    title: 'Habits',
-    subtitle: 'Build Daily Routines',
-    icon: '✅',
-    content: 'Create habits (meditation, reading, stretching, etc.) and check them off daily. Build streaks to earn bonus XP. View your 30-day completion heatmap to spot patterns and improve.',
-    highlights: ['screen-habits'],
-    action: 'Next'
-  },
-  {
-    id: 'tasks',
-    title: 'Tasks',
-    subtitle: 'Discipline System',
-    icon: '⚔️',
-    content: 'Create tasks with difficulty (Easy → Extreme) and optional time limits. Complete before the deadline to earn XP and boost Discipline. Miss it and lose XP. Set recurrence: daily, weekdays, alternate days, or custom schedule.',
-    highlights: ['screen-tasks'],
-    action: 'Next'
-  },
-  {
-    id: 'study',
-    title: 'Study Timer',
-    subtitle: 'Focus Sessions',
-    icon: '📚',
-    content: 'Track focused study sessions with the built-in timer. Log by subject and difficulty. Earn XP proportional to duration and difficulty — the harder the subject, the more XP.',
-    highlights: ['screen-study'],
-    action: 'Next'
-  },
-  {
-    id: 'quests',
-    title: 'Quests & Bonuses',
-    subtitle: 'Daily Missions',
-    icon: '⭐',
-    content: 'Auto-generated daily quests based on your activity — drink water, log meals, complete habits. Bonus tasks give extra XP. Each quest completed pushes you closer to the next rank.',
-    highlights: ['screen-quests'],
-    action: 'Next'
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics',
-    subtitle: 'Track Your Progress',
-    icon: '📈',
-    content: 'View 7-day, 30-day, and yearly charts across all metrics: calorie balance vs TDEE, hydration trends, habit completion rates, workout volume, and study time. Know your trends.',
-    highlights: ['screen-analytics'],
-    action: 'Next'
-  },
-  {
-    id: 'screentime',
-    title: 'Screen Time',
-    subtitle: 'Digital Wellness',
-    icon: '📱',
-    content: 'Track your daily screen time and set usage limits. Stay mindful of how much time you spend on your device. ZenFit isn\'t just about fitness — it\'s about balance.',
-    highlights: ['screen-screentime'],
-    action: 'Next'
-  },
-  {
-    id: 'profile',
-    title: 'Profile',
-    subtitle: 'Your Stats & Character',
-    icon: '👤',
-    content: 'Set your age, height, weight, activity level, and goal. Get personalized TDEE, BMI, and macro targets. Your character avatar evolves as you rank up — from E-rank recruit to S-rank legend.',
-    highlights: ['screen-profile'],
-    action: 'Next'
-  },
-  {
-    id: 'leaderboard',
-    title: 'Leaderboard',
-    subtitle: 'Connect & Compete',
-    icon: '🏆',
-    content: 'Share your P2P code with friends to connect. Compete on the global leaderboard, compare stats, and send messages. View partner profiles (public stats only) and climb the ranks together.',
-    highlights: ['screen-leaderboard'],
-    action: 'Next'
-  },
-  {
-    id: 'xp_system',
-    title: 'XP & Ranks',
-    subtitle: 'How Leveling Works',
-    icon: '⚡',
-    content: 'Earn XP from every activity — meals, workouts, water, habits, tasks, study sessions, and quests. Level up to unlock higher ranks: E → D → C → B → A → S. Each rank unlocks new character cosmetic tiers.',
-    highlights: [],
-    action: 'Next'
-  },
-  {
-    id: 'stats',
-    title: 'Core Stats',
-    subtitle: 'Build Your Warrior',
-    icon: '💪',
-    content: 'Five core stats grow as you log activities:\n💪 Strength — from workouts\n⚔️ Discipline — from completing tasks\n❤️ Health — from nutrition & water\n🏃 Endurance — from habits & consistency\n📖 Wisdom — from study sessions\n\nHigher stats unlock better character evolutions.',
-    highlights: [],
-    action: 'Next'
-  },
-  {
-    id: 'tips',
-    title: 'Pro Tips',
-    subtitle: 'Start Strong',
-    icon: '💡',
-    content: '✓ Fill out your Profile first for accurate TDEE & macros\n✓ Log meals as you eat — don\'t let them pile up\n✓ Set 3–5 daily habits you can realistically keep\n✓ Use workout plans for consistent training\n✓ Check Analytics weekly to spot trends\n✓ Connect with friends for extra motivation\n✓ Customize your bottom nav in Settings\n✓ Enable Glass Mode in Settings for the full neon experience',
-    highlights: [],
-    action: 'Complete'
+// ── State helpers ──
+function onboardingMark(key){if(!S.onboarding)S.onboarding={completed:false};S.onboarding[key]=true;persistSave();}
+function onboardingIs(key){return S.onboarding?!!S.onboarding[key]:false;}
+function onboardingComplete(){S.onboarding.completed=true;S.onboarding.welcomeSeen=true;S.onboarding.profileSetup=true;S.onboarding.navigationDone=true;persistSave();}
+
+// ── Mascot component ──
+function ensureGuide(){
+  if(document.getElementById('guide-bubble'))return;
+  var c=document.createElement('div');c.id='guide-bubble';c.className='guide-bubble';
+  c.innerHTML='<div class="guide-mascot"></div><div class="guide-speech" id="guide-speech"></div>';
+  document.body.appendChild(c);
+}
+function guideShow(){var g=document.getElementById('guide-bubble');if(g)g.classList.add('visible');}
+function guideHide(){var g=document.getElementById('guide-bubble');if(g)g.classList.remove('visible');}
+function guideRemove(){var g=document.getElementById('guide-bubble');if(g)g.remove();}
+
+function guideSay(text,buttons,dontShow){
+  ensureGuide();
+  var s=document.getElementById('guide-speech');
+  if(!s)return;
+  var btns='';
+  if(buttons&&buttons.length)btns='<div class="guide-btns">'+buttons.map(function(b){
+    var act=b.action;
+    if(typeof act==='string'&&act.indexOf('function')===0)act='('+act+')()';
+    return '<button class="btn btn-sm'+(b.primary?' btn-primary':'')+'" onclick="'+act+'">'+b.label+'</button>';
+  }).join('')+'</div>';
+  s.innerHTML='<div>'+text+'</div>'+btns;
+  if(!dontShow)guideShow();
+}
+
+function guideClear(){var s=document.getElementById('guide-speech');if(s)s.innerHTML='';}
+
+// ── Spotlight ──
+var _spotlightEl=null;
+var _spotlightTarget=null;
+function spotlightOn(selector){
+  spotlightOff();
+  var el=typeof selector==='string'?document.querySelector(selector):selector;
+  if(!el)return;
+  _spotlightTarget=el;
+  function pos(){
+    if(!_spotlightEl||!_spotlightTarget)return;
+    var r=_spotlightTarget.getBoundingClientRect();
+    _spotlightEl.style.cssText='top:'+(r.top-8)+'px;left:'+(r.left-8)+'px;width:'+(r.width+16)+'px;height:'+(r.height+16)+'px';
   }
-];
+  var s=document.createElement('div');s.className='guide-spotlight';
+  document.body.appendChild(s);_spotlightEl=s;pos();
+  // Reposition on scroll and resize for responsive support
+  window._spotlightRepos=pos;
+  window.addEventListener('scroll',pos,{passive:true});
+  window.addEventListener('resize',pos,{passive:true});
+}
+function spotlightOff(){
+  if(_spotlightEl){_spotlightEl.remove();_spotlightEl=null;}
+  _spotlightTarget=null;
+  if(window._spotlightRepos){
+    window.removeEventListener('scroll',window._spotlightRepos);
+    window.removeEventListener('resize',window._spotlightRepos);
+    window._spotlightRepos=null;
+  }
+}
 
-let tutorialStep = 0;
-let tutorialActive = false;
+// ── Overlay card ──
+function guideOverlay(html,onClose){
+  var ov=document.createElement('div');ov.className='guide-overlay';
+  ov.innerHTML='<div class="guide-card">'+html+'</div>';
+  document.body.appendChild(ov);
+  return ov;
+}
+function closeGuideOverlay(ov){if(ov)ov.remove();guideHide();}
 
-function showTutorial() {
-  if (!S.featureFlags?.tutorial_main) {
+// ═══════════════════════════════════════════
+// FIRST LAUNCH EXPERIENCE
+// ═══════════════════════════════════════════
+
+function startFirstLaunch(){
+  if(onboardingIs('completed'))return;
+  S.onboarding=S.onboarding||{completed:false};
+  showWelcomeChoice();
+}
+
+function showWelcomeChoice(){
+  var ov=guideOverlay(
+    '<div class="guide-mascot-lg"></div>'+
+    '<h2>Hi! 👋</h2><p>Welcome to ZenFit.<br>ZenFit isn\'t just another fitness tracker.<br><br>It\'s your personal companion for fitness, nutrition, productivity, mindfulness, habits, and daily growth—all in one place.<br><br>I\'ll help you get started.</p>'+
+    '<div style="display:flex;gap:10px">'+
+    '<button class="btn btn-primary btn-full" onclick="startOnboarding()" style="flex:1">I\'m New</button>'+
+    '<button class="btn btn-full" onclick="skipOnboarding()" style="flex:1">I Already Know My Way Around</button>'+
+    '</div>'
+  );
+}
+window.startOnboarding=function(){
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  onboardingMark('welcomeSeen');
+  showProfileSetup();
+}
+window.skipOnboarding=function(){
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  onboardingComplete();
+  showNotif('Onboarding skipped. Replay anytime from Profile.','OK');
+}
+
+// ═══════════════════════════════════════════
+// STEP 1 — PROFILE SETUP (one field at a time)
+// ═══════════════════════════════════════════
+
+var _profileFields=['name','age','gender','heightCm','weightKg','country','waistCm','hipCm'];
+var _profileLabels={name:'Your Name',age:'Your Age',gender:'Your Gender',heightCm:'Your Height (cm)',weightKg:'Your Weight (kg)',country:'Your Country',waistCm:'Your Waist Size (cm)',hipCm:'Your Hip Size (cm)'};
+var _profileTypes={name:'text',age:'number',gender:'select',heightCm:'number',weightKg:'number',country:'text',waistCm:'number',hipCm:'number'};
+var _profileOpts={gender:['male','female']};
+var _profileIdx=0;
+
+function showProfileSetup(){
+  _profileIdx=0;
+  S.profile=S.profile||{filled:false,name:'',age:0,gender:'male',heightCm:170,weightKg:70,activityLevel:'moderate',goal:'maintain',waistCm:0,hipCm:0,country:''};
+  renderProfileField();
+}
+function renderProfileField(){
+  if(_profileIdx>=_profileFields.length){
+    onboardingMark('profileSetup');
+    startOrbTutorial();
     return;
   }
-  
-  tutorialActive = true;
-  tutorialStep = 0;
-  renderTutorialCard();
-}
-
-function renderTutorialCard() {
-  const step = TUTORIAL_STEPS[tutorialStep];
-  if (!step) return;
-
-  const totalSteps = TUTORIAL_STEPS.length;
-  const pct = Math.round((tutorialStep / totalSteps) * 100);
-
-  let overlay = document.getElementById('tutorial-overlay');
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'tutorial-overlay';
-    overlay.className = 'tutorial-overlay';
-    document.body.appendChild(overlay);
+  var key=_profileFields[_profileIdx];
+  var val=S.profile[key];
+  var isGender=key==='gender';
+  var inputHtml;
+  if(_profileTypes[key]==='select'){
+    var opts=_profileOpts[key]||[];
+    inputHtml='<select id="pf-'+key+'">'+opts.map(function(o){return '<option value="'+o+'"'+(val===o?' selected':'')+'>'+o.charAt(0).toUpperCase()+o.slice(1)+'</option>';}).join('')+'</select>';
+  }else if(key==='country'){
+    inputHtml='<input type="text" id="pf-country" list="pf-country-list" value="'+escapeHtml(String(val||''))+'" placeholder="Search your country..." maxlength="60"><datalist id="pf-country-list">'+(typeof COUNTRY_TZ_MAP!=='undefined'?COUNTRY_TZ_MAP.map(function(c){return '<option value="'+c.code+' — '+c.name+'">'}).join(''):'')+'</datalist>';
+  }else{
+    inputHtml='<input type="'+_profileTypes[key]+'" id="pf-'+key+'" value="'+escapeHtml(String(val||''))+'" placeholder="'+_profileLabels[key]+'">';
   }
+  var ov=guideOverlay(
+    '<div style="text-align:center"><div class="guide-mascot-lg"></div></div>'+
+    '<h2 style="text-align:center">'+_profileLabels[key]+'</h2>'+
+    '<p style="text-align:center;font-size:12px">Don\'t worry — you can skip anything and fill it in later.</p>'+
+    '<div class="onboarding-field">'+inputHtml+'</div>'+
+    '<div style="display:flex;gap:10px">'+
+    '<button class="btn btn-primary btn-full" onclick="saveProfileField()" style="flex:1">Next</button>'+
+    '<button class="btn btn-full" onclick="skipProfileField()" style="flex:1">Skip</button>'+
+    '</div>'+
+    '<div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-muted)">Step '+(_profileIdx+1)+' of '+_profileFields.length+'</div>'
+  );
+  var inp=document.getElementById('pf-'+key);
+  if(inp)setTimeout(function(){inp.focus();inp.select();},100);
+}
+function saveProfileField(){
+  var key=_profileFields[_profileIdx];
+  var inp=document.getElementById('pf-'+key);
+  if(!inp)return skipProfileField();
+  var val=inp.value;
+  if(key==='country')val=val.split(' — ')[0];
+  else if(_profileTypes[key]==='number')val=parseFloat(val)||0;
+  S.profile[key]=val;
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  _profileIdx++;
+  renderProfileField();
+}
+function skipProfileField(){
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  _profileIdx++;
+  renderProfileField();
+}
+window.saveProfileField=saveProfileField;
+window.skipProfileField=skipProfileField;
 
-  overlay.innerHTML = `
-    <div class="tutorial-card">
-      <!-- Progress bar -->
-      <div class="tutorial-progress">
-        <div class="tutorial-progress-bar" style="width: ${pct}%"></div>
-      </div>
+// ═══════════════════════════════════════════
+// STEP 2a — ORB HOME INTRODUCTION
+// ═══════════════════════════════════════════
 
-      <!-- Icon & Header -->
-      <div class="tutorial-header">
-        <div class="tutorial-icon">${step.icon}</div>
-        <div>
-          <div class="tutorial-title">${step.title}</div>
-          <div class="tutorial-subtitle">${step.subtitle}</div>
-        </div>
-        <button class="tutorial-close-btn" onclick="skipTutorial()">✕</button>
-      </div>
-
-      <!-- Content -->
-      <div class="tutorial-content">
-        ${step.content.split('\n').map(line => `<div class="tutorial-text">${line}</div>`).join('')}
-      </div>
-
-      <!-- Navigation -->
-      <div class="tutorial-nav">
-        <div style="display: flex; gap: 8px; flex: 1; margin-bottom: 8px">
-          ${tutorialStep > 0 ? `<button class="btn btn-sm" onclick="prevTutorial()" style="flex: 1">← Back</button>` : ''}
-          <button class="btn btn-primary btn-sm" onclick="nextTutorial()" style="flex: ${tutorialStep > 0 ? '1' : '1'}">${step.action}</button>
-          ${step.action === 'Complete' ? `<button class="btn btn-sm" onclick="skipTutorial()" style="flex: 1">Skip</button>` : ''}
-        </div>
-        
-        <!-- Dot indicators -->
-        <div class="tutorial-dots">
-          ${TUTORIAL_STEPS.map((_, i) => `
-            <div class="tutorial-dot${i === tutorialStep ? ' active' : ''}" 
-              onclick="jumpToStep(${i})"
-              style="cursor: pointer"></div>
-          `).join('')}
-        </div>
-      </div>
-
-      <!-- Tips -->
-      ${step.id === 'welcome' ? `
-        <div class="tutorial-tip">
-          💡 <strong>Tip:</strong> You can always restart the tutorial from Settings.
-        </div>
-      ` : ''}
-    </div>
-  `;
-
-  if (step.highlights.length > 0) {
-    highlightElement(step.highlights[0]);
-  } else {
-    removeHighlight();
+function startOrbTutorial(){
+  // Wait if changelog overlay is showing — let it dismiss first
+  if(document.getElementById('changelog-overlay')){
+    setTimeout(startOrbTutorial,500);
+    return;
   }
-}
-
-function highlightElement(selector) {
-  removeHighlight();
-  const el = document.querySelector(selector);
-  if (!el) return;
-
-  const rect = el.getBoundingClientRect();
-  const highlight = document.createElement('div');
-  highlight.id = 'tutorial-highlight';
-  highlight.className = 'tutorial-highlight';
-  highlight.style.cssText = `
-    position: fixed;
-    top: ${rect.top - 10}px;
-    left: ${rect.left - 10}px;
-    width: ${rect.width + 20}px;
-    height: ${rect.height + 20}px;
-    border: 3px solid var(--primary);
-    border-radius: 12px;
-    pointer-events: none;
-    z-index: 9997;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.6),
-                inset 0 0 20px rgba(124,111,255,0.3);
-    animation: tutorialPulse 2s ease-in-out infinite;
-  `;
-  document.body.appendChild(highlight);
-}
-
-function removeHighlight() {
-  const hl = document.getElementById('tutorial-highlight');
-  if (hl) hl.remove();
-}
-
-function nextTutorial() {
-  if (tutorialStep < TUTORIAL_STEPS.length - 1) {
-    tutorialStep++;
-    renderTutorialCard();
-  } else {
-    completeTutorial();
-  }
-}
-
-function prevTutorial() {
-  if (tutorialStep > 0) {
-    tutorialStep--;
-    renderTutorialCard();
-  }
-}
-
-function jumpToStep(step) {
-  tutorialStep = step;
-  renderTutorialCard();
-}
-
-function skipTutorial() {
-  removeHighlight();
-  const overlay = document.getElementById('tutorial-overlay');
-  if (overlay) overlay.remove();
-  tutorialActive = false;
-  S.featureFlags.tutorial_main = false;
+  _navStepIdx=0;
+  _navInProgress=false;
+  S._pendingNavOnDashboard=true;
   persistSave();
+  switchScreen('home');
+  setTimeout(function(){
+    guideSay('This is your <b>Home Dashboard</b>.<br><br>Every orb takes you directly to a major feature of ZenFit.<br><br>Think of it as your personal control center.<br><br><b>Tap the center orb</b> to start exploring!',[
+      {label:'Got it!',action:'spotlightOff();guideHide()',primary:true}
+    ]);
+    spotlightOn('.aw-center3');
+  },600);
 }
 
-function completeTutorial() {
-  removeHighlight();
-  const overlay = document.getElementById('tutorial-overlay');
-  
-  overlay.innerHTML = `
-    <div class="tutorial-card" style="text-align: center">
-      <div style="font-size: 64px; margin-bottom: 16px">🎉</div>
-      <div class="tutorial-title">You're Ready, Warrior!</div>
-      <div class="tutorial-subtitle">Your journey begins now</div>
-      <div class="tutorial-content" style="margin: 20px 0">
-        <div class="tutorial-text" style="font-size: 14px; color: var(--text-secondary)">Here's your launch checklist:</div>
-        <div class="tutorial-text" style="margin-top: 12px; font-size: 13px; line-height: 2">
-          ✓ Fill out your Profile for personalized targets<br>
-          ✓ Log your first meal in Nutrition<br>
-          ✓ Record a workout or create a habit<br>
-          ✓ Check your Dashboard daily for quests<br>
-          ✓ Connect with friends on the Leaderboard
-        </div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="completeTutorialNow()" style="margin-top: 16px">Begin Your Journey →</button>
-    </div>
-  `;
+// ═══════════════════════════════════════════
+// STEP 2b — NAVIGATION TUTORIAL
+// ═══════════════════════════════════════════
+
+var _navSteps=[];
+var _navStepIdx=0;
+var _navInProgress=false;
+
+function startNavTutorial(){
+  _navStepIdx=0;
+  _navInProgress=true;
+  switchScreen('dashboard');
+  setTimeout(renderNavStep,400);
+}
+function renderNavStep(){
+  var steps=[
+    {
+      text:'You can move between major sections by <b>swiping left or right</b> anywhere on the screen.',
+      spotlight:null
+    },
+    {
+      text:'Prefer jumping directly?<br><br>Use the <b>tabs at the top</b> to instantly switch between major sections.',
+      spotlight:'#nav'
+    },
+    {
+      text:'These are your <b>Quick Shortcuts</b> at the bottom.',
+      spotlight:'#bottom-nav'
+    },
+    {
+      text:'You can completely <b>customize these shortcuts</b> by tapping the gear icon (the <b>...</b> button).<br><br>Add your favorite sections here so they\'re always one tap away.',
+      spotlight:null
+    }
+  ];
+  if(_navStepIdx>=steps.length){
+    _navInProgress=false;
+    onboardingMark('navigationDone');
+    guideSay('That\'s everything you need to know about getting around ZenFit.<br><br>Go ahead and explore.<br><br><i>I\'ll explain each feature the first time you visit it.</i>',[{label:'Got it!',action:'guideHide();spotlightOff()',primary:true}]);
+    return;
+  }
+  var s=steps[_navStepIdx];
+  if(s.spotlight)spotlightOn(s.spotlight);else spotlightOff();
+  guideSay(s.text,[{label:'Next →',action:'guideHide();spotlightOff();_navStepIdx++;renderNavStep()',primary:true}]);
+}
+window._navStepIdx=0;
+
+// ═══════════════════════════════════════════
+// MODULE TUTORIALS (context-aware, shown on first visit)
+// ═══════════════════════════════════════════
+
+var MODULE_GUIDES={
+  nutrition:{
+    title:'Nutrition',
+    intro:'This is where you\'ll track everything you eat and monitor your daily nutrition.',
+    tabs:[
+      {name:'Today',desc:'Track everything you eat today. View calories, macros, meals, and daily progress.'},
+      {name:'Calculator',desc:'Estimate nutritional values before eating or planning meals. Perfect for comparing different food options.'},
+      {name:'Meal Planner',desc:'Plan meals ahead of time to stay consistent and organized.'}
+    ],
+    nestedTabs:{Today:[
+      {name:'Text Search',desc:'Use this when you know the name of the food. Search the nutrition database.'},
+      {name:'Manual Entry',desc:'Use this for homemade meals or foods that aren\'t available in the database.'},
+      {name:'Barcode Scanner',desc:'Use this when your food has a barcode — scan it to retrieve nutritional info.'}
+    ]},
+    firstAction:'Let\'s log your first meal together!',
+    completeMsg:'🎉 Great job! Your nutrition journey has officially begun.',
+    completeFlag:'nutritionIntro',
+    firstCompleteFlag:'nutritionFirstMeal'
+  },
+  workout:{
+    title:'Workouts',
+    intro:'Your workout command center. Log exercises, track volume, and follow structured plans.',
+    tabs:[
+      {name:'Log',desc:'Quick-log exercises with sets, reps, weight, and duration. Get live calorie burn estimates.'},
+      {name:'Plans',desc:'Create and manage structured workout routines. Follow them day by day.'}
+    ],
+    firstAction:'Let\'s log your first exercise!',
+    completeMsg:'🎉 Nice! That\'s your first workout logged.',
+    completeFlag:'workoutIntro',
+    firstCompleteFlag:'workoutFirstLog'
+  },
+  water:{
+    title:'Water',
+    intro:'Track your daily water intake. Stay hydrated to stay sharp.',
+    tabs:[
+      {name:'Log',desc:'Tap quick-add buttons (100ml–500ml) or enter a custom amount. Watch your water tank fill up as you approach your daily goal.'},
+      {name:'History',desc:'View your hydration history and see how consistently you\'re hitting your goal.'}
+    ],
+    firstAction:'Let\'s log your first glass of water!',
+    completeMsg:'🎉 Hydration matters! First glass logged.',
+    completeFlag:'waterIntro',
+    firstCompleteFlag:'waterFirstGlass'
+  },
+  habits:{
+    title:'Habits',
+    intro:'Build daily routines that stick. Create habits, check them off, and build streaks.',
+    tabs:[
+      {name:'All Habits',desc:'View all your habits. Check off completed ones and track your 30-day heatmap.'},
+      {name:'New Habit',desc:'Create a new habit. Name it, set a frequency, and start building your streak.'}
+    ],
+    firstAction:'Try creating your first habit!',
+    completeMsg:'🎉 Great! Your first habit is ready to go.',
+    completeFlag:'habitIntro',
+    firstCompleteFlag:'habitFirstComplete'
+  },
+  tasks:{
+    title:'Tasks',
+    intro:'The discipline system. Create tasks with difficulty levels and time limits to earn XP.',
+    tabs:[
+      {name:'Due Today',desc:'Tasks due today with countdown timers. Complete before the deadline or lose XP.'},
+      {name:'All Tasks',desc:'Every task you\'ve created. Filter by status and manage your workload.'}
+    ],
+    firstAction:'Let\'s create your first task!',
+    completeMsg:'🎉 Task created! Discipline is the bridge between goals and accomplishment.',
+    completeFlag:'taskIntro',
+    firstCompleteFlag:'taskFirstComplete'
+  },
+  mood:{
+    title:'Mood',
+    intro:'Track how you\'re feeling. Your mood log helps you spot patterns over time.',
+    tabs:[
+      {name:'Log',desc:'Quickly log your current mood with intensity and energy levels. Add optional notes.'},
+      {name:'History',desc:'View your mood timeline and see trends at a glance.'}
+    ],
+    firstAction:'How are you feeling right now? Try logging it!',
+    completeMsg:'🎉 Mood logged! Self-awareness is the first step to growth.',
+    completeFlag:'moodIntro',
+    firstCompleteFlag:'moodFirstLog'
+  },
+  analytics:{
+    title:'Analytics',
+    intro:'Your personal analytics center. The more you use ZenFit, the more useful it becomes.',
+    tabs:[
+      {name:'Overview',desc:'A quick summary of your overall progress across all metrics.'},
+      {name:'Nutrition',desc:'Analyze calories, macros, and eating patterns over time.'},
+      {name:'Habits',desc:'Track your consistency and streaks across all habits.'},
+      {name:'Mind',desc:'Review meditation sessions, mood trends, and mental wellness.'},
+      {name:'Health',desc:'Monitor weight, body measurements, steps, and long-term physical progress.'}
+    ],
+    completeMsg:'Come back often. As your history grows, your insights become smarter and more detailed.',
+    completeFlag:'analyticsIntro'
+  },
+  zen:{
+    title:'Zen',
+    intro:'Your mindfulness space. Breathe, meditate, and find your center.',
+    tabs:[
+      {name:'Breathe',desc:'Guided breathing exercises. Choose a pattern and duration to calm your mind.'},
+      {name:'Meditate',desc:'Timed meditation sessions with ambient sounds. Focus, relax, and recharge.'},
+      {name:'History',desc:'Review your meditation sessions and track your mindfulness journey.'}
+    ],
+    firstAction:'Try your first breathing exercise!',
+    completeMsg:'🧘 Awesome! Your first meditation session is complete.',
+    completeFlag:'zenIntro',
+    firstCompleteFlag:'zenFirstMeditation'
+  },
+  profile:{
+    title:'Profile',
+    intro:'Your command center — stats, character, body metrics, and all settings in one place.',
+    tabs:[
+      {name:'Personal Info',desc:'Name, age, height, weight, gender, and fitness goals. This data powers your TDEE, BMR, recommended macros, and calorie targets — keep it accurate.'},
+      {name:'Body Analytics',desc:'BMI, BMR, TDEE, body fat estimate, and recommended macro split. All calculated live from your profile and updated as your weight changes.'},
+      {name:'Review Tutorial',desc:'Replay the full onboarding or just the navigation guide anytime.'},
+      {name:'Settings',desc:'Daily water goal, sound effects, glass mode, notifications, backup/restore, data management, and account controls.'}
+    ],
+    completeMsg:'Your profile is the engine room. Keep it updated and ZenFit works its best.',
+    completeFlag:'profileIntro'
+  },
+  dashboard:{
+    title:'Dashboard',
+    intro:'Your daily launchpad. All your key stats, recent activity, and quick-access cards in one scrollable view.',
+    tabs:[
+      {name:'Stats Section',desc:'At-a-glance stats: level, XP bar, streak, rank, and your top metrics for the day.'},
+      {name:'Quick-Access Cards',desc:'Shortcut cards to Water, Nutrition, Workout, Habits, Tasks, Mind, and more — tap any to jump straight in.'},
+      {name:'Quests Panel',desc:'Active quests and daily challenges. Complete them for bonus XP and rewards.'},
+      {name:'Activity Feed',desc:'Recent actions across all modules — mood, meals, workouts, zen sessions — at a glance.'}
+    ],
+    completeMsg:'Check your dashboard daily to stay on top of your journey.',
+    completeFlag:'dashboardIntro'
+  },
+  mind:{
+    title:'Mind',
+    intro:'Your mental wellness hub. Train focus, reduce stress, and build a healthier relationship with technology.',
+    tabs:[
+      {name:'Zen',desc:'Guided breathing exercises (Box, 4-7-8, Equal, custom) and timed meditation with ambient soundscapes.'},
+      {name:'Study',desc:'Pomodoro-style study/ focus timer. Track sessions and build deep-work streaks.'},
+      {name:'Screen Time',desc:'Set daily screen-time limits, track usage, and build healthier digital habits.'}
+    ],
+    completeMsg:'A strong mind makes everything easier. Train it daily.',
+    completeFlag:'mindIntro'
+  },
+  leaderboard:{
+    title:'Leaderboard',
+    intro:'Compete, connect, and climb. See how you stack up against friends and the world.',
+    tabs:[
+      {name:'Global',desc:'Worldwide rankings of all ZenFit users by XP and level. Opt in to appear on the board.'},
+      {name:'Friends',desc:'Add friends via invite codes, compare progress, and keep each other accountable.'},
+      {name:'Challenges',desc:'Time-limited competitive challenges with exclusive rewards for top performers.'}
+    ],
+    completeMsg:'A little friendly competition never hurt — go for the top!',
+    completeFlag:'leaderboardIntro'
+  }
+};
+
+function showModuleGuide(moduleId){
+  var cfg=MODULE_GUIDES[moduleId];
+  if(!cfg||onboardingIs(cfg.completeFlag))return;
+
+  // Build auto-advancing slideshow (no buttons, just timed messages)
+  var slides=[];
+  slides.push('<b>'+cfg.title+'</b><br><br>'+cfg.intro);
+  if(cfg.tabs&&cfg.tabs.length){
+    var tabList=cfg.tabs.map(function(t,i){return (i+1)+'. <b>'+t.name+'</b> — '+t.desc;}).join('<br>');
+    slides.push('<b>Sections:</b><br><br>'+tabList);
+  }
+  if(cfg.nestedTabs){
+    var tabName=cfg.tabs[0].name;
+    var nested=cfg.nestedTabs[tabName];
+    if(nested&&nested.length){
+      var nestList=nested.map(function(n,i){return (i+1)+'. <b>'+n.name+'</b> — '+n.desc;}).join('<br>');
+      slides.push('<b>In "'+tabName+'":</b><br><br>'+nestList);
+    }
+  }
+  if(cfg.firstAction&&!cfg._actionShown){
+    cfg._actionShown=true;
+    slides.push(cfg.firstAction);
+  }
+
+  var si=0;
+  function showSlide(){
+    if(si>=slides.length){
+      onboardingMark(cfg.completeFlag);
+      cfg._actionShown=undefined;
+      guideHide();
+      return;
+    }
+    var isLast=si>=slides.length-1;
+    var txt=slides[si].replace(/<[^>]+>/g,'');
+    var delay=Math.max(2500,Math.min(8000,txt.length*30+1500));
+    guideSay(slides[si]);
+    si++;
+    var self=this;
+    setTimeout(function(){
+      if(isLast){
+        onboardingMark(cfg.completeFlag);
+        cfg._actionShown=undefined;
+        guideHide();
+      }else{
+        showSlide();
+      }
+    },isLast?Math.max(delay,3500):delay);
+  }
+  showSlide();
 }
 
-function completeTutorialNow() {
-  skipTutorial();
-  switchScreen('profile');
-  showNotif('Let\'s set up your profile!', 'OK');
+// ── Hook into screen switches for module tutorials ──
+function initModuleGuideHooks(){
+  var orig=window.switchScreen;
+  if(!orig)return;
+  window.switchScreen=function(id){
+    orig(id);
+    // Handle orb → dashboard nav: start nav tutorial
+    if(id==='dashboard'&&S._pendingNavOnDashboard){
+      S._pendingNavOnDashboard=false;
+      persistSave();
+      setTimeout(function(){spotlightOff();startNavTutorial();},400);
+      return;
+    }
+    // Block module tutorials during navigation phase
+    if(_navInProgress)return;
+    // Module tutorials (only after user has done navigation)
+    if(!S.onboarding||S.onboarding.completed||!onboardingIs('navigationDone'))return;
+    if(id==='home')return;
+    var flags={nutrition:'nutritionIntro',water:'waterIntro',workout:'workoutIntro',habits:'habitIntro',tasks:'taskIntro',analytics:'analyticsIntro',zen:'zenIntro',profile:'profileIntro',mood:'moodIntro',dashboard:'dashboardIntro',mind:'mindIntro',leaderboard:'leaderboardIntro'};
+    var cf=flags[id];
+    if(cf&&!onboardingIs(cf)){
+      setTimeout(function(){
+        if(document.querySelector('.guide-overlay'))return;
+        showModuleGuide(id);
+      },600);
+    }
+  };
 }
 
-window.restartTutorial = function() {
-  tutorialStep = 0;
-  S.featureFlags.tutorial_main = true;
-  persistSave();
-  showTutorial();
+// ── Celebration system for first interactions ──
+function celebrateFirst(key,msg){
+  if(onboardingIs(key))return;
+  onboardingMark(key);
+  guideSay(msg);
+  setTimeout(function(){guideHide();},3500);
 }
+
+// ── Review Tutorial (from Profile) ──
+window.showOnboardingReview=function(){
+  var ov=guideOverlay(
+    '<div class="guide-mascot-lg"></div>'+
+    '<h2>Review Tutorial</h2>'+
+    '<p>What would you like to replay?</p>'+
+    '<div style="display:flex;flex-direction:column;gap:8px">'+
+    '<button class="btn btn-full btn-primary" onclick="replayFullOnboarding()">Replay Full Onboarding</button>'+
+    '<button class="btn btn-full" onclick="replayNavTutorial()">Replay Navigation Guide</button>'+
+    '<button class="btn btn-full" onclick="closeGuideOverlay(document.querySelector(\'.guide-overlay\'))">Cancel</button>'+
+    '</div>'
+  );
+};
+window.replayFullOnboarding=function(){
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  showWelcomeChoice();
+};
+window.replayNavTutorial=function(){
+  closeGuideOverlay(document.querySelector('.guide-overlay'));
+  startOrbTutorial();
+};
 
 // ════════════════════════════════════════════════════════════════════════════
 // FUTURE-PROOF CONFIGURATION & CONSTANTS
@@ -2314,7 +2329,6 @@ const DATA_VERSION=5;
 const STORAGE_KEYS={
   STATE:'zenfit_v1',
   DEVICE_ID:'zenfit_device_id',
-  TUTORIAL_DONE:'zenfit_tutorial_done',
   IMPORT_INPUT:'zenfit_import_inp_static',
   CHAT_HISTORY:'zenfit_chat_history_'
 };
@@ -2369,6 +2383,7 @@ const SCHEMA={
   glassBlur:'number',
   glassAlpha:'number',
   steps:'array',
+  onboarding:'object',
 };
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -2402,13 +2417,7 @@ function migrateData(saved){
   const version=saved.dataVersion||1;
   
   if(version<2){
-    // Preserve existing tutorial state, don't override it
-    saved.featureFlags=saved.featureFlags||{
-      tutorial_main:false, // Default to false
-      tutorial_nutrition:true,
-      tutorial_workout:true,
-      tutorial_habits:true
-    };
+    saved.onboarding=saved.onboarding||{completed:false};
     saved.dataVersion=2;
   }
   
@@ -2501,12 +2510,7 @@ function defaultState(){
     screenTime:{},screenTimeLimit:120,
     partners:[],peerId:null,profilePic:null,
     pendingRequests:[],sentRequests:[],partnerStats:{},
-    featureFlags:{
-      tutorial_main:false, // ← CHANGE THIS TO FALSE BY DEFAULT
-      tutorial_nutrition:true,
-      tutorial_workout:true,
-      tutorial_habits:true
-    },
+    featureFlags:{},
     lastSaved:Date.now(),
     achievements:[],
     challenges:[],
@@ -2526,6 +2530,7 @@ function defaultState(){
   },
   mood:{entries:[]},
   restDays:[],
+  onboarding:{completed:false},
 };
 }
 function loadState(){
@@ -2541,7 +2546,6 @@ function loadState(){
   
   // This is a fresh user
   const fresh = defaultState();
-  fresh.featureFlags.tutorial_main = true;
   return fresh;
 }
 
@@ -2621,14 +2625,22 @@ function persistLoad(){
     generateQuests();
     generateBonusTasks();
     render();
+    if(typeof initModuleGuideHooks==='function')initModuleGuideHooks();
     
-    setTimeout(() => {
-      if (S.featureFlags?.tutorial_main) {
-        showTutorial();
-        S.featureFlags.tutorial_main = false; // Disable after showing
-        persistSave(); // Save immediately
+    setTimeout(function(){
+      // Only trigger onboarding for truly fresh users (no existing data)
+      var hasData=S.player.xp>0||S.nutrition.entries.length>0||S.workouts.length>0||(S.habits||[]).length>0||(S.tasks||[]).length>0;
+      if(hasData){
+        if(!S.onboarding)S.onboarding={completed:false};
+        S.onboarding.completed=true;
+        persistSave();
+      }else{
+        if(!S.onboarding)S.onboarding={completed:false};
+        if(!S.onboarding.completed&&typeof startFirstLaunch==='function'){
+          startFirstLaunch();
+        }
       }
-    }, 300);
+    },400);
 
     // Init notification scheduling
     setTimeout(function(){ initNotifications(); }, 600);
@@ -4552,7 +4564,7 @@ function removePreviewItem(idx){
 function logParsedFood(){
   if(!parsedFood?.length)return;
   parsedFood.forEach(f=>S.nutrition.entries.push({name:f.name,qty:f.qty,unit:f.unit||'',nutrients:f.nutrients,date:getTodayStr(),xpAwarded:30}));
-  updStat('health',parsedFood.length);addXP(30*parsedFood.length,'Meals logged!');checkAutoQuests();checkAchievements();parsedFood=null;renderScreens();
+  celebrateFirst('nutritionFirstMeal','🥗 First meal logged! Your nutrition journey begins.');updStat('health',parsedFood.length);addXP(30*parsedFood.length,'Meals logged!');checkAutoQuests();checkAchievements();parsedFood=null;renderScreens();
 }
 async function doBC(){
   const bc=document.getElementById('bc-input')?.value?.trim();if(!bc)return;
@@ -4644,7 +4656,7 @@ function stopBCCamera(){
   if(wrap)wrap.style.display='none';
   if(btn)btn.style.display='';
 }
-function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr(),xpAwarded:30});updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
+function logBCE(e){S.nutrition.entries.push({...e,date:getTodayStr(),xpAwarded:30});celebrateFirst('nutritionFirstMeal','🥗 First meal logged! Your nutrition journey begins.');updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();}
 function showFoodDetails(e){
   var g=gradeFood(e.nutrients),l=gradeLabel(g),n=e.nutrients;
   var cal=nn(n.cal),prot=nn(n.protein||n.prot),carbs=nn(n.carbs),fat=nn(n.fat),fiber=nn(n.fiber),sugar=nn(n.sugar);
@@ -4675,7 +4687,7 @@ function logMF(){
   const servingSize=+document.getElementById('m-ss')?.value||100;
   const servingUnit=document.getElementById('m-su')?.value||'g';
   S.nutrition.entries.push({name,qty:servingSize,unit:servingUnit,nutrients:n,date:getTodayStr(),xpAwarded:30});
-  const shouldSave=document.getElementById('m-save-food')?.checked!==false;
+  celebrateFirst('nutritionFirstMeal','🥗 First meal logged! Your nutrition journey begins.');const shouldSave=document.getElementById('m-save-food')?.checked!==false;
   if(shouldSave&&name&&name!=='Custom'){
     if(!S.customFoods)S.customFoods=[];
     const exists=S.customFoods.some(f=>f.name.toLowerCase()===name.toLowerCase());
@@ -4734,7 +4746,7 @@ function quickLogMyFood(i){
   const f=(S.customFoods||[])[i];if(!f)return;
   const sq=f.servingSize||100;const su=f.servingUnit||'g';
   S.nutrition.entries.push({name:f.name,qty:sq,unit:su,nutrients:{cal:f.cal,protein:f.protein,carbs:f.carbs,fat:f.fat,fiber:f.fiber||0,sugar:f.sugar||0},date:getTodayStr(),xpAwarded:30});
-  updStat('health');addXP(30,'Meal logged!');checkAutoQuests();persistSave();renderScreens();
+  celebrateFirst('nutritionFirstMeal','🥗 First meal logged! Your nutrition journey begins.');updStat('health');addXP(30,'Meal logged!');checkAutoQuests();persistSave();renderScreens();
   showNotif(f.name+' logged','OK');
 }
 function deleteMyFood(i){
@@ -4805,7 +4817,7 @@ function addWater(ml){
   SFX.water();
   const prev=todayWater();
   S.water.entries=S.water.entries||[];S.water.entries.push({ml,date:getTodayStr(),ts:Date.now(),xpAwarded:5});
-  addXP(5,'Hydrating!');updStat('health',1);
+  celebrateFirst('waterFirstGlass','💧 First glass logged! Stay hydrated.');addXP(5,'Hydrating!');updStat('health',1);
   if(todayWater()>=S.water.dailyGoalMl&&prev<S.water.dailyGoalMl)addXP(50,'Water goal!');
   checkAutoQuests();trackChallengeProgress();persistSave();var _wel=document.getElementById('screen-water');if(_wel&&currentScreen==='water')renderWater(_wel);else renderScreens();
 }
@@ -5140,7 +5152,7 @@ function logWorkout(override=null){
     date:getTodayStr(),ts:Date.now(),caloriesBurned,xpAwarded:xpW
   };
   S.workouts.push(entry);
-  if(S._pendingWorkout) S._pendingWorkout='';
+  celebrateFirst('workoutFirstLog','💪 First workout logged! Let the gains begin.');if(S._pendingWorkout) S._pendingWorkout='';
   if(!S.burned)S.burned=[];
   if(caloriesBurned>0){
     S.burned.push({activity:name,duration,met,weightKg:S.player.weightKg||70,calories:caloriesBurned,date:getTodayStr(),ts:Date.now(),source:'workout'});
@@ -5628,7 +5640,7 @@ function toggleHabit(i){
     }
   } else {
     h.completedDates.push(today);
-    const xM={easy:20,medium:40,hard:70};
+    celebrateFirst('habitFirstComplete','✅ First habit completed! Building discipline.');const xM={easy:20,medium:40,hard:70};
     addXP(xM[h.difficulty]||20,'Habit: '+h.name);
     updStat('discipline',2);
   }
@@ -6114,7 +6126,7 @@ function completeZen(){
   S.zen.history[today]=(S.zen.history[today]||0)+mins;
   var modeLabel=ZEN_MODES[_zenMode]?.label||'Custom';
   S.zen.sessions.push({date:today,minutes:mins,mode:modeLabel,pattern:_zenMode==='custom'?(document.getElementById('zen-custom-name')?.value||''):'',xp:xp,ts:Date.now()});
-  var dates=Object.keys(S.zen.history||{}).sort().reverse();
+  celebrateFirst('zenFirstMeditation','🧘 First meditation complete! Inner peace grows.');var dates=Object.keys(S.zen.history||{}).sort().reverse();
   var streak=0;var check=new Date();
   for(var i=0;i<dates.length;i++){
     var d=new Date(dates[i]);d.setHours(0,0,0,0);
@@ -7656,12 +7668,12 @@ function renderProfile(el){
     <div class="flex-between"><span style="font-size:13px">Water Goal</span><div class="flex gap8"><input type="number" value="${S.water.dailyGoalMl}" style="width:90px;text-align:right" onchange="S.water.dailyGoalMl=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">ml</span></div></div>
   <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)">
   <button class="btn btn-full btn-primary"
-    onclick="restartTutorial()"
+    onclick="showOnboardingReview()"
     style="display:flex;align-items:center;justify-content:center;gap:8px">
-    🎓 Review App Tutorial
+    🎓 Review Tutorial
   </button>
   <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">
-    Replay the onboarding walkthrough anytime
+    Replay the full onboarding, navigation guide, or module tutorials anytime
   </div>
 </div>
   <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)" id="notif-settings-box"></div>
@@ -10497,7 +10509,7 @@ function completeTask(taskId){
   var now=Date.now();
   var overdue=t.deadlineTs&&now>t.deadlineTs;
   t.completedAt=now;t.completedDate=getTodayStr();t.xpAwarded=overdue?Math.floor(TASK_XP[t.difficulty]*0.5):TASK_XP[t.difficulty];t.overdueCharged=false;
-  addXP(t.xpAwarded,'Task: '+t.title);updStat('discipline',overdue?1:3);persistSave();
+  celebrateFirst('taskFirstComplete','📝 First task done! On a roll.');addXP(t.xpAwarded,'Task: '+t.title);updStat('discipline',overdue?1:3);persistSave();
   if(overdue)showNotif('[ TASK COMPLETE ] Late — +'+t.xpAwarded+' XP (half reward)','⚡');
   else showNotif('[ TASK COMPLETE ] +'+t.xpAwarded+' XP — Discipline +3','⚔️');
   renderScreens();
@@ -10963,8 +10975,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.3.1';
+var CHANGELOG_VERSION='v8.3.2';
 var CHANGELOG_ENTRIES=[
+  'v8.3.2 Bug fixes: Android export, analytics, and import/export stability improvements. And a completely new tutorial ',
   'v8.3.1 Analytics update and new import export implemented and some minor bugs ',
   'v8.3.0 Android export removed — streamlined export modal with ZIP + Manual + Browser methods only',
   'v8.3.0 New Habits analytics subtab — habit completion trends, per-habit breakdown with streaks and totals, weekly comparison stats',
@@ -11160,7 +11173,7 @@ function logMood(mood){
       ov2.remove();
       unlockScreen();
       S.mood.entries.push({mood, note: '', date: today, ts: Date.now(), intensity, energy});
-      addXP(5, 'Mood Log');
+      celebrateFirst('moodFirstLog','🎭 First mood logged! Self-awareness is key.');addXP(5, 'Mood Log');
       persistSave();
       showNotif('Mood logged: ' + m.label + ' ('+intensity+'/10 · '+energy+'/10)', m.emoji);
       const el=document.getElementById('screen-dashboard');
