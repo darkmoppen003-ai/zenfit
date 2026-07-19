@@ -2,7 +2,7 @@
 // Full offline support + background notifications + auto-update
 
 // ── BUILD INFO (auto-updated by update-build.js) ───
-const SW_BUILD = "2026.07.18.2";
+const SW_BUILD = "2026.07.19.3";
 const SCHEMA_VERSION = 1;
 
 // Cache names derived from build — changes on every deploy
