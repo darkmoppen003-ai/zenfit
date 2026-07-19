@@ -464,7 +464,7 @@ body.home-active #bottom-nav{display:none!important}
 }
 .guide-bubble.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .guide-mascot {
-  width: 125px; height: 185px; flex-shrink: 0;
+  width: 125px; height: 185px; flex-shrink: 0; position: relative; bottom: -40px;
   background: url('assets/mascot/mascot.png') no-repeat center/contain;
   filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
   animation: guideFloat 3s ease-in-out infinite;
@@ -475,8 +475,8 @@ body.home-active #bottom-nav{display:none!important}
   border-radius: 16px; padding: 14px 16px; font-size: 13px;
   color: var(--text-primary); line-height: 1.5; position: relative;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 20px rgba(124,111,255,0.2);
-  max-width: 275px; min-width: 155px;
-  margin-bottom: 28px;
+  width: clamp(220px, 38vw, 300px); max-width: min(420px, calc(100vw - 145px)); min-width: 170px;
+  margin-bottom: 16px;
 }
 .guide-speech::after {
   content: ''; position: absolute; bottom: 28px; right: -7px;
