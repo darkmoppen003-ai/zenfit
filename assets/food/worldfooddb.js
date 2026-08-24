@@ -81,6 +81,20 @@ INGR_DB = {
 'pizza':{cal:285,p:12,c:36,f:10,fi:2,s:3.6},
 'burger':{cal:354,p:20,c:40,f:14,fi:2,s:4.0},
 
+// ── Meal Plan Additions ──
+'bread & jam':{cal:280,p:8,c:48,f:5,fi:3,s:18.0},
+'custard':{cal:120,p:4,c:18,f:4,fi:0,s:12.0},
+'pickle':{cal:60,p:1,c:5,fi:4,s:1.5},
+'kadhi':{cal:80,p:4,c:8,f:3.5,fi:1,s:2.0},
+'gobi pakoda':{cal:280,p:6,c:33,f:14,fi:2,s:3.3},
+'mix dal':{cal:120,p:8,c:20,f:1,fi:8,s:2.0},
+'mili dal':{cal:125,p:9,c:20,f:1.5,fi:7,s:2.0},
+'aloo paratha':{cal:250,p:6,c:32,f:11,fi:3,s:2.5},
+'palak chana':{cal:130,p:7,c:18,f:3,fi:6,s:2.5},
+'mint raita':{cal:65,p:3,c:6,f:3,fi:0.5,s:3.2},
+'masoor dal':{cal:116,p:9,c:20,f:0.4,fi:8,s:1.8},
+'toor dal':{cal:120,p:8,c:22,f:0.5,fi:7,s:2.0},
+
 // Extra Indian additions
 'chicken tikka masala':{cal:220,p:24,c:8,f:11,fi:1.5,s:0.8},
 'chicken tandoori':{cal:190,p:28,c:2,f:8,fi:0.5,s:0.2},

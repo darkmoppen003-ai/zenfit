@@ -86,6 +86,8 @@ var COMMON_INGREDIENTS=[
   'Mushroom Masala','Soya Chaap','Malai Kofta','Lauki Kofta',
   'Baingan Bharta','Bhindi Masala','Gobi Manchurian',
   'Tandoori Chicken','Chicken 65','Chicken Lollipop','Fish Fry (Indian)',
+  // Meal Plan Raw Ingredients
+  'Sprouts','Barbatti','Fryums','Biscuits',
 ];
 
 var INGREDIENT_NUTRITION={
@@ -449,4 +451,9 @@ var INGREDIENT_NUTRITION={
   'chicken 65':[240,22,10,13,1,1.0],
   'chicken lollipop':[250,20,8,16,0.5,0.8],
   'fish fry (indian)':[220,22,6,12,1,0.6],
+  // Meal Plan Raw Ingredients
+  'sprouts':[80,6,12,0.5,5,2.5],
+  'barbatti':[110,7,16,2,5,3.0],
+  'fryums':[450,5,65,20,2,1.0],
+  'biscuits':[420,7,65,15,2,20.0],
 };
