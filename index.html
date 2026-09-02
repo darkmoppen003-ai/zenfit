@@ -2325,7 +2325,7 @@ window.replayNavTutorial=function(){
 // ════════════════════════════════════════════════════════════════════════════
 // FUTURE-PROOF CONFIGURATION & CONSTANTS
 // ════════════════════════════════════════════════════════════════════════════
-const DATA_VERSION=5;
+const DATA_VERSION=6;
 const STORAGE_KEYS={
   STATE:'zenfit_v1',
   DEVICE_ID:'zenfit_device_id',
@@ -2382,6 +2382,17 @@ const SCHEMA={
   glassMode:'boolean',
   glassBlur:'number',
   glassAlpha:'number',
+  bgType:'string',
+  bgImage:'string',
+  bgImageFallback:'string',
+  bgOverlay:'number',
+  bgDim:'number',
+  animatedBgEnabled:'boolean',
+  particlesEnabled:'boolean',
+  particleCount:'number',
+  accentColor:'string',
+  bgImages:'array',
+  bgAllScreens:'boolean',
   steps:'array',
   onboarding:'object',
 };
@@ -2436,6 +2447,21 @@ function migrateData(saved){
   if(version<5){
     if(!saved.steps)saved.steps=[];
     saved.dataVersion=5;
+  }
+  
+  if(version<6){
+    saved.bgType=saved.bgType||'animated';
+    saved.bgImage=saved.bgImage||null;
+    saved.bgImageFallback=saved.bgImageFallback||null;
+    saved.bgOverlay=saved.bgOverlay||0;
+    saved.bgDim=saved.bgDim||0;
+    saved.animatedBgEnabled=saved.animatedBgEnabled!==false;
+    saved.particlesEnabled=saved.particlesEnabled!==false;
+    saved.particleCount=saved.particleCount||80;
+    saved.accentColor=saved.accentColor||'';
+    saved.bgImages=Array.isArray(saved.bgImages)?saved.bgImages:[];
+    saved.bgAllScreens=saved.bgAllScreens!==false;
+    saved.dataVersion=6;
   }
   
   return saved;
@@ -2524,6 +2550,17 @@ function defaultState(){
   glassMode:true,
   glassBlur:4,
   glassAlpha:0.1,
+  bgType:'animated',
+  bgImage:null,
+  bgImageFallback:null,
+  bgOverlay:0,
+  bgDim:0,
+  animatedBgEnabled:true,
+  particlesEnabled:true,
+  particleCount:80,
+  accentColor:'',
+  bgImages:[],
+  bgAllScreens:true,
   zen:{
     totalSessions:0,totalMinutes:0,currentStreak:0,bestStreak:0,
     lastSessionDate:null,sessions:[],history:{}
