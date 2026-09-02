@@ -7760,6 +7760,111 @@ function renderProfile(el){
   </div>
   <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();}">Reset All Data</button>`;
 
+  // BACKGROUND SETTINGS
+  var bgTypes = ['animated','solid','gradient','image'];
+  var bgTypeLabels = ['✨ Animated','🎨 Solid','🌈 Gradient','🖼️ Image'];
+  var bgTypeIcons = ['✨','🎨','🌈','🖼️'];
+  el.innerHTML += '<div class="card mt16"><div class="section-title">Background</div>' +
+    '<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Background Type</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap" id="bg-type-selector">' +
+    bgTypes.map(function(t,i){
+      var active = S.bgType===t;
+      return '<button type="button" onclick="setBgType(\''+t+'\');renderScreens();" ' +
+        'style="flex:1;min-width:70px;padding:10px 8px;border-radius:10px;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';' +
+        'background:'+(active?'var(--bg-raised)':'var(--bg-overlay)')+';color:'+(active?'var(--primary)':'var(--text-primary)')+';' +
+        'font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px">' +
+        '<span style="font-size:16px">'+bgTypeIcons[i]+'</span>' +
+        '<span>'+bgTypeLabels[i]+'</span>' +
+        '</button>';
+    }).join('') +
+    '</div></div>' +
+    // Animated BG toggle (only for animated type)
+    (S.bgType==='animated' ? (
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">✨ Animated Background</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Enable animated gradient orbs</div></div>' +
+      '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">' +
+      '<input type="checkbox" '+(S.animatedBgEnabled?'checked':'')+' onchange="S.animatedBgEnabled=this.checked;persistSave();applyBackgroundConfig();renderScreens();" style="opacity:0;width:0;height:0">' +
+      '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.animatedBgEnabled?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">' +
+      '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.animatedBgEnabled?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>' +
+      '</div>'
+    ) : '') +
+    // Particles toggle
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+    '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">✨ Particles</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Floating particle effects</div></div>' +
+    '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">' +
+    '<input type="checkbox" '+(S.particlesEnabled?'checked':'')+' onchange="S.particlesEnabled=this.checked;persistSave();applyBackgroundConfig();renderScreens();" style="opacity:0;width:0;height:0">' +
+    '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.particlesEnabled?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">' +
+    '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.particlesEnabled?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>' +
+    '</div>' +
+    // Particle count slider
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+    '<span style="font-size:12px;color:var(--text-secondary)">Particle Count</span>' +
+    '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="particle-count-val">'+(S.particleCount??80)+'</span>' +
+    '</div>' +
+    '<input type="range" min="0" max="120" value="'+(S.particleCount??80)+'" oninput="setParticleCount(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
+    '<div style="position:relative;height:24px">'+[0,30,60,80,100,120].map(function(v){return "<div style=\"position:absolute;left:"+(v/120*100)+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setParticleCount("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.particleCount==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.particleCount==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
+    '</div>' +
+    // Overlay slider
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+    '<span style="font-size:12px;color:var(--text-secondary)">Overlay</span>' +
+    '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-overlay-val">'+(S.bgOverlay??0)+'%</span>' +
+    '</div>' +
+    '<input type="range" min="0" max="100" value="'+(S.bgOverlay??0)+'" oninput="setOverlay(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
+    '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setOverlay("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgOverlay==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgOverlay==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
+    '</div>' +
+    // Dim slider
+    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+    '<span style="font-size:12px;color:var(--text-secondary)">Dim</span>' +
+    '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-dim-val">'+(S.bgDim??0)+'%</span>' +
+    '</div>' +
+    '<input type="range" min="0" max="100" value="'+(S.bgDim??0)+'" oninput="setDim(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
+    '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setDim("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgDim==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgDim==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
+    '</div>' +
+    // Image background section (only for image type)
+    (S.bgType==='image' ? (
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🖼️ Image Background</div>' +
+      '<button class="btn btn-primary" onclick="uploadBackgroundImage()" style="width:100%;margin-bottom:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Image</button>' +
+      (S.bgImage ? (
+        '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Current Background</div>' +
+        '<div style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay)">' +
+        '<img id="bg-preview-img" src="" alt="Background preview" style="width:100%;height:100%;object-fit:cover">' +
+        '</div></div>'
+      ) : '') +
+      (S.bgImages && S.bgImages.length ? (
+        '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Uploaded Images</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">' +
+        S.bgImages.map(function(img){
+          return '<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay);aspect-ratio:1">' +
+            '<img src="" data-bg-id="'+img.id+'" alt="'+escapeHtml(img.name)+'" style="width:100%;height:100%;object-fit:cover" onclick="selectBgImage(\''+img.id+'\')">' +
+            '<div style="position:absolute;top:4px;right:4px;display:flex;gap:2px">' +
+            '<button class="btn btn-sm" onclick="event.stopPropagation();selectBgImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--primary);color:#fff;border:none">Use</button>' +
+            '<button class="btn btn-sm" onclick="event.stopPropagation();deleteBackgroundImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--danger);color:#fff;border:none">Del</button>' +
+            '</div>' +
+            '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(img.name)+'</div>' +
+            '</div>';
+        }).join('') +
+        '</div></div>'
+      ) : '') +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">Use on All Screens</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Apply this background everywhere</div></div>' +
+      '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">' +
+      '<input type="checkbox" '+(S.bgAllScreens?'checked':'')+' onchange="S.bgAllScreens=this.checked;persistSave();renderScreens();" style="opacity:0;width:0;height:0">' +
+      '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.bgAllScreens?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">' +
+      '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.bgAllScreens?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>' +
+      '</div>' +
+      '</div>'
+    ) : '') +
+    '</div>';
+
 
   el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
@@ -7785,6 +7890,9 @@ function renderProfile(el){
         (active?'<div style="font-size:10px;color:'+t.primary+';margin-top:2px">Active</div>':'')+'</div>';
     }).join('')+
     '</div></div>';
+
+  // CUSTOM THEMES SECTION
+  el.innerHTML += '<div class="card mt16" id="custom-themes-section"><div class="section-title" style="display:flex;align-items:center;justify-content:space-between">Custom Themes<button class="btn btn-sm btn-primary" onclick="showThemeBuilder()" style="font-size:11px;padding:6px 10px">+ New Theme</button></div><div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+renderCustomThemes()+'</div></div>';
 
 
 
@@ -7818,6 +7926,27 @@ function renderProfile(el){
 
   // Render notification settings panel (deferred so DOM element exists)
   setTimeout(function(){ renderNotifSettings('notif-settings-box'); }, 20);
+
+  // Load background preview images
+  setTimeout(function(){
+    var previewImg = document.getElementById('bg-preview-img');
+    if(previewImg && S.bgImage){
+      getBackgroundImageUrl(S.bgImage).then(function(url){
+        if(url) previewImg.src = url;
+      });
+    }
+    // Load uploaded image thumbnails
+    if(S.bgImages && S.bgImages.length){
+      S.bgImages.forEach(function(img){
+        var thumb = document.querySelector('img[data-bg-id="'+img.id+'"]');
+        if(thumb){
+          getBackgroundImageUrl(img.id).then(function(url){
+            if(url) thumb.src = url;
+          });
+        }
+      });
+    }
+  }, 50);
  
 }
 
@@ -9399,18 +9528,60 @@ function setBgType(type){
 }
 function setOverlay(v){
   S.bgOverlay=v;
+  var el=document.getElementById('bg-overlay-val');
+  if(el)el.textContent=v+'%';
+  var r=document.querySelector('input[type="range"][oninput*="setOverlay"]');
+  if(r)r.value=v;
+  document.querySelectorAll('[onclick*="setOverlay"]').forEach(function(m){
+    var mv=parseInt(m.getAttribute('onclick').match(/setOverlay\((\d+)\)/)?.[1]||'0');
+    var dot=m.querySelector('div');
+    if(dot){
+      dot.style.borderColor=mv===v?'var(--primary)':'var(--text-muted)';
+      dot.style.background=mv===v?'var(--primary)':'transparent';
+    }
+  });
   applyBackgroundConfig();
   persistSave();
 }
 function setDim(v){
   S.bgDim=v;
+  var el=document.getElementById('bg-dim-val');
+  if(el)el.textContent=v+'%';
+  var r=document.querySelector('input[type="range"][oninput*="setDim"]');
+  if(r)r.value=v;
+  document.querySelectorAll('[onclick*="setDim"]').forEach(function(m){
+    var mv=parseInt(m.getAttribute('onclick').match(/setDim\((\d+)\)/)?.[1]||'0');
+    var dot=m.querySelector('div');
+    if(dot){
+      dot.style.borderColor=mv===v?'var(--primary)':'var(--text-muted)';
+      dot.style.background=mv===v?'var(--primary)':'transparent';
+    }
+  });
   applyBackgroundConfig();
   persistSave();
 }
 function setParticleCount(n){
   S.particleCount=Math.max(0,Math.min(120,Math.floor(n)));
+  var el=document.getElementById('particle-count-val');
+  if(el)el.textContent=S.particleCount;
+  var r=document.querySelector('input[type="range"][oninput*="setParticleCount"]');
+  if(r)r.value=S.particleCount;
+  document.querySelectorAll('[onclick*="setParticleCount"]').forEach(function(m){
+    var mv=parseInt(m.getAttribute('onclick').match(/setParticleCount\((\d+)\)/)?.[1]||'0');
+    var dot=m.querySelector('div');
+    if(dot){
+      dot.style.borderColor=mv===S.particleCount?'var(--primary)':'var(--text-muted)';
+      dot.style.background=mv===S.particleCount?'var(--primary)':'transparent';
+    }
+  });
   if(window.__setParticleCount) window.__setParticleCount(S.particleCount);
   persistSave();
+}
+function selectBgImage(id){
+  S.bgImage=id;
+  persistSave();
+  renderScreens();
+  showNotif('Background image selected','OK');
 }
 function initTheme(){
   if(S.theme){
@@ -9491,6 +9662,227 @@ function applyCustomTheme(id){
   const t=themes.find(t=>t.id===id);
   if(!t)return;
   applyThemeObject(t,'custom:'+id);
+}
+
+// ════════════════════════════════════════════════════
+// CUSTOM THEME BUILDER UI
+// ════════════════════════════════════════════════════
+function renderCustomThemes(){
+  const themes=getCustomThemes();
+  if(!themes.length) return '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--text-muted);font-size:12px">No custom themes yet. Create your first theme!</div>';
+  return themes.map(function(t){
+    var isActive = S.theme==='custom:'+t.id;
+    return '<div style="position:relative;cursor:pointer;padding:10px 12px;border-radius:10px;border:2px solid '+(isActive?'var(--primary)':'var(--border-mid)')+';background:'+t.bgSurface+';transition:all .2s" onclick="applyCustomTheme(\''+t.id+'\')">'+
+      '<div style="display:flex;gap:6px;margin-bottom:6px">'+
+        '<div style="width:14px;height:14px;border-radius:50%;background:'+t.bgBase+';"></div>'+
+        '<div style="width:14px;height:14px;border-radius:50%;background:'+t.primary+';"></div>'+
+        '<div style="width:14px;height:14px;border-radius:50%;background:'+t.textMuted+';"></div>'+
+      '</div>'+
+      '<div style="font-size:12px;font-weight:600;color:'+t.textPrimary+'">'+escapeHtml(t.name)+'</div>'+
+      (isActive?'<div style="font-size:10px;color:'+t.primary+';margin-top:2px">Active</div>':'')+
+      '<button onclick="event.stopPropagation();deleteCustomTheme(\''+t.id+'\');renderScreens();" style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--bg-overlay);border:1px solid var(--border-mid);color:var(--text-muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="Delete theme">&#10006;</button>'+
+    '</div>';
+  }).join('');
+}
+
+function showThemeBuilder(themeToEdit){
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  
+  var box = document.createElement('div');
+  box.style.cssText = 'background:var(--dialog-bg,#1a1f2e);border-radius:14px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.6)';
+  
+  var title = document.createElement('h2');
+  title.style.cssText = 'margin:0 0 8px 0;font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--text-primary,#e2e8f8);text-align:center';
+  title.textContent = themeToEdit ? '✏️ Edit Theme' : '🎨 Create Custom Theme';
+  
+  var subtitle = document.createElement('p');
+  subtitle.style.cssText = 'margin:0 0 20px 0;font-size:12px;color:var(--text-muted,#8a94b8);text-align:center;line-height:1.5';
+  subtitle.textContent = themeToEdit ? 'Modify your custom theme colors' : 'Design your own color scheme';
+  
+  var form = document.createElement('div');
+  form.style.cssText = 'display:flex;flex-direction:column;gap:12px';
+  
+  // Name input
+  var nameGroup = document.createElement('div');
+  nameGroup.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+  var nameLabel = document.createElement('label');
+  nameLabel.style.cssText = 'font-size:12px;font-weight:600;color:var(--text-primary)';
+  nameLabel.textContent = 'Theme Name *';
+  var nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.id = 'theme-name-input';
+  nameInput.placeholder = 'My Custom Theme';
+  nameInput.value = themeToEdit ? themeToEdit.name : '';
+  nameInput.style.cssText = 'padding:10px 12px;border-radius:8px;border:1px solid var(--border-mid);background:var(--input-bg);color:var(--text-primary);font-size:14px';
+  nameGroup.appendChild(nameLabel);
+  nameGroup.appendChild(nameInput);
+  form.appendChild(nameGroup);
+  
+  // Color picker fields
+  var colorFields = [
+    {key:'bgBase', label:'Base Background'},
+    {key:'bgSurface', label:'Surface Background'},
+    {key:'bgRaised', label:'Raised Background'},
+    {key:'bgOverlay', label:'Overlay Background'},
+    {key:'borderMid', label:'Border Color'},
+    {key:'primary', label:'Primary Accent'},
+    {key:'textPrimary', label:'Primary Text'},
+    {key:'textSecondary', label:'Secondary Text'},
+    {key:'textMuted', label:'Muted Text'},
+    {key:'glow1', label:'Glow 1'},
+    {key:'glow2', label:'Glow 2'},
+    {key:'glow3', label:'Glow 3'},
+    {key:'inputBg', label:'Input Background'}
+  ];
+  
+  var colorInputs = {};
+  colorFields.forEach(function(f){
+    var group = document.createElement('div');
+    group.style.cssText = 'display:flex;align-items:center;gap:10px';
+    var label = document.createElement('label');
+    label.style.cssText = 'font-size:12px;color:var(--text-secondary);min-width:140px';
+    label.textContent = f.label;
+    var input = document.createElement('input');
+    input.type = 'color';
+    input.id = 'theme-'+f.key;
+    input.value = themeToEdit ? themeToEdit[f.key] : THEMES.dark[f.key];
+    input.style.cssText = 'width:40px;height:32px;border-radius:6px;border:1px solid var(--border-mid);cursor:pointer;background:none;padding:0';
+    colorInputs[f.key] = input;
+    group.appendChild(label);
+    group.appendChild(input);
+    form.appendChild(group);
+  });
+  
+  // p_hue number input
+  var hueGroup = document.createElement('div');
+  hueGroup.style.cssText = 'display:flex;align-items:center;gap:10px';
+  var hueLabel = document.createElement('label');
+  hueLabel.style.cssText = 'font-size:12px;color:var(--text-secondary);min-width:140px';
+  hueLabel.textContent = 'Particle Hue (0-360)';
+  var hueInput = document.createElement('input');
+  hueInput.type = 'number';
+  hueInput.id = 'theme-p_hue';
+  hueInput.min = '0';
+  hueInput.max = '360';
+  hueInput.value = themeToEdit ? themeToEdit.p_hue : THEMES.dark.p_hue;
+  hueInput.style.cssText = 'width:80px;padding:10px 12px;border-radius:8px;border:1px solid var(--border-mid);background:var(--input-bg);color:var(--text-primary);font-size:14px';
+  hueGroup.appendChild(hueLabel);
+  hueGroup.appendChild(hueInput);
+  form.appendChild(hueGroup);
+  
+  // Live preview area
+  var previewBox = document.createElement('div');
+  previewBox.id = 'theme-preview-box';
+  previewBox.style.cssText = 'margin-top:8px;padding:16px;border-radius:10px;border:1px solid var(--border-mid);background:var(--bg-surface);transition:all .2s';
+  previewBox.innerHTML = 
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;text-align:center">Live Preview</div>' +
+    '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px" id="theme-preview-dots"></div>' +
+    '<div style="font-size:13px;font-weight:600;text-align:center;color:var(--text-primary)" id="theme-preview-name">Theme Preview</div>' +
+    '<div style="margin-top:10px;padding:10px;border-radius:6px;border:1px solid var(--border-mid);background:var(--input-bg);color:var(--text-primary);font-size:12px;text-align:center" id="theme-preview-text">Sample text content</div>' +
+    '<button style="margin-top:10px;width:100%;padding:8px;border-radius:6px;border:1px solid var(--border-mid);background:var(--primary);color:var(--text-primary);font-size:12px;font-weight:600;cursor:pointer" id="theme-preview-btn">Sample Button</button>';
+  form.appendChild(previewBox);
+  
+  // Button row
+  var btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:10px;margin-top:8px';
+  
+  var saveBtn = document.createElement('button');
+  saveBtn.style.cssText = 'flex:1;padding:12px;border-radius:8px;border:none;background:var(--primary);color:var(--text-primary);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s';
+  saveBtn.textContent = themeToEdit ? 'Save Changes' : 'Save Theme';
+  saveBtn.onmouseover = function(){ this.style.filter='brightness(1.1)'; };
+  saveBtn.onmouseout = function(){ this.style.filter='brightness(1)'; };
+  saveBtn.onclick = function(){
+    var name = nameInput.value.trim();
+    if(!name){
+      showNotif('Theme name is required','!');
+      return;
+    }
+    var themes = getCustomThemes();
+    if(themes.some(function(t){ return t.name===name && t.id!==(themeToEdit?themeToEdit.id:''); })){
+      showNotif('A theme with this name already exists','!');
+      return;
+    }
+    var themeObj = {
+      name: name,
+      bgBase: colorInputs.bgBase.value,
+      bgSurface: colorInputs.bgSurface.value,
+      bgRaised: colorInputs.bgRaised.value,
+      bgOverlay: colorInputs.bgOverlay.value,
+      borderMid: colorInputs.borderMid.value,
+      primary: colorInputs.primary.value,
+      textPrimary: colorInputs.textPrimary.value,
+      textSecondary: colorInputs.textSecondary.value,
+      textMuted: colorInputs.textMuted.value,
+      glow1: colorInputs.glow1.value,
+      glow2: colorInputs.glow2.value,
+      glow3: colorInputs.glow3.value,
+      p_hue: hueInput.value,
+      inputBg: colorInputs.inputBg.value
+    };
+    var result = themeToEdit ? updateCustomTheme(themeToEdit.id, themeObj) : addCustomTheme(themeObj);
+    if(result){
+      showNotif(themeToEdit ? 'Theme updated' : 'Theme created','OK');
+      overlay.remove();
+      renderScreens();
+    }else{
+      showNotif('Failed to save theme','!');
+    }
+  };
+  
+  var cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'flex:1;padding:12px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-overlay);color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onmouseover = function(){ this.style.background='var(--bg-raised)'; };
+  cancelBtn.onmouseout = function(){ this.style.background='var(--bg-overlay)'; };
+  cancelBtn.onclick = function(){ overlay.remove(); };
+  
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(saveBtn);
+  form.appendChild(btnRow);
+  
+  // Update preview function
+  function updatePreview(){
+    var dots = document.getElementById('theme-preview-dots');
+    var nameEl = document.getElementById('theme-preview-name');
+    var textEl = document.getElementById('theme-preview-text');
+    var btnEl = document.getElementById('theme-preview-btn');
+    var boxEl = document.getElementById('theme-preview-box');
+    if(!dots||!nameEl||!textEl||!btnEl||!boxEl) return;
+    dots.innerHTML = 
+      '<div style="width:14px;height:14px;border-radius:50%;background:'+colorInputs.bgBase.value+';"></div>'+
+      '<div style="width:14px;height:14px;border-radius:50%;background:'+colorInputs.primary.value+';"></div>'+
+      '<div style="width:14px;height:14px;border-radius:50%;background:'+colorInputs.textMuted.value+';"></div>';
+    nameEl.textContent = nameInput.value || 'Theme Preview';
+    nameEl.style.color = colorInputs.textPrimary.value;
+    textEl.style.color = colorInputs.textPrimary.value;
+    textEl.style.background = colorInputs.inputBg.value;
+    textEl.style.borderColor = colorInputs.borderMid.value;
+    btnEl.style.background = colorInputs.primary.value;
+    btnEl.style.color = colorInputs.textPrimary.value;
+    btnEl.style.borderColor = colorInputs.primary.value;
+    boxEl.style.background = colorInputs.bgSurface.value;
+    boxEl.style.borderColor = colorInputs.borderMid.value;
+  }
+  
+  // Attach preview updates to all color inputs
+  Object.values(colorInputs).forEach(function(input){
+    input.addEventListener('input', updatePreview);
+  });
+  hueInput.addEventListener('input', updatePreview);
+  nameInput.addEventListener('input', updatePreview);
+  
+  // Initial preview
+  setTimeout(updatePreview, 0);
+  
+  box.appendChild(title);
+  box.appendChild(subtitle);
+  box.appendChild(form);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  
+  // Close on overlay click
+  overlay.onclick = function(e){ if(e.target===overlay) overlay.remove(); };
 }
 
 // ════════════════════════════════════════════════════
