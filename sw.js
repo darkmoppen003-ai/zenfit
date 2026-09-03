@@ -2,8 +2,8 @@
 // Full offline support + background notifications + auto-update
 
 // ── BUILD INFO (auto-updated by update-build.js) ───
-const SW_BUILD = "2026.08.24.6";
-const SCHEMA_VERSION = 1;
+const SW_BUILD = "2026.09.03.15";
+const SCHEMA_VERSION = 6;
 
 // Cache names derived from build — changes on every deploy
 // forces browser to detect SW update and refresh all caches
@@ -52,6 +52,7 @@ const STATIC_ASSETS = [
   './assets/zen/river.mp3',
   './assets/zen/soul_frequencies.mp3',
   './assets/zen/thunder.mp3',
+  './assets/bg/holy.jpeg',
 ];
 
 const NEVER_CACHE_HOSTS = [
