@@ -2352,7 +2352,7 @@ window.replayNavTutorial=function(){
 // ════════════════════════════════════════════════════════════════════════════
 // FUTURE-PROOF CONFIGURATION & CONSTANTS
 // ════════════════════════════════════════════════════════════════════════════
-const DATA_VERSION=6;
+const DATA_VERSION=7;
 const STORAGE_KEYS={
   STATE:'zenfit_v1',
   DEVICE_ID:'zenfit_device_id',
@@ -2422,6 +2422,11 @@ const SCHEMA={
   animatedBgEnabled:'boolean',
   particlesEnabled:'boolean',
   particleCount:'number',
+  particleEffect:'string',
+  bgFit:'string',
+  bgPosX:'number',
+  bgPosY:'number',
+  bgZoom:'number',
   accentColor:'string',
   bgImages:'array',
   bgAllScreens:'boolean',
@@ -2493,6 +2498,17 @@ function migrateData(saved){
     saved.bgImages=Array.isArray(saved.bgImages)?saved.bgImages:[];
     saved.bgAllScreens=saved.bgAllScreens!==false;
     saved.dataVersion=6;
+  }
+  
+  if(version<7){
+    // Remove solid/gradient background types (only animated + image remain)
+    if(saved.bgType==='solid'||saved.bgType==='gradient') saved.bgType='animated';
+    saved.particleEffect=saved.particleEffect||'dust';
+    saved.bgFit=saved.bgFit||'cover';
+    saved.bgPosX=(typeof saved.bgPosX==='number')?saved.bgPosX:50;
+    saved.bgPosY=(typeof saved.bgPosY==='number')?saved.bgPosY:50;
+    saved.bgZoom=(typeof saved.bgZoom==='number')?saved.bgZoom:100;
+    saved.dataVersion=7;
   }
   
   return saved;
@@ -2588,6 +2604,11 @@ function defaultState(){
   animatedBgEnabled:true,
   particlesEnabled:true,
   particleCount:80,
+  particleEffect:'dust',
+  bgFit:'cover',
+  bgPosX:50,
+  bgPosY:50,
+  bgZoom:100,
   accentColor:'',
   bgImages:[],
   bgAllScreens:true,
@@ -3619,6 +3640,38 @@ function ensureScreenContainers(){
   });
 }
 const RENDER_FNS={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,habits:renderHabits,tasks:renderTasks,mind:renderMind,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,leaderboard:renderLeaderboard};
+// Bundled preset wallpapers shipped under ./assets/bg/
+window.__PRESET_WALLPAPERS=[
+  {file:'adapt.jpeg',name:'Adapt'},
+  {file:'back.jpeg',name:'Back'},
+  {file:'bat.jpg',name:'Bat'},
+  {file:'berserk.jpg',name:'Berserk'},
+  {file:'better.jpg',name:'Better'},
+  {file:'demon.jpg',name:'Demon'},
+  {file:'discipline.jpg',name:'Discipline'},
+  {file:'eclipse.png',name:'Eclipse'},
+  {file:'Goku.jpeg',name:'Goku'},
+  {file:'goku-moves-beyond-the-limits-of-god-3w.jpg',name:'Goku 3W'},
+  {file:'guts.png',name:'Guts'},
+  {file:'holy.jpeg',name:'Holy'},
+  {file:'kafka-honkai-star-rail-hr.jpg',name:'Kafka'},
+  {file:'knowledge.png',name:'Knowledge'},
+  {file:'mahoraga.jpeg',name:'Mahoraga'},
+  {file:'man.jpg',name:'Man'},
+  {file:'metanoia.jpeg',name:'Metanoia'},
+  {file:'miyamoto.jpeg',name:'Miyamoto'},
+  {file:'mushashi.jpeg',name:'Mushashi'},
+  {file:'naruto.png',name:'Naruto'},
+  {file:'protocol.png',name:'Protocol'},
+  {file:'sacrifice.jpg',name:'Sacrifice'},
+  {file:'skull.jpeg',name:'Skull'},
+  {file:'sword.png',name:'Sword'},
+  {file:'tojif.jpeg',name:'Toji F'},
+  {file:'toji.jpg',name:'Toji'},
+  {file:'vegeta.jpeg',name:'Vegeta'},
+  {file:'vegetaui',name:'Vegeta UI'},
+  {file:'violet evergarden.png',name:'Violet Evergarden'}
+];
 function renderScreens(navigating){
   ensureScreenContainers();
   SCREENS.forEach(s=>{
@@ -7766,9 +7819,9 @@ function renderProfile(el){
   <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();}">Reset All Data</button>`;
 
   // APPEARANCE & CUSTOMIZATION
-  var bgTypes = ['animated','solid','gradient','image'];
-  var bgTypeLabels = ['✨ Animated','🎨 Solid','🌈 Gradient','🖼️ Image'];
-  var bgTypeIcons = ['✨','🎨','🌈','🖼️'];
+  var bgTypes = ['animated','image'];
+  var bgTypeLabels = ['✨ Animated','🖼️ Image'];
+  var bgTypeIcons = ['✨','🖼️'];
   el.innerHTML += '<div class="card mt16" id="appearance-section"><div class="section-title">Appearance & Customization</div>' +
     // Glass Mode subsection
     '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
@@ -7821,6 +7874,14 @@ function renderProfile(el){
     '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.particlesEnabled?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">' +
     '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.particlesEnabled?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>' +
     '</div>' +
+    // Particle effect selector (dust vs snow)
+    '<div style="margin-top:10px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Particle Effect</div>' +
+    '<div style="display:flex;gap:6px">' +
+    ['dust','snow'].map(function(ef){
+      var active=(S.particleEffect||'dust')===ef;
+      return '<button type="button" onclick="S.particleEffect=\''+ef+'\';persistSave();applyBackgroundConfig();renderScreens();" style="flex:1;padding:8px;border-radius:10px;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:'+(active?'var(--bg-raised)':'var(--bg-overlay)')+';color:'+(active?'var(--primary)':'var(--text-primary)')+';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">'+(ef==='snow'?'❄️ Snow':'✨ Dust')+'</button>';
+    }).join('') +
+    '</div></div>' +
     // Particle count slider
     '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
@@ -7853,12 +7914,39 @@ function renderProfile(el){
       '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
       '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🖼️ Image Background</div>' +
       '<button class="btn btn-primary" onclick="uploadBackgroundImage()" style="width:100%;margin-bottom:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Image</button>' +
+      // Preset wallpapers (bundled assets)
+      '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Preset Wallpapers</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">' +
+      window.__PRESET_WALLPAPERS.map(function(p){
+        var active=(S.bgImage==='preset:'+p.file);
+        return '<div style="position:relative;border-radius:8px;overflow:hidden;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:var(--bg-overlay);aspect-ratio:1;cursor:pointer" onclick="selectBgImage(\'preset:'+p.file+'\')">' +
+          '<img src="./assets/bg/'+p.file+'" alt="'+escapeHtml(p.name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover">' +
+          '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(p.name)+'</div>' +
+          '</div>';
+      }).join('') +
+      '</div></div>' +
       (S.bgImage ? (
         '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Current Background</div>' +
         '<div style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay)">' +
         '<img id="bg-preview-img" src="" alt="Background preview" style="width:100%;height:100%;object-fit:cover">' +
         '</div></div>'
       ) : '') +
+      // Fit / position / zoom controls for the wallpaper
+      '<div style="margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">' +
+      '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Wallpaper Fit &amp; Position</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:10px">' +
+      ['cover','contain','fill'].map(function(f){
+        var active=(S.bgFit||'cover')===f;
+        return '<button type="button" onclick="setBgFit(\''+f+'\')" style="flex:1;padding:7px;border-radius:8px;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:'+(active?'var(--bg-raised)':'transparent')+';color:'+(active?'var(--primary)':'var(--text-primary)')+';font-size:11px;font-weight:600;cursor:pointer;text-transform:capitalize">'+f+'</button>';
+      }).join('') +
+      '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Zoom</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-zoom-val">'+(S.bgZoom??100)+'%</span></div>' +
+      '<input type="range" min="50" max="200" value="'+(S.bgZoom??100)+'" oninput="setBgZoom(+this.value)" style="width:100%;height:6px;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Horizontal Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posx-val">'+(S.bgPosX??50)+'%</span></div>' +
+      '<input type="range" min="0" max="100" value="'+(S.bgPosX??50)+'" oninput="setBgPosX(+this.value)" style="width:100%;height:6px;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Vertical Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posy-val">'+(S.bgPosY??50)+'%</span></div>' +
+      '<input type="range" min="0" max="100" value="'+(S.bgPosY??50)+'" oninput="setBgPosY(+this.value)" style="width:100%;height:6px">' +
+      '</div>' +
       (S.bgImages && S.bgImages.length ? (
         '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Uploaded Images</div>' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">' +
@@ -7960,7 +8048,7 @@ function renderProfile(el){
   setTimeout(function(){
     var previewImg = document.getElementById('bg-preview-img');
     if(previewImg && S.bgImage){
-      getBackgroundImageUrl(S.bgImage).then(function(url){
+      resolveBackgroundImage(S.bgImage).then(function(url){
         if(url) previewImg.src = url;
       });
     }
@@ -9580,6 +9668,7 @@ function applyBackgroundConfig(){
   document.body.classList.toggle('no-particles', !S.particlesEnabled || isReducedMotion());
   if(window.__setParticlesEnabled) window.__setParticlesEnabled(S.particlesEnabled && !isReducedMotion());
   if(window.__setParticleCount) window.__setParticleCount(S.particleCount);
+  if(window.__setParticleEffect) window.__setParticleEffect(S.particleEffect||'dust');
   // Image background handling
   var isImage = S.bgType==='image' && S.bgImage;
   document.body.classList.toggle('image-bg-active', !!isImage);
@@ -9588,7 +9677,13 @@ function applyBackgroundConfig(){
   if(isImage){
     if(!imgLayer){ ensureBgImageLayer(); imgLayer=document.getElementById('app-bg-img'); scrim=document.getElementById('app-bg-scrim'); }
     if(imgLayer){
-      getBackgroundImageUrl(S.bgImage).then(function(url){
+      // Apply fit / position / zoom to the image layer
+      var fit=S.bgFit||'cover';
+      imgLayer.style.backgroundSize = fit==='fill' ? '100% 100%' : fit;
+      imgLayer.style.backgroundPosition = (S.bgPosX||50)+'% '+(S.bgPosY||50)+'%';
+      imgLayer.style.transformOrigin='center';
+      imgLayer.style.transform='scale('+((S.bgZoom||100)/100)+')';
+      resolveBackgroundImage(S.bgImage).then(function(url){
         if(url && imgLayer){
           // revoke previous object URL to prevent leak
           if(imgLayer._bgUrl){ try{URL.revokeObjectURL(imgLayer._bgUrl);}catch(e){} }
@@ -10227,6 +10322,7 @@ function uploadProfilePic(){
   document.body.appendChild(inp);inp.click();
   setTimeout(function(){try{document.body.removeChild(inp);}catch(e){}},2000);
 }
+var _bgCounter=0;
 function uploadBackgroundImage(){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';
@@ -10262,7 +10358,6 @@ function uploadBackgroundImage(){
   setTimeout(function(){try{document.body.removeChild(inp);}catch(e){}},2000);
 }
 var _bgObjectUrls=[];
-var _bgCounter=0;
 function getBackgroundImageUrl(id){
   return idbGetImage(id).then(function(blob){
     if(!blob)return null;
@@ -10270,6 +10365,42 @@ function getBackgroundImageUrl(id){
     _bgObjectUrls.push(url);
     return url;
   });
+}
+// Resolve a background image id to a usable URL.
+// Preset ids use the "preset:<filename>" convention and point to bundled
+// assets under ./assets/bg/. Uploaded ids (bg_...) are fetched from IndexedDB.
+function resolveBackgroundImage(id){
+  if(typeof id==='string' && id.indexOf('preset:')===0){
+    var fname=id.slice(7);
+    return Promise.resolve('./assets/bg/'+fname);
+  }
+  return getBackgroundImageUrl(id);
+}
+function setBgFit(v){
+  S.bgFit=v;
+  applyBackgroundConfig();
+  persistSave();
+}
+function setBgPosX(v){
+  S.bgPosX=Math.max(0,Math.min(100,Math.floor(v)));
+  var el=document.getElementById('bg-posx-val');
+  if(el)el.textContent=S.bgPosX+'%';
+  applyBackgroundConfig();
+  persistSave();
+}
+function setBgPosY(v){
+  S.bgPosY=Math.max(0,Math.min(100,Math.floor(v)));
+  var el=document.getElementById('bg-posy-val');
+  if(el)el.textContent=S.bgPosY+'%';
+  applyBackgroundConfig();
+  persistSave();
+}
+function setBgZoom(v){
+  S.bgZoom=Math.max(50,Math.min(200,Math.floor(v)));
+  var el=document.getElementById('bg-zoom-val');
+  if(el)el.textContent=S.bgZoom+'%';
+  applyBackgroundConfig();
+  persistSave();
 }
 function revokeAllBackgroundImageUrls(){
   _bgObjectUrls.forEach(function(u){try{URL.revokeObjectURL(u);}catch(e){}});
@@ -12510,6 +12641,7 @@ function requestNotifAndSubscribe() {
   var particles = [];
   var mouseX = -9999, mouseY = -9999;
   var animId;
+  var mode = (typeof S!=='undefined' && S.particleEffect) ? S.particleEffect : 'dust';
   
   function resize(){
     canvas.width = window.innerWidth;
@@ -12572,10 +12704,41 @@ function requestNotifAndSubscribe() {
     };
   }
   
+  function SnowParticle(){
+    this.reset = function(){
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 3 + 1;
+      this.speedY = Math.random() * 1.2 + 0.4;
+      this.drift = Math.random() * 0.6 + 0.2;
+      this.phase = Math.random() * Math.PI * 2;
+      this.opacity = Math.random() * 0.6 + 0.3;
+    };
+    this.reset();
+    this.update = function(){
+      this.y += this.speedY;
+      this.phase += 0.02;
+      this.x += Math.sin(this.phase) * this.drift;
+      if(this.y > canvas.height + 10){
+        this.y = -10;
+        this.x = Math.random() * canvas.width;
+      }
+      if(this.x < -10) this.x = canvas.width + 10;
+      if(this.x > canvas.width + 10) this.x = -10;
+    };
+    this.draw = function(){
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + this.opacity + ')';
+      ctx.fill();
+    };
+  }
+  
   function initParticles(){
     var count = (typeof S!=='undefined' && S.particleCount) ? Math.max(0,Math.min(120,Math.floor(S.particleCount))) : Math.min(Math.floor(canvas.width * canvas.height / 6000), 120);
     particles = [];
-    for(var i = 0; i < count; i++) particles.push(new Particle());
+    var Ctor = (mode==='snow') ? SnowParticle : Particle;
+    for(var i = 0; i < count; i++) particles.push(new Ctor());
   }
   initParticles();
   
@@ -12594,6 +12757,12 @@ function requestNotifAndSubscribe() {
     S.particleCount = capped;
     initParticles();
   };
+  window.__setParticleEffect = function(effect){
+    var next = (effect==='snow') ? 'snow' : 'dust';
+    if(next===mode) return;
+    mode = next;
+    initParticles();
+  };
   
   function animate(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -12601,19 +12770,22 @@ function requestNotifAndSubscribe() {
       particles[i].update();
       particles[i].draw();
     }
-    for(var i = 0; i < particles.length; i++){
-      for(var j = i + 1; j < particles.length; j++){
-        var dx = particles[i].x - particles[j].x;
-        var dy = particles[i].y - particles[j].y;
-        var dist = dx * dx + dy * dy;
-        if(dist < 14400){
-          var opacity = (1 - dist / 14400) * 0.12;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = 'rgba(124,111,255,' + opacity + ')';
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
+    // Constellation connecting lines only for the dust effect
+    if(mode!=='snow'){
+      for(var i = 0; i < particles.length; i++){
+        for(var j = i + 1; j < particles.length; j++){
+          var dx = particles[i].x - particles[j].x;
+          var dy = particles[i].y - particles[j].y;
+          var dist = dx * dx + dy * dy;
+          if(dist < 14400){
+            var opacity = (1 - dist / 14400) * 0.12;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = 'rgba(124,111,255,' + opacity + ')';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
         }
       }
     }
