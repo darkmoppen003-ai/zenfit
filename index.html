@@ -4694,7 +4694,7 @@ async function doBC(){
     const d=await res.json();
     if(d.status!==1){if(r)r.innerHTML=`<div style="color:var(--danger)">Not found.</div>`;return;}
     const p=d.product,n=p.nutriments||{};
-    const e={name:p.product_name||'Product',qty:1,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10,sugar:Math.round((n['sugars_100g']||0)*10)/10}};
+    const e={name:p.product_name||'Product',qty:1,servingQty:(p.serving_quantity&&p.serving_quantity>0)?p.serving_quantity:100,nutrients:{cal:Math.round(n['energy-kcal_100g']||0),protein:Math.round((n['proteins_100g']||0)*10)/10,carbs:Math.round((n['carbohydrates_100g']||0)*10)/10,fat:Math.round((n['fat_100g']||0)*10)/10,fiber:Math.round((n['fiber_100g']||0)*10)/10,sugar:Math.round((n['sugars_100g']||0)*10)/10}};
     if(!r)return;
     const hasData=e.nutrients.cal||e.nutrients.protein||e.nutrients.carbs||e.nutrients.fat;
     if(!hasData){
@@ -4716,10 +4716,56 @@ async function doBC(){
           <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(e.name)}</div>
           <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${nn(e.nutrients.cal)} kcal · P ${nn(e.nutrients.protein)}g · C ${nn(e.nutrients.carbs)}g · F ${nn(e.nutrients.fat)}g · S ${nn(e.nutrients.sugar)}g</div>
         </div>
-        <button class="btn btn-primary btn-sm" onclick='logBCE(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button>
+        <button class="btn btn-primary btn-sm" onclick='showBCServingDialog(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log</button>
       </div>`;
     }
   }catch(ex){if(r)r.innerHTML=`<div style="color:var(--danger)">Lookup failed.</div>`;}
+}
+function scaleBCNutrients(n,servingSize,servings){
+  const f=(servingSize/100)*servings;
+  return {cal:Math.round(n.cal*f),protein:Math.round((n.protein||0)*f*10)/10,carbs:Math.round((n.carbs||0)*f*10)/10,fat:Math.round((n.fat||0)*f*10)/10,fiber:Math.round((n.fiber||0)*f*10)/10,sugar:Math.round((n.sugar||0)*f*10)/10};
+}
+function showBCServingDialog(e){
+  const ov=document.createElement('div');ov.className='overlay';
+  ov.onclick=function(ev){if(ev.target===ov)ov.remove();};
+  const defServing=e.servingQty||100;
+  ov.innerHTML=`<div class="overlay-box" style="max-width:400px;width:92%;text-align:left" onclick="event.stopPropagation()">
+    <div style="text-align:right;margin-bottom:6px"><button onclick="this.closest('.overlay').remove()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px">✕</button></div>
+    <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:2px">${escapeHtml(e.name)}</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Nutrition data is per 100g. Adjust the serving size and servings to match what you actually ate.</div>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Serving Size (g)</div>
+        <input type="number" id="bc-ss" min="1" value="${defServing}" oninput="updateBCPreview()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-raised);color:var(--text-primary);font-size:14px">
+      </div>
+      <div style="flex:1">
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">Servings</div>
+        <input type="number" id="bc-serv" min="1" value="1" oninput="updateBCPreview()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border-mid);background:var(--bg-raised);color:var(--text-primary);font-size:14px">
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);margin-bottom:6px">Total for this log</div>
+    <div id="bc-preview" style="font-size:13px;color:var(--text-primary);font-weight:600;margin-bottom:14px"></div>
+    <button class="btn btn-primary btn-full" onclick='logBCServing(${JSON.stringify(e).replace(/'/g,"&#39;")})'>Log Item</button>
+  </div>`;
+  document.body.appendChild(ov);
+  window._bcBaseNutrients=e.nutrients;
+  updateBCPreview();
+}
+function updateBCPreview(){
+  const ss=+document.getElementById('bc-ss')?.value||100;
+  const sv=+document.getElementById('bc-serv')?.value||1;
+  const n=scaleBCNutrients(window._bcBaseNutrients||{},ss,sv);
+  const el=document.getElementById('bc-preview');
+  if(el)el.textContent=`${nn(n.cal)} kcal · P ${nn(n.protein)}g · C ${nn(n.carbs)}g · F ${nn(n.fat)}g · S ${nn(n.sugar)}g`;
+}
+function logBCServing(e){
+  const ss=+document.getElementById('bc-ss')?.value||100;
+  const sv=+document.getElementById('bc-serv')?.value||1;
+  const n=scaleBCNutrients(e.nutrients,ss,sv);
+  const entry={name:e.name,qty:Math.round(ss*sv),unit:'g',servingSize:ss,servings:sv,nutrients:n};
+  logBCE(entry);
+  const ov=document.querySelector('.overlay-box');
+  if(ov)ov.closest('.overlay').remove();
 }
 let _bcStream=null,_bcDetecting=false;
 async function startBCCamera(){
