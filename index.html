@@ -2368,10 +2368,9 @@ function idbSave(key,val){try{return openDB().then(db=>new Promise((res,rej)=>{c
 function idbLoad(key){try{return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction(DB_STORE,'readonly');const g=t.objectStore(DB_STORE).get(key);g.onsuccess=()=>{db.close();res(g.result);};g.onerror=()=>{db.close();rej(g.error);};}));}catch(e){return Promise.reject(e);}}
 
 // ── IndexedDB background image store ──────────────────────────────────────────
-function idbPutImage(id,blob){return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readwrite');t.objectStore('zenfit-bg-images').put(blob,id);t.oncomplete=()=>{db.close();res();};t.onerror=()=>{db.close();rej(t.error);};}));}
-function idbGetImage(id){return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readonly');const g=t.objectStore('zenfit-bg-images').get(id);g.onsuccess=()=>{db.close();res(g.result||null);};g.onerror=()=>{db.close();rej(g.error);};}));}
-function idbDeleteImage(id){return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readwrite');t.objectStore('zenfit-bg-images').delete(id);t.oncomplete=()=>{db.close();res();};t.onerror=()=>{db.close();rej(t.error);};}));}
-function idbListImages(){return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readonly');const req=t.objectStore('zenfit-bg-images').getAllKeys();req.onsuccess=()=>{db.close();res((req.result||[]).map(function(id){return{id:id};}));};req.onerror=()=>{db.close();rej(req.error);};}));}
+function idbPutImage(id,blob){try{return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readwrite');t.objectStore('zenfit-bg-images').put(blob,id);t.oncomplete=()=>{db.close();res();};t.onerror=()=>{db.close();rej(t.error);};}));}catch(e){return Promise.reject(e);}}
+function idbGetImage(id){try{return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readonly');const g=t.objectStore('zenfit-bg-images').get(id);g.onsuccess=()=>{db.close();res(g.result||null);};g.onerror=()=>{db.close();rej(g.error);};}));}catch(e){return Promise.reject(e);}}
+function idbDeleteImage(id){try{return openDB().then(db=>new Promise((res,rej)=>{const t=db.transaction('zenfit-bg-images','readwrite');t.objectStore('zenfit-bg-images').delete(id);t.oncomplete=()=>{db.close();res();};t.onerror=()=>{db.close();rej(t.error);};}));}catch(e){return Promise.reject(e);}}
 
 // Dynamic schema definition - Add new fields here for future-proofing
 const SCHEMA={
@@ -2418,7 +2417,6 @@ const SCHEMA={
   glassAlpha:'number',
   bgType:'string',
   bgImage:'string',
-  bgImageFallback:'string',
   bgOverlay:'number',
   bgDim:'number',
   animatedBgEnabled:'boolean',
@@ -2486,7 +2484,6 @@ function migrateData(saved){
   if(version<6){
     saved.bgType=saved.bgType||'animated';
     saved.bgImage=saved.bgImage||null;
-    saved.bgImageFallback=saved.bgImageFallback||null;
     saved.bgOverlay=saved.bgOverlay||0;
     saved.bgDim=saved.bgDim||0;
     saved.animatedBgEnabled=saved.animatedBgEnabled!==false;
@@ -2586,7 +2583,6 @@ function defaultState(){
   glassAlpha:0.1,
   bgType:'animated',
   bgImage:null,
-  bgImageFallback:null,
   bgOverlay:0,
   bgDim:0,
   animatedBgEnabled:true,
@@ -9593,12 +9589,19 @@ function applyBackgroundConfig(){
     if(!imgLayer){ ensureBgImageLayer(); imgLayer=document.getElementById('app-bg-img'); scrim=document.getElementById('app-bg-scrim'); }
     if(imgLayer){
       getBackgroundImageUrl(S.bgImage).then(function(url){
-        if(url && imgLayer) imgLayer.style.backgroundImage='url("'+url+'")';
-      });
+        if(url && imgLayer){
+          // revoke previous object URL to prevent leak
+          if(imgLayer._bgUrl){ try{URL.revokeObjectURL(imgLayer._bgUrl);}catch(e){} }
+          imgLayer._bgUrl=url;
+          imgLayer.style.backgroundImage='url("'+url+'")';
+        }
+      }).catch(function(){});
       imgLayer.style.display='block';
       if(scrim){
         var dim=Math.max(0,Math.min(100,S.bgDim||0));
-        scrim.style.background='rgba(0,0,0,'+(dim/100)+')';
+        var ov=Math.max(0,Math.min(100,S.bgOverlay||0));
+        var total=Math.min(100, dim+ov);
+        scrim.style.background='rgba(0,0,0,'+(total/100)+')';
         scrim.style.display='block';
       }
     }
@@ -9748,10 +9751,6 @@ function deleteCustomTheme(id){
   _customThemesCache=themes;
   saveCustomThemes(themes);
   return true;
-}
-function themeExists(name){
-  const themes=getCustomThemes();
-  return themes.some(t=>t.name===name);
 }
 function applyCustomTheme(id){
   const themes=getCustomThemes();
@@ -10271,11 +10270,6 @@ function getBackgroundImageUrl(id){
     _bgObjectUrls.push(url);
     return url;
   });
-}
-function revokeBackgroundImageUrl(url){
-  try{URL.revokeObjectURL(url);}catch(e){}
-  var idx=_bgObjectUrls.indexOf(url);
-  if(idx>=0)_bgObjectUrls.splice(idx,1);
 }
 function revokeAllBackgroundImageUrls(){
   _bgObjectUrls.forEach(function(u){try{URL.revokeObjectURL(u);}catch(e){}});
