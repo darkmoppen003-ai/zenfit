@@ -1156,6 +1156,8 @@ nav::-webkit-scrollbar {
     animation: none !important;
     transition: none !important;
   }
+  .bg-glow-orb { display: none !important; }
+  #particles-canvas { display: none !important; }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1218,6 +1220,26 @@ nav::-webkit-scrollbar {
 body.no-anim-bg .bg-glow-orb { display: none !important; }
 body.no-anim-bg::after { display: none !important; }
 body.no-particles #particles-canvas { display: none !important; }
+
+/* ── Background image layer ── */
+.app-bg-img {
+  position: fixed; inset: 0; z-index: 0;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  pointer-events: none;
+  display: none;
+}
+.app-bg-scrim {
+  position: fixed; inset: 0; z-index: 0;
+  background: rgba(0,0,0,0); pointer-events: none;
+  display: none;
+}
+/* When an image background is active, make app/screen backgrounds transparent
+   so the fixed .app-bg-img layer shows through. */
+body.image-bg-active .app,
+body.image-bg-active .screen {
+  background: transparent !important;
+  background-color: transparent !important;
+}
 
 /* ── Particles canvas ── */
 #particles-canvas {
@@ -9551,13 +9573,48 @@ function clearAccentColor(){
   persistSave();
   showNotif('Accent reset to theme default','✨');
 }
+function isReducedMotion(){
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 function applyBackgroundConfig(){
   if(!S)return;
   var noAnim = !S.animatedBgEnabled || S.bgType!=='animated';
+  if(isReducedMotion()) noAnim = true;
   document.body.classList.toggle('no-anim-bg', noAnim);
-  document.body.classList.toggle('no-particles', !S.particlesEnabled);
-  if(window.__setParticlesEnabled) window.__setParticlesEnabled(S.particlesEnabled);
+  document.body.classList.toggle('no-particles', !S.particlesEnabled || isReducedMotion());
+  if(window.__setParticlesEnabled) window.__setParticlesEnabled(S.particlesEnabled && !isReducedMotion());
   if(window.__setParticleCount) window.__setParticleCount(S.particleCount);
+  // Image background handling
+  var isImage = S.bgType==='image' && S.bgImage;
+  document.body.classList.toggle('image-bg-active', !!isImage);
+  var imgLayer=document.getElementById('app-bg-img');
+  var scrim=document.getElementById('app-bg-scrim');
+  if(isImage){
+    if(!imgLayer){ ensureBgImageLayer(); imgLayer=document.getElementById('app-bg-img'); scrim=document.getElementById('app-bg-scrim'); }
+    if(imgLayer){
+      getBackgroundImageUrl(S.bgImage).then(function(url){
+        if(url && imgLayer) imgLayer.style.backgroundImage='url("'+url+'")';
+      });
+      imgLayer.style.display='block';
+      if(scrim){
+        var dim=Math.max(0,Math.min(100,S.bgDim||0));
+        scrim.style.background='rgba(0,0,0,'+(dim/100)+')';
+        scrim.style.display='block';
+      }
+    }
+  } else {
+    if(imgLayer) imgLayer.style.display='none';
+    if(scrim) scrim.style.display='none';
+  }
+}
+function ensureBgImageLayer(){
+  if(document.getElementById('app-bg-img')) return;
+  var img=document.createElement('div');
+  img.id='app-bg-img'; img.className='app-bg-img';
+  var scrim=document.createElement('div');
+  scrim.id='app-bg-scrim'; scrim.className='app-bg-scrim';
+  document.body.insertBefore(scrim, document.body.firstChild);
+  document.body.insertBefore(img, document.body.firstChild);
 }
 function setBgType(type){
   S.bgType=type;
@@ -9618,6 +9675,7 @@ function setParticleCount(n){
 function selectBgImage(id){
   S.bgImage=id;
   persistSave();
+  applyBackgroundConfig();
   renderScreens();
   showNotif('Background image selected','OK');
 }
@@ -9702,6 +9760,26 @@ function applyCustomTheme(id){
   applyThemeObject(t,'custom:'+id);
 }
 
+// WCAG 2.2 contrast helper
+function checkContrast(fg, bg){
+  function luminance(hex){
+    var c = hex.replace('#','');
+    if(c.length===3) c = c.split('').map(function(x){return x+x;}).join('');
+    var r = parseInt(c.substr(0,2),16)/255;
+    var g = parseInt(c.substr(2,2),16)/255;
+    var b = parseInt(c.substr(4,2),16)/255;
+    var srgb = [r,g,b].map(function(v){
+      return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+    });
+    return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+  }
+  var L1 = luminance(fg);
+  var L2 = luminance(bg);
+  var lighter = Math.max(L1, L2);
+  var darker = Math.min(L1, L2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 // ════════════════════════════════════════════════════
 // CUSTOM THEME BUILDER UI
 // ════════════════════════════════════════════════════
@@ -9719,6 +9797,7 @@ function renderCustomThemes(){
       '<div style="font-size:12px;font-weight:600;color:'+t.textPrimary+'">'+escapeHtml(t.name)+'</div>'+
       (isActive?'<div style="font-size:10px;color:'+t.primary+';margin-top:2px">Active</div>':'')+
       '<button onclick="event.stopPropagation();deleteCustomTheme(\''+t.id+'\');renderScreens();" style="position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;background:var(--bg-overlay);border:1px solid var(--border-mid);color:var(--text-muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="Delete theme">&#10006;</button>'+
+      '<button onclick="event.stopPropagation();exportSingleTheme(\''+t.id+'\');" style="position:absolute;top:6px;right:32px;width:20px;height:20px;border-radius:50%;background:var(--bg-overlay);border:1px solid var(--border-mid);color:var(--text-muted);font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1" title="Export theme">&#8593;</button>'+
     '</div>';
   }).join('');
 }
@@ -9818,7 +9897,8 @@ function showThemeBuilder(themeToEdit){
     '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px" id="theme-preview-dots"></div>' +
     '<div style="font-size:13px;font-weight:600;text-align:center;color:var(--text-primary)" id="theme-preview-name">Theme Preview</div>' +
     '<div style="margin-top:10px;padding:10px;border-radius:6px;border:1px solid var(--border-mid);background:var(--input-bg);color:var(--text-primary);font-size:12px;text-align:center" id="theme-preview-text">Sample text content</div>' +
-    '<button style="margin-top:10px;width:100%;padding:8px;border-radius:6px;border:1px solid var(--border-mid);background:var(--primary);color:var(--text-primary);font-size:12px;font-weight:600;cursor:pointer" id="theme-preview-btn">Sample Button</button>';
+    '<button style="margin-top:10px;width:100%;padding:8px;border-radius:6px;border:1px solid var(--border-mid);background:var(--primary);color:var(--text-primary);font-size:12px;font-weight:600;cursor:pointer" id="theme-preview-btn">Sample Button</button>' +
+    '<div id="theme-contrast-indicator" style="margin-top:8px;padding:6px 10px;border-radius:6px;font-size:11px;text-align:center;display:none"></div>';
   form.appendChild(previewBox);
   
   // Button row
@@ -12331,6 +12411,7 @@ const LeaderboardAPI=(function(){
 })();
 
 initTheme();
+ensureBgImageLayer();
 // Check achievements on every load (catches anything earned offline)
 setTimeout(function(){checkAchievements();},200);
 // Sync global leaderboard in background if opted in
