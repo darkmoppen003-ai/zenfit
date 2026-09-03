@@ -1779,7 +1779,7 @@ const safeFetch = async function(url, opts){
 };
 
 const APP_VERSION="v8.3.3";
-const APP_BUILD="2026.08.24.6";
+const APP_BUILD="2026.09.03.15";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
 var schemaMigrations = {};
@@ -7744,27 +7744,30 @@ function renderProfile(el){
       </label>
     </div>
   </div>
-  <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">🪟 Liquid Glass</div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Frosted blur effect on cards</div>
-      </div>
-      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">
-        <input type="checkbox" id="glass-toggle" ${S.glassMode?'checked':''} onchange="S.glassMode=this.checked;persistSave();applyGlassMode();renderScreens();" style="opacity:0;width:0;height:0">
-        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.glassMode?'var(--primary-dark)':'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.glassMode?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
-      </label>
-    </div>
-    ${S.glassMode?('<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Blur</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-blur-val">'+(S.glassBlur??4)+'px</span></div><input type="range" min="0" max="30" value="'+(S.glassBlur??4)+'" oninput="setGlassBlur(+this.value)" class="glass-blur-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px;margin-bottom:8px">'+[0,4,10,16,22,30].map(function(v){return'<div style="position:absolute;left:'+(v/30*100)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassBlur('+v+')"><div class="blur-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round(S.glassBlur??4)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round(S.glassBlur??4)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.1)*100)+'%</span></div><input type="range" min="0" max="100" value="'+Math.round((S.glassAlpha??0.1)*100)+'" oninput="setGlassAlpha(+this.value)" class="glass-alpha-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px">'+[0,20,40,55,75,100].map(function(v){return'<div style="position:absolute;left:'+(v)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassAlpha('+v+')"><div class="alpha-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div></div>'):''}
-  </div>
   </div>
   <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();}">Reset All Data</button>`;
 
-  // BACKGROUND SETTINGS
+  // APPEARANCE & CUSTOMIZATION
   var bgTypes = ['animated','solid','gradient','image'];
   var bgTypeLabels = ['✨ Animated','🎨 Solid','🌈 Gradient','🖼️ Image'];
   var bgTypeIcons = ['✨','🎨','🌈','🖼️'];
-  el.innerHTML += '<div class="card mt16"><div class="section-title">Background</div>' +
+  el.innerHTML += '<div class="card mt16" id="appearance-section"><div class="section-title">Appearance & Customization</div>' +
+    // Glass Mode subsection
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Liquid Glass</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+    '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">🪟 Liquid Glass</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Frosted blur effect on cards</div></div>' +
+    '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">' +
+    '<input type="checkbox" id="glass-toggle" '+(S.glassMode?'checked':'')+' onchange="S.glassMode=this.checked;persistSave();applyGlassMode();renderScreens();" style="opacity:0;width:0;height:0">' +
+    '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.glassMode?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.glassMode?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>' +
+    '</label>' +
+    '</div>' +
+    (S.glassMode?('<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;color:var(--text-secondary)">Blur</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-blur-val">'+(S.glassBlur??4)+'px</span></div><input type="range" min="0" max="30" value="'+(S.glassBlur??4)+'" oninput="setGlassBlur(+this.value)" class="glass-blur-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px;margin-bottom:8px">'+[0,4,10,16,22,30].map(function(v){return'<div style="position:absolute;left:'+(v/30*100)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassBlur('+v+')"><div class="blur-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round(S.glassBlur??4)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round(S.glassBlur??4)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.1)*100)+'%</span></div><input type="range" min="0" max="100" value="'+Math.round((S.glassAlpha??0.1)*100)+'" oninput="setGlassAlpha(+this.value)" class="glass-alpha-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px">'+[0,20,40,55,75,100].map(function(v){return'<div style="position:absolute;left:'+(v)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassAlpha('+v+')"><div class="alpha-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div></div>'):'') +
+    '</div>' +
+    // Background Settings subsection
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Background</div>' +
     '<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Background Type</div>' +
     '<div style="display:flex;gap:6px;flex-wrap:wrap" id="bg-type-selector">' +
     bgTypes.map(function(t,i){
@@ -7863,19 +7866,21 @@ function renderProfile(el){
       '</div>' +
       '</div>'
     ) : '') +
-    '</div>';
-
-
-  el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    '<button class="btn btn-primary" onclick="showExportOptions()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Share / Export</button>' +
-    '<button class="btn" onclick="importData()" style="border:1px solid var(--border-mid)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import Backup</button>' +
-    '</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px">Share or Export your data as a .json backup file. Import it on another device to restore your progress. On Android: uses native share sheet. Paste into Import on your new device to restore. Import a previous backup to restore all your progress.</div></div>';
-
-
-
-  // THEME SELECTOR
-  el.innerHTML += '<div class="card mt16"><div class="section-title">Themes</div>' +
+    '</div>' +
+    // Accent Quick-Picker subsection
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Accent Color</div>' +
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+    '<div style="font-size:13px;font-weight:600;color:var(--text-primary);min-width:120px">Accent</div>' +
+    '<input type="color" id="accent-picker" value="'+(S.accentColor||'#7c6fff')+'" style="width:44px;height:44px;border:none;border-radius:8px;cursor:pointer;background:none" onchange="setAccentColor(this.value)">' +
+    '<span style="font-size:12px;color:var(--text-secondary)" id="accent-hex">'+(S.accentColor||'Theme default')+'</span>' +
+    '<button class="btn btn-sm" onclick="clearAccentColor()" style="margin-left:auto;font-size:11px">Reset to Theme</button>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:6px">Overrides theme primary/glow1 without creating a full theme. Leave empty to use theme default.</div>' +
+    '</div>' +
+    // Built-in Themes subsection
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Built-in Themes</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
     Object.entries(THEMES).map(function(e){
       var k=e[0],t=e[1];
@@ -7889,14 +7894,20 @@ function renderProfile(el){
         '<div style="font-size:12px;font-weight:600;color:'+t.textPrimary+'">'+t.name+'</div>'+
         (active?'<div style="font-size:10px;color:'+t.primary+';margin-top:2px">Active</div>':'')+'</div>';
     }).join('')+
-    '</div></div>';
+    '</div></div>' +
+    // Custom Themes subsection
+    '<div>' +
+    '<div class="section-title" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span>Custom Themes</span><button class="btn btn-sm btn-primary" onclick="showThemeBuilder()" style="font-size:11px;padding:6px 10px">+ New Theme</button></div>' +
+    '<div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+renderCustomThemes()+'</div>' +
+    '</div>' +
+    '</div>';
 
-  // CUSTOM THEMES SECTION
-  el.innerHTML += '<div class="card mt16" id="custom-themes-section"><div class="section-title" style="display:flex;align-items:center;justify-content:space-between">Custom Themes<button class="btn btn-sm btn-primary" onclick="showThemeBuilder()" style="font-size:11px;padding:6px 10px">+ New Theme</button></div><div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+renderCustomThemes()+'</div></div>';
+  el.innerHTML += '<div class="card mt16"><div class="section-title">Data Management</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="btn btn-primary" onclick="showExportOptions()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Share / Export</button>' +
+    '<button class="btn" onclick="importData()" style="border:1px solid var(--border-mid)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Import Backup</button>' +
+    '</div><div style="font-size:11px;color:var(--text-muted);margin-top:8px">Share or Export your data as a .json backup file. Import it on another device to restore your progress. On Android: uses native share sheet. Paste into Import on your new device to restore. Import a previous backup to restore all your progress.</div></div>';
 
-
-
-  // Profile picture card
   var picCard=document.createElement('div');
   picCard.className='card mb12';
   picCard.style.cssText='display:flex;align-items:center;gap:16px;padding:16px';
@@ -9513,6 +9524,33 @@ function setGlassAlpha(pct){
   if(r)r.value=pct<=0.01?0:pct;
   persistSave();
 }
+function setAccentColor(color){
+  S.accentColor=color;
+  var r=document.documentElement.style;
+  r.setProperty('--primary',color);
+  r.setProperty('--glow1',color);
+  var hexEl=document.getElementById('accent-hex');
+  if(hexEl)hexEl.textContent=color;
+  var picker=document.getElementById('accent-picker');
+  if(picker)picker.value=color;
+  persistSave();
+  showNotif('Accent color updated','✨');
+}
+function clearAccentColor(){
+  S.accentColor='';
+  var t=THEMES[S.theme||'dark'];
+  if(t){
+    var r=document.documentElement.style;
+    r.setProperty('--primary',t.primary);
+    r.setProperty('--glow1',t.glow1);
+  }
+  var hexEl=document.getElementById('accent-hex');
+  if(hexEl)hexEl.textContent='Theme default';
+  var picker=document.getElementById('accent-picker');
+  if(picker)picker.value=t?t.primary:'#7c6fff';
+  persistSave();
+  showNotif('Accent reset to theme default','✨');
+}
 function applyBackgroundConfig(){
   if(!S)return;
   var noAnim = !S.animatedBgEnabled || S.bgType!=='animated';
@@ -10739,9 +10777,65 @@ function importData(){
           imported=JSON.parse(text);
           if(zipFiles['profile.png'])profilePicBytes=zipFiles['profile.png'];
           if(zipFiles['profile.jpg'])profilePicBytes=zipFiles['profile.jpg'];
+          // Import custom themes from themes.json
+          if(zipFiles['themes.json']){
+            try{
+              var themesText=new TextDecoder().decode(zipFiles['themes.json']);
+              var importedThemes=JSON.parse(themesText);
+              if(Array.isArray(importedThemes)){
+                importedThemes.forEach(function(t){
+                  if(t && t.name && typeof t.name==='string'){
+                    addCustomTheme(t);
+                  }
+                });
+              }
+            }catch(e){
+              console.warn('Failed to import themes.json:',e);
+            }
+          }
+          // Import background images from bg/ entries
+          if(S.bgImages===undefined) S.bgImages=[];
+          for(var name in zipFiles){
+            if(name.indexOf('bg/')===0 && name.length>3){
+              var id=name.split('/')[1];
+              if(id && id.indexOf('.png')===id.length-4){
+                id=id.slice(0,-4);
+                try{
+                  var bytes=zipFiles[name];
+                  if(bytes && bytes.length>0){
+                    var blob=new Blob([bytes],{type:'image/png'});
+                    idbPutImage(id,blob).then(function(){
+                      // Rebuild S.bgImages entry if not already present
+                      if(!S.bgImages.some(function(b){return b.id===id;})){
+                        S.bgImages.push({id:id,name:id+'.png',size:bytes.length,ts:Date.now()});
+                        persistSave();
+                      }
+                    }).catch(function(e){
+                      console.warn('Failed to import bg image '+id+':',e);
+                    });
+                  }
+                }catch(e){
+                  console.warn('Failed to process bg entry '+name+':',e);
+                }
+              }
+            }
+          }
         } else {
           var text=ev.target.result;
-          imported=JSON.parse(text);
+          var parsed=JSON.parse(text);
+          // Handle envelope format {data:..., themes:...} or legacy direct format
+          if(parsed.data && parsed.data.player){
+            imported=parsed.data;
+            if(Array.isArray(parsed.themes)){
+              parsed.themes.forEach(function(t){
+                if(t && t.name && typeof t.name==='string'){
+                  addCustomTheme(t);
+                }
+              });
+            }
+          } else {
+            imported=parsed;
+          }
         }
         if(!imported||!imported.player||!imported.nutrition){
           showNotif('Invalid backup file','!');
@@ -10869,7 +10963,7 @@ function showExportOptions(){
   // METHOD 1: ZIP Export (Recommended)
   var btn0 = document.createElement('button');
   btn0.style.cssText = 'padding:14px;background:#0a2a1a;border:2px solid #4cdb8a;border-radius:10px;color:#4cdb8a;cursor:pointer;font-weight:600;font-size:13px;transition:all .2s;text-align:left';
-  btn0.innerHTML = '<div style="font-size:16px;margin-bottom:4px">📦 ZIP Backup <span style="font-size:9px;background:#4cdb8a22;padding:2px 6px;border-radius:4px;color:#4cdb8a">Recommended</span></div><div style="font-size:11px;color:#2a9a5a">Includes data.json + profile picture + metadata</div>';
+  btn0.innerHTML = '<div style="font-size:16px;margin-bottom:4px">📦 ZIP Backup <span style="font-size:9px;background:#4cdb8a22;padding:2px 6px;border-radius:4px;color:#4cdb8a">Recommended</span></div><div style="font-size:11px;color:#2a9a5a">Includes data.json + profile + themes + backgrounds</div>';
   btn0.onmouseover = function(){ this.style.background='#0f3a2a'; this.style.borderColor='#5aec9a'; };
   btn0.onmouseout = function(){ this.style.background='#0a2a1a'; this.style.borderColor='#4cdb8a'; };
   btn0.onclick = function(){
@@ -10918,7 +11012,11 @@ function showExportOptions(){
 
 // METHOD 1: MANUAL EXPORT (Current method - copy/paste)
 function exportDataFileManual(){
-  var json = JSON.stringify(S, null, 2);
+  var envelope={
+    data:S,
+    themes:getCustomThemes()
+  };
+  var json = JSON.stringify(envelope, null, 2);
   showManualExportModal(json);
 }
 
@@ -10971,7 +11069,11 @@ function showManualExportModal(json){
 // METHOD 2: BROWSER EXPORT (Old method - try download)
 function exportDataFileBrowser(){
   try{
-    var json = JSON.stringify(S, null, 2);
+    var envelope={
+      data:S,
+      themes:getCustomThemes()
+    };
+    var json = JSON.stringify(envelope, null, 2);
     var filename = 'zenfit_backup_' + getTodayStr() + '.json';
     var dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
     
@@ -10990,8 +11092,8 @@ function exportDataFileBrowser(){
   }
 }
 
-// METHOD 3: ZIP EXPORT (data.json + profile.png + metadata.json)
-function exportDataZip(){
+// METHOD 3: ZIP EXPORT (data.json + profile.png + metadata.json + themes.json + bg images)
+async function exportDataZip(){
   try{
     var files={};
     files['data.json']=JSON.stringify(S, null, 2);
@@ -11009,6 +11111,26 @@ function exportDataZip(){
       var picData=dataUriToBytes(S.profilePic);
       if(picData)files['profile.png']=picData;
     }
+    // Include custom themes
+    var customThemes=getCustomThemes();
+    if(customThemes && customThemes.length>0){
+      files['themes.json']=JSON.stringify(customThemes, null, 2);
+    }
+    // Include user background images from IndexedDB
+    if(S.bgImages && S.bgImages.length>0){
+      for(var i=0;i<S.bgImages.length;i++){
+        var bg=S.bgImages[i];
+        try{
+          var blob=await idbGetImage(bg.id);
+          if(blob){
+            var bytes=new Uint8Array(await blob.arrayBuffer());
+            files['bg/'+bg.id+'.png']=bytes;
+          }
+        }catch(e){
+          console.warn('Failed to export bg image '+bg.id+':',e);
+        }
+      }
+    }
     var zipBuf=makeZip(files);
     var blob=new Blob([zipBuf],{type:'application/zip'});
     var url=URL.createObjectURL(blob);
@@ -11021,10 +11143,34 @@ function exportDataZip(){
       try{document.body.removeChild(a);}catch(e){}
       URL.revokeObjectURL(url);
     },1000);
-    showNotif('ZIP backup downloaded! Contains data.json + profile.','📦');
+    showNotif('ZIP backup downloaded! Contains data.json + profile + themes + backgrounds.','📦');
   }catch(err){
     showNotif('ZIP export failed: '+err.message,'!');
     exportDataFileBrowser();
+  }
+}
+function exportSingleTheme(id){
+  var themes=getCustomThemes();
+  var theme=themes.find(function(t){return t.id===id;});
+  if(!theme){
+    showNotif('Theme not found','!');
+    return;
+  }
+  try{
+    var json=JSON.stringify(theme, null, 2);
+    var safeName=theme.name.replace(/[^a-z0-9_-]/gi,'_');
+    var filename='zenfit-theme-'+safeName+'.json';
+    var dataUrl='data:application/json;charset=utf-8,'+encodeURIComponent(json);
+    var link=document.createElement('a');
+    link.href=dataUrl;
+    link.download=filename;
+    link.style.display='none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotif('Theme "'+theme.name+'" exported!','OK');
+  }catch(err){
+    showNotif('Theme export failed: '+err.message,'!');
   }
 }
 function dataUriToBytes(dataUri){
