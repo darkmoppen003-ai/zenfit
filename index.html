@@ -47,6 +47,11 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .screen.active{display:block;backface-visibility:hidden;opacity:1}
 .screen.active.nav-enter>*{animation:fadeIn .22s ease-out}
 .screen.active.nav-enter{overflow:hidden}
+/* Per-tab header showing the tab name in Syne font */
+.screen-header{display:flex;align-items:center;gap:10px;padding:6px 2px 14px;margin-bottom:6px}
+.screen-header .sh-title{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:.5px;color:var(--text-primary);line-height:1.1}
+.screen-header .sh-icon{font-size:20px;line-height:1}
+.screen-header .sh-sub{font-size:11px;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-top:2px}
 .aw-home{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg-base)}
 .aw-wrap{position:relative;width:380px;height:380px}
 .aw-center{position:absolute;top:50%;left:50%;width:148px;height:148px;margin-top:-74px;margin-left:-74px;border-radius:50%;border:3px solid var(--primary);cursor:pointer;z-index:20;background:radial-gradient(circle at 35% 35%,#4a3a6a,#1a1030);box-shadow:0 0 36px rgba(123,94,255,.45),0 0 72px rgba(123,94,255,.18);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease}
@@ -277,7 +282,7 @@ html{background:var(--app-bg,#0d0f14);min-height:100%;height:100%}
 body{background:var(--app-bg,#0d0f14);min-height:100%;height:100%;margin:0;padding:0;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   color:var(--text-primary,#e2e8f8);overscroll-behavior:none;overflow-x:hidden}
-.app{background:var(--app-bg,#0d0f14);min-height:100vh;min-height:100dvh}
+.app{background:var(--app-bg,#0d0f14);min-height:100vh;min-height:100dvh;position:relative}
 .screen{background:var(--app-bg,#0d0f14);min-height:100vh}
 input,textarea,select{background:var(--input-bg,#161B26)!important;color:var(--text-primary,#FFFFFF)!important;border:1px solid var(--border-mid,rgba(255,255,255,0.10))!important;border-radius:8px;padding:8px 12px;width:100%;font-size:var(--text-base,15px);-webkit-appearance:none;appearance:none;font-family:var(--font-ui)}
 select option{background:var(--app-bg,#1a1e2a);color:var(--text-primary,#e2e8f8)}
@@ -329,22 +334,68 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'NotoEmoji',
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes splashPulse{0%,100%{opacity:.7}50%{opacity:1}}
 
-.bottom-nav{position:fixed!important;bottom:0!important;left:0!important;right:0!important;
-  height:56px!important;background:var(--bg-surface)!important;border-top:1px solid var(--border-mid)!important;
+.bottom-nav{position:fixed!important;bottom:12px!important;left:50%!important;right:auto!important;
+  transform:translateX(-50%)!important;
+  width:min(92%,380px)!important;height:auto!important;
+  background:var(--glass-bg,rgba(15,18,32,0.82))!important;
+  backdrop-filter:blur(22px) saturate(1.3)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.3)!important;
+  border:1px solid var(--glass-border,rgba(255,255,255,0.10))!important;
+  border-radius:28px!important;
+  box-shadow:0 8px 32px rgba(0,0,0,0.45),0 0 0 0.5px rgba(255,255,255,0.04),inset 0 1px 0 rgba(255,255,255,0.06)!important;
   display:flex!important;align-items:center!important;justify-content:space-around!important;
-  z-index:9999!important;padding:0 4px!important;
-  padding-bottom:env(safe-area-inset-bottom,0)!important}
+  gap:2px!important;padding:8px 6px!important;
+  z-index:9999!important;
+  padding-bottom:calc(env(safe-area-inset-bottom,0) + 8px)!important}
 .bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:2px;padding:4px 2px;cursor:pointer;border-radius:8px}
-.bottom-nav-item:active{background:#ffffff0a}
+  justify-content:center;gap:2px;padding:6px 4px 4px;cursor:pointer;border-radius:16px;
+  position:relative;min-width:0;color:var(--text-muted);user-select:none;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1),color .2s ease,background .25s ease;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.bottom-nav-item:active{transform:scale(.92)}
 .bni-icon{display:flex;align-items:center;justify-content:center;
-  width:24px;height:24px;color:#8a94b8;transition:all .25s cubic-bezier(.34,1.56,.64,1)}
-.bni-icon svg{display:block;width:22px;height:22px;stroke:currentColor;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+  width:22px;height:22px;color:#8a94b8;transition:transform .35s cubic-bezier(.34,1.56,.64,1),color .2s ease;
+  position:relative;z-index:1}
+.bni-icon svg{display:block;width:20px;height:20px;stroke:currentColor;transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+.bni-label{font-size:10px;color:#8a94b8;white-space:nowrap;transition:color .2s ease,opacity .2s ease;
+  position:relative;z-index:1;letter-spacing:0.01em;margin-top:3px}
+.bottom-nav-item.active{color:var(--primary)}
+.bottom-nav-item.active .bni-icon{color:var(--primary);transform:scale(1.18) translateY(-2px)}
 .bottom-nav-item.active .bni-icon svg{transform:scale(1.1);filter:drop-shadow(0 0 6px rgba(123,94,255,.4))}
-.bni-label{font-size:10px;color:#8a94b8;white-space:nowrap;transition:color .2s}
-.bottom-nav-item.active .bni-icon{color:var(--primary)}
 .bottom-nav-item.active .bni-label{color:var(--primary)}
-.screen{padding-bottom:68px!important}
+/* Active pill background (no solid bar above icon) */
+.bottom-nav-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:52px;height:100%;background:linear-gradient(180deg,rgba(123,94,255,0.22),rgba(123,94,255,0.08));
+  border-radius:16px;z-index:0;animation:navPillBounce .5s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes navPillBounce{0%{width:32px;opacity:0}60%{width:56px}100%{width:52px;opacity:1}}
+/* Hide labels when nav-labels-off */
+body.nav-labels-off .bni-label{display:none!important}
+.screen{padding-bottom:96px!important}
+
+/* ── "More" overflow popover ── */
+.more-popover{
+  position:fixed;width:200px;
+  background:var(--glass-bg,rgba(15,18,32,0.92));
+  backdrop-filter:blur(22px) saturate(1.3);
+  -webkit-backdrop-filter:blur(22px) saturate(1.3);
+  border:1px solid var(--glass-border,rgba(255,255,255,0.10));
+  border-radius:16px;padding:6px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  z-index:10000;display:none;
+  animation:morePopIn .25s cubic-bezier(.34,1.56,.64,1);
+}
+.more-popover.show{display:block}
+@keyframes morePopIn{from{opacity:0;transform:translateY(8px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.more-popover .mp-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;cursor:pointer;
+  color:var(--text-secondary);transition:all .15s ease;
+}
+.more-popover .mp-item:hover{background:var(--bg-raised);color:var(--text-primary)}
+.more-popover .mp-item.active-mp{color:var(--primary)}
+.more-popover .mp-item .mp-icon{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.more-popover .mp-item .mp-icon svg{width:18px;height:18px}
+.more-popover .mp-item span{font-size:13px;font-weight:500}
 
 .aw-home3{
   position:fixed;top:0;left:0;right:0;bottom:0;
@@ -363,7 +414,6 @@ body.home-active{overflow:hidden!important;position:fixed;width:100%;height:100%
 body.home-active .app{padding:0!important;max-width:100vw!important;width:100vw!important;margin:0!important}
 body.home-active #screens{width:100vw;height:100vh;height:100dvh;overflow:hidden}
 body.home-active #screen-home{height:100vh;height:100dvh;padding:0!important;margin:0!important;overflow:hidden}
-body.home-active nav#nav{position:fixed;top:0;left:0;right:0;z-index:100}
 body.home-active #bottom-nav{display:none!important}
 .aw-ring1{position:absolute;width:51.85%;height:51.85%;border-radius:50%;
   border:1px solid rgba(124,111,255,.18);top:50%;left:50%;
@@ -714,16 +764,12 @@ body::after {
 
 /* ── Bottom nav enhancement ── */
 .bottom-nav {
-  backdrop-filter: blur(12px) saturate(1.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.3);
-  background: var(--bottombar-bg,rgba(15,17,24,.85)) !important;
-  box-shadow: 0 -4px 20px rgba(0,0,0,.3);
   transition: transform .3s ease;
 }
 
 .bottom-nav-item {
   position: relative;
-  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1), color .2s ease, background .25s ease;
 }
 
 .bottom-nav-item:hover {
@@ -742,33 +788,16 @@ body::after {
   transform: scale(.92);
 }
 
-/* ── Navigation top bar ── */
-nav {
-  backdrop-filter: blur(10px) saturate(1.2);
-  -webkit-backdrop-filter: blur(10px) saturate(1.2);
-  background: var(--nav-bg,rgba(15,17,24,.8)) !important;
-}
+/* ── Navigation top bar removed — bottom dock handles navigation ── */
 
-/* Nav opacity ON: nav bars follow the existing glass opacity slider (--glass-alpha),
-   but never drop below a readable floor (--nav-glass-alpha). */
-body.nav-glass-opacity nav {
-  background: rgba(var(--glass-bg-rgb,15,17,24),var(--nav-glass-alpha,0.55)) !important;
-}
+/* Nav opacity ON: bottom dock follows the existing glass opacity slider (--glass-alpha),
+   but never drops below a readable floor (--nav-glass-alpha). */
 body.nav-glass-opacity .bottom-nav {
   background: rgba(var(--glass-bg-rgb,15,17,24),var(--nav-glass-alpha,0.55)) !important;
 }
 
 /* Collapsible profile sections */
 .collapsible-body.collapsed{display:none!important}
-
-.nav-btn {
-  transition: all .25s cubic-bezier(.34,1.56,.64,1);
-}
-
-.nav-btn.active {
-  box-shadow: inset 0 -2px 0 var(--primary);
-  text-shadow: 0 0 12px rgba(123,94,255,.4);
-}
 
 /* ── Quest card enhancement ── */
 .quest-card {
@@ -1268,13 +1297,12 @@ body.image-bg-active .screen {
   background-color: transparent !important;
 }
 
-/* When both glass-mode and image-bg-active are active, preserve the glass-mode
-   gradient background on the active screen so content remains readable.
-   Content elements (cards, etc.) already have glass-mode backgrounds via line 74. */
+/* When both glass-mode and image-bg-active are active, keep the active screen
+   transparent so the wallpaper shows through. Content cards already carry their
+   own glass-mode backgrounds for readability. */
 body.glass-mode.image-bg-active .screen.active {
-  background: linear-gradient(135deg, var(--app-bg, #0d0f14), var(--bg-surface, #100d1a), var(--app-bg, #0d0f14)) !important;
-  background-size: 200% 200% !important;
-  animation: glassBgFlow 14s ease infinite;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* ── Particles canvas ── */
@@ -1767,7 +1795,7 @@ body.glass-mode.image-bg-active .screen.active {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.4.1</div>
+  <div class="splash-ver">v8.4.2</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1802,12 +1830,12 @@ body.glass-mode.image-bg-active .screen.active {
 
 <input type="file" id="zenfit-import-inp-static" accept=".json,application/json,text/plain" style="position:fixed;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px">
 <div class="app">
-<nav id="nav"></nav>
 <div id="screens"></div>
 </div>
 <div id="notif-container"></div>
 <script src="assets/food/worldfooddb.js"></script>
 <script src="assets/food/rawingredient.js"></script>
+<script src="config.js"></script>
 <script>
 const ZENFIT_LOGO=(document.getElementById('zenfit-logo-data')||{src:''}).src;
 var silentLog = function(){};
@@ -1818,6 +1846,18 @@ function devError(){if(location.hostname==='localhost'||location.hostname.starts
 function escapeHtml(str) {
   if (str == null) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Strip dangerous markup/script from user-supplied text before it is stored.
+// This is a defense-in-depth layer on top of output escaping (escapeHtml).
+function sanitizeText(str){
+  if(str==null)return '';
+  return String(str)
+    .replace(/<\s*\/?\s*script[\s\S]*?>/gi,'')
+    .replace(/<\s*\/?\s*(iframe|object|embed|link|meta|style|form|svg|math)[\s\S]*?>/gi,'')
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
+    .replace(/javascript\s*:/gi,'')
+    .replace(/<\s*\/?\s*[a-z][^>]*>/gi,'')
+    .trim();
 }
 
 const CAN_FETCH = (function(){
@@ -1836,7 +1876,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.4.1";
+const APP_VERSION="v8.4.2";
 const APP_BUILD="2026.09.04.18";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2467,6 +2507,7 @@ const SCHEMA={
   accentColor:'string',
   bgImages:'array',
   bgAllScreens:'boolean',
+  bgScreen:'string',
   collapsedSections:'object',
   fullscreenMode:'boolean',
   steps:'array',
@@ -2657,7 +2698,9 @@ function defaultState(){
   accentColor:'',
   bgImages:[],
   bgAllScreens:true,
+  bgScreen:'dashboard',
   fullscreenMode:true,
+  navLabels:true,
   zen:{
     totalSessions:0,totalMinutes:0,currentStreak:0,bestStreak:0,
     lastSessionDate:null,sessions:[],history:{}
@@ -3626,23 +3669,19 @@ function render(){
   if(typeof renderBottomNav==='function')renderBottomNav();
   if(currentScreen==='home'){
     _toggleHomeBody(true);
-    document.getElementById('nav').style.display='none';
+    var navEl=document.getElementById('nav');if(navEl)navEl.style.display='none';
     var c=document.getElementById('screens');
     c.innerHTML='<div class="screen active nav-enter" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
     _toggleHomeBody(false);
-    document.getElementById('nav').style.display='flex';
+    var navEl2=document.getElementById('nav');if(navEl2)navEl2.style.display='flex';
     renderNav();renderScreens(true);renderBottomNav();
   }
 }
 function renderNav(){
-  var homeB='<button class="nav-btn" onclick="switchScreen(\x27home\x27)" style="color:var(--primary);border:1px solid var(--primary-dim);margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>';
-  var tabs=SCREENS.map(function(s){
-    var a=currentScreen===s.id?' active':'';
-    return '<button class="nav-btn'+a+'" onclick="switchScreen(\x27'+s.id+'\x27)">'+s.label+'</button>';
-  }).join('');
-  document.getElementById('nav').innerHTML=homeB+tabs;
+  // Top navigation bar removed — navigation is handled by the bottom dock.
+  return;
 }
 function switchScreen(id,subTab){
   hidePreviewCard(true);
@@ -3656,14 +3695,17 @@ function switchScreen(id,subTab){
   if(id==='analytics'){analyticsSection=subTab||S._analyticsSection||analyticsSection;S._analyticsSection=analyticsSection;persistSave();}
   if(id==='home'){
     _toggleHomeBody(true);
-    document.getElementById('nav').style.display='none';
+    var navEl=document.getElementById('nav');if(navEl)navEl.style.display='none';
     var c=document.getElementById('screens');
     c.innerHTML='<div class="screen active nav-enter" id="screen-home"></div>';
     renderAWHome(document.getElementById('screen-home'));
   }else{
     _toggleHomeBody(false);
-    document.getElementById('nav').style.display='flex';
+    var navEl2=document.getElementById('nav');if(navEl2)navEl2.style.display='flex';
     renderNav();renderScreens(true);renderBottomNav();
+    // Re-apply background config so per-screen wallpaper visibility updates
+    // when "Use on All Screens" is off.
+    if(typeof applyBackgroundConfig==='function')applyBackgroundConfig();
     // Auto-scroll active nav tab into view
     setTimeout(function(){
       var nav=document.getElementById('nav');
@@ -3710,6 +3752,20 @@ function renderScreens(navigating){
   });
   const target=document.getElementById(`screen-${currentScreen}`);
   if(target && RENDER_FNS[currentScreen]) RENDER_FNS[currentScreen](target);
+  // Inject a per-tab header showing the tab name in Syne font at the top.
+  // The header is inserted as the first child so it sits above the tab content.
+  if(target && currentScreen!=='home'){
+    const sc=SCREENS.find(x=>x.id===currentScreen);
+    if(sc){
+      let hdr=target.querySelector(':scope > .screen-header');
+      if(!hdr){
+        hdr=document.createElement('div');
+        hdr.className='screen-header';
+        target.insertBefore(hdr, target.firstChild);
+      }
+      hdr.innerHTML='<span class="sh-icon">'+sc.icon+'</span><div class="sh-title">'+sc.label+'</div>';
+    }
+  }
   if(navigating && target){
     void target.offsetWidth;
     target.classList.add('nav-enter');
@@ -4377,7 +4433,7 @@ function renderNutrition(el){
     <div id="ft-manual" style="${activeTab==='manual'?'':'display:none'}">
       <div class="grid2" style="gap:8px;margin-bottom:8px">
         <input type="text" id="m-name" placeholder="Food name" list="my-foods-list" style="grid-column:1/-1">
-        <datalist id="my-foods-list">${(S.customFoods||[]).map(f=>`<option value="${f.name} — ${f.servingSize||100}${f.servingUnit||'g'}">`).join('')}</datalist>
+        <datalist id="my-foods-list">${(S.customFoods||[]).map(f=>`<option value="${escapeHtml(f.name)} — ${f.servingSize||100}${f.servingUnit||'g'}">`).join('')}</datalist>
         <input type="number" id="m-cal" placeholder="Calories (kcal)">
         <input type="number" id="m-protein" placeholder="Protein (g)">
         <input type="number" id="m-carbs" placeholder="Carbs (g)">
@@ -4415,7 +4471,7 @@ function renderNutrition(el){
   </div>
   <div class="section-title">Today (${te.length})</div>
   ${te.length===0?`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img src="assets/mascot/nutrition.png" style="width:128px;height:128px;opacity:1;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No meals logged.</div></div>`:''}
-  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(e.nutrients)}" onclick='showFoodDetails(${JSON.stringify({name:e.name,qty:e.qty,unit:e.unit||'',nutrients:e.nutrients}).replace(/'/g,"&#39;")})'>${gradeFood(e.nutrients)}</div><div class="bc-hint">tap</div></div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${e.name}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g · S:${nn(e.nutrients.sugar)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
+  ${te.map((e,i)=>`<div class="card-sm mb8 flex gap12"><div style="display:flex;flex-direction:column;align-items:center"><div class="grade grade-tap grade-${gradeFood(e.nutrients)}" onclick='showFoodDetails(${JSON.stringify({name:e.name,qty:e.qty,unit:e.unit||'',nutrients:e.nutrients}).replace(/'/g,"&#39;")})'>${gradeFood(e.nutrients)}</div><div class="bc-hint">tap</div></div><div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(e.name)}${e.unit?` × ${e.qty}${e.unit}`:e.qty>1?` ×${e.qty}`:''}</div><div style="font-size:11px;color:var(--text-secondary)">${nn(e.nutrients.cal)} kcal · P:${nn(e.nutrients.protein||e.nutrients.prot)}g · C:${nn(e.nutrients.carbs)}g · F:${nn(e.nutrients.fat)}g · S:${nn(e.nutrients.sugar)}g</div></div><button class="btn btn-icon btn-sm" onclick="delN(${S.nutrition.entries.indexOf(e)})" style="color:var(--danger)">×</button></div>`).join('')}`;
   }else if(nutritionTab==='calculator'){
     const n=dishIngredients.length>0?calcDishNutrition():null;
     html+=`
@@ -4444,7 +4500,7 @@ function renderNutrition(el){
       <div style="flex:1">
         <label style="font-size:11px;color:var(--text-muted)">Ingredient</label>
         <input type="text" id="ing-name" placeholder="e.g. Chicken Breast" list="ing-list" style="margin-top:4px">
-        <datalist id="ing-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${i}">`).join('')}</datalist>
+        <datalist id="ing-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${escapeHtml(i)}">`).join('')}</datalist>
       </div>
       <div style="width:80px">
         <label style="font-size:11px;color:var(--text-muted)">Qty</label>
@@ -4519,7 +4575,7 @@ function renderNutrition(el){
       <div style="flex:1">
         <label style="font-size:11px;color:var(--text-muted)">Food Item</label>
         <input type="text" id="mi-name" placeholder="e.g. Oats, Chicken Breast..." list="mi-list" style="margin-top:4px">
-        <datalist id="mi-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${i}">`).join('')}</datalist>
+        <datalist id="mi-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${escapeHtml(i)}">`).join('')}</datalist>
       </div>
       <div style="width:80px">
         <label style="font-size:11px;color:var(--text-muted)">Amount</label>
@@ -4582,11 +4638,68 @@ function nn(x){
   return x ? Number(x).toFixed(0) : 0;
 }
 function setFT(t){activeTab=t;parsedFood=null;renderScreens();}
+// ── AI (Gemini) nutrition fallback ─────────────────────
+// Used as a THIRD fallback in food parsing: after saved foods (S.customFoods)
+// and the food .js databases (INGR_DB / ALIASES), unrecognized items are sent
+// to Gemini. The API key is read from config.js (window.ZENFIT_CONFIG), never
+// hardcoded. If no key is configured or the call fails, the user is prompted
+// to log the food manually.
+async function fetchNutritionGemini(query){
+  const key=(window.ZENFIT_CONFIG&&window.ZENFIT_CONFIG.GEMINI_API_KEY)||'';
+  if(!key)return null;
+  const MODEL='gemini-3.5-flash';
+  const prompt='You are a nutrition database. Given the food item(s): "'+query+'", return JSON with a "foods" array. Each food object must have exactly these fields: name, quantity, calories, protein_g, carbs_g, fat_g, fiber_g. Also include a "total" object with the same fields summed. Use realistic per-serving values. Respond ONLY with valid JSON, no markdown.';
+  try{
+    const r=await safeFetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent?key='+encodeURIComponent(key),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{parts:[{text:prompt}]}],
+        generationConfig:{responseMimeType:'application/json',temperature:0.2}
+      }),
+      signal:AbortSignal.timeout(10000)
+    });
+    if(!r||!r.ok)return null;
+    const d=await r.json();
+    const txt=d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text;
+    if(!txt)return null;
+    return JSON.parse(txt);
+  }catch(e){return null;}
+}
+function geminiFoodToParsed(f){
+  const qty=parseFloat(f&&f.quantity)||1;
+  return{
+    name:String((f&&f.name)||'Food'),
+    qty:qty,
+    unit:'',
+    source:'gemini',
+    nutrients:{
+      cal:Math.round(parseFloat(f&&f.calories)||0),
+      protein:Math.round((parseFloat(f&&f.protein_g)||0)*10)/10,
+      carbs:Math.round((parseFloat(f&&f.carbs_g)||0)*10)/10,
+      fat:Math.round((parseFloat(f&&f.fat_g)||0)*10)/10,
+      fiber:Math.round((parseFloat(f&&f.fiber_g)||0)*10)/10
+    }
+  };
+}
+function showFoodFallbackPrompt(r,btn,parsed,failed){
+  parsedFood=parsed;
+  const failHtml=failed.map(f=>'<div style="padding:6px 0;border-bottom:1px solid var(--border-mid,rgba(255,255,255,0.08))">'+
+    '<span style="color:var(--text-primary)">'+escapeHtml(f)+'</span>'+
+    ' <span style="color:var(--danger);font-size:12px">— not recognized</span>'+
+    '</div>').join('');
+  r.innerHTML='<div style="color:var(--danger);font-size:13px;margin-bottom:6px">Could not recognize some items. Log them manually:</div>'+
+    failHtml+
+    '<button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="setFT(\'manual\')">✏️ Log manually</button>';
+  if(btn)btn.style.display='none';
+}
 function parseFoodInput(){
-  const val=document.getElementById('food-input')?.value||'';
-  const items=val.split(',').map(s=>{
-    const p=parseFood(s.trim());
-    if(!p)return null;
+  const val=sanitizeText(document.getElementById('food-input')?.value)||'';
+  const rawItems=val.split(',').map(s=>s.trim()).filter(Boolean);
+  const parsed=[],failed=[];
+  rawItems.forEach(s=>{
+    const p=parseFood(s);
+    if(!p){failed.push(s);return;}
     const pq=p.qty||1;
     const pu=p.unit||'';
     const pc=p.nutrients?.cal||0;
@@ -4604,13 +4717,34 @@ function parseFoodInput(){
       if(fu&&fu.u==='piece'&&fu.g)per1gFromPiece=perPiece/fu.g;
     }
     p._edit={baseQty:pq,baseUnit:pu,per1g:(per1g||per1gAlt||per1gFromPiece),per1ml:per1ml||per1g,perPiece:perPiece};
-    return p;
-  }).filter(Boolean);
-  parsedFood=items;
+    parsed.push(p);
+  });
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
   if(!r)return;
-  if(!items.length){r.innerHTML='<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "3 eggs", "200g rice", or "250ml milk".</div>';return;}
-  renderFoodPreview();
+  // Everything parsed locally -> render immediately (preserves original sync flow)
+  if(!failed.length){
+    parsedFood=parsed;
+    if(!parsed.length){r.innerHTML='<div style="color:var(--danger);font-size:13px">Could not recognize. Try "2 chapati", "3 eggs", "200g rice", or "250ml milk".</div>';return;}
+    renderFoodPreview();
+    return;
+  }
+  // Some items failed -> try Gemini as a third fallback
+  const key=(window.ZENFIT_CONFIG&&window.ZENFIT_CONFIG.GEMINI_API_KEY)||'';
+  if(!key){
+    showFoodFallbackPrompt(r,btn,parsed,failed);
+    return;
+  }
+  r.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:4px 0">Recognizing with AI: '+escapeHtml(failed.join(', '))+'…</div>';
+  fetchNutritionGemini(failed.join(', ')).then(res=>{
+    const aiFoods=(res&&Array.isArray(res.foods))?res.foods:[];
+    const aiParsed=aiFoods.map(geminiFoodToParsed);
+    const merged=parsed.concat(aiParsed);
+    parsedFood=merged;
+    if(!merged.length){showFoodFallbackPrompt(r,btn,parsed,failed);return;}
+    renderFoodPreview();
+  }).catch(()=>{
+    showFoodFallbackPrompt(r,btn,parsed,failed);
+  });
 }
 function renderFoodPreview(){
   const r=document.getElementById('food-res'),btn=document.getElementById('log-food-btn');
@@ -4710,6 +4844,30 @@ function removePreviewItem(idx){
 }
 function logParsedFood(){
   if(!parsedFood?.length)return;
+  // Auto-save any Gemini-parsed foods to My Foods (S.customFoods) for future use,
+  // just like manually saved foods. Skip foods that already exist by name.
+  if(!S.customFoods)S.customFoods=[];
+  parsedFood.forEach(f=>{
+    if(f.source==='gemini'&&f.name){
+      const exists=S.customFoods.some(cf=>cf.name.toLowerCase()===String(f.name).toLowerCase());
+      if(!exists){
+        const n=f.nutrients||{};
+        const qty=parseFloat(f.qty)||1;
+        S.customFoods.push({
+          name:String(f.name),
+          cal:Math.round(n.cal||0),
+          protein:Math.round((n.protein||0)*10)/10,
+          carbs:Math.round((n.carbs||0)*10)/10,
+          fat:Math.round((n.fat||0)*10)/10,
+          fiber:Math.round((n.fiber||0)*10)/10,
+          sugar:Math.round((n.sugar||0)*10)/10,
+          source:'gemini',
+          servingSize:qty>1?qty:100,
+          servingUnit:'g'
+        });
+      }
+    }
+  });
   parsedFood.forEach(f=>S.nutrition.entries.push({name:f.name,qty:f.qty,unit:f.unit||'',nutrients:f.nutrients,date:getTodayStr(),xpAwarded:30}));
   celebrateFirst('nutritionFirstMeal','🥗 First meal logged! Your nutrition journey begins.');updStat('health',parsedFood.length);addXP(30*parsedFood.length,'Meals logged!');checkAutoQuests();checkAchievements();parsedFood=null;renderScreens();
 }
@@ -4875,7 +5033,7 @@ function showFoodDetails(e){
   document.body.appendChild(ov);
 }
 function logMF(){
-  const name=(document.getElementById('m-name')?.value?.trim())||'Custom';
+  const name=sanitizeText(document.getElementById('m-name')?.value)||'Custom';
   const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0,sugar:+document.getElementById('m-sugar')?.value||0};
   const servingSize=+document.getElementById('m-ss')?.value||100;
   const servingUnit=document.getElementById('m-su')?.value||'g';
@@ -4892,7 +5050,7 @@ function logMF(){
   updStat('health');addXP(30,'Meal logged!');checkAutoQuests();checkAchievements();renderScreens();
 }
 function saveFood(){
-  const name=(document.getElementById('m-name')?.value?.trim())||'';
+  const name=sanitizeText(document.getElementById('m-name')?.value)||'';
   const n={cal:+document.getElementById('m-cal')?.value||0,protein:+document.getElementById('m-protein')?.value||0,carbs:+document.getElementById('m-carbs')?.value||0,fat:+document.getElementById('m-fat')?.value||0,fiber:+document.getElementById('m-fiber')?.value||0,sugar:+document.getElementById('m-sugar')?.value||0};
   const servingSize=+document.getElementById('m-ss')?.value||100;
   const servingUnit=document.getElementById('m-su')?.value||'g';
@@ -4924,7 +5082,7 @@ function showMyFoods(){
     <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:12px">📌 My Foods (${S.customFoods.length})</div>
     ${S.customFoods.map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${f.name}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${escapeHtml(f.name)}</div>
         <div style="font-size:10px;color:var(--text-muted)">${f.cal} kcal · P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g · S:${f.sugar||0}g</div>
         <div style="font-size:9px;color:var(--text-muted);margin-top:1px">${f.servingSize||100}${f.servingUnit||'g'} per serving</div>
       </div>
@@ -8042,73 +8200,11 @@ function renderProfile(el){
     '<input type="range" min="0" max="100" value="'+(S.bgDim??0)+'" oninput="setDim(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
     '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setDim("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgDim==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgDim==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
     '</div>' +
-    // Image background section (only for image type)
+    // Image background section — opens the wallpaper settings popup
     (S.bgType==='image' ? (
       '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
       '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">🖼️ Image Background</div>' +
-      '<button class="btn btn-primary" onclick="uploadBackgroundImage()" style="width:100%;margin-bottom:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Image</button>' +
-      // Preset wallpapers (bundled assets)
-      renderCollapseHeader('wallpapers-collapse','Wallpapers','🖼️','Choose a preset background') +
-      '<div class="collapsible-body'+((S.collapsedSections&&S.collapsedSections['wallpapers-collapse'])?' collapsed':'')+'" id="wallpapers-collapse">' +
-      '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Preset Wallpapers</div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">' +
-      window.__PRESET_WALLPAPERS.map(function(p){
-        var active=(S.bgImage==='preset:'+p.file);
-        return '<div style="position:relative;border-radius:8px;overflow:hidden;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:var(--bg-overlay);aspect-ratio:1;cursor:pointer" onclick="selectBgImage(\'preset:'+p.file+'\')">' +
-          '<img src="./assets/bg/'+p.file+'" alt="'+escapeHtml(p.name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover">' +
-          '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(p.name)+'</div>' +
-          '</div>';
-      }).join('') +
-      '</div></div>' +
-      (S.bgImage ? (
-        '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Current Background</div>' +
-        '<div style="width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay)">' +
-        '<img id="bg-preview-img" src="" alt="Background preview" style="width:100%;height:100%;object-fit:cover">' +
-        '</div></div>'
-      ) : '') +
-      (S.bgImages && S.bgImages.length ? (
-        '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Uploaded Images</div>' +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">' +
-        S.bgImages.map(function(img){
-          return '<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay);aspect-ratio:1">' +
-            '<img src="" data-bg-id="'+img.id+'" alt="'+escapeHtml(img.name)+'" style="width:100%;height:100%;object-fit:cover" onclick="selectBgImage(\''+img.id+'\')">' +
-            '<div style="position:absolute;top:4px;right:4px;display:flex;gap:2px">' +
-            '<button class="btn btn-sm" onclick="event.stopPropagation();selectBgImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--primary);color:#fff;border:none">Use</button>' +
-            '<button class="btn btn-sm" onclick="event.stopPropagation();deleteBackgroundImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--danger);color:#fff;border:none">Del</button>' +
-            '</div>' +
-            '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(img.name)+'</div>' +
-            '</div>';
-        }).join('') +
-        '</div></div>'
-      ) : '') +
-      '</div>' +
-      // Fit / position / zoom controls for the wallpaper
-      renderCollapseHeader('wallpaper-settings-collapse','Wallpaper Settings','🎛️','Fit, position & zoom') +
-      '<div class="collapsible-body'+((S.collapsedSections&&S.collapsedSections['wallpaper-settings-collapse'])?' collapsed':'')+'" id="wallpaper-settings-collapse">' +
-      '<div data-no-swipe style="touch-action:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">' +
-      '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Wallpaper Fit &amp; Position</div>' +
-      '<div style="display:flex;gap:6px;margin-bottom:10px">' +
-      ['cover','contain','fill'].map(function(f){
-        var active=(S.bgFit||'cover')===f;
-        return '<button type="button" onclick="setBgFit(\''+f+'\')" style="flex:1;padding:7px;border-radius:8px;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:'+(active?'var(--bg-raised)':'transparent')+';color:'+(active?'var(--primary)':'var(--text-primary)')+';font-size:11px;font-weight:600;cursor:pointer;text-transform:capitalize">'+f+'</button>';
-      }).join('') +
-      '</div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Zoom</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-zoom-val">'+(S.bgZoom??100)+'%</span></div>' +
-      '<input type="range" min="50" max="200" value="'+(S.bgZoom??100)+'" oninput="setBgZoom(+this.value)" style="width:100%;height:6px;margin-bottom:10px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Horizontal Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posx-val">'+(S.bgPosX??50)+'%</span></div>' +
-      '<input type="range" min="0" max="100" value="'+(S.bgPosX??50)+'" oninput="setBgPosX(+this.value)" style="width:100%;height:6px;margin-bottom:10px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Vertical Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posy-val">'+(S.bgPosY??50)+'%</span></div>' +
-      '<input type="range" min="0" max="100" value="'+(S.bgPosY??50)+'" oninput="setBgPosY(+this.value)" style="width:100%;height:6px">' +
-      '</div>' +
-      '</div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">' +
-      '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">Use on All Screens</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Apply this background everywhere</div></div>' +
-      '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">' +
-      '<input type="checkbox" '+(S.bgAllScreens?'checked':'')+' onchange="S.bgAllScreens=this.checked;persistSave();renderScreens();" style="opacity:0;width:0;height:0">' +
-      '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.bgAllScreens?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">' +
-      '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.bgAllScreens?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>' +
-      '</div>' +
+      '<button class="btn btn-primary" onclick="openWallpaperSettings()" style="width:100%"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Wallpaper Settings</button>' +
       '</div>'
     ) : '') +
     '</div>' +
@@ -8430,7 +8526,7 @@ function renderCustomDish(el){
       <div style="flex:1">
         <label style="font-size:11px;color:var(--text-muted)">Ingredient</label>
         <input type="text" id="ing-name" placeholder="e.g. Chicken Breast" list="ing-list" style="margin-top:4px">
-        <datalist id="ing-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${i}">`).join('')}</datalist>
+        <datalist id="ing-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${escapeHtml(i)}">`).join('')}</datalist>
       </div>
       <div style="width:80px">
         <label style="font-size:11px;color:var(--text-muted)">Qty</label>
@@ -8581,7 +8677,7 @@ function renderMealPlanner(el){
       <div style="flex:1">
         <label style="font-size:11px;color:var(--text-muted)">Food Item</label>
         <input type="text" id="mi-name" placeholder="e.g. Oats, Chicken Breast..." list="mi-list" style="margin-top:4px">
-        <datalist id="mi-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${i}">`).join('')}</datalist>
+        <datalist id="mi-list">${[...COMMON_INGREDIENTS, ...(S.customFoods||[]).map(f=>f.name)].map(i=>`<option value="${escapeHtml(i)}">`).join('')}</datalist>
       </div>
       <div style="width:80px">
         <label style="font-size:11px;color:var(--text-muted)">Amount</label>
@@ -8661,7 +8757,11 @@ function renderLeaderboard(el){
     <div class="chart-tab${_lbTab==='challenges'?' active':''}" onclick="_lbTab='challenges';renderLeaderboard(document.getElementById('screen-leaderboard'))">⚔️ Challenges</div>
   </div>`;
   html += _lbTab==='friends' ? buildFriendsTab(RANK_COLORS_LB) : _lbTab==='challenges' ? buildChallengesTab() : buildGlobalTab(RANK_COLORS_LB);
-  el.innerHTML=html;
+  // Preserve the injected per-tab header (first child) and render content into an
+  // inner container so switching subtabs does not wipe the "Leaderboard" header.
+  const lbHdr=el.querySelector(':scope > .screen-header');
+  el.innerHTML='<div id="lb-content">'+html+'</div>';
+  if(lbHdr) el.insertBefore(lbHdr, el.firstChild);
   if(_lbTab==='global' && !_globalLoading && _globalRows===null) loadGlobalRows(el);
   if(_lbTab==='challenges' && !_challengeRefreshing){
     trackChallengeProgress();
@@ -9474,7 +9574,7 @@ const ALL_NAV_OPTIONS=[
   {id:'quests',icon:NAV_ICONS.quests,label:'Quests'},
   {id:'tasks',icon:NAV_ICONS.tasks,label:'Tasks'},
   {id:'mind',icon:NAV_ICONS.mind,label:'Mind'},
-  {id:'leaderboard',icon:NAV_ICONS.leaderboard,label:'Ranks'},
+  {id:'leaderboard',icon:NAV_ICONS.leaderboard,label:'Leaderboard'},
   {id:'profile',icon:NAV_ICONS.profile,label:'Profile'},
 ];
 
@@ -9494,14 +9594,64 @@ function renderBottomNav(){
   let el=document.getElementById('bottom-nav');
   if(!el){el=document.createElement('div');el.id='bottom-nav';el.className='bottom-nav';document.body.appendChild(el);}
   el.style.display='flex';
+  // Apply label visibility toggle
+  document.body.classList.toggle('nav-labels-off', S.navLabels===false);
   const tabs=getActiveNavTabs();
   el.innerHTML=tabs.map(t=>`<div class="bottom-nav-item${currentScreen===t.id?' active':''}" onclick="switchScreen('${t.id}')">
     <span class="bni-icon">${t.icon}</span><span class="bni-label">${t.label}</span>
   </div>`).join('')+
-  `<div class="bottom-nav-item" onclick="openNavEditor()" title="Customize">
-    <span class="bni-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="bni-label">Edit</span>
+  `<div class="bottom-nav-item${isOverflowScreen()?' active':''}" onclick="toggleMorePopover(event)" title="More">
+    <span class="bni-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span><span class="bni-label">More</span>
+  </div>`;
+  renderMorePopover();
+}
+// ── "More" overflow popover (like nav-redesign.html) ──
+function getOverflowTabs(){
+  const active=getActiveNavTabs().map(t=>t.id);
+  return ALL_NAV_OPTIONS.filter(o=>!active.includes(o.id));
+}
+function isOverflowScreen(){
+  const active=getActiveNavTabs().map(t=>t.id);
+  return !active.includes(currentScreen);
+}
+function renderMorePopover(){
+  let pop=document.getElementById('more-popover');
+  if(!pop){
+    pop=document.createElement('div');pop.id='more-popover';pop.className='more-popover';
+    document.body.appendChild(pop);
+  }
+  const items=getOverflowTabs();
+  pop.innerHTML=items.map(t=>`<div class="mp-item${currentScreen===t.id?' active-mp':''}" onclick="switchScreen('${t.id}');closeMorePopover()">
+    <span class="mp-icon">${t.icon}</span><span>${t.label}</span>
+  </div>`).join('')+
+  `<div class="mp-item" onclick="closeMorePopover();openNavEditor()">
+    <span class="mp-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>Customize</span>
   </div>`;
 }
+function toggleMorePopover(e){
+  if(e&&e.stopPropagation)e.stopPropagation();
+  const pop=document.getElementById('more-popover');
+  if(!pop)return;
+  if(pop.classList.contains('show')){pop.classList.remove('show');return;}
+  renderMorePopover();
+  const btn=document.querySelector('.bottom-nav-item[onclick*="toggleMorePopover"]');
+  const rect=btn?btn.getBoundingClientRect():null;
+  if(rect){
+    pop.style.right=(window.innerWidth-rect.right)+'px';
+    pop.style.bottom=(window.innerHeight-rect.top+8)+'px';
+  }
+  pop.classList.add('show');
+}
+function closeMorePopover(){
+  const pop=document.getElementById('more-popover');
+  if(pop)pop.classList.remove('show');
+}
+document.addEventListener('click',function(e){
+  const pop=document.getElementById('more-popover');
+  if(pop&&!pop.contains(e.target)&&!e.target.closest('[onclick*="toggleMorePopover"]')){
+    pop.classList.remove('show');
+  }
+});
 function openNavEditor(){
   const current=getActiveNavTabs().map(t=>t.id);
   const ov=document.createElement('div');ov.className='overlay';ov.id='nav-editor-ov';
@@ -9518,6 +9668,13 @@ function openNavEditor(){
       }).join('')}
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px" id="nav-sel-count">Selected: ${current.length}/6</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay);margin-bottom:14px">
+      <div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">🏷️ Show Labels</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Show text labels below icons</div></div>
+      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+      <input type="checkbox" ${S.navLabels!==false?'checked':''} onchange="S.navLabels=this.checked;persistSave();renderBottomNav();updateToggleVisual(this);" style="opacity:0;width:0;height:0">
+      <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.navLabels!==false?'var(--primary-dark)':'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:'';height:18px;width:18px;left:${S.navLabels!==false?'20px':'3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary btn-sm" style="flex:1" onclick="saveNavLayout()">Save</button>
       <button class="btn btn-sm" style="flex:1" onclick="resetNavLayout()">Reset Default</button>
@@ -9862,7 +10019,9 @@ function applyBackgroundConfig(){
   if(window.__setParticleCount) window.__setParticleCount(S.particleCount);
   if(window.__setParticleEffect) window.__setParticleEffect(S.particleEffect||'dust');
   // Image background handling
-  var isImage = S.bgType==='image' && S.bgImage;
+  // The wallpaper applies to all screens when bgAllScreens is on; otherwise it
+  // only applies to the screen it was set on (S.bgScreen).
+  var isImage = S.bgType==='image' && S.bgImage && (S.bgAllScreens!==false || currentScreen===S.bgScreen);
   document.body.classList.toggle('image-bg-active', !!isImage);
   var imgLayer=document.getElementById('app-bg-img');
   var scrim=document.getElementById('app-bg-scrim');
@@ -9910,6 +10069,121 @@ function setBgType(type){
   S.bgType=type;
   applyBackgroundConfig();
   persistSave();
+  // When the user picks the Image option, open the wallpaper settings popup
+  if(type==='image'){ openWallpaperSettings(); }
+}
+// ── Wallpaper Settings Popup ─────────────────────────────
+// Opens a modal with wallpaper selection (presets + uploaded) and
+// fit/position/zoom controls, instead of filling the whole profile page.
+function openWallpaperSettings(){
+  // Remove any existing popup
+  var old=document.getElementById('wallpaper-settings-ov');
+  if(old)old.remove();
+  var ov=document.createElement('div');ov.className='overlay';ov.id='wallpaper-settings-ov';
+  ov.innerHTML='<div class="overlay-box" style="max-height:88vh;overflow-y:auto;text-align:left;max-width:440px;width:94%;padding:20px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+      '<div style="font-size:15px;font-weight:700;color:var(--text-primary)">🖼️ Wallpaper Settings</div>'+
+      '<button class="btn btn-sm" style="color:var(--text-muted);padding:4px 10px" onclick="this.closest(\'.overlay\').remove()">✕</button>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:14px">Choose a background and adjust how it fits</div>'+
+    // Upload button
+    '<button class="btn btn-primary" onclick="uploadBackgroundImage()" style="width:100%;margin-bottom:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload Image</button>'+
+    // Preset wallpapers
+    renderCollapseHeader('wp-presets-collapse','Wallpapers','🖼️','Choose a preset background')+
+    '<div class="collapsible-body'+((S.collapsedSections&&S.collapsedSections['wp-presets-collapse'])?' collapsed':'')+'" id="wp-presets-collapse">'+
+      '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Preset Wallpapers</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">'+
+      window.__PRESET_WALLPAPERS.map(function(p){
+        var active=(S.bgImage==='preset:'+p.file);
+        return '<div style="position:relative;border-radius:8px;overflow:hidden;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:var(--bg-overlay);aspect-ratio:1;cursor:pointer" onclick="selectBgImage(\'preset:'+p.file+'\')">'+
+          '<img src="./assets/bg/'+p.file+'" alt="'+escapeHtml(p.name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover">'+
+          '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(p.name)+'</div>'+
+          '</div>';
+      }).join('')+
+      '</div></div>'+
+      (S.bgImages && S.bgImages.length ? (
+        '<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">Uploaded Images</div>'+
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px">'+
+        S.bgImages.map(function(img){
+          return '<div style="position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border-mid);background:var(--bg-overlay);aspect-ratio:1">'+
+            '<img src="" data-bg-id="'+img.id+'" alt="'+escapeHtml(img.name)+'" style="width:100%;height:100%;object-fit:cover" onclick="selectBgImage(\''+img.id+'\')">'+
+            '<div style="position:absolute;top:4px;right:4px;display:flex;gap:2px">'+
+            '<button class="btn btn-sm" onclick="event.stopPropagation();selectBgImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--primary);color:#fff;border:none">Use</button>'+
+            '<button class="btn btn-sm" onclick="event.stopPropagation();deleteBackgroundImage(\''+img.id+'\')" style="padding:4px 8px;font-size:10px;background:var(--danger);color:#fff;border:none">Del</button>'+
+            '</div>'+
+            '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.6);font-size:8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(img.name)+'</div>'+
+            '</div>';
+        }).join('')+
+        '</div></div>'
+      ) : '')+
+    '</div>'+
+    // Fit / position / zoom controls
+    renderCollapseHeader('wp-settings-collapse','Wallpaper Settings','🎛️','Fit, position & zoom')+
+    '<div class="collapsible-body'+((S.collapsedSections&&S.collapsedSections['wp-settings-collapse'])?' collapsed':'')+'" id="wp-settings-collapse">'+
+      '<div data-no-swipe style="touch-action:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">'+
+      '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Wallpaper Fit &amp; Position</div>'+
+      '<div style="display:flex;gap:6px;margin-bottom:10px">'+
+      ['cover','contain','fill'].map(function(f){
+        var active=(S.bgFit||'cover')===f;
+        return '<button type="button" onclick="setBgFit(\''+f+'\')" style="flex:1;padding:7px;border-radius:8px;border:2px solid '+(active?'var(--primary)':'var(--border-mid)')+';background:'+(active?'var(--bg-raised)':'transparent')+';color:'+(active?'var(--primary)':'var(--text-primary)')+';font-size:11px;font-weight:600;cursor:pointer;text-transform:capitalize">'+f+'</button>';
+      }).join('')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Zoom</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-zoom-val">'+(S.bgZoom??100)+'%</span></div>'+
+      '<input type="range" min="50" max="200" value="'+(S.bgZoom??100)+'" oninput="setBgZoom(+this.value)" style="width:100%;height:6px;margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Horizontal Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posx-val">'+(S.bgPosX??50)+'%</span></div>'+
+      '<input type="range" min="0" max="100" value="'+(S.bgPosX??50)+'" oninput="setBgPosX(+this.value)" style="width:100%;height:6px;margin-bottom:10px">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text-secondary)">Vertical Position</span><span style="font-size:12px;color:var(--text-primary);font-weight:600" id="bg-posy-val">'+(S.bgPosY??50)+'%</span></div>'+
+      '<input type="range" min="0" max="100" value="'+(S.bgPosY??50)+'" oninput="setBgPosY(+this.value)" style="width:100%;height:6px">'+
+      '</div>'+
+    '</div>'+
+    // Overlay slider
+    '<div data-no-swipe style="touch-action:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+      '<span style="font-size:12px;color:var(--text-secondary)">Overlay</span>'+
+      '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-overlay-val">'+(S.bgOverlay??0)+'%</span>'+
+      '</div>'+
+      '<input type="range" min="0" max="100" value="'+(S.bgOverlay??0)+'" oninput="setOverlay(+this.value)" style="width:100%;height:6px;margin-bottom:2px">'+
+      '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setOverlay("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgOverlay==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgOverlay==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>'+
+    '</div>'+
+    // Dim slider
+    '<div data-no-swipe style="touch-action:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'+
+      '<span style="font-size:12px;color:var(--text-secondary)">Dim</span>'+
+      '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-dim-val">'+(S.bgDim??0)+'%</span>'+
+      '</div>'+
+      '<input type="range" min="0" max="100" value="'+(S.bgDim??0)+'" oninput="setDim(+this.value)" style="width:100%;height:6px;margin-bottom:2px">'+
+      '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setDim("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgDim==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgDim==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>'+
+    '</div>'+
+    // Use on all screens
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">'+
+      '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">Use on All Screens</div>'+
+      '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Apply this background everywhere</div></div>'+
+      '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">'+
+      '<input type="checkbox" '+(S.bgAllScreens?'checked':'')+' onchange="S.bgAllScreens=this.checked;persistSave();applyBackgroundConfig();renderScreens();openWallpaperSettings();" style="opacity:0;width:0;height:0">'+
+      '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.bgAllScreens?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">'+
+      '<span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.bgAllScreens?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;margin-top:16px">'+
+      '<button class="btn btn-primary btn-sm" style="flex:1" onclick="this.closest(\'.overlay\').remove()">Done</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  // Load uploaded image previews
+  if(S.bgImages&&S.bgImages.length){
+    S.bgImages.forEach(function(img){
+      getBackgroundImageUrl(img.id).then(function(url){
+        var el=ov.querySelector('[data-bg-id="'+img.id+'"]');
+        if(el&&url)el.src=url;
+      });
+    });
+  }
+  // Load current background preview
+  if(S.bgImage){
+    resolveBackgroundImage(S.bgImage).then(function(url){
+      var el=ov.querySelector('#bg-preview-img');
+      if(el&&url)el.src=url;
+    });
+  }
 }
 function setOverlay(v){
   S.bgOverlay=v;
@@ -9964,6 +10238,7 @@ function setParticleCount(n){
 }
 function selectBgImage(id){
   S.bgImage=id;
+  S.bgScreen=currentScreen;
   persistSave();
   applyBackgroundConfig();
   renderScreens();
@@ -12141,8 +12416,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.4.1';
+var CHANGELOG_VERSION='v8.4.2';
 var CHANGELOG_ENTRIES=[
+  'v8.4.2 GEMINI INTEGRATION IN FOOD PARSING , BUG FIXES AND UPDATED NAVIGATION',
   'v8.4.1 Minor bug fixes',
   'v8.4 New Feature : Wallpapers',
   'v8.4 Fixed barcode serving size issue',
