@@ -71,7 +71,7 @@ nav{display:flex;gap:2px;padding:4px 8px;border-bottom:1px solid var(--border-mi
 .card-raised{background:var(--bg-raised);border:1px solid var(--border-subtle);border-radius:14px;padding:16px;box-shadow:var(--shadow-md)}
 @keyframes glassBgFlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 body.glass-mode .screen.active{background:linear-gradient(135deg,var(--app-bg,#0d0f14),var(--bg-surface,#100d1a),var(--app-bg,#0d0f14))!important;background-size:200% 200%!important;animation:glassBgFlow 14s ease infinite}
-body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised,body.glass-mode .quest-card{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3);transition:background .15s ease,backdrop-filter .15s ease,-webkit-backdrop-filter .15s ease}
+body.glass-mode .card,body.glass-mode .card-sm,body.glass-mode .card-raised,body.glass-mode .quest-card{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;backdrop-filter:blur(var(--glass-blur,12px));-webkit-backdrop-filter:blur(var(--glass-blur,12px));border-color:rgba(255,255,255,0.07)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04),0 4px 12px rgba(0,0,0,.3);transition:background .15s ease,backdrop-filter .15s ease,-webkit-backdrop-filter .15s ease;will-change:backdrop-filter;-webkit-transform:translateZ(0);transform:translateZ(0)}
 body.glass-mode .char-card-box,body.glass-mode .char-avatar-col,body.glass-mode .char-stats-col{background:rgba(var(--glass-bg-rgb,15,17,24),var(--glass-alpha,0.55))!important;border-color:rgba(255,255,255,0.07)!important;transition:background .15s ease}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
@@ -1228,6 +1228,21 @@ nav::-webkit-scrollbar {
   100% { transform: scale(0.85); opacity: 0.06; }
 }
 
+/* ── Performance: reduce blur on low-power / reduced-motion devices ── */
+@media (prefers-reduced-motion: reduce) {
+  body.glass-mode .card, body.glass-mode .card-sm, body.glass-mode .card-raised, body.glass-mode .quest-card {
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+  }
+  body.glass-mode .screen.active { animation: none !important; }
+}
+@media (max-width: 480px) {
+  body.glass-mode .card, body.glass-mode .card-sm, body.glass-mode .card-raised, body.glass-mode .quest-card {
+    backdrop-filter: blur(min(var(--glass-blur, 12px), 8px)) !important;
+    -webkit-backdrop-filter: blur(min(var(--glass-blur, 12px), 8px)) !important;
+  }
+}
+
 /* ── Background/Particles gating ── */
 body.no-anim-bg .bg-glow-orb { display: none !important; }
 body.no-anim-bg::after { display: none !important; }
@@ -1251,6 +1266,15 @@ body.image-bg-active .app,
 body.image-bg-active .screen {
   background: transparent !important;
   background-color: transparent !important;
+}
+
+/* When both glass-mode and image-bg-active are active, preserve the glass-mode
+   gradient background on the active screen so content remains readable.
+   Content elements (cards, etc.) already have glass-mode backgrounds via line 74. */
+body.glass-mode.image-bg-active .screen.active {
+  background: linear-gradient(135deg, var(--app-bg, #0d0f14), var(--bg-surface, #100d1a), var(--app-bg, #0d0f14)) !important;
+  background-size: 200% 200% !important;
+  animation: glassBgFlow 14s ease infinite;
 }
 
 /* ── Particles canvas ── */
@@ -1743,7 +1767,7 @@ body.image-bg-active .screen {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.4</div>
+  <div class="splash-ver">v8.4.1</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1812,7 +1836,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.4";
+const APP_VERSION="v8.4.1";
 const APP_BUILD="2026.09.03.16";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2444,6 +2468,7 @@ const SCHEMA={
   bgImages:'array',
   bgAllScreens:'boolean',
   collapsedSections:'object',
+  fullscreenMode:'boolean',
   steps:'array',
   onboarding:'object',
 };
@@ -2614,8 +2639,8 @@ function defaultState(){
     customFoods:[],
     customBottomNav:[],
   glassMode:true,
-  glassBlur:4,
-  glassAlpha:0.1,
+  glassBlur:2,
+  glassAlpha:0.15,
   navOpacity:true,
   bgType:'animated',
   bgImage:null,
@@ -2623,7 +2648,7 @@ function defaultState(){
   bgDim:0,
   animatedBgEnabled:true,
   particlesEnabled:true,
-  particleCount:80,
+  particleCount:50,
   particleEffect:'dust',
   bgFit:'cover',
   bgPosX:50,
@@ -2632,6 +2657,7 @@ function defaultState(){
   accentColor:'',
   bgImages:[],
   bgAllScreens:true,
+  fullscreenMode:true,
   zen:{
     totalSessions:0,totalMinutes:0,currentStreak:0,bestStreak:0,
     lastSessionDate:null,sessions:[],history:{}
@@ -3662,33 +3688,14 @@ function ensureScreenContainers(){
 const RENDER_FNS={dashboard:renderHome,nutrition:renderNutrition,water:renderWater,workout:renderWorkout,habits:renderHabits,tasks:renderTasks,mind:renderMind,quests:renderQuests,analytics:renderAnalytics,profile:renderProfile,leaderboard:renderLeaderboard};
 // Bundled preset wallpapers shipped under ./assets/bg/
 window.__PRESET_WALLPAPERS=[
-  {file:'adapt.jpeg',name:'Adapt'},
-  {file:'back.jpeg',name:'Back'},
-  {file:'bat.jpg',name:'Bat'},
   {file:'berserk.jpg',name:'Berserk'},
-  {file:'better.jpg',name:'Better'},
   {file:'demon.jpg',name:'Demon'},
-  {file:'discipline.jpg',name:'Discipline'},
-  {file:'eclipse.png',name:'Eclipse'},
-  {file:'Goku.jpeg',name:'Goku'},
-  {file:'goku-moves-beyond-the-limits-of-god-3w.jpg',name:'Goku 3W'},
-  {file:'guts.png',name:'Guts'},
   {file:'holy.jpeg',name:'Holy'},
   {file:'kafka-honkai-star-rail-hr.jpg',name:'Kafka'},
   {file:'knowledge.png',name:'Knowledge'},
-  {file:'mahoraga.jpeg',name:'Mahoraga'},
   {file:'man.jpg',name:'Man'},
-  {file:'metanoia.jpeg',name:'Metanoia'},
-  {file:'miyamoto.jpeg',name:'Miyamoto'},
-  {file:'mushashi.jpeg',name:'Mushashi'},
-  {file:'naruto.png',name:'Naruto'},
-  {file:'protocol.png',name:'Protocol'},
   {file:'sacrifice.jpg',name:'Sacrifice'},
-  {file:'skull.jpeg',name:'Skull'},
-  {file:'sword.png',name:'Sword'},
-  {file:'tojif.jpeg',name:'Toji F'},
   {file:'toji.jpg',name:'Toji'},
-  {file:'vegeta.jpeg',name:'Vegeta'},
   {file:'vegetaui',name:'Vegeta UI'},
   {file:'violet evergarden.png',name:'Violet Evergarden'}
 ];
@@ -7822,7 +7829,8 @@ function renderProfile(el){
 
   <!-- ANALYTICS CARDS -->
   ${bmi>0?`
-  <div class="section-title">Body Analytics</div>
+  ${renderCollapseHeader('body-analytics-collapse','Body Analytics','📊','BMI, BMR, TDEE & more')}
+  <div class="collapsible-body${(S.collapsedSections&&S.collapsedSections['body-analytics-collapse'])?' collapsed':''}" id="body-analytics-collapse">
   <div class="grid3 mb16">
     <div class="card-sm" style="text-align:center">
       <div style="font-size:11px;color:var(--text-muted)">BMI</div>
@@ -7855,7 +7863,9 @@ function renderProfile(el){
       <div style="font-size:11px;color:var(--text-muted)">waist-to-hip</div>
     </div>`:'<div></div>'}
   </div>
-  <div class="section-title">Recommended Macros (for ${goalLabel(pr.goal||'maintain')})</div>
+  </div>
+  ${renderCollapseHeader('macros-collapse','Recommended Macros','🥗',`For ${goalLabel(pr.goal||'maintain')}`)}
+  <div class="collapsible-body${(S.collapsedSections&&S.collapsedSections['macros-collapse'])?' collapsed':''}" id="macros-collapse">
   <div class="grid5 mb16">
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Calories</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--warning);margin:4px 0">${macros.cal}</div><div style="font-size:10px;color:var(--text-muted)">kcal/day</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Protein</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--danger);margin:4px 0">${macros.protein}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
@@ -7863,23 +7873,29 @@ function renderProfile(el){
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Fat</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--primary);margin:4px 0">${macros.fat}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
     <div class="card-sm" style="text-align:center"><div style="font-size:11px;color:var(--text-muted)">Sugar</div><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:#7c3aed;margin:4px 0">${macros.sugar}g</div><div style="font-size:10px;color:var(--text-muted)">per day</div></div>
   </div>
+  </div>
   <div style="text-align:right;margin-bottom:12px"><button class="btn btn-sm btn-primary" onclick="applyMacros(${macros.cal},${macros.protein},${macros.carbs},${macros.fat})">Apply These Macros to Goals →</button></div>
   `:'<div class="insight">Fill in your profile above to see body analytics and recommended macros.</div>'}
 
-  <div class="section-title">Achievements</div>
+  ${renderCollapseHeader('ach-collapse','Achievements','🏆','Your progress at a glance')}
+  <div class="collapsible-body${(S.collapsedSections&&S.collapsedSections['ach-collapse'])?' collapsed':''}" id="ach-collapse">
   <div class="grid3 mb16">
     ${aB('🍽️','Meals',S.nutrition.entries.length)}${aB('🏋️','Workouts',S.workouts.length)}
     ${aB('📚','Study Sessions',(S.study.sessions||[]).length)}${aB('✅','Habits Done',(S.habits||[]).reduce((a,h)=>a+(h.completedDates?.length||0),0))}
     ${aB('💧','Water Logs',S.water.entries.length)}${aB('🔥','Best Streak',Math.max(0,...S.habits.map(h=>h.streak||0)))}
   </div>
+  </div>
 
   <div class="section-title">Settings</div>
   <div class="card mb16">
+    ${renderCollapseHeader('goals-collapse','Daily Goals','🎯','Calorie, protein & water targets')}
+    <div class="collapsible-body${(S.collapsedSections&&S.collapsedSections['goals-collapse'])?' collapsed':''}" id="goals-collapse">
     <div class="flex-between mb10"><span style="font-size:13px">Daily Calorie Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.cal}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.cal=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">kcal</span></div></div>
     <div class="flex-between mb10"><span style="font-size:13px">Protein Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.protein}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.protein=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
     <div class="flex-between mb10"><span style="font-size:13px">Fiber Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.fiber||25}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.fiber=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
     <div class="flex-between mb10"><span style="font-size:13px">Sugar Goal</span><div class="flex gap8"><input type="number" value="${S.nutrition.dailyGoal.sugar||25}" style="width:90px;text-align:right" onchange="S.nutrition.dailyGoal.sugar=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">g</span></div></div>
     <div class="flex-between"><span style="font-size:13px">Water Goal</span><div class="flex gap8"><input type="number" value="${S.water.dailyGoalMl}" style="width:90px;text-align:right" onchange="S.water.dailyGoalMl=+this.value;persistSave()"><span style="font-size:12px;color:var(--text-secondary)">ml</span></div></div>
+    </div>
   <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-mid)">
   <button class="btn btn-full btn-primary"
     onclick="showOnboardingReview()"
@@ -7909,7 +7925,7 @@ function renderProfile(el){
     </div>
   </div>
   </div>
-  <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();applyNavOpacity();}">Reset All Data</button>`;
+  <button class="btn btn-full" style="color:var(--danger);border-color:var(--danger)" onclick="if(confirm('Reset ALL data?')){localStorage.removeItem('zenfit_v1');S=defaultState();persistSave();render();applyGlassMode();applyNavOpacity();applyFullscreen();}">Reset All Data</button>`;
 
   // APPEARANCE & CUSTOMIZATION
   var bgTypes = ['animated','image'];
@@ -7923,7 +7939,7 @@ function renderProfile(el){
     '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">🪟 Liquid Glass</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Frosted blur effect on cards</div></div>' +
     '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">' +
-    '<input type="checkbox" id="glass-toggle" '+(S.glassMode?'checked':'')+' onchange="S.glassMode=this.checked;persistSave();applyGlassMode();renderScreens();" style="opacity:0;width:0;height:0">' +
+    '<input type="checkbox" id="glass-toggle" '+(S.glassMode?'checked':'')+' onchange="S.glassMode=this.checked;persistSave();applyGlassMode();renderScreens();updateToggleVisual(this);" style="opacity:0;width:0;height:0">' +
     '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.glassMode?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.glassMode?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>' +
     '</label>' +
     '</div>' +
@@ -7936,8 +7952,20 @@ function renderProfile(el){
     '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">🧭 Nav Opacity</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Apply the opacity slider to top &amp; bottom navigation bars</div></div>' +
     '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">' +
-    '<input type="checkbox" id="nav-opacity-toggle" '+(S.navOpacity!==false?'checked':'')+' onchange="S.navOpacity=this.checked;persistSave();applyNavOpacity();applyGlassMode();" style="opacity:0;width:0;height:0">' +
+    '<input type="checkbox" id="nav-opacity-toggle" '+(S.navOpacity!==false?'checked':'')+' onchange="S.navOpacity=this.checked;persistSave();applyNavOpacity();applyGlassMode();updateToggleVisual(this);" style="opacity:0;width:0;height:0">' +
     '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.navOpacity!==false?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.navOpacity!==false?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>' +
+    '</label>' +
+    '</div>' +
+    '</div>' +
+    // Fullscreen subsection
+    '<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border-mid)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Display</div>' +
+    '<div style="display:flex;align-items:center;justify-content:space-between">' +
+    '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">📱 Fullscreen Mode</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Auto fullscreen on phones (PWA)</div></div>' +
+    '<label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;margin-left:12px">' +
+    '<input type="checkbox" id="fullscreen-toggle" '+(S.fullscreenMode!==false?'checked':'')+' onchange="setFullscreenMode(this.checked)" style="opacity:0;width:0;height:0">' +
+    '<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:'+(S.fullscreenMode!==false?'var(--primary-dark)':'var(--bg-overlay)')+';border-radius:24px;transition:.3s;border:1px solid var(--border-strong)"><span style="position:absolute;content:\'\';height:18px;width:18px;left:'+(S.fullscreenMode!==false?'20px':'3px')+';bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>' +
     '</label>' +
     '</div>' +
     '</div>' +
@@ -7988,16 +8016,16 @@ function renderProfile(el){
     }).join('') +
     '</div></div>' +
     // Particle count slider
-    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
     '<span style="font-size:12px;color:var(--text-secondary)">Particle Count</span>' +
-    '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="particle-count-val">'+(S.particleCount??80)+'</span>' +
+    '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="particle-count-val">'+(S.particleCount??50)+'</span>' +
     '</div>' +
-    '<input type="range" min="0" max="120" value="'+(S.particleCount??80)+'" oninput="setParticleCount(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
+    '<input type="range" min="0" max="120" value="'+(S.particleCount??50)+'" oninput="setParticleCount(+this.value)" style="width:100%;height:6px;margin-bottom:2px">' +
     '<div style="position:relative;height:24px">'+[0,30,60,80,100,120].map(function(v){return "<div style=\"position:absolute;left:"+(v/120*100)+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setParticleCount("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.particleCount==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.particleCount==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
     '</div>' +
     // Overlay slider
-    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
     '<span style="font-size:12px;color:var(--text-secondary)">Overlay</span>' +
     '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-overlay-val">'+(S.bgOverlay??0)+'%</span>' +
@@ -8006,7 +8034,7 @@ function renderProfile(el){
     '<div style="position:relative;height:24px">'+[0,25,50,75,100].map(function(v){return "<div style=\"position:absolute;left:"+v+"%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer\" onclick=\"setOverlay("+v+")\"><div style=\"width:10px;height:10px;border-radius:50%;border:2px solid "+(S.bgOverlay==v?'var(--primary)':'var(--text-muted)')+";background:"+(S.bgOverlay==v?'var(--primary)':'transparent')+";transition:all .2s\"></div><span style=\"font-size:8px;color:var(--text-muted);line-height:1\">"+v+"</span></div>";}).join('')+'</div>' +
     '</div>' +
     // Dim slider
-    '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
+    '<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">' +
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
     '<span style="font-size:12px;color:var(--text-secondary)">Dim</span>' +
     '<span style="font-size:13px;color:var(--text-primary);font-weight:600" id="bg-dim-val">'+(S.bgDim??0)+'%</span>' +
@@ -8057,7 +8085,7 @@ function renderProfile(el){
       // Fit / position / zoom controls for the wallpaper
       renderCollapseHeader('wallpaper-settings-collapse','Wallpaper Settings','🎛️','Fit, position & zoom') +
       '<div class="collapsible-body'+((S.collapsedSections&&S.collapsedSections['wallpaper-settings-collapse'])?' collapsed':'')+'" id="wallpaper-settings-collapse">' +
-      '<div style="margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">' +
+      '<div data-no-swipe style="touch-action:none;margin-bottom:12px;padding:10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay)">' +
       '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Wallpaper Fit &amp; Position</div>' +
       '<div style="display:flex;gap:6px;margin-bottom:10px">' +
       ['cover','contain','fill'].map(function(f){
@@ -9723,6 +9751,49 @@ function applyNavOpacity(){
   var alpha = on ? Math.max(S.glassAlpha??0.1, 0.55) : 0.8;
   document.documentElement.style.setProperty('--nav-glass-alpha', alpha.toString());
 }
+// Detect if the device is a phone/mobile (touch + small screen)
+function isMobileDevice(){
+  var ua = navigator.userAgent || '';
+  var mobileUA = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile|BlackBerry|Windows Phone/i.test(ua);
+  var smallScreen = (window.innerWidth <= 768) || (window.innerHeight <= 768);
+  var touch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  return mobileUA || (smallScreen && touch);
+}
+// Apply fullscreen based on device type + user toggle (default ON for phones)
+function applyFullscreen(){
+  if(!S)return;
+  var on = S.fullscreenMode!==false && isMobileDevice();
+  var el = document.documentElement;
+  var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  var exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(on){
+    // Only request if not already fullscreen and user gesture not required (PWA standalone)
+    if(!document.fullscreenElement && !document.webkitFullscreenElement && req){
+      try{ req.call(el); }catch(e){ /* user gesture may be required; ignore */ }
+    }
+  }else{
+    if((document.fullscreenElement || document.webkitFullscreenElement) && exit){
+      try{ exit.call(document); }catch(e){}
+    }
+  }
+}
+// Update a custom toggle's visual state (knob position + track color) immediately
+function updateToggleVisual(input){
+  if(!input)return;
+  var on=input.checked;
+  var track=input.nextElementSibling;
+  if(track){
+    track.style.background=on?'var(--primary-dark)':'var(--bg-overlay)';
+    var knob=track.firstElementChild;
+    if(knob)knob.style.left=on?'20px':'3px';
+  }
+}
+function setFullscreenMode(v){
+  S.fullscreenMode=!!v;
+  persistSave();
+  applyFullscreen();
+  updateToggleVisual(document.getElementById('fullscreen-toggle'));
+}
 function setGlassBlur(v){
   if(v===0)v=0.01;
   S.glassBlur=v;
@@ -9909,6 +9980,7 @@ function initTheme(){
   applyGlassMode();
   applyNavOpacity();
   applyBackgroundConfig();
+  applyFullscreen();
 }
 
 // ════════════════════════════════════════════════════
@@ -10502,6 +10574,7 @@ function setBgFit(v){
   S.bgFit=v;
   applyBackgroundConfig();
   persistSave();
+  renderScreens();
 }
 function setBgPosX(v){
   S.bgPosX=Math.max(0,Math.min(100,Math.floor(v)));
@@ -12068,8 +12141,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.4';
+var CHANGELOG_VERSION='v8.4.1';
 var CHANGELOG_ENTRIES=[
+  'v8.4.1 Minor bug fixes'
   'v8.4 New Feature : Wallpapers',
   'v8.4 Fixed barcode serving size issue',
   'v8.4 Collapsable cards in profile',
@@ -12626,6 +12700,7 @@ const LeaderboardAPI=(function(){
 })();
 
 initTheme();
+applyFullscreen();
 ensureBgImageLayer();
 // Check achievements on every load (catches anything earned offline)
 setTimeout(function(){checkAchievements();},200);
