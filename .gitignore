@@ -31,3 +31,4 @@ build/
 # Temp
 *.tmp
 *.temp
+config.js
