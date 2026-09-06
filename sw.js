@@ -3,7 +3,7 @@
 
 // ── BUILD INFO (auto-updated by update-build.js) ───
 const SW_BUILD = "2026.09.05.2";
-const SCHEMA_VERSION = 10;
+const SCHEMA_VERSION = 11;
 
 // Cache names derived from build — changes on every deploy
 // forces browser to detect SW update and refresh all caches
@@ -23,18 +23,6 @@ const PRECACHE = [
 ];
 
 const STATIC_ASSETS = [
-  './assets/male/rank_S_idle.gif',
-  './assets/male/rank_E_idle.gif',
-  './assets/male/rank_D_idle.gif',
-  './assets/male/rank_C_idle.gif',
-  './assets/male/rank_B_idle.gif',
-  './assets/male/rank_A_idle.gif',
-  './assets/female/rank_S_idle.gif',
-  './assets/female/rank_E_idle.gif',
-  './assets/female/rank_D_idle.gif',
-  './assets/female/rank_C_idle.gif',
-  './assets/female/rank_B_idle.gif',
-  './assets/female/rank_A_idle.gif',
   './assets/mascot/med.gif',
   './assets/mascot/habits.png',
   './assets/mascot/nutrition.png',
@@ -53,12 +41,10 @@ const STATIC_ASSETS = [
   './assets/zen/soul_frequencies.mp3',
   './assets/zen/thunder.mp3',
   './assets/bg/berserk.jpg',
-  './assets/bg/demon.jpg',
   './assets/bg/holy.jpeg',
   './assets/bg/kafka-honkai-star-rail-hr.jpg',
   './assets/bg/knowledge.png',
   './assets/bg/man.jpg',
-  './assets/bg/sacrifice.jpg',
   './assets/bg/toji.jpg',
   './assets/bg/vegetaui',
   './assets/bg/violet evergarden.png',

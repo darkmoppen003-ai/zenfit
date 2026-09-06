@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy"
-content="default-src 'self';script-src 'self' 'unsafe-inline' https://unpkg.com;style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self' https://world.openfoodfacts.org https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co wss://*.peerjs.com;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
+content="default-src 'self';script-src 'self' 'unsafe-inline' https://unpkg.com;style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self' https://world.openfoodfacts.org https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co wss://*.peerjs.com https://zenfit-nutrition.dark-moppen003.workers.dev;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
 <meta name="theme-color" content="#7B5EFF">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1720,7 +1720,7 @@ body.glass-mode.image-bg-active .screen.active {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.4.4</div>
+  <div class="splash-ver">v8.4.5</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1807,7 +1807,7 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.4.4";
+const APP_VERSION="v8.4.5";
 const APP_BUILD="2026.09.05.2";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
@@ -2359,7 +2359,7 @@ window.replayNavTutorial=function(){
 // ════════════════════════════════════════════════════════════════════════════
 // FUTURE-PROOF CONFIGURATION & CONSTANTS
 // ════════════════════════════════════════════════════════════════════════════
-const DATA_VERSION=10;
+const DATA_VERSION=11;
 const STORAGE_KEYS={
   STATE:'zenfit_v1',
   DEVICE_ID:'zenfit_device_id',
@@ -2440,7 +2440,6 @@ const SCHEMA={
   bgScreen:'string',
   collapsedSections:'object',
   fullscreenAutoStart:'boolean',
-  geminiApiKey:'string',
   steps:'array',
   onboarding:'object',
 };
@@ -2538,6 +2537,12 @@ saved.bgDim=saved.bgDim||0;
     // v10: 'animated' background type renamed to 'solid' (animated orbs removed)
     if(saved.bgType==='animated') saved.bgType='solid';
     saved.dataVersion=10;
+  }
+
+  if(version<11){
+    // v11: remove geminiApiKey (AI recognition now via nutrition worker)
+    if(saved.geminiApiKey!==undefined){delete saved.geminiApiKey;}
+    saved.dataVersion=11;
   }
 
   return saved;
@@ -2642,7 +2647,6 @@ function defaultState(){
   bgAllScreens:true,
   bgScreen:'dashboard',
   fullscreenAutoStart:true,
-  geminiApiKey:'',
   navLabels:true,
   zen:{
     totalSessions:0,totalMinutes:0,currentStreak:0,bestStreak:0,
@@ -3590,8 +3594,8 @@ const SCREENS=[
   {id:'quests',label:'Quests',icon:'&#11088;'},
   {id:'analytics',label:'Analytics',icon:'&#128200;'},
   {id:'leaderboard',label:'Leaderboard',icon:'&#127942;'},
-  {id:'customization',label:'Customization',icon:'&#9881;'},
   {id:'profile',label:'Profile',icon:'&#128100;'},
+  {id:'customization',label:'Customization',icon:'&#9881;'},
 ];
 let currentScreen='home';
 let mindTab='zen';
@@ -3668,12 +3672,10 @@ const RENDER_FNS={dashboard:renderHome,nutrition:renderNutrition,water:renderWat
 // Bundled preset wallpapers shipped under ./assets/bg/
 window.__PRESET_WALLPAPERS=[
   {file:'berserk.jpg',name:'Berserk'},
-  {file:'demon.jpg',name:'Demon'},
   {file:'holy.jpeg',name:'Holy'},
   {file:'kafka-honkai-star-rail-hr.jpg',name:'Kafka'},
   {file:'knowledge.png',name:'Knowledge'},
   {file:'man.jpg',name:'Man'},
-  {file:'sacrifice.jpg',name:'Sacrifice'},
   {file:'toji.jpg',name:'Toji'},
   {file:'vegetaui',name:'Vegeta UI'},
   {file:'violet evergarden.png',name:'Violet Evergarden'}
@@ -3947,7 +3949,20 @@ function renderHome(el){
     </div>
   </div>
 
-  <!-- 3. TODAY'S QUICK STATS -->
+  <!-- 3. CHARACTER CARD (collapsible) -->
+  <div class="card mb12" style="padding:0;overflow:hidden">
+    <div onclick="toggleCharCard()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:15px">👤</span>
+        <span style="font-size:12px;font-weight:600;color:var(--text-primary)">Character Card</span>
+        <span class="badge" style="background:var(--primary-dim);color:var(--primary);font-size:9px;padding:1px 6px">Rank ${p.rank}</span>
+      </div>
+      <span style="font-size:11px;color:var(--text-muted);transition:transform .3s;${_charCardCollapsed?'':'transform:rotate(180deg)'}">▼</span>
+    </div>
+    <div id="charCardMount" style="${_charCardCollapsed?'display:none':'display:block'}"></div>
+  </div>
+
+  <!-- 4. TODAY'S QUICK STATS -->
   <div>
     <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
       <div class="section-title" style="margin-bottom:0">Today</div>
@@ -3981,7 +3996,7 @@ function renderHome(el){
     </div>
   </div>
 
-  <!-- 4. QUESTS -->
+  <!-- 5. QUESTS -->
   <div>
     <div class="flex-between mb8">
       <div class="section-title" style="margin-bottom:0">${questLabel} ${allQDone?'<span style="font-size:10px;color:var(--success)">✓ All done!</span>':''}</div>
@@ -4000,7 +4015,7 @@ function renderHome(el){
     }).join('')}
   </div>
 
-  <!-- 5. MOOD LOG - 10 emotions in grid -->
+  <!-- 6. MOOD LOG - 10 emotions in grid -->
   <div class="card mood-card">
     <div style="display:flex;flex-direction:column;gap:2px;flex-shrink:0;margin-bottom:8px">
       <div style="font-size:11px;color:var(--text-primary);font-weight:600">How was your mood today?</div>
@@ -4017,7 +4032,7 @@ function renderHome(el){
     </div>
   </div>
 
-  <!-- 6. ACHIEVEMENT RING + STEP COUNTER (side by side) -->
+  <!-- 7. ACHIEVEMENT RING + STEP COUNTER (side by side) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <!-- Achievement square -->
     <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 10px;gap:8px;text-align:center;cursor:pointer" onclick="switchScreen('analytics','gamification')">
@@ -4046,7 +4061,7 @@ function renderHome(el){
     </div>
   </div>
 
-  <!-- 7. Rest Day + Weight squares (side by side) -->
+  <!-- 8. Rest Day + Weight squares (side by side) -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
     <!-- Rest Day square -->
     <div class="card-sm" style="text-align:center">
@@ -4080,18 +4095,7 @@ function renderHome(el){
     })()}
   </div>
 
-  <!-- 8. CHARACTER CARD (collapsible) -->
-  <div class="card mb12" style="padding:0;overflow:hidden">
-    <div onclick="toggleCharCard()" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:15px">👤</span>
-        <span style="font-size:12px;font-weight:600;color:var(--text-primary)">Character Card</span>
-        <span class="badge" style="background:var(--primary-dim);color:var(--primary);font-size:9px;padding:1px 6px">Rank ${p.rank}</span>
-      </div>
-      <span style="font-size:11px;color:var(--text-muted);transition:transform .3s;${_charCardCollapsed?'':'transform:rotate(180deg)'}">▼</span>
-    </div>
-    <div id="charCardMount" style="${_charCardCollapsed?'display:none':'display:block'}"></div>
-  </div>`;
+  `;
   // If expanded, render character card after innerHTML
   if(!_charCardCollapsed)renderCharacterCard();
 }
@@ -4574,36 +4578,45 @@ function nn(x){
   return x ? Number(x).toFixed(0) : 0;
 }
 function setFT(t){activeTab=t;parsedFood=null;renderScreens();}
-// ── AI (Gemini) nutrition fallback ─────────────────────
+// ── AI (Worker) nutrition fallback ──────────────────────
 // Used as a THIRD fallback in food parsing: after saved foods (S.customFoods)
 // and the food .js databases (INGR_DB / ALIASES), unrecognized items are sent
-// to Gemini. The API key is read from config.js (window.ZENFIT_CONFIG), never
-// hardcoded. If no key is configured or the call fails, the user is prompted
-// to log the food manually.
-function geminiEffectiveKey(){
-  const cfgKey=(window.ZENFIT_CONFIG&&window.ZENFIT_CONFIG.GEMINI_API_KEY)||'';
-  return (S&&S.geminiApiKey)||(/^AIza[0-9A-Za-z_\-]{20,}$/.test(cfgKey)?cfgKey:'');
-}
+// to the nutrition worker. The worker proxies to Gemini and returns items in
+// ZenFit's parsed format. If the call fails, the user is prompted to log manually.
 async function fetchNutritionGemini(query){
-  const key=geminiEffectiveKey();
-  if(!key)return null;
-  const MODEL='gemini-3.5-flash';
-  const prompt='You are a nutrition database. Given the food item(s): "'+query+'", return JSON with a "foods" array. Each food object must have exactly these fields: name, quantity, calories, protein_g, carbs_g, fat_g, fiber_g. Also include a "total" object with the same fields summed. Use realistic per-serving values. Respond ONLY with valid JSON, no markdown.';
+  const WORKER_URL='https://zenfit-nutrition.dark-moppen003.workers.dev/';
   try{
-    const r=await safeFetch('https://generativelanguage.googleapis.com/v1beta/models/'+MODEL+':generateContent?key='+encodeURIComponent(key),{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    const r=await safeFetch(WORKER_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{parts:[{text:prompt}]}],
-        generationConfig:{responseMimeType:'application/json',temperature:0.2}
-      }),
-      signal:AbortSignal.timeout(10000)
+      body:JSON.stringify({text:query}),
+      signal:controller.signal
     });
+    clearTimeout(timeout);
     if(!r||!r.ok)return null;
-    const d=await r.json();
-    const txt=d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text;
-    if(!txt)return null;
-    return JSON.parse(txt);
+    const data=await r.json();
+    // Accept either a bare array of foods OR {foods:[...]}
+    const foods=Array.isArray(data)?data:(data&&Array.isArray(data.foods)?data.foods:[]);
+    if(!foods.length)return null;
+    // Items already in ZenFit parsed format (have nutrients) are used as-is.
+    // Items in raw format (calories/protein_g) are converted via geminiFoodToParsed.
+    return foods.map(f=>{
+      if(f&&f.nutrients&&typeof f.nutrients==='object'){
+        // Already in parsed format — ensure source and _edit exist
+        return {
+          name:String(f.name||'Food'),
+          qty:parseFloat(f.qty)||1,
+          unit:String(f.unit||'g'),
+          source:'gemini',
+          nutrients:f.nutrients,
+          _edit:f._edit||{baseQty:parseFloat(f.qty)||1,baseUnit:String(f.unit||'g'),per1g:0,per1ml:0,perPiece:0}
+        };
+      }
+      // Raw format fallback
+      return geminiFoodToParsed(f,query);
+    });
   }catch(e){return null;}
 }
 function geminiFoodToParsed(f,queryText){
@@ -4737,22 +4750,18 @@ function parseFoodInput(){
     renderFoodPreview();
     return;
   }
-  // Some items failed -> try Gemini as a third fallback
-  const key=geminiEffectiveKey();
-  if(!key){
-    showFoodFallbackPrompt(r,btn,parsed,failed);
-    return;
-  }
+  // Some items failed -> try AI worker as a third fallback
   r.innerHTML='<div style="color:var(--text-muted);font-size:13px;padding:4px 0">Recognizing with AI: '+escapeHtml(failed.join(', '))+'…</div>';
-  fetchNutritionGemini(failed.join(', ')).then(res=>{
-    const aiFoods=(res&&Array.isArray(res.foods))?res.foods:[];
-    const aiParsed=aiFoods.map((af,i)=>geminiFoodToParsed(af,failed[i]||failed[0]));
-    // Auto-save Gemini-parsed foods to My Foods immediately (standard values), so they
+  fetchNutritionGemini(failed.join(', ')).then(aiParsed=>{
+    if(!aiParsed||!aiParsed.length){
+      showFoodFallbackPrompt(r,btn,parsed,failed);
+      return;
+    }
+    // Auto-save AI-parsed foods to My Foods immediately (standard values), so they
     // are available for future use even if the user does not click "Log Entry".
     aiParsed.forEach(f=>saveGeminiFoodToCustom(f));
     const merged=parsed.concat(aiParsed);
     parsedFood=merged;
-    if(!merged.length){showFoodFallbackPrompt(r,btn,parsed,failed);return;}
     renderFoodPreview();
   }).catch(()=>{
     showFoodFallbackPrompt(r,btn,parsed,failed);
@@ -8261,14 +8270,6 @@ function renderCustomization(el){
         (S.glassMode?('<div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)"><div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 6px"><span style="font-size:12px;color:var(--text-secondary)">Opacity</span><span style="font-size:13px;color:var(--text-primary);font-weight:600" id="glass-alpha-val">'+Math.round((S.glassAlpha??0.1)*100)+'%</span></div><input type="range" min="0" max="100" value="'+Math.round((S.glassAlpha??0.1)*100)+'" oninput="setGlassAlpha(+this.value)" class="glass-alpha-range" style="width:100%;height:6px;margin-bottom:2px"><div style="position:relative;height:24px">'+[0,20,40,55,75,100].map(function(v){return'<div style="position:absolute;left:'+(v)+'%;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer" onclick="setGlassAlpha('+v+')"><div class="alpha-marker" data-val="'+v+'" style="width:14px;height:14px;border-radius:50%;border:2px solid '+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'var(--text-muted)')+';background:'+(Math.round((S.glassAlpha??0.1)*100)==v?'var(--primary)':'transparent')+';transition:all .2s"></div><span style="font-size:8px;color:var(--text-muted);line-height:1">'+v+'</span></div>'}).join('')+'</div></div>'):'') +
       '</div>' +
     '</div>' +
-    // ═══ AI ═══
-    '<div class="section-title">AI</div>' +
-    '<div class="card mb8">' +
-      '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:4px">🤖 Gemini AI Food Recognition</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Used to recognize foods not in the database. Keys start with "AIza".</div>' +
-      '<input type="password" id="gemini-key-input" value="'+escapeHtml(S.geminiApiKey||'')+'" placeholder="AIza..." oninput="setGeminiApiKey(this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border-strong);background:var(--bg-overlay);color:var(--text-primary);font-size:13px;box-sizing:border-box">' +
-      '<div id="gemini-key-status" style="font-size:11px;margin-top:6px;color:var(--text-muted)">'+(geminiEffectiveKey()?'AI recognition enabled ✓':'No valid key set — AI recognition disabled')+'</div>' +
-    '</div>' +
     // ═══ THEMES ═══
     '<div class="section-title">Themes</div>' +
     // Built-Ins tile
@@ -9985,17 +9986,6 @@ function setFullscreenAutoStart(v){
   persistSave();
   applyFullscreen();
   updateToggleVisual(document.getElementById('fullscreen-toggle'));
-}
-function setGeminiApiKey(v){
-  v=(v||'').trim();
-  const st=document.getElementById('gemini-key-status');
-  if(v&&!/^AIza[0-9A-Za-z_\-]{20,}$/.test(v)){
-    if(st){st.textContent='Invalid key — Gemini keys start with "AIza"';st.style.color='var(--danger)';}
-    return;
-  }
-  S.geminiApiKey=v;
-  persistSave();
-  if(st){st.textContent=geminiEffectiveKey()?'AI recognition enabled ✓':'No valid key set — AI recognition disabled';st.style.color=geminiEffectiveKey()?'var(--success)':'var(--text-muted)';}
 }
 function setGlassBlur(v){
   if(v===0)v=0.01;
@@ -12561,8 +12551,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.4.4';
+var CHANGELOG_VERSION='v8.4.5';
 var CHANGELOG_ENTRIES=[
+  'v8.4.5 Fixed Online parsing and Repositioning of Dasboard',
   'v8.4.4 THEME COHERENCE , GEMINI SECURITY , FOOD PARSER FIXES , FULLSCREEN REWORK , CUSTOM THEME ACTIONS',
   'v8.4.3 BUG FIXES AND CUSTOMIZATION TAB EDITION',
   'v8.4.2 GEMINI INTEGRATION IN FOOD PARSING , BUG FIXES AND UPDATED NAVIGATION',
