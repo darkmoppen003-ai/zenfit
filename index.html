@@ -1720,7 +1720,7 @@ body.glass-mode.image-bg-active .screen.active {
   <img src="zenfit.png" class="splash-img" alt="ZenFit">
   <div class="splash-title">ZENFIT</div>
   <div class="splash-sub">Health RPG</div>
-  <div class="splash-ver">v8.4.5</div>
+  <div class="splash-ver">v8.5</div>
   <div class="splash-bar-wrap">
     <div id="splash-bar" class="splash-bar" style="background:linear-gradient(90deg,var(--primary-dark),var(--primary))"></div>
   </div>
@@ -1807,8 +1807,8 @@ const safeFetch = async function(url, opts){
   }
 };
 
-const APP_VERSION="v8.4.5";
-const APP_BUILD="2026.09.06.3";
+const APP_VERSION="v8.5";
+const APP_BUILD="2026.09.07.1";
 
 // ── BUILD / SCHEMA VERSION CHECK ────────────────────
 var schemaMigrations = {};
@@ -3349,6 +3349,17 @@ function parseFood(text){
   }
   if(ALIASES[text]&&INGR_DB[ALIASES[text]]) return bE(ALIASES[text],text,qty,unit);
   if(INGR_DB[text]) return bE(text,text,qty,unit);
+  // Pluralization fallback: "eggs"→"egg", "bananas"→"banana", "mangoes"→"mango", "eggs curry"→"egg curry"
+  const sing=text.replace(/es$/,'').replace(/s$/,'');
+  if(sing!==text){
+    if(ALIASES[sing]&&INGR_DB[ALIASES[sing]]) return bE(ALIASES[sing],text,qty,unit);
+    if(INGR_DB[sing]) return bE(sing,text,qty,unit);
+  }
+  const sing2=text.replace(/^(\w+)es\b/,'$1').replace(/^(\w+)s\b/,'$1');
+  if(sing2!==text){
+    if(ALIASES[sing2]&&INGR_DB[ALIASES[sing2]]) return bE(ALIASES[sing2],text,qty,unit);
+    if(INGR_DB[sing2]) return bE(sing2,text,qty,unit);
+  }
   return null;
 }
 function bE(dbKey,orig,qty,unit){
@@ -12551,8 +12562,9 @@ function getTopZenSounds(){
 // ════════════════════════════════════════════════════
 // CHANGELOG / VERSION UPDATE POPUP
 // ════════════════════════════════════════════════════
-var CHANGELOG_VERSION='v8.4.5';
+var CHANGELOG_VERSION='v8.5';
 var CHANGELOG_ENTRIES=[
+  'v8.5 Plural food matching (eggs→egg) — local DB lookup before AI',
   'v8.4.5 Fixed Online parsing and Repositioning of Dasboard',
   'v8.4.4 THEME COHERENCE , GEMINI SECURITY , FOOD PARSER FIXES , FULLSCREEN REWORK , CUSTOM THEME ACTIONS',
   'v8.4.3 BUG FIXES AND CUSTOMIZATION TAB EDITION',
