@@ -92,7 +92,7 @@ export function syncGlobalIfOptedIn() {
 /* ── Global admin board (phase 1: Supabase-backed broadcasts/events/rewards) ──
    Tables (run once in Supabase SQL editor):
      create table global_broadcasts (id uuid default gen_random_uuid() primary key, title text, body text, target text default 'all', bg text default 'none', hl text default 'none', image text default '', confetti boolean default false, created_at timestamptz default now());
-     create table global_events (id uuid default gen_random_uuid() primary key, title text, descr text, xp int default 0, status text default 'live', target text default 'all', rules jsonb, created_at timestamptz default now());
+     create table global_events (id uuid default gen_random_uuid() primary key, title text, descr text, xp int default 0, status text default 'live', target text default 'all', rules jsonb, image text default '', created_at timestamptz default now());
      create table global_rewards (id uuid default gen_random_uuid() primary key, title text, xp int default 0, code text, target text default 'all', created_at timestamptz default now());
      alter table global_broadcasts enable row level security; alter table global_events enable row level security; alter table global_rewards enable row level security;
      create policy "public read" on global_broadcasts for select using (true);
@@ -146,7 +146,7 @@ export const GlobalBoard = {
     } catch { return []; }
   },
   publishBroadcast: (title, body, target = 'all') => GlobalBoard.publish('global_broadcasts', { title, body, target }),
-  publishEvent: (title, descr, xp = 0, target = 'all', rules = null) => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules } : { title, descr, xp, status: 'live', target }),
+  publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '') => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image } : { title, descr, xp, status: 'live', target, image }),
   publishReward: (title, xp, code = '', target = 'all') => GlobalBoard.publish('global_rewards', { title, xp, code, target }),
   fetchBroadcasts: () => GlobalBoard.fetch('global_broadcasts'),
   fetchEvents: () => GlobalBoard.fetch('global_events'),
