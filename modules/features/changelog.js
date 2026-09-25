@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.8.1', 'Matrix hue + sparks direction, thread inbox, mission designer v2, global outbox'],
   ['v8.8 beta', 'Inbox, global coach messages, missions with auto-rewards, faster particles'],
   ['Dashboard first', 'Orb home removed — dashboard opens directly'],
   ['Bottom-dock navigation', 'Top tab bar removed — swipe or use the pill bar'],
