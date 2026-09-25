@@ -18,7 +18,7 @@ export const STORAGE_KEYS = {
   THEMES: 'zenfit_themes_v1',
 };
 export const DATA_VERSION = 11;
-export const APP_VERSION = "8.8";
+export const APP_VERSION = "8.8.1";
 export const APP_BUILD = "2026.09.26.18";
 
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
