@@ -1,0 +1,11 @@
+[
+  {"id":"campfire","label":"Campfire","icon":"🔥"},
+  {"id":"forest_morning","label":"Forest Morning","icon":"🌲"},
+  {"id":"heavy_rain","label":"Heavy Rain","icon":"🌧️"},
+  {"id":"ocean","label":"Ocean","icon":"🌊"},
+  {"id":"rain_puddle","label":"Rain Puddle","icon":"💧"},
+  {"id":"rainy_forest","label":"Rainy Forest","icon":"🌲"},
+  {"id":"river","label":"River Stream","icon":"🏞️"},
+  {"id":"soul_frequencies","label":"Soul Frequencies","icon":"🎵"},
+  {"id":"thunder","label":"Thunderstorm","icon":"⛈️"}
+]
