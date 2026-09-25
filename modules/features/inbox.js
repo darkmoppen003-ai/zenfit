@@ -24,6 +24,7 @@ const gMarkRead = (id) => {
   } catch {}
 };
 const isGRead = (m) => gReadIds().includes('g-' + (m.id || m.title));
+const isGHidden = (m) => (S.hiddenGlobals || []).includes('g-' + (m.id || m.title));
 const kindColor = (m) => {
   if (m.kind === 'reward') return Number(m.xp) < 0 ? 'var(--danger)' : 'var(--warning)';
   if (/penalty/i.test(m.title || '')) return 'var(--danger)';
@@ -48,14 +49,17 @@ export function renderInbox(host) {
   </div>
   <div id="inbox-threads"></div>
   ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
-    ${events.map((e) => `<div class="card mb8"><div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
-      <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.body || e.desc || '')}</div></div>`).join('')}` : ''}
+    ${events.map((e) => {
+      const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
+      return `<div class="card mb8">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
+      <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
   let filter = 'all';
   const allRows = () => {
     const local = msgs.map((m) => ({ m, mid: m.id, global: false, ts: m.ts || 0 }));
-    const remote = gThreads.map((m) => ({ m, mid: 'g-' + (m.id || m.title), global: true, ts: Date.parse(m.created_at || '') || 0 }));
+    const hidden = new Set(S.hiddenGlobals || []);
+    const remote = gThreads.filter((m) => !hidden.has('g-' + (m.id || m.title))).map((m) => ({ m, mid: 'g-' + (m.id || m.title), global: true, ts: Date.parse(m.created_at || '') || 0 }));
     return [...local, ...remote].sort((a, b) => b.ts - a.ts);
   };
   const paint = () => {
@@ -80,7 +84,7 @@ export function renderInbox(host) {
         + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}</span></div>`
         + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body || '')}</div>`
         + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
-        + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : (!global ? `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button>` : '')}</div>`;
+        + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" data-global="${global ? 1 : ''}" style="color:var(--danger);flex-shrink:0" title="${global ? 'Hide for me' : 'Delete'}">×</button>`}</div>`;
     }).join('') || '<div class="card text-center" style="color:var(--text-muted)">No messages match. Challenges and rewards from your coach appear here.</div>';
     box.querySelectorAll('[data-open]').forEach((row) => {
       row.onclick = (e) => {
@@ -91,12 +95,18 @@ export function renderInbox(host) {
     box.querySelectorAll('[data-delmsg]').forEach((b) => {
       b.onclick = (e) => {
         e.stopPropagation();
-        deleteMsg(b.dataset.delmsg);
+        deleteMsg(b.dataset.delmsg, b.dataset.global === '1');
       };
     });
   };
   host._repaintInbox = paint;
-  const deleteMsg = (mid) => {
+  const deleteMsg = (mid, isGlobalRow) => {
+    if (isGlobalRow) {
+      update((s) => { s.hiddenGlobals = [...new Set([...(s.hiddenGlobals || []), mid])]; });
+      showNotif('Hidden — you won\'t see this again', 'OK');
+      window.ZF.rerender();
+      return;
+    }
     const m = (S.inbox || []).find((x) => x.id === mid);
     const wasUnread = m && !isRead(mid);
     update((s) => {
@@ -232,14 +242,18 @@ async function syncGlobals(host) {
       } catch {}
     }
     if (myEvts?.length) {
-      html += `<div class="section-title mt12">Global missions</div>` + myEvts.slice(0, 5).map((e) => {
+      const hidden = new Set(S.hiddenGlobals || []);
+      const visEvts = myEvts.filter((e) => !hidden.has('g-' + (e.id || e.code || e.title)));
+      html += visEvts.length ? `<div class="section-title mt12">Global missions</div>` + visEvts.slice(0, 5).map((e) => {
         const gid = e.id || e.code || e.title;
         const tracked = (S.events || []).some((x) => x.globalId === gid);
         const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
         const rules = Array.isArray(e.rules) ? e.rules : [];
+        const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
         return `<div class="card mb12" style="border-color:var(--primary)"><div class="flex-between">`
         + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display)">${escapeHtml(e.title || 'Event')}</div>`
-        + `<span class="badge badge-purple">Mission</span></div>`
+        + `<span style="display:flex;gap:4px;align-items:center"><span class="badge badge-purple">Mission</span><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + gid)}" style="color:var(--danger)" title="Hide for me">×</button></span></div>`
+        + `${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:6px 0">` : ''}`
         + `<div style="font-size:12px;color:var(--text-secondary);margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
         + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
         + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
@@ -261,17 +275,26 @@ async function syncGlobals(host) {
             + lines.map((l) => `<div style="font-size:12px;color:var(--text-secondary)">• ${escapeHtml(l)}</div>`).join('') + `</div>`;
         }).join('') + `</div>` : '')
         + (canTrack ? `<button class="btn btn-sm btn-primary mt8" data-track="${escapeHtml(String(gid))}">Track this mission</button>` : tracked ? `<div style="font-size:11px;color:var(--success);margin-top:4px">Tracked ✓ your logs are auto-checked</div>` : '') + `</div>`;
-      }).join('');
+      }).join('') : '';
     }
     if (myRewards?.length) {
-      html += `<div class="section-title mt12">Claimable rewards</div>` + myRewards.slice(0, 5).map((r) => {
+      const hiddenR = new Set(S.hiddenGlobals || []);
+      const visRewards = myRewards.filter((r) => !hiddenR.has('g-' + (r.id || r.code)));
+      html += visRewards.length ? `<div class="section-title mt12">Claimable rewards</div>` + visRewards.slice(0, 5).map((r) => {
         const done = claimed.has(r.id || r.code);
         return `<div class="card mb8"><div class="flex-between"><div><div style="font-size:13px;font-weight:700">${escapeHtml(r.title || 'Reward')}</div>`
           + `<div style="font-size:11px;color:var(--warning)">${Number(r.xp) < 0 ? '' : '+'}${r.xp || 0} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div>`
-          + `<button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim="${escapeHtml(r.id || r.code || '')}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button></div></div>`;
-      }).join('');
+          + `<span style="display:flex;gap:4px"><button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim="${escapeHtml(r.id || r.code || '')}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + (r.id || r.code))}" style="color:var(--danger)" title="Hide for me">×</button></span></div></div>`;
+      }).join('') : '';
     }
     box.innerHTML = html || '';
+    box.querySelectorAll('[data-ghide]').forEach((b) => {
+      b.onclick = () => {
+        update((s) => { s.hiddenGlobals = [...new Set([...(s.hiddenGlobals || []), b.dataset.ghide])]; });
+        showNotif('Hidden — you won\'t see this again', 'OK');
+        window.ZF.rerender();
+      };
+    });
     box.querySelectorAll('[data-track]').forEach((b) => {
       b.onclick = () => {
         const gid = b.dataset.track;
@@ -281,6 +304,7 @@ async function syncGlobals(host) {
           s.events = [...(s.events || []), {
             id: `g-${Date.now()}`, globalId: gid, kind: 'mission', title: String(e.title || 'Mission').slice(0, 60),
             icon: '📯', body: String(e.descr || e.desc || '').slice(0, 200),
+            image: /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '',
             xp: Math.min(500, Math.max(1, Number(e.xp) || 25)),
             rules: (e.rules || []).slice(0, 5).map((r) => {
               if (r.cat === 'workout') return { cat: 'workout', exercise: String(r.exercise || '').slice(0, 40), sets: Number(r.sets) || 0, reps: Number(r.reps) || 0, days: Number(r.days) || 1 };

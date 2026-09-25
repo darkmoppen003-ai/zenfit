@@ -18,8 +18,8 @@ export const STORAGE_KEYS = {
   THEMES: 'zenfit_themes_v1',
 };
 export const DATA_VERSION = 11;
-export const APP_VERSION = "8.8.1";
-export const APP_BUILD = "2026.09.26.20";
+export const APP_VERSION = "8.8.3";
+export const APP_BUILD = "2026.09.26.21";
 
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
@@ -48,7 +48,7 @@ const SCHEMA = {
   bgScreen: 'string', collapsedSections: 'object',
   fullscreenAutoStart: 'boolean', steps: 'array', onboarding: 'object',
   // V2 additions
-  inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array',
+  inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array', hiddenGlobals: 'array',
   customThemes: 'array', customDishes: 'array', notifSettings: 'object',
   navOpacityVal: 'number',
 };
@@ -141,6 +141,7 @@ export function defaultState() {
     inbox: [],            // admin → user messages / notifications
     inboxUnread: 0,       // unread inbox count (red dot, cleared on open)
     inboxRead: [],        // read local message ids (unread highlight)
+    hiddenGlobals: [],    // global ids hidden by user (delete-after-read)
     events: [],           // admin-created events / missions
     adminRewards: [],     // history of granted rewards
     claimedRewards: [],   // global reward IDs already claimed (no double-XP)
