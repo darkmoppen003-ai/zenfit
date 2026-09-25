@@ -11,6 +11,19 @@ import { showNotif, awardXP, celebrateBurst, MSG_BGS, MSG_HLS } from '../core/ui
 
 const isRead = (mid) => (S.inboxRead || []).includes(mid);
 const isRewardMsg = (m) => m.kind === 'reward' && Number.isFinite(Number(m.xp));
+
+/* Global broadcasts mirrored as threads (same template as device mail). */
+let gThreads = [];
+const gReadIds = () => {
+  try { return JSON.parse(localStorage.getItem('zf_global_read') || '[]'); } catch { return []; }
+};
+const gMarkRead = (id) => {
+  try {
+    const arr = gReadIds();
+    if (!arr.includes(id)) localStorage.setItem('zf_global_read', JSON.stringify([...arr, id].slice(-100)));
+  } catch {}
+};
+const isGRead = (m) => gReadIds().includes('g-' + (m.id || m.title));
 const kindColor = (m) => {
   if (m.kind === 'reward') return Number(m.xp) < 0 ? 'var(--danger)' : 'var(--warning)';
   if (/penalty/i.test(m.title || '')) return 'var(--danger)';
@@ -40,32 +53,39 @@ export function renderInbox(host) {
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
   let filter = 'all';
+  const allRows = () => {
+    const local = msgs.map((m) => ({ m, mid: m.id, global: false, ts: m.ts || 0 }));
+    const remote = gThreads.map((m) => ({ m, mid: 'g-' + (m.id || m.title), global: true, ts: Date.parse(m.created_at || '') || 0 }));
+    return [...local, ...remote].sort((a, b) => b.ts - a.ts);
+  };
   const paint = () => {
     const q = (host.querySelector('#inbox-q').value || '').toLowerCase();
     const box = host.querySelector('#inbox-threads');
-    const rows = msgs.map((m) => ({ m, mid: m.id }));
-    const shown = rows.filter(({ m, mid }) => {
-      if (filter === 'unread' && isRead(mid)) return false;
+    if (!box) return;
+    const rows = allRows();
+    const shown = rows.filter(({ m, mid, global }) => {
+      const unread = global ? !isGRead(m) : !isRead(mid);
+      if (filter === 'unread' && !unread) return false;
       if (filter === 'rewards' && !isRewardMsg(m)) return false;
-      if (q && !(m.title + ' ' + m.body).toLowerCase().includes(q)) return false;
+      if (q && !((m.title || '') + ' ' + (m.body || '')).toLowerCase().includes(q)) return false;
       return true;
     });
-    box.innerHTML = shown.map(({ m, mid }) => {
-      const unread = !isRead(mid);
+    box.innerHTML = shown.map(({ m, mid, global }) => {
+      const unread = global ? !isGRead(m) : !isRead(mid);
       const claimed = isRewardMsg(m) && (S.claimedRewards || []).includes(mid);
       const init = escapeHtml(((m.title || 'Z')[0] || 'Z').toUpperCase());
-      return `<div class="quest-card${unread ? '' : ''}" data-open="${escapeHtml(mid)}" style="cursor:pointer;${unread ? `border-color:var(--primary);background:var(--primary-dim);` : ''}">`
+      return `<div class="quest-card" data-open="${escapeHtml(mid)}" data-global="${global ? 1 : ''}" style="cursor:pointer;${unread ? `border-color:var(--primary);background:var(--primary-dim);` : ''}">`
         + `<span style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-display);background:${kindColor(m)}22;color:${kindColor(m)};border:1px solid ${kindColor(m)}">${init}</span>`
         + `<div style="flex:1;min-width:0"><div class="flex-between"><div style="font-size:13px;font-weight:${unread ? 800 : 600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'ZenFit')}</div>`
-        + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || '')}</span></div>`
+        + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}</span></div>`
         + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body || '')}</div>`
-        + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
-        + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button>`}</div>`;
+        + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
+        + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : (!global ? `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button>` : '')}</div>`;
     }).join('') || '<div class="card text-center" style="color:var(--text-muted)">No messages match. Challenges and rewards from your coach appear here.</div>';
     box.querySelectorAll('[data-open]').forEach((row) => {
       row.onclick = (e) => {
         if (e.target.closest('[data-delmsg]')) return;
-        openDetail(host, row.dataset.open);
+        openDetail(host, row.dataset.open, row.dataset.global === '1');
       };
     });
     box.querySelectorAll('[data-delmsg]').forEach((b) => {
@@ -75,6 +95,7 @@ export function renderInbox(host) {
       };
     });
   };
+  host._repaintInbox = paint;
   const deleteMsg = (mid) => {
     const m = (S.inbox || []).find((x) => x.id === mid);
     const wasUnread = m && !isRead(mid);
@@ -98,6 +119,10 @@ export function renderInbox(host) {
       s.inboxRead = [...new Set([...(s.inboxRead || []), ...(s.inbox || []).map((m) => m.id)])];
       s.inboxUnread = 0;
     });
+    try {
+      const gids = gThreads.map((m) => 'g-' + (m.id || m.title));
+      localStorage.setItem('zf_global_read', JSON.stringify([...new Set([...gReadIds(), ...gids])].slice(-100)));
+    } catch {}
     window.ZF.rerender();
   });
   host.querySelector('#inbox-delread')?.addEventListener('click', () => {
@@ -112,15 +137,31 @@ export function renderInbox(host) {
 }
 
 /** Full message view: styled hero, image, claim, delete, back. */
-function openDetail(host, mid) {
-  const m = (S.inbox || []).find((x) => x.id === mid);
+function openDetail(host, mid, isGlobal = false) {
+  const m = isGlobal
+    ? gThreads.find((x) => 'g-' + (x.id || x.title) === mid)
+    : (S.inbox || []).find((x) => x.id === mid);
   if (!m) { window.ZF.rerender(); return; }
-  const wasUnread = !isRead(mid);
-  update((s) => {
-    if (!(s.inboxRead || []).includes(mid)) s.inboxRead = [...(s.inboxRead || []), mid];
-    if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
-  }, { silent: true });
-  try { save(); } catch {}
+  const wasUnread = isGlobal ? !isGRead(m) : !isRead(mid);
+  if (isGlobal) {
+    gMarkRead(mid);
+    if (wasUnread) {
+      try {
+        const latest = gThreads[0];
+        if (latest && mid === 'g-' + (latest.id || latest.title)) {
+          try { localStorage.setItem('zf_global_seen', String(latest.id)); } catch {}
+          update((s) => { s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1); }, { silent: true });
+          try { save(); } catch {}
+        }
+      } catch {}
+    }
+  } else {
+    update((s) => {
+      if (!(s.inboxRead || []).includes(mid)) s.inboxRead = [...(s.inboxRead || []), mid];
+      if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
+    }, { silent: true });
+    try { save(); } catch {}
+  }
   const isReward = isRewardMsg(m);
   const claimed = (S.claimedRewards || []).includes(mid);
   const bg = MSG_BGS[m.bg] || '';
@@ -131,20 +172,20 @@ function openDetail(host, mid) {
   <div class="card" style="${bg ? `background:${bg};` : ''}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
     ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
     <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bg ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
-    <div style=\"font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px\">${escapeHtml(m.date || '')}</div>
-    <div style=\"font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}\">${escapeHtml(m.body || '')}</div>
-    ${isReward ? `<button class=\"btn ${claimed ? '' : 'btn-primary'} mt12\" id=\"inbox-dclaim\" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
+    <div style="font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
+    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(m.body || '')}</div>
+    ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
   </div>
-  <button class=\"btn btn-sm btn-danger btn-full mt8\" id=\"inbox-ddel\">Delete message</button>`;
+  ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
   if (wasUnread && m.confetti) setTimeout(() => { try { celebrateBurst(90); } catch {} }, 250);
   host.querySelector('#inbox-back').onclick = () => window.ZF.rerender();
-  host.querySelector('#inbox-ddel').onclick = () => {
+  !isGlobal && (host.querySelector('#inbox-ddel').onclick = () => {
     update((s) => {
       s.inbox = (s.inbox || []).filter((x) => x.id !== mid);
       s.inboxRead = (s.inboxRead || []).filter((id) => id !== mid);
     });
     window.ZF.rerender();
-  };
+  });
   host.querySelector('#inbox-dclaim')?.addEventListener('click', () => {
     if ((S.claimedRewards || []).includes(mid)) return;
     const xp = Number(m.xp) || 0;
@@ -170,36 +211,56 @@ async function syncGlobals(host) {
     const myRewards = (rewards || []).filter(forMe);
     const claimed = new Set(S.claimedRewards || []);
     let html = '';
+    gThreads = myCasts.slice(0, 20).map((b) => ({
+      id: b.id, title: b.title || 'Broadcast', body: b.body || '',
+      date: (b.created_at || '').slice(0, 10), created_at: b.created_at || '',
+      bg: b.bg || 'none', hl: b.hl || 'none', image: b.image || '', confetti: !!b.confetti,
+    }));
+    try { host._repaintInbox && host._repaintInbox(); } catch {}
     if (myCasts?.length) {
-      html += `<div class="section-title mt12">Global broadcasts</div>` + myCasts.slice(0, 5).map((b) => {
-        const bbg = MSG_BGS[b.bg] || '';
-        const bhl = MSG_HLS[b.hl] || '';
-        return `<div class="card mb8" style="${bbg ? `background:${bbg};` : ''}${bhl ? `border-color:${bhl};` : ''}"><div style="font-size:13px;font-weight:700;${bbg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : ''}">${escapeHtml(b.title || 'Broadcast')}</div>`
-        + `<div style="font-size:12px;${bbg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(b.body || '')}</div></div>`;
-      }).join('');
       try {
         const latest = myCasts[0];
-        const seenKey = 'zf_global_seen';
+        const seenKey = 'zf_global_notified';
         const seen = localStorage.getItem(seenKey);
         if (latest?.id && seen !== String(latest.id)) {
           localStorage.setItem(seenKey, String(latest.id));
           update((s) => { s.inboxUnread = (s.inboxUnread || 0) + 1; }, { silent: true });
           try { save(); } catch {}
           showNotif(`📣 ${latest.title || 'New broadcast'}`, 'OK');
-          window.ZF?.rerender();
+          try { host._repaintInbox && host._repaintInbox(); } catch {}
         }
       } catch {}
     }
     if (myEvts?.length) {
-      html += `<div class="section-title mt12">Global events</div>` + myEvts.slice(0, 5).map((e) => {
+      html += `<div class="section-title mt12">Global missions</div>` + myEvts.slice(0, 5).map((e) => {
         const gid = e.id || e.code || e.title;
         const tracked = (S.events || []).some((x) => x.globalId === gid);
         const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
-        return `<div class="card mb8"><div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Event')}</div>`
-        + `<div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.descr || e.desc || '')}</div>`
-        + (e.xp ? `<div style="font-size:11px;color:var(--warning)">+${e.xp} XP on completion</div>` : '')
-        + (Array.isArray(e.rules) && e.rules.length ? `<div style="font-size:11px;color:var(--info);margin-top:2px">Auto: ${e.rules.map((r) => `${escapeHtml(r.metric)} ≥ ${r.target} × ${r.days}d`).join(' + ')}</div>` : '')
-        + (canTrack ? `<button class="btn btn-sm btn-primary mt8" data-track="${escapeHtml(String(gid))}">Track this mission</button>` : tracked ? `<div style="font-size:11px;color:var(--success);margin-top:4px">Tracked ✓ auto-checks your logs</div>` : '') + `</div>`;
+        const rules = Array.isArray(e.rules) ? e.rules : [];
+        return `<div class="card mb12" style="border-color:var(--primary)"><div class="flex-between">`
+        + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display)">${escapeHtml(e.title || 'Event')}</div>`
+        + `<span class="badge badge-purple">Mission</span></div>`
+        + `<div style="font-size:12px;color:var(--text-secondary);margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
+        + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
+        + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
+          const cat = r.cat || 'task';
+          const catLabel = cat[0].toUpperCase() + cat.slice(1);
+          let lines = [];
+          if (cat === 'workout') {
+            if (r.exercise) lines.push(`Exercise: ${r.exercise}`);
+            if (r.sets) lines.push(`Sets: ${r.sets}`);
+            if (r.reps) lines.push(`Reps: ${r.reps}`);
+          } else if (cat === 'streak') lines.push(`Reach a ${r.target || '?'}-day streak`);
+          else {
+            const unit = cat === 'water' ? 'ml' : (cat === 'study' || cat === 'zen' || cat === 'screentime') ? 'min' : 'count';
+            const verb = cat === 'screentime' ? 'at most' : 'at least';
+            lines.push(`${verb} ${r.target ?? '?'} ${unit} per day`);
+          }
+          lines.push(`Consistency: ${r.days || 1} day${(r.days || 1) > 1 ? 's' : ''} in a row`);
+          return `<div class="card-sm" style="padding:10px"><div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--primary);margin-bottom:4px">${escapeHtml(String(catLabel).toUpperCase())}</div>`
+            + lines.map((l) => `<div style="font-size:12px;color:var(--text-secondary)">• ${escapeHtml(l)}</div>`).join('') + `</div>`;
+        }).join('') + `</div>` : '')
+        + (canTrack ? `<button class="btn btn-sm btn-primary mt8" data-track="${escapeHtml(String(gid))}">Track this mission</button>` : tracked ? `<div style="font-size:11px;color:var(--success);margin-top:4px">Tracked ✓ your logs are auto-checked</div>` : '') + `</div>`;
       }).join('');
     }
     if (myRewards?.length) {
@@ -210,7 +271,7 @@ async function syncGlobals(host) {
           + `<button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim="${escapeHtml(r.id || r.code || '')}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button></div></div>`;
       }).join('');
     }
-    box.innerHTML = html || '<div style="font-size:11px;color:var(--text-muted)">No global items (tables missing or offline).</div>';
+    box.innerHTML = html || '';
     box.querySelectorAll('[data-track]').forEach((b) => {
       b.onclick = () => {
         const gid = b.dataset.track;
@@ -221,7 +282,11 @@ async function syncGlobals(host) {
             id: `g-${Date.now()}`, globalId: gid, kind: 'mission', title: String(e.title || 'Mission').slice(0, 60),
             icon: '📯', body: String(e.descr || e.desc || '').slice(0, 200),
             xp: Math.min(500, Math.max(1, Number(e.xp) || 25)),
-            rules: (e.rules || []).slice(0, 5).map((r) => ({ metric: String(r.metric || 'water_ml').slice(0, 20), target: Number(r.target) || 1, days: Number(r.days) || 1 })),
+            rules: (e.rules || []).slice(0, 5).map((r) => {
+              if (r.cat === 'workout') return { cat: 'workout', exercise: String(r.exercise || '').slice(0, 40), sets: Number(r.sets) || 0, reps: Number(r.reps) || 0, days: Number(r.days) || 1 };
+              if (r.cat === 'streak') return { cat: 'streak', target: Number(r.target) || 1, days: 1 };
+              return { cat: String(r.cat || r.metric || 'water').slice(0, 20), target: Number(r.target) || 1, days: Number(r.days) || 1 };
+            }),
             status: 'live', ts: Date.now(),
           }];
         });
