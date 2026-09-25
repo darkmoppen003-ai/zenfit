@@ -11,6 +11,7 @@ import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { getTodayStr } from '../core/utils.js';
 import { showNotif, awardXP, MSG_BGS } from '../core/ui.js';
 import { MISSION_CATS, missionProgress } from '../core/missions.js';
+import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
 
 let unlocked = false;
@@ -239,6 +240,7 @@ function renderMissions(body) {
       <input type="text" id="ad-mtitle" placeholder="Title (e.g. Weekend 5K)" maxlength="60">
       <input type="text" id="ad-micon" placeholder="Icon emoji" maxlength="8">
       <input type="text" id="ad-mbody" placeholder="Details…" maxlength="200" style="grid-column:1/-1">
+      <input type="text" id="ad-mimg" placeholder="Image URL (https://…) — optional" maxlength="500" style="grid-column:1/-1">
       <input type="number" id="ad-mxp" placeholder="Reward XP" min="1" max="500">
     </div>
     <div class="section-title mt12">Completion rules — matched against user logs (all rows must hold)</div>
@@ -266,6 +268,7 @@ function renderMissions(body) {
         id: uid('event'), title, kind: 'mission',
         icon: sanitizeText(body.querySelector('#ad-micon').value, 8) || '📯',
         body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
+        image: cleanImageUrl(body.querySelector('#ad-mimg').value),
         xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
         rules, status: 'live', ts: Date.now(),
       }];
@@ -456,10 +459,11 @@ async function loadGlobalOutbox(body) {
   if (!box) return;
   try {
     const { GlobalBoard } = await import('../core/cloud.js');
-    const [casts, evts] = await Promise.all([GlobalBoard.fetchBroadcasts(), GlobalBoard.fetchEvents()]);
+    const [casts, evts, rewards] = await Promise.all([GlobalBoard.fetchBroadcasts(), GlobalBoard.fetchEvents(), GlobalBoard.fetchRewards()]);
     const rows = [
       ...(casts || []).slice(0, 10).map((r) => ({ table: 'global_broadcasts', id: r.id, title: r.title || 'Broadcast', sub: (r.body || '').slice(0, 80) })),
       ...(evts || []).slice(0, 10).map((r) => ({ table: 'global_events', id: r.id, title: r.title || 'Mission', sub: (r.descr || r.desc || '').slice(0, 80) })),
+      ...((rewards || []).slice(0, 10).map((r) => ({ table: 'global_rewards', id: r.id, title: r.title || 'Reward', sub: `${Number(r.xp) < 0 ? '' : '+'}${r.xp || 0} XP${r.code ? ' · ' + r.code : ''}` }))),
     ];
     box.innerHTML = rows.length ? rows.map((r) => `<div class="flex-between mb8"><div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title)}</div>
       <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.sub)}</div></div>
@@ -488,10 +492,36 @@ function renderContent(body) {
     <div class="flex gap8 mt8"><input type="text" id="ad-wpurl" placeholder="https://…/image.jpg" maxlength="500">
     <button class="btn btn-sm btn-primary" id="ad-wpadd">Add</button></div>
     <div style="font-size:12px" class="mt8">${(S.bgImages || []).length} uploaded · presets ship in assets/bg/</div></div>
-  <div class="card mb12"><div class="section-title">Push a theme to this device</div>
-    <div class="grid2 gap8"><input type="text" id="ad-thname" placeholder="Theme name" maxlength="30">
-    <input type="color" id="ad-thc" value="#00c8ff" style="height:40px"></div>
-    <button class="btn btn-sm btn-primary mt8" id="ad-thpush">Push theme</button></div>
+  <div class="card mb12"><div class="section-title">Theme studio (same builder as Themes tab)</div>
+    <div class="section-title mt8">Built-in</div>
+    <div class="grid2 gap8" id="ad-theme-grid"></div>
+    <div class="section-title mt12">Custom</div>
+    <div id="ad-theme-mine" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    <div class="section-title mt12">Creator</div>
+    <div class="theme-preview active" id="adth-live"><div class="tp-bar" id="adth-live-bar">
+      <div class="tp-dot" id="adth-live-dot"></div><div style="font-size:12px" id="adth-live-name">Preview</div></div>
+      <div class="tp-body" id="adth-live-body"><div class="tp-chip"></div><div class="tp-chip"></div><div class="tp-chip"></div></div></div>
+    <div class="grid2 gap8 mt8">
+      <label style="font-size:12px">Name<input type="text" id="adth-name" placeholder="Theme name" maxlength="30"></label>
+      <label style="font-size:12px">Template<select id="adth-tpl"></select></label>
+      <label style="font-size:12px">Wallpaper<select id="adth-wp"><option value="">— keep current —</option></select></label>
+      <label style="font-size:12px">Particles<select id="adth-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="sparks">🔥 Sparks</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
+    </div>
+    <div class="section-title mt12">Surfaces</div><div id="adth-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="section-title mt12">Text</div><div id="adth-texts" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="section-title mt12">Accent & glow</div><div id="adth-accents" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="grid2 gap8 mt8">
+      <label style="font-size:12px">Particle hue (0–360)<input type="number" id="adth-phue" min="0" max="360" value="250"></label>
+      <label style="font-size:12px">Particle speed (0.2–3)<input type="number" id="adth-pspeed" min="0.2" max="3" step="0.1" value="1"></label>
+      <label style="font-size:12px">Particle count<select id="adth-pcount"><option value="">— theme default —</option><option value="30">Calm (30)</option><option value="80">Normal (80)</option><option value="150">Dense (150)</option></select></label>
+      <label style="font-size:12px">Wallpaper fit<select id="adth-pfit"><option value="">— keep current —</option><option value="cover">Cover</option><option value="contain">Contain</option><option value="fill">Fill</option></select></label>
+      <label style="font-size:12px">Glass blur (0–30px)<input type="number" id="adth-blur" min="0" max="30" value="4"></label>
+      <label style="font-size:12px">Card opacity (10–95%)<input type="number" id="adth-alpha" min="10" max="95" value="55"></label>
+    </div>
+    <div class="flex gap8 mt8">
+      <button class="btn btn-primary btn-sm" id="adth-save">Save Custom Theme</button>
+      <button class="btn btn-sm btn-ghost" id="adth-try">Try live</button>
+    </div></div>
   <div class="card"><div class="section-title">Cloud sync (optional, Supabase)</div>
     <div style="font-size:12px;color:var(--text-muted)" class="mb8">Local-first always works. Fill these to enable future multi-device sync — nothing breaks if empty.</div>
     <input type="text" id="ad-surl" placeholder="Supabase URL" value="${escapeHtml(cfg.url || '')}">
@@ -505,12 +535,7 @@ function renderContent(body) {
     update((s) => { s.bgImages = [...(s.bgImages || []), { name: 'Remote', src: url }]; });
     showNotif('Wallpaper added', 'OK');
   };
-  body.querySelector('#ad-thpush').onclick = () => {
-    const name = sanitizeText(body.querySelector('#ad-thname').value, 30) || 'Coach theme';
-    const primary = body.querySelector('#ad-thc').value;
-    update((s) => { s.customThemes = [...(s.customThemes || []), { id: uid('theme'), name, primary, bg: '#0d0f14', surface: '#161b26', raised: '#1e2435' }]; });
-    showNotif(`Theme “${name}” pushed`, 'OK');
-  };
+  wireThemeStudio(body);
   body.querySelector('#ad-ssave').onclick = () => {
     localStorage.setItem('zf_supabase', JSON.stringify({ url: sanitizeText(body.querySelector('#ad-surl').value, 200), key: sanitizeText(body.querySelector('#ad-skey').value, 500) }));
     showNotif('Cloud config saved', 'OK');
@@ -525,5 +550,142 @@ function renderContent(body) {
       const r = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, { headers: { apikey: key } });
       res.textContent = r.ok ? '✓ Reachable — tables can be added later.' : `HTTP ${r.status} — check URL/key.`;
     } catch { res.textContent = 'Unreachable — still fully usable offline.'; }
+  };
+}
+
+/* ── Theme studio (same builder as Themes tab; themes stay local, no SQL) ── */
+const ADTH_FIELDS = [
+  { sec: 'surfaces', key: 'bgBase', label: 'Background' },
+  { sec: 'surfaces', key: 'bgSurface', label: 'Surface' },
+  { sec: 'surfaces', key: 'bgRaised', label: 'Raised' },
+  { sec: 'surfaces', key: 'bgOverlay', label: 'Overlay' },
+  { sec: 'surfaces', key: 'borderMid', label: 'Border' },
+  { sec: 'surfaces', key: 'inputBg', label: 'Input bg' },
+  { sec: 'texts', key: 'textPrimary', label: 'Text primary' },
+  { sec: 'texts', key: 'textSecondary', label: 'Text secondary' },
+  { sec: 'texts', key: 'textMuted', label: 'Text muted' },
+  { sec: 'accents', key: 'primary', label: 'Primary' },
+  { sec: 'accents', key: 'glow1', label: 'Glow 1' },
+  { sec: 'accents', key: 'glow2', label: 'Glow 2' },
+  { sec: 'accents', key: 'glow3', label: 'Glow 3' },
+];
+
+function wireThemeStudio(body) {
+  const q = (sel) => body.querySelector(sel);
+  const grid = q('#ad-theme-grid');
+  if (grid) {
+    grid.innerHTML = Object.entries(THEMES).map(([id, t]) => {
+      const active = S.theme === id;
+      return `<div class="theme-preview${active ? ' active' : ''}" data-adtheme="${id}" style="background:${t.bgSurface};padding:10px 12px;border-radius:10px;cursor:pointer">
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase};border:1px solid var(--border-mid)"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.primary}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.textMuted}"></div></div>
+        <div style="font-size:12px;font-weight:600;color:${t.textPrimary}">${escapeHtml(t.name)}</div>
+        ${active ? `<div style="font-size:10px;color:${t.primary};margin-top:2px">Active</div>` : ''}</div>`;
+    }).join('');
+    grid.querySelectorAll('[data-adtheme]').forEach((c) => {
+      c.onclick = () => { applyTheme(c.dataset.adtheme); showNotif('Theme applied', 'OK'); };
+    });
+  }
+  const mine = q('#ad-theme-mine');
+  if (mine) {
+    mine.innerHTML = getCustomThemes().map((t) => `
+      <div style="position:relative;cursor:pointer;padding:10px 12px;border-radius:10px;border:2px solid ${S.theme === `custom:${t.id}` ? 'var(--primary)' : 'var(--border-mid)'};background:${t.bgSurface}" data-adctheme="${t.id}">
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.primary}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.textMuted}"></div></div>
+        <div style="font-size:12px;font-weight:600;color:${t.textPrimary}">${escapeHtml(t.name)}</div>
+        ${S.theme === `custom:${t.id}` ? `<div style="font-size:10px;color:${t.primary};margin-top:2px">Active</div>` : ''}</div>`).join('');
+    mine.querySelectorAll('[data-adctheme]').forEach((c) => {
+      c.onclick = () => { applyTheme(`custom:${c.dataset.adctheme}`); showNotif('Custom theme applied', 'OK'); };
+    });
+  }
+  const tpl = q('#adth-tpl');
+  if (!tpl) return;
+  tpl.innerHTML = [...Object.entries(THEMES).map(([id, t]) => [`built:${id}`, t.name]), ...getCustomThemes().map((t) => [`custom:${t.id}`, `${t.name} (custom)`])]
+    .map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join('');
+  try {
+    const imgs = [...PRESET_WALLPAPERS.map((p) => ({ name: p.name, src: `preset:${p.file}` })), ...(S.bgImages || []).map((w) => (typeof w === 'string' ? { name: w, src: w } : { name: w.name || 'Upload', src: w.src || w.id }))];
+    q('#adth-wp').innerHTML = '<option value="">— keep current —</option>' + imgs.map((w) => `<option value="${escapeHtml(w.src)}">${escapeHtml(w.name)}</option>`).join('');
+  } catch {}
+  const groups = { surfaces: q('#adth-surfaces'), texts: q('#adth-texts'), accents: q('#adth-accents') };
+  const val = (id) => q(`#adth-c-${id}`)?.value;
+  for (const { sec, key, label } of ADTH_FIELDS) {
+    const wrap = groups[sec];
+    if (!wrap || wrap.querySelector(`#adth-c-${key}`)) continue;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px';
+    row.innerHTML = `<span style="font-size:12px;min-width:110px">${label}</span>
+      <input type="color" id="adth-c-${key}" value="#7b5eff" style="width:40px;height:32px;padding:2px;flex-shrink:0">
+      <input type="text" id="adth-c-${key}-hex" maxlength="7" placeholder="#RRGGBB" style="flex:1;font-family:monospace">`;
+    wrap.appendChild(row);
+    const picker = row.querySelector(`#adth-c-${key}`);
+    const hex = row.querySelector(`#adth-c-${key}-hex`);
+    picker.oninput = () => { hex.value = picker.value; live(); };
+    hex.oninput = () => { if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value; live(); } };
+  }
+  const live = () => {
+    const [kind, key] = (tpl.value || 'built:midnight').split(':');
+    const base = kind === 'custom'
+      ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
+      : THEMES[key] || THEMES.midnight;
+    const draft = { ...base, name: q('#adth-name').value || 'Preview', p_hue: q('#adth-phue')?.value || base.p_hue };
+    for (const { key: k } of ADTH_FIELDS) { const v = val(k); if (v) draft[k] = v; }
+    draft.particleSpeed = Math.min(3, Math.max(0.2, Number(q('#adth-pspeed')?.value) || 1));
+    const pc = Number(q('#adth-pcount')?.value); if ([30, 80, 150].includes(pc)) draft.particleCount = pc;
+    const pf = q('#adth-pfit')?.value; if (['cover', 'contain', 'fill'].includes(pf)) draft.bgFit = pf;
+    draft.glassBlur = Math.min(30, Math.max(0, Number(q('#adth-blur')?.value ?? 4)));
+    draft.glassAlpha = Math.min(0.95, Math.max(0.1, (Number(q('#adth-alpha')?.value ?? 55)) / 100));
+    const box = q('#adth-live');
+    if (box) {
+      box.querySelector('#adth-live-bar').style.background = draft.bgSurface;
+      box.querySelector('#adth-live-dot').style.background = draft.primary;
+      box.querySelector('#adth-live-body').style.background = draft.bgBase;
+      box.querySelector('#adth-live-name').textContent = draft.name;
+      box.querySelector('#adth-live-name').style.color = draft.textPrimary;
+    }
+    return draft;
+  };
+  const sync = () => {
+    const [kind, key] = (tpl.value || 'built:midnight').split(':');
+    const base = kind === 'custom'
+      ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
+      : THEMES[key] || THEMES.midnight;
+    for (const { key: k } of ADTH_FIELDS) {
+      const picker = q(`#adth-c-${k}`); const hex = q(`#adth-c-${k}-hex`);
+      if (picker && base[k]) picker.value = base[k];
+      if (hex && base[k]) hex.value = base[k];
+    }
+    if (q('#adth-phue')) q('#adth-phue').value = base.p_hue || 250;
+    live();
+  };
+  q('#adth-name').oninput = live;
+  tpl.onchange = sync;
+  sync();
+  q('#adth-save').onclick = () => {
+    const draft = live();
+    const name = sanitizeText(q('#adth-name').value, 30);
+    if (!name) { showNotif('Name your theme', '!'); return; }
+    if (getCustomThemes().some((t) => t.name === name)) { showNotif(`"${name}" already exists`, '!'); return; }
+    const [kind, key] = (tpl.value || 'built:midnight').split(':');
+    const base = kind === 'custom'
+      ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
+      : { ...THEMES[key] };
+    const t = { ...base, ...draft, id: `ct_${Date.now()}`, name };
+    try {
+      const wp = q('#adth-wp')?.value || '';
+      const fx = q('#adth-fx')?.value || '';
+      if (wp) { t.bgImage = wp; t.bgType = 'image'; }
+      if (fx) { t.particleEffect = fx; t.p_hue = t.p_hue || draft.p_hue; }
+    } catch {}
+    update((s) => { s.customThemes = [...(s.customThemes || []), t]; });
+    showNotif(`Theme "${name}" created!`, 'OK');
+    window.ZF.rerender();
+  };
+  q('#adth-try').onclick = () => {
+    applyThemeObject({ ...live(), name: 'Preview' }, S.theme);
+    showNotif('Previewing — pick a theme to keep it', 'OK');
   };
 }
