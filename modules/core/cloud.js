@@ -111,6 +111,16 @@ function sbHdr() {
   const { key } = sbCfg();
   return { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` };
 }
+/** Owner delete for the admin outbox (requires the Anon-delete policies). */
+export async function sbDel(table, id) {
+  try {
+    if (!/^[a-z_]+$/.test(table) || !id) return false;
+    const { url } = sbCfg();
+    const res = await fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHdr() });
+    return res.ok;
+  } catch { return false; }
+}
+
 export const GlobalBoard = {
   async publish(table, row) {
     try {

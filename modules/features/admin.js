@@ -385,16 +385,19 @@ function renderBroadcast(body) {
     <label class="flex-between mt8" style="font-size:13px">Confetti shower on open
       <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
       <input type="checkbox" id="ad-nconf" style="opacity:0;width:0;height:0">
-      <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg-overlay);border-radius:24px;border:1px solid var(--border-strong)"></span></span></label>
+      <span id="ad-nconf-track" style="position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg-overlay);border-radius:24px;border:1px solid var(--border-strong);transition:.3s">
+      <span id="ad-nconf-knob" style="position:absolute;height:18px;width:18px;left:3px;bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></span></label>
     <div id="ad-npreview" class="mt8"></div>
     <div class="flex gap8 mt8">
       <button class="btn btn-primary btn-sm" id="ad-nsend">Send to inbox (this device)</button>
       <button class="btn btn-sm" id="ad-nglobal">Publish globally</button>
       <button class="btn btn-sm btn-ghost" id="ad-npush">Send + push now</button>
     </div></div>
-  <div class="section-title">Inbox history</div>
-  ${inbox.map((m) => `<div class="insight"><strong>${escapeHtml(m.title)}</strong><br>${escapeHtml(m.body)}<br><span style="font-size:10px;color:var(--text-muted)">${escapeHtml(m.date || '')}</span></div>`).join('') || '<div class="card">Empty.</div>'}
-  <button class="btn btn-sm btn-danger mt8" id="ad-nclear">Clear inbox</button>`;
+  <div class="section-title">Inbox history (this device)</div>
+  ${inbox.map((m, ix) => `<div class="insight"><div class="flex-between"><div><strong>${escapeHtml(m.title)}</strong><br>${escapeHtml(m.body)}<br><span style="font-size:10px;color:var(--text-muted)">${escapeHtml(m.date || '')}</span></div><button class="btn btn-icon btn-sm" data-hdel="${ix}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button></div></div>`).join('') || '<div class="card">Empty.</div>'}
+  <div class="flex gap8 mt8"><button class="btn btn-sm btn-danger" id="ad-nclear">Clear inbox</button></div>
+  <div class="section-title mt12">Global outbox (all devices)</div>
+  <div id="ad-goutbox"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div>`;
   const collect = () => ({
     title: sanitizeText(body.querySelector('#ad-ntitle').value, 60) || 'ZenFit',
     body: sanitizeText(body.querySelector('#ad-nbody').value, 300) || '',
@@ -408,11 +411,16 @@ function renderBroadcast(body) {
     const box = body.querySelector('#ad-npreview');
     if (!box) return;
     box.innerHTML = `<div class="card-sm" style="${d.bg !== 'none' && MSG_BGS[d.bg] ? `background:${MSG_BGS[d.bg]};color:#fff;` : ''}${d.hl !== 'none' ? `border-color:var(--${d.hl});` : ''}">`
-      + `<div style="font-size:12px;font-weight:700">${escapeHtml(d.title) || 'Title'}</div>`
+      + `<div style="font-size:12px;font-weight:700">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
       + `<div style="font-size:11px;opacity:.85">${escapeHtml(d.body).slice(0, 80) || 'Preview…'}</div></div>`;
   };
   ['#ad-ntitle', '#ad-nbody', '#ad-nbg', '#ad-nhl'].forEach((sel) => { body.querySelector(sel).oninput = paintPreview; });
-  body.querySelector('#ad-nconf').onchange = paintPreview;
+  body.querySelector('#ad-nconf').onchange = (e) => {
+    const on = e.target.checked;
+    body.querySelector('#ad-nconf-track').style.background = on ? 'var(--primary-dark)' : 'var(--bg-overlay)';
+    body.querySelector('#ad-nconf-knob').style.left = on ? '20px' : '3px';
+    paintPreview();
+  };
   paintPreview();
   body.querySelector('#ad-nsend').onclick = () => {
     const m = collect();
@@ -437,6 +445,39 @@ function renderBroadcast(body) {
     else if ('Notification' in window) Notification.requestPermission();
   };
   body.querySelector('#ad-nclear').onclick = () => update((s) => { s.inbox = []; });
+  body.querySelectorAll('[data-hdel]').forEach((b) => {
+    b.onclick = () => update((s) => { s.inbox = (s.inbox || []).filter((_, ix) => ix !== Number(b.dataset.hdel)); });
+  });
+  loadGlobalOutbox(body);
+}
+
+async function loadGlobalOutbox(body) {
+  const box = body.querySelector('#ad-goutbox');
+  if (!box) return;
+  try {
+    const { GlobalBoard } = await import('../core/cloud.js');
+    const [casts, evts] = await Promise.all([GlobalBoard.fetchBroadcasts(), GlobalBoard.fetchEvents()]);
+    const rows = [
+      ...(casts || []).slice(0, 10).map((r) => ({ table: 'global_broadcasts', id: r.id, title: r.title || 'Broadcast', sub: (r.body || '').slice(0, 80) })),
+      ...(evts || []).slice(0, 10).map((r) => ({ table: 'global_events', id: r.id, title: r.title || 'Mission', sub: (r.descr || r.desc || '').slice(0, 80) })),
+    ];
+    box.innerHTML = rows.length ? rows.map((r) => `<div class="flex-between mb8"><div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title)}</div>
+      <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.sub)}</div></div>
+      <button class="btn btn-sm btn-danger" data-gdel-table="${r.table}" data-gdel-id="${escapeHtml(r.id || '')}">Delete</button></div>`).join('')
+      : '<div style="font-size:12px;color:var(--text-muted)">Nothing published yet.</div>';
+    try {
+      const { sbDel } = await import('../core/cloud.js');
+      box.querySelectorAll('[data-gdel-id]').forEach((b) => {
+        b.onclick = async () => {
+          b.disabled = true;
+          const ok = await sbDel(b.dataset.gdelTable, b.dataset.gdelId);
+          showNotif(ok ? 'Deleted globally' : 'Delete failed', ok ? 'OK' : '!');
+          if (ok) window.ZF.rerender();
+          else b.disabled = false;
+        };
+      });
+    } catch {}
+  } catch { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Offline.</div>'; }
 }
 
 /* ── Content: wallpapers, themes, cloud stub ── */

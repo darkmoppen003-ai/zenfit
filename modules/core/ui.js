@@ -3,8 +3,8 @@
    background engine, SFX stubs. Used by ALL feature modules.
 ────────────────────────────────────────────────────────────── */
 import { escapeHtml } from './sanitize.js';
-import { S, addXP, update, resolveBgSrc } from './store.js';
-import { xpForLevel, rankForLevel } from './utils.js';
+import { S, addXP, resolveBgSrc, update } from './store.js';
+import { rankForLevel, xpForLevel } from './utils.js';
 
 export function el(id) { return document.getElementById(id); }
 
@@ -268,7 +268,7 @@ function renderParticles() {
   const density = 0.25 + 0.75 * Math.min(1, N / 150);
   const buildMatrix = () => {
     const cols = Math.max(10, Math.floor(c.width / 16));
-    parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(0, c.height), s: R(0.5, 1.6), gap: 18, active: Math.random() < density, trail: Array.from({ length: 5 }, () => null), seed: Math.random() }));
+    parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(0, c.height), s: R(0.5, 1.6), gap: 18, active: Math.random() < density, trail: Array.from({ length: 8 }, () => null), seed: Math.random() }));
   };
   const buildCyber = () => {
     parts = Array.from({ length: N }, () => ({ x: R(0, c.width), y: R(0, c.height), len: R(10, 30), s: R(0.5, 1.6), col: Math.random() > 0.5 }));
@@ -288,7 +288,7 @@ function renderParticles() {
       s: R(0.2, 0.8), ph: R(0, 6.28), sway: R(0, 1), vx: R(-0.3, 0.3),
     }));
   }
-  const glyphs = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃ';
+  const glyphs = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFGHIJKLMNOPQRSTUXYZﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃ';
   const hiddenWords = ['DARK', 'MOPPEN', 'SHIVAM', '8958'];
   let raf = 0, t = 0;
   const mx = { x: -9999, y: -9999 };
@@ -297,12 +297,11 @@ function renderParticles() {
   const tick = () => {
     t += 0.016 * sp;
     if (effect === 'matrix') {
-      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.globalCompositeOperation = 'destination-out';
       ctx.fillRect(0, 0, c.width, c.height);
       ctx.globalCompositeOperation = 'source-over';
       ctx.font = 'bold 16px monospace';
-      const v1Green = `hsla(155,75%,60%,0.95)`;
       parts.forEach((p) => {
         if (!p.active) return;
         p.trail.pop();
@@ -319,12 +318,12 @@ function renderParticles() {
           if (!tc) return;
           const yy = p.y - idx * p.gap;
           if (idx === 0) { ctx.fillStyle = '#fff'; ctx.globalAlpha = 1; }
-          else { ctx.fillStyle = v1Green; ctx.globalAlpha = Math.max(0.15, 0.95 - idx * 0.2); }
+          else { ctx.fillStyle = `hsla(${hue},85%,60%,1)`; ctx.globalAlpha = Math.max(0.2, 1 - idx * 0.13); }
           ctx.fillText(tc, p.x, yy);
         });
         ctx.globalAlpha = 1;
         p.y += p.s * 0.8 * sp;
-        if (p.y - p.trail.length * p.gap > c.height + 20) { p.y = R(-40, 0); p.s = R(0.5, 1.6); p.seed = Math.random(); p.trail = Array.from({ length: 5 }, () => null); }
+        if (p.y - p.trail.length * p.gap > c.height + 20) { p.y = R(-40, 0); p.s = R(0.5, 1.6); p.seed = Math.random(); p.trail = Array.from({ length: 8 }, () => null); }
       });
       ctx.globalAlpha = 1;
     } else ctx.clearRect(0, 0, c.width, c.height);
@@ -339,9 +338,15 @@ function renderParticles() {
     } else if (effect === 'sparks') {
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
+      const sdir = S.sparkDirection || 'straight';
       parts.forEach((p) => {
-        p.y -= (p.s + 1.2) * sp; p.x += Math.sin(t * 3 + p.ph) * 0.9 * sp;
-        if (p.y < -12) { p.y = c.height + 12; p.x = R(0, c.width); p.len = R(4, 12); }
+        if (sdir === 'diagonal') {
+          p.x += p.s * 2 * sp; p.y -= (p.s + 0.8) * sp;
+          if (p.y < -12 || p.x > c.width + 12) { p.y = R(c.height * 0.5, c.height + 12); p.x = R(-12, c.width * 0.5); p.len = R(4, 12); }
+        } else {
+          p.y -= (p.s + 1.2) * sp; p.x += Math.sin(t * 3 + p.ph) * 0.9 * sp;
+          if (p.y < -12) { p.y = c.height + 12; p.x = R(0, c.width); p.len = R(4, 12); }
+        }
         if (!p.len) p.len = R(4, 12);
         const flick = 0.55 + 0.45 * Math.sin(t * 9 + p.ph);
         const h = 18 + p.r * 8;
@@ -349,7 +354,8 @@ function renderParticles() {
         ctx.lineWidth = 1.6;
         ctx.shadowBlur = 6;
         ctx.shadowColor = `hsla(${h},100%,50%,0.9)`;
-        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - p.len); ctx.stroke();
+        if (sdir === 'diagonal') { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.len * 0.8, p.y + p.len * 0.6); ctx.stroke(); }
+        else { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - p.len); ctx.stroke(); }
       });
       ctx.shadowBlur = 0;
       ctx.globalCompositeOperation = 'source-over';
