@@ -1,0 +1,248 @@
+/* ── ZenFit V2 · features/inbox.js ─────────────────────────
+   User inbox: local messages + global broadcasts/events/rewards.
+   Hidden route — accessible ONLY via More popover.
+   Global: Supabase tables (see cloud.js GlobalBoard). Rewards are
+   claimed once (claimedRewards IDs) — no double-XP.
+────────────────────────────────────────────────────────────── */
+import { S, update, save, deductXP } from '../core/store.js';
+import { escapeHtml } from '../core/sanitize.js';
+import { uid } from '../core/utils.js';
+import { showNotif, awardXP, celebrateBurst, MSG_BGS, MSG_HLS } from '../core/ui.js';
+
+const isRead = (mid) => (S.inboxRead || []).includes(mid);
+const isRewardMsg = (m) => m.kind === 'reward' && Number.isFinite(Number(m.xp));
+const kindColor = (m) => {
+  if (m.kind === 'reward') return Number(m.xp) < 0 ? 'var(--danger)' : 'var(--warning)';
+  if (/penalty/i.test(m.title || '')) return 'var(--danger)';
+  return 'var(--info)';
+};
+
+export function renderInbox(host) {
+  if ((S.inbox || []).some((m) => !m.id)) {
+    update((s) => { (s.inbox || []).forEach((m) => { if (!m.id) m.id = uid('msg'); }); }, { silent: true });
+    try { save(); } catch {}
+  }
+  const msgs = (S.inbox || []).slice().reverse();
+  const events = (S.events || []).filter((e) => e.status === 'live').slice().reverse();
+  host.innerHTML = `
+  <div class="flex-between mb8"><div class="section-title" style="margin:0">Inbox ${(S.inboxUnread || 0) > 0 ? `<span class="badge badge-danger">${S.inboxUnread} new</span>` : ''}</div>
+  <button class="btn btn-sm btn-ghost" id="inbox-readall">Mark all read</button></div>
+  <div class="flex gap8 mb8">
+    <input type="text" id="inbox-q" placeholder="Search messages…" maxlength="60" style="flex:1">
+  </div>
+  <div class="flex gap8 mb12" id="inbox-filters">
+    ${['all', 'unread', 'rewards'].map((f) => `<button class="btn btn-sm${f === 'all' ? ' btn-primary' : ''}" data-ifilter="${f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('')}
+  </div>
+  <div id="inbox-threads"></div>
+  ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
+    ${events.map((e) => `<div class="card mb8"><div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
+      <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.body || e.desc || '')}</div></div>`).join('')}` : ''}
+  <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
+  ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
+  let filter = 'all';
+  const paint = () => {
+    const q = (host.querySelector('#inbox-q').value || '').toLowerCase();
+    const box = host.querySelector('#inbox-threads');
+    const rows = msgs.map((m) => ({ m, mid: m.id }));
+    const shown = rows.filter(({ m, mid }) => {
+      if (filter === 'unread' && isRead(mid)) return false;
+      if (filter === 'rewards' && !isRewardMsg(m)) return false;
+      if (q && !(m.title + ' ' + m.body).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    box.innerHTML = shown.map(({ m, mid }) => {
+      const unread = !isRead(mid);
+      const claimed = isRewardMsg(m) && (S.claimedRewards || []).includes(mid);
+      const init = escapeHtml(((m.title || 'Z')[0] || 'Z').toUpperCase());
+      return `<div class="quest-card${unread ? '' : ''}" data-open="${escapeHtml(mid)}" style="cursor:pointer;${unread ? `border-color:var(--primary);background:var(--primary-dim);` : ''}">`
+        + `<span style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-display);background:${kindColor(m)}22;color:${kindColor(m)};border:1px solid ${kindColor(m)}">${init}</span>`
+        + `<div style="flex:1;min-width:0"><div class="flex-between"><div style="font-size:13px;font-weight:${unread ? 800 : 600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'ZenFit')}</div>`
+        + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || '')}</span></div>`
+        + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body || '')}</div>`
+        + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
+        + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button>`}</div>`;
+    }).join('') || '<div class="card text-center" style="color:var(--text-muted)">No messages match. Challenges and rewards from your coach appear here.</div>';
+    box.querySelectorAll('[data-open]').forEach((row) => {
+      row.onclick = (e) => {
+        if (e.target.closest('[data-delmsg]')) return;
+        openDetail(host, row.dataset.open);
+      };
+    });
+    box.querySelectorAll('[data-delmsg]').forEach((b) => {
+      b.onclick = (e) => {
+        e.stopPropagation();
+        deleteMsg(b.dataset.delmsg);
+      };
+    });
+  };
+  const deleteMsg = (mid) => {
+    const m = (S.inbox || []).find((x) => x.id === mid);
+    const wasUnread = m && !isRead(mid);
+    update((s) => {
+      s.inbox = (s.inbox || []).filter((x) => x.id !== mid);
+      s.inboxRead = (s.inboxRead || []).filter((id) => id !== mid);
+      if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
+    });
+    window.ZF.rerender();
+  };
+  host.querySelector('#inbox-q').oninput = paint;
+  host.querySelectorAll('[data-ifilter]').forEach((b) => {
+    b.onclick = () => {
+      filter = b.dataset.ifilter;
+      host.querySelectorAll('[data-ifilter]').forEach((x) => x.classList.toggle('btn-primary', x === b));
+      paint();
+    };
+  });
+  host.querySelector('#inbox-readall')?.addEventListener('click', () => {
+    update((s) => {
+      s.inboxRead = [...new Set([...(s.inboxRead || []), ...(s.inbox || []).map((m) => m.id)])];
+      s.inboxUnread = 0;
+    });
+    window.ZF.rerender();
+  });
+  host.querySelector('#inbox-delread')?.addEventListener('click', () => {
+    update((s) => {
+      const keep = (s.inbox || []).filter((m) => !isRead(m.id));
+      s.inbox = keep;
+    });
+    window.ZF.rerender();
+  });
+  paint();
+  syncGlobals(host);
+}
+
+/** Full message view: styled hero, image, claim, delete, back. */
+function openDetail(host, mid) {
+  const m = (S.inbox || []).find((x) => x.id === mid);
+  if (!m) { window.ZF.rerender(); return; }
+  const wasUnread = !isRead(mid);
+  update((s) => {
+    if (!(s.inboxRead || []).includes(mid)) s.inboxRead = [...(s.inboxRead || []), mid];
+    if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
+  }, { silent: true });
+  try { save(); } catch {}
+  const isReward = isRewardMsg(m);
+  const claimed = (S.claimedRewards || []).includes(mid);
+  const bg = MSG_BGS[m.bg] || '';
+  const hl = MSG_HLS[m.hl] || '';
+  const img = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(m.image || '') ? m.image : '';
+  host.innerHTML = `
+  <button class="btn btn-sm btn-ghost mb12" id="inbox-back">← Back to inbox</button>
+  <div class="card" style="${bg ? `background:${bg};` : ''}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
+    ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
+    <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bg ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
+    <div style=\"font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px\">${escapeHtml(m.date || '')}</div>
+    <div style=\"font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}\">${escapeHtml(m.body || '')}</div>
+    ${isReward ? `<button class=\"btn ${claimed ? '' : 'btn-primary'} mt12\" id=\"inbox-dclaim\" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
+  </div>
+  <button class=\"btn btn-sm btn-danger btn-full mt8\" id=\"inbox-ddel\">Delete message</button>`;
+  if (wasUnread && m.confetti) setTimeout(() => { try { celebrateBurst(90); } catch {} }, 250);
+  host.querySelector('#inbox-back').onclick = () => window.ZF.rerender();
+  host.querySelector('#inbox-ddel').onclick = () => {
+    update((s) => {
+      s.inbox = (s.inbox || []).filter((x) => x.id !== mid);
+      s.inboxRead = (s.inboxRead || []).filter((id) => id !== mid);
+    });
+    window.ZF.rerender();
+  };
+  host.querySelector('#inbox-dclaim')?.addEventListener('click', () => {
+    if ((S.claimedRewards || []).includes(mid)) return;
+    const xp = Number(m.xp) || 0;
+    update((s) => { s.claimedRewards = [...(s.claimedRewards || []), mid]; });
+    if (xp > 0) awardXP(xp, m.title || 'Reward');
+    else if (xp < 0) { deductXP(Math.abs(xp), m.title || 'Penalty'); showNotif(`${xp} XP — ${m.title || 'Penalty'}`, '!'); }
+    window.ZF.rerender();
+  });
+}
+
+async function syncGlobals(host) {
+  try {
+    const { GlobalBoard } = await import('../core/cloud.js');
+    const mine = [S.deviceId, S.profile?.name, S.player?.name].filter(Boolean).map(String);
+    const forMe = (r) => !r?.target || r.target === 'all' || mine.includes(String(r.target));
+    const [casts, evts, rewards] = await Promise.all([
+      GlobalBoard.fetchBroadcasts(), GlobalBoard.fetchEvents(), GlobalBoard.fetchRewards(),
+    ]);
+    const box = host.querySelector('#inbox-global');
+    if (!box) return;
+    const myCasts = (casts || []).filter(forMe);
+    const myEvts = (evts || []).filter(forMe);
+    const myRewards = (rewards || []).filter(forMe);
+    const claimed = new Set(S.claimedRewards || []);
+    let html = '';
+    if (myCasts?.length) {
+      html += `<div class="section-title mt12">Global broadcasts</div>` + myCasts.slice(0, 5).map((b) => {
+        const bbg = MSG_BGS[b.bg] || '';
+        const bhl = MSG_HLS[b.hl] || '';
+        return `<div class="card mb8" style="${bbg ? `background:${bbg};` : ''}${bhl ? `border-color:${bhl};` : ''}"><div style="font-size:13px;font-weight:700;${bbg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : ''}">${escapeHtml(b.title || 'Broadcast')}</div>`
+        + `<div style="font-size:12px;${bbg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(b.body || '')}</div></div>`;
+      }).join('');
+      try {
+        const latest = myCasts[0];
+        const seenKey = 'zf_global_seen';
+        const seen = localStorage.getItem(seenKey);
+        if (latest?.id && seen !== String(latest.id)) {
+          localStorage.setItem(seenKey, String(latest.id));
+          update((s) => { s.inboxUnread = (s.inboxUnread || 0) + 1; }, { silent: true });
+          try { save(); } catch {}
+          showNotif(`📣 ${latest.title || 'New broadcast'}`, 'OK');
+          window.ZF?.rerender();
+        }
+      } catch {}
+    }
+    if (myEvts?.length) {
+      html += `<div class="section-title mt12">Global events</div>` + myEvts.slice(0, 5).map((e) => {
+        const gid = e.id || e.code || e.title;
+        const tracked = (S.events || []).some((x) => x.globalId === gid);
+        const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
+        return `<div class="card mb8"><div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Event')}</div>`
+        + `<div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.descr || e.desc || '')}</div>`
+        + (e.xp ? `<div style="font-size:11px;color:var(--warning)">+${e.xp} XP on completion</div>` : '')
+        + (Array.isArray(e.rules) && e.rules.length ? `<div style="font-size:11px;color:var(--info);margin-top:2px">Auto: ${e.rules.map((r) => `${escapeHtml(r.metric)} ≥ ${r.target} × ${r.days}d`).join(' + ')}</div>` : '')
+        + (canTrack ? `<button class="btn btn-sm btn-primary mt8" data-track="${escapeHtml(String(gid))}">Track this mission</button>` : tracked ? `<div style="font-size:11px;color:var(--success);margin-top:4px">Tracked ✓ auto-checks your logs</div>` : '') + `</div>`;
+      }).join('');
+    }
+    if (myRewards?.length) {
+      html += `<div class="section-title mt12">Claimable rewards</div>` + myRewards.slice(0, 5).map((r) => {
+        const done = claimed.has(r.id || r.code);
+        return `<div class="card mb8"><div class="flex-between"><div><div style="font-size:13px;font-weight:700">${escapeHtml(r.title || 'Reward')}</div>`
+          + `<div style="font-size:11px;color:var(--warning)">${Number(r.xp) < 0 ? '' : '+'}${r.xp || 0} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div>`
+          + `<button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim="${escapeHtml(r.id || r.code || '')}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button></div></div>`;
+      }).join('');
+    }
+    box.innerHTML = html || '<div style="font-size:11px;color:var(--text-muted)">No global items (tables missing or offline).</div>';
+    box.querySelectorAll('[data-track]').forEach((b) => {
+      b.onclick = () => {
+        const gid = b.dataset.track;
+        const e = (myEvts || []).find((x) => String(x.id || x.code || x.title) === gid);
+        if (!e || (S.events || []).some((x) => x.globalId === gid)) return;
+        update((s) => {
+          s.events = [...(s.events || []), {
+            id: `g-${Date.now()}`, globalId: gid, kind: 'mission', title: String(e.title || 'Mission').slice(0, 60),
+            icon: '📯', body: String(e.descr || e.desc || '').slice(0, 200),
+            xp: Math.min(500, Math.max(1, Number(e.xp) || 25)),
+            rules: (e.rules || []).slice(0, 5).map((r) => ({ metric: String(r.metric || 'water_ml').slice(0, 20), target: Number(r.target) || 1, days: Number(r.days) || 1 })),
+            status: 'live', ts: Date.now(),
+          }];
+        });
+        showNotif('Mission tracked — logs auto-checked', 'OK');
+        import('../core/missions.js').then((m) => { try { m.checkMissions(); } catch {} }).catch(() => {});
+        window.ZF.rerender();
+      };
+    });
+    box.querySelectorAll('[data-claim]').forEach((b) => {
+      b.onclick = () => {
+        const id = b.dataset.claim;
+        const r = (myRewards || []).find((x) => (x.id || x.code) === id);
+        if (!r || (S.claimedRewards || []).includes(id)) return;
+        const xp = Number(r.xp) || 0;
+        update((s) => { s.claimedRewards = [...(s.claimedRewards || []), id]; });
+        if (xp > 0) awardXP(xp, `Global reward: ${r.title || ''}`);
+        else if (xp < 0) { deductXP(Math.abs(xp), `Global penalty: ${r.title || ''}`); showNotif(`${xp} XP — ${r.title || 'Penalty'}`, '!'); }
+        window.ZF.rerender();
+      };
+    });
+  } catch {
+    host.querySelector('#inbox-global') && (host.querySelector('#inbox-global').innerHTML = '');
+  }
+}

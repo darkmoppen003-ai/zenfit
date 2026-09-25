@@ -1,0 +1,37 @@
+/* ── ZenFit V2 · Responsive ────────────────────────────────
+   Mobile-first base; desktop enhancements ≥768px.
+   Token-only. Touch targets ≥40px on coarse pointers.
+────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .grid4 { grid-template-columns: 1fr 1fr; }
+  .grid5 { grid-template-columns: 1fr 1fr 1fr; }
+  .grid3 { grid-template-columns: 1fr 1fr; }
+  .stat-blocks { grid-template-columns: 1fr 1fr; }
+  .stat-block .sb-value { font-size: 10px; }
+  .stat-block .sb-label { font-size: 10px; }
+  .mood-card { text-align: center; }
+  .mood-grid { max-width: 280px; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+}
+
+@media (min-width: 768px) {
+  .app { padding: 0 24px env(safe-area-inset-bottom, 0px); }
+  .screen { padding: 20px 8px 96px; }
+  .screen-header .sh-title { font-size: 30px; }
+  .bottom-nav { width: min(60%, 520px); }
+  .zen-breath { width: 260px; height: 260px; }
+  .zen-circle { width: 180px; height: 180px; }
+}
+
+@media (min-width: 1100px) {
+  .grid4 { grid-template-columns: repeat(4, 1fr); }
+  .dash-desktop { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: start; }
+}
+
+@media (pointer: coarse) {
+  .btn, .bottom-nav-item { min-height: 40px; }
+  .quest-check, .task-check { width: 28px; height: 28px; }
+  .chart-tab, .an-sec-btn { min-height: 0; }
+}
+
+#screens { touch-action: pan-y; }
+.screen-locked { overflow: hidden !important; touch-action: none; }
