@@ -253,7 +253,6 @@ export function renderCustomization(host) {
             <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${S.particlesEnabled ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;transition:.3s;border:1px solid var(--border-strong)">
             <span style="position:absolute;height:18px;width:18px;left:${S.particlesEnabled ? '20px' : '3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
           </label></div>
-      </div>
       <div style="margin-top:10px"><div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Particle Effect</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px" id="fx-effects"></div></div>
       <div data-no-swipe style="touch-action:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
