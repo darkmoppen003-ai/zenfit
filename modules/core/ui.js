@@ -327,7 +327,9 @@ function renderParticles() {
       });
       ctx.globalAlpha = 1;
     } else ctx.clearRect(0, 0, c.width, c.height);
-    if (effect === 'snow') {
+    if (effect === 'matrix') {
+      // drawn above — skip per-particle branch
+    } else if (effect === 'snow') {
       parts.forEach((p) => {
         p.y += (p.s + 0.4) * sp; p.x += Math.sin(t + p.ph) * 0.4 * sp;
         if (p.y > c.height + 4) { p.y = -4; p.x = R(0, c.width); }
