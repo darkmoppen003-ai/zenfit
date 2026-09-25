@@ -172,8 +172,12 @@ body.nav-labels-off .bni-label { display: none; }
 .more-popover .mp-item.active-mp { color: var(--primary); }
 .more-popover .mp-item .mp-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
-.chart-tab-bar { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-raised); border-radius: 10px; padding: 4px; }
-.chart-tab { flex: 1; text-align: center; padding: 7px 4px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: all var(--dur-fast); }
+.chart-tab-bar { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-raised); border-radius: 10px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+.chart-tab-bar::-webkit-scrollbar { display: none; }
+.chart-tab { flex: 1 0 auto; text-align: center; padding: 7px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: all var(--dur-fast); white-space: nowrap; }
+@media (max-width: 600px) {
+  .chart-tab { font-size: 11px; padding: 7px 8px; }
+}
 .chart-tab.active { background: var(--primary-dark); color: #fff; }
 
 .grade { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }

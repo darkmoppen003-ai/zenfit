@@ -19,7 +19,7 @@ export const STORAGE_KEYS = {
 };
 export const DATA_VERSION = 11;
 export const APP_VERSION = "8.8";
-export const APP_BUILD = "2026.09.25.16";
+export const APP_BUILD = "2026.09.26.18";
 
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
@@ -41,7 +41,7 @@ const SCHEMA = {
   glassAlpha: 'number', navOpacity: 'boolean', navLabels: 'boolean',
   bgType: 'string', bgImage: 'string', bgDim: 'number',
   particlesEnabled: 'boolean', particleCount: 'number',
-  particleEffect: 'string', particleHue: 'number', particleSpeed: 'number', cyberDirection: 'string',
+  particleEffect: 'string', particleHue: 'number', particleSpeed: 'number', cyberDirection: 'string', sparkDirection: 'string',
   bgFit: 'string', bgPosX: 'number', bgPosY: 'number',
   bgOffX: 'number', bgOffY: 'number', bgZoom: 'number',
   accentColor: 'string', bgImages: 'array', bgAllScreens: 'boolean',
@@ -117,6 +117,7 @@ export function defaultState() {
     particleHue: 250,
     particleSpeed: 1,
     cyberDirection: 'straight',
+    sparkDirection: 'straight',
     particleEffect: 'dust',
     bgFit: 'cover',
     bgPosX: 50,

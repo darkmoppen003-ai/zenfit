@@ -10,6 +10,8 @@ import { uid } from '../core/utils.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
 import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles } from '../core/ui.js';
 
+let editingThemeId = null;
+
 export const PRESET_WALLPAPERS = [
   { file: 'berserk.jpg', name: 'Berserk' }, { file: 'holy.jpeg', name: 'Holy' },
   { file: 'kafka-honkai-star-rail-hr.jpg', name: 'Kafka' }, { file: 'knowledge.png', name: 'Knowledge' },
@@ -164,6 +166,8 @@ export function applyTheme(id) {
           if (t.particleEffect) s.particleEffect = t.particleEffect;
           if (t.p_hue != null) s.particleHue = Number(t.p_hue);
           if (t.particleSpeed != null) s.particleSpeed = Math.min(3, Math.max(0.2, Number(t.particleSpeed)));
+          if (t.particleCount != null) s.particleCount = Math.min(150, Math.max(0, Number(t.particleCount)));
+          if (t.bgFit) s.bgFit = t.bgFit;
           if (t.glassBlur != null) s.glassBlur = Math.min(30, Math.max(0, Number(t.glassBlur)));
           if (t.glassAlpha != null) s.glassAlpha = Math.min(0.95, Math.max(0.1, Number(t.glassAlpha)));
         }, { silent: true });
@@ -203,7 +207,7 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', '🖼️', 'Particles & dimming', 'default-collapsed')}
+    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', '🖼️', 'Gallery, framing & dimming', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('wallpaper-sliders') ? ' collapsed' : ''}" id="wallpaper-sliders">
       <div class="section-title mt12">Gallery</div>
       <div class="grid3" id="wp-gallery"></div>
@@ -235,8 +239,13 @@ export function renderCustomization(host) {
         </div>
       </div>
       <div class="flex gap8 mt8" style="font-size:11px;color:var(--text-muted)">Wallpaper applies to all screens.</div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    </div>
+  </div>
+
+  <div class="card mb8">
+    ${collapseHeader('particle-fx', 'Particle Effects', '✨', 'Count, hue, speed & direction', 'default-collapsed')}
+    <div class="collapsible-body${isCollapsed('particle-fx') ? ' collapsed' : ''}" id="particle-fx">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:12px">
           <div><div style="font-size:13px;font-weight:600">✨ Particles</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Floating particle effects</div></div>
           <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
@@ -312,6 +321,7 @@ export function renderCustomization(host) {
       <div class="grid2" id="theme-grid"></div>
       <div class="section-title mt12">Custom Themes</div>
       <div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      <div id="th-creator-home" style="display:none"></div>
       <div id="th-creator" style="display:none">
       <div class="section-title mt12">Live preview & creator</div>
       <div class="theme-preview active" id="th-live"><div class="tp-bar" id="th-live-bar">
@@ -332,6 +342,8 @@ export function renderCustomization(host) {
       <div class="grid2 gap8 mt8">
         <label style="font-size:12px">Particle hue (0–360)<input type="number" id="th-phue" min="0" max="360" value="250"></label>
         <label style="font-size:12px">Particle speed (0.2–3)<input type="number" id="th-pspeed" min="0.2" max="3" step="0.1" value="1"></label>
+        <label style="font-size:12px">Particle count<select id="th-pcount"><option value="">— theme default —</option><option value="30">Calm (30)</option><option value="80">Normal (80)</option><option value="150">Dense (150)</option></select></label>
+        <label style="font-size:12px">Wallpaper fit<select id="th-pfit"><option value="">— keep current —</option><option value="cover">Cover</option><option value="contain">Contain</option><option value="fill">Fill</option></select></label>
         <label style="font-size:12px">Glass blur (0–30px)<input type="number" id="th-blur" min="0" max="30" value="4"></label>
         <label style="font-size:12px">Card opacity (10–95%)<input type="number" id="th-alpha" min="10" max="95" value="55"></label>
       </div>
@@ -520,6 +532,7 @@ export function renderCustomization(host) {
     b.onclick = () => {
       update((s) => { s.particleEffect = b.dataset.fx; });
       if (b.dataset.fx === 'cyber') askCyberDirection();
+      if (b.dataset.fx === 'sparks') askSparkDirection();
     };
   });
   host.querySelector('#fx-count').oninput = (e) => {
@@ -637,10 +650,10 @@ export function renderCustomization(host) {
   drawMine();
 
   /* creator live preview */
-  const tpl = host.querySelector('#th-tpl');
+  const tpl = document.querySelector('#th-tpl');
   const tplOpts = [...Object.entries(THEMES).map(([id, t]) => [`built:${id}`, t.name]), ...getCustomThemes().map((t) => [`custom:${t.id}`, `${t.name} (custom)`])];
   tpl.innerHTML = tplOpts.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join('');
-  const wpSel = host.querySelector('#th-wp');
+  const wpSel = document.querySelector('#th-wp');
   try {
     const imgs = [...PRESET_WALLPAPERS.map((p) => ({ name: p.name, src: `preset:${p.file}` })), ...(S.bgImages || []).map((w) => (typeof w === 'string' ? { name: w, src: w } : { name: w.name || 'Upload', src: w.src || w.id }))];
     wpSel.innerHTML = '<option value="">— keep current —</option>' + imgs.map((w) => `<option value="${escapeHtml(w.src)}">${escapeHtml(w.name)}</option>`).join('');
@@ -662,7 +675,7 @@ export function renderCustomization(host) {
   ];
   const thVal = (id) => host.querySelector(`#th-c-${id}`)?.value;
   const buildRows = () => {
-    const groups = { surfaces: host.querySelector('#th-surfaces'), texts: host.querySelector('#th-texts'), accents: host.querySelector('#th-accents') };
+    const groups = { surfaces: document.querySelector('#th-surfaces'), texts: document.querySelector('#th-texts'), accents: document.querySelector('#th-accents') };
     for (const { sec, key, label } of TH_FIELDS) {
       const wrap = groups[sec];
       if (!wrap || wrap.querySelector(`#th-c-${key}`)) continue;
@@ -687,17 +700,19 @@ export function renderCustomization(host) {
       : THEMES[key] || THEMES.midnight;
     const draft = {
       ...base,
-      name: host.querySelector('#th-name').value || 'Preview',
-      p_hue: host.querySelector('#th-phue')?.value || base.p_hue,
-      particleSpeed: Math.min(3, Math.max(0.2, Number(host.querySelector('#th-pspeed')?.value) || 1)),
-      glassBlur: Math.min(30, Math.max(0, Number(host.querySelector('#th-blur')?.value ?? 4))),
-      glassAlpha: Math.min(0.95, Math.max(0.1, (Number(host.querySelector('#th-alpha')?.value ?? 55)) / 100)),
+      name: document.querySelector('#th-name').value || 'Preview',
+      p_hue: document.querySelector('#th-phue')?.value || base.p_hue,
+      particleSpeed: Math.min(3, Math.max(0.2, Number(document.querySelector('#th-pspeed')?.value) || 1)),
+      particleCount: [30, 80, 150].includes(Number(document.querySelector('#th-pcount')?.value)) ? Number(document.querySelector('#th-pcount').value) : null,
+      bgFit: ['cover', 'contain', 'fill'].includes(document.querySelector('#th-pfit')?.value) ? document.querySelector('#th-pfit').value : null,
+      glassBlur: Math.min(30, Math.max(0, Number(document.querySelector('#th-blur')?.value ?? 4))),
+      glassAlpha: Math.min(0.95, Math.max(0.1, (Number(document.querySelector('#th-alpha')?.value ?? 55)) / 100)),
     };
     for (const { key: k } of TH_FIELDS) {
       const v = thVal(k);
       if (v) draft[k] = v;
     }
-    const box = host.querySelector('#th-live');
+    const box = document.querySelector('#th-live');
     box.querySelector('#th-live-bar').style.background = draft.bgSurface;
     box.querySelector('#th-live-dot').style.background = draft.primary;
     box.querySelector('#th-live-body').style.background = draft.bgBase;
@@ -720,27 +735,41 @@ export function renderCustomization(host) {
       if (picker && base[k]) picker.value = base[k];
       if (hex && base[k]) hex.value = base[k];
     }
-    const ph = host.querySelector('#th-phue');
+    const ph = document.querySelector('#th-phue');
     if (ph) ph.value = base.p_hue || 250;
-    const ps = host.querySelector('#th-pspeed');
+    const ps = document.querySelector('#th-pspeed');
     if (ps) ps.value = base.particleSpeed || 1;
-    const bl = host.querySelector('#th-blur');
+    const bl = document.querySelector('#th-blur');
     if (bl) bl.value = base.glassBlur ?? 4;
-    const al = host.querySelector('#th-alpha');
+    const al = document.querySelector('#th-alpha');
     if (al) al.value = Math.round((base.glassAlpha ?? 0.55) * 100);
+    const pc = document.querySelector('#th-pcount');
+    if (pc) pc.value = [30, 80, 150].includes(Number(base.particleCount)) ? String(base.particleCount) : '';
+    const pf = document.querySelector('#th-pfit');
+    if (pf) pf.value = ['cover', 'contain', 'fill'].includes(base.bgFit) ? base.bgFit : '';
     live();
   };
-  host.querySelector('#th-name').oninput = live;
-  host.querySelector('#th-phue').oninput = live;
-  host.querySelector('#th-pspeed').oninput = live;
-  host.querySelector('#th-blur').oninput = live;
-  host.querySelector('#th-alpha').oninput = live;
+  document.querySelector('#th-name').oninput = live;
+  document.querySelector('#th-phue').oninput = live;
+  document.querySelector('#th-pspeed').oninput = live;
+  document.querySelector('#th-blur').oninput = live;
+  document.querySelector('#th-alpha').oninput = live;
   tpl.onchange = syncFromTemplate;
   syncFromTemplate();
-  host.querySelector('#th-save').onclick = () => {
+  document.querySelector('#th-save').onclick = () => {
     const draft = live();
-    const name = sanitizeText(host.querySelector('#th-name').value, 30);
+    const name = sanitizeText(document.querySelector('#th-name').value, 30);
     if (!name) { showNotif('Name your theme', '!'); return; }
+    if (editingThemeId) {
+      const clash = getCustomThemes().some((t) => t.name === name && t.id !== editingThemeId);
+      if (clash) { showNotif(`"${name}" already exists`, '!'); return; }
+      const eid = editingThemeId;
+      editingThemeId = null;
+      update((s) => { s.customThemes = (s.customThemes || []).map((t) => t.id === eid ? { ...t, ...draft, id: eid, name } : t); });
+      showNotif(`Theme "${name}" updated!`, 'OK');
+      window.ZF.rerender();
+      return;
+    }
     if (getCustomThemes().some((t) => t.name === name)) { showNotif(`"${name}" already exists`, '!'); return; }
     const [kind, key] = (tpl.value || 'built:midnight').split(':');
     const base = kind === 'custom'
@@ -748,20 +777,20 @@ export function renderCustomization(host) {
       : { ...THEMES[key] };
     const t = { ...base, ...draft, id: `ct_${Date.now()}`, name };
     try {
-      const wp = host.querySelector('#th-wp')?.value || '';
-      const fx = host.querySelector('#th-fx')?.value || '';
+      const wp = document.querySelector('#th-wp')?.value || '';
+      const fx = document.querySelector('#th-fx')?.value || '';
       if (wp) { t.bgImage = wp; t.bgType = 'image'; }
       if (fx) { t.particleEffect = fx; t.p_hue = t.p_hue || draft.p_hue; }
     } catch {}
     update((s) => { s.customThemes = [...(s.customThemes || []), t]; });
     showNotif(`Theme "${name}" created!`, 'OK');
   };
-  host.querySelector('#th-try').onclick = () => {
+  document.querySelector('#th-try').onclick = () => {
     const draft = live();
     applyThemeObject({ ...draft, name: 'Preview' }, S.theme);
     showNotif('Previewing — pick a theme to keep it', 'OK');
   };
-  host.querySelector('#th-import').onchange = (e) => {
+  document.querySelector('#th-import').onchange = (e) => {
     const f = e.target.files[0];
     if (!f) return;
     const r = new FileReader();
@@ -782,10 +811,29 @@ export function renderCustomization(host) {
     if (!t) return;
     openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:12px">${escapeHtml(t.name)}</div>
       <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-primary" id="tha-edit">Edit theme</button>
+      <button class="btn" id="tha-dup">Duplicate</button>
       <button class="btn" id="tha-export">Export theme file</button>
       <button class="btn btn-danger" id="tha-del">Delete theme</button>
       <button class="btn btn-ghost" id="tha-x">Cancel</button></div>`);
     document.getElementById('tha-x').onclick = () => document.getElementById('zf-overlay')?.remove();
+    document.getElementById('tha-edit').onclick = () => {
+      document.getElementById('zf-overlay')?.remove();
+      editingThemeId = id;
+      showThemeBuilder();
+      const src = getCustomThemes().find((x) => x.id === id) || {};
+      document.querySelector('#th-name').value = src.name || '';
+      document.querySelector('#th-tpl').value = `custom:${id}`;
+      syncFromTemplate();
+      if (src.bgImage) { const w = document.querySelector('#th-wp'); if (w) w.value = src.bgImage; }
+      if (src.particleEffect) { const f = document.querySelector('#th-fx'); if (f) f.value = src.particleEffect; }
+    };
+    document.getElementById('tha-dup').onclick = () => {
+      const copy = { ...t, id: `ct_${Date.now()}`, name: `${t.name} (copy)`.slice(0, 30) };
+      update((s) => { s.customThemes = [...(s.customThemes || []), copy]; });
+      document.getElementById('zf-overlay')?.remove();
+      showNotif(`Theme "${copy.name}" created!`, 'OK');
+    };
     document.getElementById('tha-del').onclick = () => {
       update((s) => { s.customThemes = (s.customThemes || []).filter((x) => x.id !== id); });
       document.getElementById('zf-overlay')?.remove();
@@ -803,17 +851,21 @@ export function renderCustomization(host) {
   }
 
   function showThemeBuilder() {
-    const creator = host.querySelector('#th-creator');
+    const creator = document.querySelector('#th-creator');
     if (!creator) return;
-    openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:8px">Create Custom Theme</div><div id="th-dialog-slot"></div><button class="btn btn-ghost btn-sm mt8" id="th-dialog-close">Close</button>`);
+    const isEdit = !!editingThemeId;
+    openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:8px">${isEdit ? 'Edit Custom Theme' : 'Create Custom Theme'}</div><div id="th-dialog-slot"></div><button class="btn btn-ghost btn-sm mt8" id="th-dialog-close">Close</button>`);
     document.querySelector('#zf-overlay .overlay-box')?.classList.add('overlay-wide');
     const slot = document.querySelector('#th-dialog-slot');
     if (slot) { slot.appendChild(creator); creator.style.display = 'block'; }
     document.getElementById('th-dialog-close').onclick = () => {
+      editingThemeId = null;
+      const creatorEl = document.querySelector('#th-creator');
+      const home = document.querySelector('#th-creator-home');
+      if (creatorEl && home) { home.appendChild(creatorEl); creatorEl.style.display = 'none'; }
       document.getElementById('zf-overlay')?.remove();
-      showNotif('Name it, pick a template, tune colors, save', 'OK');
     };
-    setTimeout(() => host.querySelector('#th-name')?.focus(), 100);
+    setTimeout(() => document.querySelector('#th-name')?.focus(), 100);
   }
 
   /* accent */
@@ -845,6 +897,21 @@ export function renderCustomization(host) {
     if (cur) applyThemeObject(cur, S.theme);
     else window.ZF.rerender();
   };
+}
+
+function askSparkDirection() {
+  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">🔥 Sparks direction</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Straight rises vertically like embers. Diagonal slants with the wind.</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn ${S.sparkDirection !== 'diagonal' ? 'btn-primary' : ''}" id="sp-straight">Straight</button>
+      <button class="btn ${S.sparkDirection === 'diagonal' ? 'btn-primary' : ''}" id="sp-diag">Diagonal</button></div>`);
+  const pick = (dir) => {
+    update((s) => { s.sparkDirection = dir; });
+    document.getElementById('zf-overlay')?.remove();
+    showNotif(`Sparks: ${dir}`, 'OK');
+  };
+  document.getElementById('sp-straight').onclick = () => pick('straight');
+  document.getElementById('sp-diag').onclick = () => pick('diagonal');
 }
 
 function askCyberDirection() {

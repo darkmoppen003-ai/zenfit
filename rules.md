@@ -183,3 +183,15 @@ failing items get a "Log manually" switch, never silent drops.
 15.7. **Missions redo:** 8 categories (WORKOUT with exercise/sets/reps, WATER, HABITS, STREAK, STEPS, ZEN, STUDY, SCREENTIME max) × consistency days; log-verified auto-rewards; legacy `{metric}` rules still evaluate; global missions trackable from inbox.
 15.8. **Themes:** particle speed + glass blur/opacity per custom theme (inputs, template prefill, applied on use).
 15.9. **Persist/sw:** `flushSave()` write-through on `pagehide`/hidden-tab; sw precache covers missions/inbox; leaderboard opt-in notes global missions + XP.
+
+## 16. Session round-14 additions (2026-09-26, matrix/sparks/particles/tutorial/inbox/missions/themes)
+
+16.1. **Matrix:** 8-char words, fade 0.22→0.3 (crisper, less blur), white head only, rest fully hue-driven.
+16.2. **Sparks:** straight/diagonal option with popup (`S.sparkDirection`); diagonal streaks slant wind-blown, respawn lower-left.
+16.3. **Particles:** own collapsible card (`particle-fx`), split from wallpaper settings.
+16.4. **Tutorial:** Mochi mascot 110px centered in all popovers; zero Admin hints.
+16.5. **Admin tabs:** `.chart-tab-bar` scrolls horizontally on small screens, no cutoff.
+16.6. **Inbox:** global broadcasts merged into thread list (same template + styled detail, Global badge, no delete); search/filters cover both.
+16.7. **Missions:** single big card per global mission with inner per-category cards (bullets: exercise/sets/reps or count + consistency); new-category track mapping.
+16.8. **Themes:** per-theme particle count (`particleCount`) + wallpaper fit (`bgFit`) + Edit/Duplicate actions.
+16.9. **Global delete:** `20260925000001_global_delete.sql` pushed; admin outbox lists broadcasts + missions with Delete (`sbDel`); local history per-row delete; confetti toggle with working knob + preview badge.

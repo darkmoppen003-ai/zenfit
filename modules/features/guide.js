@@ -143,7 +143,7 @@ function offerExploration() {
 export function startExplorationTour() {
   const factory = driverFactory();
   if (!factory) { showNotif('Tour library still loading — try again in a moment', '!'); return; }
-  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:72px;height:72px;object-fit:contain;display:block;margin-bottom:6px">`;
+  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 8px">`;
   const legs = [
     { screen: 'nutrition', steps: [['#food-input', 'Mochi: log food', 'Type like “2 chapati, 200g rice” — I split commas, juggle units and grade everything instantly. Picky items get a manual fallback, never the bin.'], ['#bc-input', 'Mochi: barcode', 'Scan a pack and I fetch OpenFoodFacts values — tweak serving size before logging.']] },
     { screen: 'workout', steps: [['#w-name', 'Mochi: workout', 'Log sets, reps and weight, or grab a plan. Body-weight moves borrow your profile weight automatically. Sweat = XP + burn.']] },
@@ -188,7 +188,7 @@ function driverFactory() {
 export function startDashboardTour(onDone) {
   const factory = driverFactory();
   if (!factory) { showNotif('Tour library still loading — try again in a moment', '!'); return; }
-  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:72px;height:72px;object-fit:contain;display:block;margin-bottom:6px">`;
+  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 8px">`;
   const step = (element, title, description, side = 'top') => ({
     element, popover: { title, description: mascot + description, side, align: 'center' },
   });
@@ -219,7 +219,7 @@ export function startDashboardTour(onDone) {
 export function startFeatureTour(screen) {
   const factory = driverFactory();
   if (!factory) return;
-  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:72px;height:72px;object-fit:contain;display:block;margin-bottom:6px">`;
+  const mascot = `<img src="./assets/mascot/mascot.png" alt="Mochi" style="width:110px;height:110px;object-fit:contain;display:block;margin:0 auto 8px">`;
   const maps = {
     nutrition: [['#food-input', 'Text log', 'Comma-split: custom foods → aliases → database → plural → Gemini worker. Failed items get Log manually, never silent drops.'], ['#food-res', 'Preview', 'Grade + kcal update live on qty/unit change. Each entry carries xpAwarded:30, deducted on delete.'], ['#bc-input', 'Barcode', 'OpenFoodFacts lookup with serving-size dialog (size + servings).']],
     workout: [['#w-name', 'Log tab', 'Body-weight type autofills profile weight, prompts if missing. Each set = 15 XP + 8 XP/volume bonus.'], ['#w-body', 'Burn tab', 'Net = eaten − burned. Tapping dashboard Net Cal lands here.']],
