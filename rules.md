@@ -195,3 +195,7 @@ failing items get a "Log manually" switch, never silent drops.
 16.7. **Missions:** single big card per global mission with inner per-category cards (bullets: exercise/sets/reps or count + consistency); new-category track mapping.
 16.8. **Themes:** per-theme particle count (`particleCount`) + wallpaper fit (`bgFit`) + Edit/Duplicate actions.
 16.9. **Global delete:** `20260925000001_global_delete.sql` pushed; admin outbox lists broadcasts + missions with Delete (`sbDel`); local history per-row delete; confetti toggle with working knob + preview badge.
+
+## 17. Session round-15 additions (2026-09-26, persistence + collapse fixes)
+
+17.1. **Matrix persistence:** guarded constellation fallthrough — it ran on matrix columns (`r/ph/vx` undefined → NaN), killing rain after frame one. Matrix now persists across re-renders (verified pixel-stable).
