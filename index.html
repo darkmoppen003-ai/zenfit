@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self';script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com;style-src 'self' 'unsafe-inline' https:;img-src 'self' https: data: blob:;connect-src 'self' https://world.openfoodfacts.org https://oeytdfhwtxpwkzyaubad.supabase.co https://*.supabase.co https://zenfit-nutrition.dark-moppen003.workers.dev https://cdnjs.cloudflare.com;font-src 'self' https: data:;worker-src 'self' blob:;object-src 'none';base-uri 'self';form-action 'none';">
+<meta name="theme-color" content="#7B5EFF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZenFit">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="zenfit.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ZenFit</title>
+<link rel="icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/base.css">
+<link rel="stylesheet" href="./css/components.css">
+<link rel="stylesheet" href="./css/screens.css">
+<link rel="stylesheet" href="./css/animations.css">
+<link rel="stylesheet" href="./css/responsive.css">
+<link rel="stylesheet" href="./driver.css">
+<!-- Chart.js loads on demand (analytics) to keep first paint fast -->
+<script src="./driver.js"></script>
+</head>
+<body>
+<noscript><div style="background:#080A10;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:20px"><div><h1 style="color:#7B5EFF;font-size:24px;margin-bottom:12px">ZenFit</h1><p style="color:rgba(255,255,255,0.7);font-size:15px">ZenFit requires JavaScript to run. Please enable JavaScript in your browser settings.</p></div></div></noscript>
+
+<div id="splash" class="splash">
+  <img src="zenfit.png" class="splash-img" alt="ZenFit">
+  <div class="splash-title">ZENFIT</div>
+  <div class="splash-sub">Health RPG</div>
+  <div class="splash-ver">v8.8</div>
+  <div class="splash-bar-wrap"><div id="splash-bar" class="splash-bar"></div></div>
+  <div class="splash-hint">tap to enter · double-tap for fullscreen</div>
+</div>
+
+<div class="app">
+  <main id="screens"></main>
+</div>
+<div id="notif-container" aria-live="polite"></div>
+
+<script>
+/* ES modules require http(s) — file:// blocks them (browser CORS).
+   If the app was double-clicked instead of served, explain. */
+setTimeout(function () {
+  if (!window.ZF) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#080A10;color:#fff;display:flex;align-items:center;justify-content:center;padding:24px;font-family:sans-serif';
+    d.innerHTML = '<div style="max-width:420px;text-align:center">' +
+      '<h2 style="color:#7B5EFF">ZenFit needs a local server</h2>' +
+      '<p style="color:rgba(255,255,255,.7);font-size:14px;line-height:1.6">You opened index.html directly (file://), which blocks the app\'s modules. Serve the folder instead:</p>' +
+      '<p style="background:#161B26;border-radius:10px;padding:12px;font-family:monospace;font-size:13px">python3 -m http.server<br>then open http://localhost:8000</p>' +
+      '<p style="color:rgba(255,255,255,.45);font-size:12px">GitHub Pages / Cloudflare hosting works with zero setup.</p></div>';
+    document.body.appendChild(d);
+    var s = document.getElementById('splash');
+    if (s) s.style.display = 'none';
+  }
+}, 7000);
+</script>
+
+<!-- Bundled offline data (globals consumed by nutrition/workout parsers) -->
+<script src="./assets/food/worldfooddb.js"></script>
+<script src="./assets/food/rawingredient.js"></script>
+<script src="./assets/exercise/exercisedb.js"></script>
+<!-- App bootstrap (ES modules, no build step — Pages/Workers ready) -->
+<script type="module" src="./modules/app.js"></script>
+</body>
+</html>

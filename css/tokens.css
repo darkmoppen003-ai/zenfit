@@ -1,0 +1,137 @@
+/* ── ZenFit V2 · Design Tokens ─────────────────────────────
+   SINGLE SOURCE OF TRUTH for all styling.
+   Rule: no hardcoded colors / fonts / sizes anywhere else.
+   Every other CSS file may ONLY use var(--*) tokens below.
+   New theme = override these vars (see themes in customization.js).
+────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --bg-base: #080a10;
+  --bg-surface: #0f1118;
+  --bg-raised: #161b26;
+  --bg-overlay: #1e2435;
+  --app-bg: #0d0f14;
+  --input-bg: #1a1e2a;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.45);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-mid: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.16);
+
+  /* Brand */
+  --primary: #7b5eff;
+  --primary-rgb: 123, 94, 255;
+  --primary-dark: #5a3ecc;
+  --primary-dim: #3a2099;
+
+  /* Semantic */
+  --success: #22d98a;
+  --warning: #f0a000;
+  --danger: #ff4d6a;
+  --water: #00c8ff;
+  --energy: #ff7a1a;
+  --info: #4a9eff;
+  --pink: #f472b6;
+
+  /* Badge tints */
+  --badge-green-bg: #0a3d22;
+  --badge-amber-bg: #3d2800;
+  --badge-red-bg: #3d0a0a;
+  --badge-blue-bg: #0a2a4d;
+  --badge-teal-bg: #002a3d;
+  --badge-energy-bg: #3d1a00;
+
+  /* Grade colors */
+  --grade-a-bg: #0a3d22; --grade-a-fg: #4cdb8a;
+  --grade-b-bg: #0a2a4d; --grade-b-fg: #4a9eff;
+  --grade-c-bg: #3d2800; --grade-c-fg: #f5a623;
+  --grade-d-bg: #3d1a00; --grade-d-fg: #ff8c42;
+  --grade-e-bg: #3d0a0a; --grade-e-fg: #ff5a5a;
+
+  /* Calorie balance banners */
+  --cal-deficit: #0a3d22; --cal-deficit2: #0d1f10;
+  --cal-surplus: #3d1500; --cal-surplus2: #1f0e00;
+  --cal-balanced: #0a2a4d; --cal-balanced2: #050f1a;
+
+  /* Heatmap */
+  --hm-1-bg: rgba(76, 219, 138, 0.2); --hm-1-border: rgba(76, 219, 138, 0.27);
+  --hm-2-bg: rgba(76, 219, 138, 0.47); --hm-2-border: rgba(76, 219, 138, 0.53);
+  --hm-3-bg: #4cdb8a; --hm-3-border: #4cdb8a;
+
+  /* Habit accent palette (cycled per habit card) */
+  --h0: #4a9eff; --h1: #f5a623; --h2: #00d4aa; --h3: #4cdb8a;
+  --h4: #ff5a5a; --h5: #c084fc; --h6: #f472b6; --h7: #fb923c;
+
+  /* Rank colors (match V1 RANK_COLORS) */
+  --rank-e: #888; --rank-d: #4cdb8a; --rank-c: #4a9eff;
+  --rank-b: #c084fc; --rank-a: #f5a623; --rank-s: #ff5a5a;
+
+  /* Task / timer tints */
+  --task-overdue-bg: rgba(61, 10, 10, 0.09);
+  --task-completed-bg: rgba(10, 61, 34, 0.09);
+  --timer-ok-bg: rgba(10, 42, 77, 0.13);
+  --timer-warn-bg: rgba(61, 40, 0, 0.13);
+  --timer-over-bg: rgba(61, 10, 10, 0.13);
+  --ach-earned-glow: rgba(61, 40, 0, 0.07);
+  --cal-day-done-bg: #0a3d22; --cal-day-done-border: #1a6d3a;
+  --swipe-hint-bg: rgba(255, 255, 255, 0.08);
+
+  /* Water tank gradient */
+  --water-hi: #00dfff; --water-mid: #00b6ff; --water-lo: #009cff;
+
+  /* Theme-driven glow accents */
+  --glow1: #7b5eff; --glow2: #00d4ff; --glow3: #bf00ff;
+  --particle-hue: 250;
+
+  /* Particles */
+  --glass-bg: rgba(15, 18, 32, 0.82);
+  --glass-bg-rgb: 15, 17, 24;
+  --glass-alpha: 0.55;
+  --glass-blur: 12px;
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Nav / overlays */
+  --nav-bg: rgba(15, 17, 24, 0.8);
+  --bottombar-bg: rgba(15, 17, 24, 0.85);
+  --overlay-bg: rgba(15, 17, 24, 0.92);
+  --overlay-scrim: rgba(0, 0, 0, 0.85);
+  --dialog-bg: #161b26;
+  --subtabs-bg: rgba(22, 27, 38, 0.6);
+  --notif-bg: rgba(15, 17, 24, 0.9);
+  --tutorial-bg: linear-gradient(135deg, #13161e, #1a1e2a);
+  --changelog-header-bg: linear-gradient(135deg, rgba(123,94,255,0.15), rgba(123,94,255,0.05));
+  --changelog-scrim: rgba(0,0,0,0.56);
+  --preview-card-bg: rgba(18,18,26,0.95);
+  --home-stats-bg: rgba(8,10,16,0.75);
+  --stat-badge-bg: rgba(255,255,255,0.04);
+  --orb-bg: rgba(10,12,20,.85);
+
+  /* Shadows & glows */
+  --shadow-sm: 0 4px 10px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+
+  /* Typography */
+  --font-display: 'Syne', sans-serif;
+  --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --text-hero: 40px; --text-xxl: 30px; --text-xl: 24px;
+  --text-lg: 20px; --text-md: 17px; --text-base: 15px;
+  --text-sm: 13px; --text-xs: 11px;
+
+  /* Shape & motion */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 14px; --radius-xl: 20px;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 0.15s; --dur-med: 0.25s; --dur-slow: 0.45s;
+
+  /* Layout */
+  --app-max-width: 1100px;
+  --bottomnav-width: min(92%, 380px);
+  --z-nav: 9999; --z-popover: 10000; --z-notif: 9999;
+  --z-overlay: 9998; --z-guide: 100002; --z-splash: 99999; --z-changelog: 100005;
+}

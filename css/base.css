@@ -1,0 +1,131 @@
+/* ── ZenFit V2 · Base ──────────────────────────────────────
+   Reset, document defaults, app frame, splash, guide system.
+   Only var(--*) tokens — no hardcoded styling.
+────────────────────────────────────────────────────────────── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  background: var(--app-bg);
+  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  min-height: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@font-face {
+  font-family: 'NotoEmoji';
+  src: local('Noto Color Emoji'), local('Android Emoji'), local('Segoe UI Emoji');
+  unicode-range: U+1F000-1FFFF, U+2600-27FF;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 0 12px env(safe-area-inset-bottom, 0px);
+  position: relative;
+  z-index: 1;
+}
+
+canvas { max-width: 100%; display: block; }
+hr { border: none; border-top: 1px solid var(--border-mid); margin: 16px 0; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+/* ── Splash ── */
+.splash {
+  position: fixed; inset: 0; background: var(--bg-base);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: var(--z-splash);
+}
+.splash-img {
+  width: 120px; height: 120px; object-fit: contain; border-radius: 50%;
+  margin-bottom: 16px; animation: splashPulse 1.5s ease-in-out infinite;
+}
+.splash-title {
+  font-size: var(--text-xxl); font-weight: 800; letter-spacing: 4px;
+  font-family: var(--font-display); color: var(--text-primary);
+}
+.splash-sub {
+  font-size: var(--text-sm); color: var(--primary); margin-top: 6px;
+  letter-spacing: 3px; text-transform: uppercase;
+}
+.splash-ver { font-size: var(--text-xs); color: var(--border-strong); margin-top: 2px; letter-spacing: 1px; }
+.splash-hint { font-size: var(--text-xs); color: var(--text-muted); margin-top: 14px; }
+.splash-bar-wrap { margin-top: 18px; width: 140px; height: 3px; background: var(--bg-raised); border-radius: 2px; overflow: hidden; }
+.splash-bar { height: 100%; width: 0; border-radius: 2px; transition: width 0.08s linear;
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
+@keyframes splashPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.onboarding-field { margin-bottom: 16px; }
+.onboarding-field label { display: block; font-size: var(--text-sm); font-weight: 600; margin-bottom: 6px; }
+
+/* ── Onboarding welcome card ── */
+.guide-card {
+  position: fixed; z-index: var(--z-guide); top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--bg-surface); border: 1px solid var(--primary);
+  border-radius: var(--radius-xl); padding: 28px 24px; max-width: 380px; width: calc(100% - 32px);
+  box-shadow: var(--shadow-lg); text-align: center;
+}
+.guide-card h2 { margin: 0 0 4px; font-size: var(--text-lg); font-weight: 700; font-family: var(--font-display); }
+.guide-card p { margin: 0 0 16px; font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.5; }
+.guide-card .guide-mascot-lg {
+  width: 140px; height: 200px; margin: 0 auto 16px;
+  background: url('../assets/mascot/mascot.png') no-repeat center / contain;
+}
+/* driver.js tour theming hooks */
+.driver-popover { background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--primary); }
+.driver-popover-title { font-family: var(--font-display); }
+.driver-popover-progress-text, .driver-popover-footer button { font-family: var(--font-ui); }
+
+/* Wallpaper framing grid (WhatsApp-style crop preview) */
+.wp-frame { position: relative; overflow: hidden; border-radius: var(--radius-md); background: var(--bg-overlay); touch-action: none; height: 320px; }
+.wp-frame img.wp-img { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.wp-grid { position: absolute; inset: 0; pointer-events: none; }
+/* Phone: tighter safe area, taller crop preview */
+@media (max-width: 600px) {
+  .wp-frame { height: 240px; }
+  .wp-safe { inset: 10% 6%; }
+  .wp-grid::before, .wp-grid::after { background: rgba(255,255,255,0.22); }
+}
+/* Desktop: wider safe area, shorter crop preview */
+@media (min-width: 768px) {
+  .wp-frame { height: 380px; }
+  .wp-safe { inset: 15% 14%; }
+}
+.wp-grid::before, .wp-grid::after {
+  content: ''; position: absolute; background: rgba(255, 255, 255, 0.35);
+}
+.wp-grid::before { left: 33.33%; right: 33.33%; top: 0; bottom: 0; border-left: 1px solid rgba(255,255,255,.35); border-right: 1px solid rgba(255,255,255,.35); }
+.wp-grid::after { top: 33.33%; bottom: 33.33%; left: 0; right: 0; border-top: 1px solid rgba(255,255,255,.35); border-bottom: 1px solid rgba(255,255,255,.35); }
+.wp-safe { position: absolute; inset: 12% 8%; border: 1px dashed rgba(255, 255, 255, 0.5); border-radius: 12px; pointer-events: none; }
+.wp-safe span { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: rgba(255,255,255,.7); white-space: nowrap; }
+input[type="range"].slider { width: 100%; accent-color: var(--primary); touch-action: none; }
+/* Stepper rows: − slider + with live value */
+.wp-stepper { display: flex; align-items: center; gap: 8px; }
+.wp-stepper button {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 9px;
+  border: 1px solid var(--border-mid); background: var(--bg-raised);
+  color: var(--text-primary); font-size: 16px; line-height: 1; cursor: pointer;
+}
+.wp-stepper button:active { transform: scale(0.92); background: var(--bg-overlay); }
+#wp-sliders > label { display: block; margin-bottom: 10px; }
+#wp-sliders > label > span:first-child { font-variant-numeric: tabular-nums; }
+.wp-stepper .slider { flex: 1; min-width: 0; }

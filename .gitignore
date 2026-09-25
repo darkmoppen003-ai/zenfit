@@ -1,0 +1,10 @@
+# ZenFit V2 — never commit owner secrets or local junk
+admin.env
+*.env.local
+CONTEXT/
+.opencode/
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+*.log

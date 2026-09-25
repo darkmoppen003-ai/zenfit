@@ -1,0 +1,45 @@
+/* ── ZenFit V2 · Animations ────────────────────────────────
+   anime.js drives entrances/transitions; these keyframes are the
+   no-JS fallback + micro-interactions. Token-only.
+────────────────────────────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes questPop { 0% { transform: scale(1); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
+@keyframes levelUpSlide {
+  0% { transform: translateY(100%); opacity: 0; }
+  15% { transform: translateY(0); opacity: 1; }
+  85% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+@keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes moodPop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 60% { transform: scale(0.95); } 100% { transform: scale(1); } }
+@keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+@keyframes morePopIn { from { opacity: 0; transform: translateY(8px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes navPillBounce { 0% { width: 32px; opacity: 0; } 60% { width: 56px; } 100% { width: 52px; opacity: 1; } }
+@keyframes breatheInOut { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+.anim-pop { animation: questPop 0.25s var(--ease-spring); }
+.anim-fadein { animation: fadeIn 0.22s ease-out; }
+.quest-card.done { animation: questPop 0.25s var(--ease-spring); }
+.quest-check.done { animation: questPop 0.25s var(--ease-spring); }
+.notif { animation: slideIn 0.3s ease; }
+.overlay-box { animation: popIn 0.4s ease; }
+.more-popover.show { animation: morePopIn 0.25s var(--ease-spring); }
+.bottom-nav-item.active::before { animation: navPillBounce 0.5s var(--ease-spring) forwards; }
+
+/* Layer contract: ONLY the wallpaper layer (#zf-bg) and the elements
+   layer (.card/.screen content) may paint. No tinted wash may sit
+   between them — the background must show through untouched. */
+body.glass-mode .screen.active {
+  background: transparent;
+}
+
+.grid3 .card-sm { transition: transform var(--dur-fast) ease, box-shadow var(--dur-fast) ease; }
+.grid3 .card-sm:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+/* anime.js hooks: screens start slightly translated, JS animates to rest.
+   If anime.js fails to load, .screen.active shows instantly (no FOUC). */
+.screen.anim-enter { will-change: transform, opacity; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
