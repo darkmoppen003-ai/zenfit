@@ -434,7 +434,7 @@ function renderBroadcast(body) {
     const target = sanitizeText(body.querySelector('#ad-ntarget').value, 40) || 'all';
     showNotif(target === 'all' ? 'Broadcasting globally…' : `Sending to ${target}…`, 'OK');
     const { GlobalBoard } = await import('../core/cloud.js');
-    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, image: m.image, confetti: m.confetti });
+    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, confetti: m.confetti });
     showNotif(ok ? (target === 'all' ? 'Broadcast live globally — users get it in Inbox' : `Message queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-npush').onclick = () => {

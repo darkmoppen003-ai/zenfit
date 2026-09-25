@@ -91,7 +91,7 @@ export function syncGlobalIfOptedIn() {
 
 /* ── Global admin board (phase 1: Supabase-backed broadcasts/events/rewards) ──
    Tables (run once in Supabase SQL editor):
-     create table global_broadcasts (id uuid default gen_random_uuid() primary key, title text, body text, target text default 'all', created_at timestamptz default now());
+     create table global_broadcasts (id uuid default gen_random_uuid() primary key, title text, body text, target text default 'all', bg text default 'none', hl text default 'none', image text default '', confetti boolean default false, created_at timestamptz default now());
      create table global_events (id uuid default gen_random_uuid() primary key, title text, descr text, xp int default 0, status text default 'live', target text default 'all', rules jsonb, created_at timestamptz default now());
      create table global_rewards (id uuid default gen_random_uuid() primary key, title text, xp int default 0, code text, target text default 'all', created_at timestamptz default now());
      alter table global_broadcasts enable row level security; alter table global_events enable row level security; alter table global_rewards enable row level security;
@@ -128,7 +128,7 @@ export const GlobalBoard = {
       const post = (body) => fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: { ...sbHdr(), Prefer: 'return=minimal' }, body: JSON.stringify(body) });
       let body = { ...row };
       let res = await post(body);
-      for (const k of ['rules', 'target', 'bg', 'image', 'confetti']) {
+      for (const k of ['confetti', 'image', 'bg', 'hl', 'rules', 'target']) {
         if (!res.ok && k in body) {
           delete body[k];
           res = await post(body);
