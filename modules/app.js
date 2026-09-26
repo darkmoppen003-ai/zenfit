@@ -29,6 +29,17 @@ window.ZF = {
 
 let splashDone = false;
 
+/* Touch devices: block long-press menu + legacy pinch gesture.
+   Scoped to coarse pointers — desktop right-click stays intact. */
+try {
+  if (window.matchMedia?.('(pointer: coarse)').matches) {
+    document.addEventListener('contextmenu', (e) => {
+      if (!e.target.closest?.('input,textarea,select,[contenteditable]')) e.preventDefault();
+    });
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+  }
+} catch {}
+
 function boot() {
   // V1 build/schema check: when APP_BUILD changes (new deploy), persist
   // versions and notify the service worker (V1 logic, adapted).
