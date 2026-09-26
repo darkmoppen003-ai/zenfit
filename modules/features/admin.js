@@ -5,7 +5,7 @@
    SHA-256 lives in core/secrets.js (plaintext only in the
    gitignored admin.env on your machine).
 ────────────────────────────────────────────────────────────── */
-import { S, update } from '../core/store.js';
+import { S, update, idbDeleteImage } from '../core/store.js';
 import { uid } from '../core/utils.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { getTodayStr } from '../core/utils.js';
@@ -300,10 +300,33 @@ function renderMissions(body) {
     if (!title) { showNotif('Title required', '!'); return; }
     const rules = [...body.querySelectorAll('[data-rule]')].map((row) => readRuleRow(row)).filter(Boolean);
     const { GlobalBoard } = await import('../core/cloud.js');
-    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null);
+    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value));
     showNotif(ok ? 'Mission live globally — users track it from Inbox' : 'Publish failed — check Supabase config', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-msend').after(pubG);
+  const gSec = document.createElement('div');
+  gSec.innerHTML = `<div class="section-title mt12">Global missions (all devices, admin only)</div><div id="ad-gmissions"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div>`;
+  body.appendChild(gSec);
+  import('../core/cloud.js').then(async ({ GlobalBoard, sbDel }) => {
+    const box = gSec.querySelector('#ad-gmissions');
+    try {
+      const rows = await GlobalBoard.fetchEvents();
+      box.innerHTML = rows.length ? rows.slice(0, 20).map((r) => `<div class="flex-between mb8" style="gap:6px">
+        <div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title || 'Mission')}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${escapeHtml((r.descr || r.desc || '').slice(0, 60))}</div></div>
+        <button class="btn btn-sm btn-danger" data-gmdel="${escapeHtml(r.id || '')}">Delete</button></div>`).join('')
+        : '<div style="font-size:12px;color:var(--text-muted)">Nothing published yet.</div>';
+      box.querySelectorAll('[data-gmdel]').forEach((b) => {
+        b.onclick = async () => {
+          b.disabled = true;
+          const ok = await sbDel('global_events', b.dataset.gmdel);
+          showNotif(ok ? 'Mission removed globally' : 'Delete failed', ok ? 'OK' : '!');
+          if (ok) window.ZF.rerender();
+          else b.disabled = false;
+        };
+      });
+    } catch { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Offline.</div>'; }
+  }).catch(() => {});
   body.querySelectorAll('[data-mdel]').forEach((b) => { b.onclick = () => update((s) => { s.events = s.events.filter((x) => x.id !== b.dataset.mdel); }); });
 }
 
@@ -523,7 +546,11 @@ function renderContent(body) {
     <div style="font-size:12px;color:var(--text-muted)">Add via Themes tab → Wallpaper studio, or drop a URL here:</div>
     <div class="flex gap8 mt8"><input type="text" id="ad-wpurl" placeholder="https://…/image.jpg" maxlength="500">
     <button class="btn btn-sm btn-primary" id="ad-wpadd">Add</button></div>
+    <div id="ad-wplist" class="mt8" style="display:flex;flex-direction:column;gap:6px"></div>
     <div style="font-size:12px" class="mt8">${(S.bgImages || []).length} uploaded · presets ship in assets/bg/</div></div>
+  <div class="card mb12"><div class="section-title">Deployed assets (all devices, admin only)</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Wallpapers + themes shipped globally. Removing deletes them for everyone.</div>
+    <div id="ad-assets"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div></div>
   <div class="card mb12"><div class="section-title">Theme studio (same builder as Themes tab)</div>
     <div class="section-title mt8">Built-in</div>
     <div class="grid2 gap8" id="ad-theme-grid"></div>
@@ -552,6 +579,7 @@ function renderContent(body) {
     </div>
     <div class="flex gap8 mt8">
       <button class="btn btn-primary btn-sm" id="adth-save">Save Custom Theme</button>
+      <button class="btn btn-sm" id="adth-ship">Ship globally</button>
       <button class="btn btn-sm btn-ghost" id="adth-try">Try live</button>
     </div></div>
   <div class="card"><div class="section-title">Cloud sync (optional, Supabase)</div>
@@ -564,9 +592,65 @@ function renderContent(body) {
   body.querySelector('#ad-wpadd').onclick = () => {
     const url = sanitizeText(body.querySelector('#ad-wpurl').value, 500);
     if (!/^https?:\/\//i.test(url)) { showNotif('Paste a full https:// URL', '!'); return; }
-    update((s) => { s.bgImages = [...(s.bgImages || []), { name: 'Remote', src: url }]; });
+    update((s) => { s.bgImages = [...(s.bgImages || []), { id: uid('wp'), name: 'Remote', src: url }]; });
     showNotif('Wallpaper added', 'OK');
+    paintWpList();
   };
+  const paintWpList = () => {
+    const box = body.querySelector('#ad-wplist');
+    if (!box) return;
+    const ups = (S.bgImages || []).map((w, ix) => ({ w, id: typeof w === 'string' ? w : (w.id || w.src), name: typeof w === 'string' ? w : (w.name || 'Upload'), src: typeof w === 'string' ? w : (w.src || w.id) }))
+      .filter((x) => x.id && !String(x.id).startsWith('preset:'));
+    box.innerHTML = ups.map((x, i) => `<div class="flex-between" style="font-size:12px;gap:6px">
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${escapeHtml(x.name)}</span>
+      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-wpdeploy="${i}">Deploy</button><button class="btn btn-sm btn-ghost" data-wpdel="${i}">Remove</button></span></div>`).join('')
+      || '<div style="font-size:11px;color:var(--text-muted)">No uploads yet.</div>';
+    box.querySelectorAll('[data-wpdel]').forEach((b) => {
+      b.onclick = () => {
+        const x = ups[Number(b.dataset.wpdel)];
+        update((s) => { s.bgImages = (s.bgImages || []).filter((w) => (typeof w === 'string' ? w : (w.id || w.src)) !== x.id); });
+        try { idbDeleteImage(x.id); } catch {}
+        showNotif('Wallpaper removed from this device', 'OK');
+        paintWpList();
+      };
+    });
+    box.querySelectorAll('[data-wpdeploy]').forEach((b) => {
+      b.onclick = async () => {
+        const x = ups[Number(b.dataset.wpdeploy)];
+        b.disabled = true;
+        const { GlobalBoard } = await import('../core/cloud.js');
+        const ok = await GlobalBoard.publishAsset('wallpaper', x.name, x.src);
+        showNotif(ok ? `“${x.name}” live on all devices` : 'Deploy failed', ok ? 'OK' : '!');
+        b.disabled = false;
+        loadDeployedAssets();
+      };
+    });
+  };
+  paintWpList();
+  async function loadDeployedAssets() {
+    const box = body.querySelector('#ad-assets');
+    if (!box) return;
+    try {
+      const { GlobalBoard } = await import('../core/cloud.js');
+      const { sbDel } = await import('../core/cloud.js');
+      const rows = await GlobalBoard.fetchAssets();
+      box.innerHTML = rows.length ? rows.slice(0, 30).map((r) => `<div class="flex-between mb8" style="gap:6px">
+        <div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.name || 'Asset')}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(r.kind || '')}</div></div>
+        <button class="btn btn-sm btn-danger" data-adel="${escapeHtml(r.id || '')}">Remove</button></div>`).join('')
+        : '<div style="font-size:12px;color:var(--text-muted)">Nothing deployed yet.</div>';
+      box.querySelectorAll('[data-adel]').forEach((b) => {
+        b.onclick = async () => {
+          b.disabled = true;
+          const ok = await sbDel('global_assets', b.dataset.adel);
+          showNotif(ok ? 'Removed from all devices' : 'Delete failed', ok ? 'OK' : '!');
+          if (ok) loadDeployedAssets();
+          else b.disabled = false;
+        };
+      });
+    } catch { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Offline.</div>'; }
+  }
+  loadDeployedAssets();
   wireThemeStudio(body);
   body.querySelector('#ad-ssave').onclick = () => {
     localStorage.setItem('zf_supabase', JSON.stringify({ url: sanitizeText(body.querySelector('#ad-surl').value, 200), key: sanitizeText(body.querySelector('#ad-skey').value, 500) }));
@@ -696,11 +780,10 @@ function wireThemeStudio(body) {
   q('#adth-name').oninput = live;
   tpl.onchange = sync;
   sync();
-  q('#adth-save').onclick = () => {
+  const collectTheme = () => {
     const draft = live();
     const name = sanitizeText(q('#adth-name').value, 30);
-    if (!name) { showNotif('Name your theme', '!'); return; }
-    if (getCustomThemes().some((t) => t.name === name)) { showNotif(`"${name}" already exists`, '!'); return; }
+    if (!name) { showNotif('Name your theme', '!'); return null; }
     const [kind, key] = (tpl.value || 'built:midnight').split(':');
     const base = kind === 'custom'
       ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
@@ -712,9 +795,25 @@ function wireThemeStudio(body) {
       if (wp) { t.bgImage = wp; t.bgType = 'image'; }
       if (fx) { t.particleEffect = fx; t.p_hue = t.p_hue || draft.p_hue; }
     } catch {}
+    return t;
+  };
+  q('#adth-save').onclick = () => {
+    const t = collectTheme();
+    if (!t) return;
+    if (getCustomThemes().some((x) => x.name === t.name)) { showNotif(`"${t.name}" already exists`, '!'); return; }
     update((s) => { s.customThemes = [...(s.customThemes || []), t]; });
-    showNotif(`Theme "${name}" created!`, 'OK');
+    showNotif(`Theme "${t.name}" created!`, 'OK');
     window.ZF.rerender();
+  };
+  q('#adth-ship').onclick = async () => {
+    const t = collectTheme();
+    if (!t) return;
+    const btn = q('#adth-ship');
+    btn.disabled = true;
+    const { GlobalBoard } = await import('../core/cloud.js');
+    const ok = await GlobalBoard.publishAsset('theme', t.name, '', t);
+    showNotif(ok ? `“${t.name}” live on all devices` : 'Ship failed', ok ? 'OK' : '!');
+    btn.disabled = false;
   };
   q('#adth-try').onclick = () => {
     applyThemeObject({ ...live(), name: 'Preview' }, S.theme);
