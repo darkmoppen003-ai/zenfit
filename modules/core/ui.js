@@ -4,6 +4,7 @@
 ────────────────────────────────────────────────────────────── */
 import { escapeHtml } from './sanitize.js';
 import { S, addXP, resolveBgSrc, update } from './store.js';
+import { PRESET_WALLPAPERS } from './themes.js';
 import { rankForLevel, xpForLevel } from './utils.js';
 
 export function el(id) { return document.getElementById(id); }
@@ -219,6 +220,11 @@ export function applyBackgroundConfig() {
     bg.after(dim);
   }
   const dim = el('zf-bg-dim');
+  if (st.bgType === 'image' && st.bgImage) {
+    if (String(st.bgImage).startsWith('preset:') && !PRESET_WALLPAPERS.some((p) => `preset:${p.file}` === st.bgImage)) {
+      update((s) => { s.bgType = 'solid'; s.bgImage = null; }, { silent: true });
+    }
+  }
   if (st.bgType === 'image' && st.bgImage) {
     bg.style.backgroundImage = 'none';
     bg.style.background = 'var(--app-bg)';

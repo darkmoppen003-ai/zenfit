@@ -82,3 +82,10 @@ Material changes to this policy will be noted in the in-app changelog
 This is a self-hosted personal project. For privacy questions or deletion
 help with the optional global board, contact the instance owner who gave
 you the app link.
+
+## 7. Wallpaper credit
+
+Thank you to the original creators of the awesome wallpapers bundled with
+ZenFit — we do not own any of the wallpapers, and all credit is due to
+their original creators. If you are a creator and want your wallpaper
+removed, kindly contact us by raising an issue in the repo.

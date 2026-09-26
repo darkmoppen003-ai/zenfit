@@ -28,3 +28,10 @@ DEALINGS IN THE SOFTWARE.
 ZenFit estimates (calories, macros, body fat %, grades) are rough,
 non-medical approximations for everyday tracking only. Nothing in this app
 is medical advice. Consult a qualified professional for health decisions.
+
+## Wallpaper credit
+
+Thank you to the original creators of the awesome wallpapers bundled with
+ZenFit — we do not own any of the wallpapers, and all credit is due to
+their original creators. If you are a creator and want your wallpaper
+removed, kindly contact us by raising an issue in the repo.

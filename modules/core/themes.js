@@ -9,10 +9,9 @@ import { S, update } from './store.js';
 import { uid } from './utils.js';
 
 export const PRESET_WALLPAPERS = [
-  { file: 'berserk.jpg', name: 'Berserk' }, { file: 'holy.jpeg', name: 'Holy' },
-  { file: 'kafka-honkai-star-rail-hr.jpg', name: 'Kafka' }, { file: 'knowledge.png', name: 'Knowledge' },
-  { file: 'man.jpg', name: 'Man' }, { file: 'toji.jpg', name: 'Toji' },
-  { file: 'violet evergarden.png', name: 'Violet' },
+  { file: 'berserk.jpg', name: 'Berserk' }, { file: 'vegeta.jpg', name: 'Vegeta' },
+  { file: 'violet evergarden.png', name: 'Violet' }, { file: 'red-space.jpeg', name: 'Red Space' },
+  { file: 'endure.jpeg', name: 'Endure' },
 ];
 
 export const THEMES = {

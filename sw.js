@@ -1,7 +1,7 @@
 // ZenFit V2 Service Worker — offline shell + updates.
 // Cache names derive from build → every deploy refreshes cleanly.
 
-const SW_BUILD = "2026.09.26.29";
+const SW_BUILD = "2026.09.26.32";
 const SCHEMA_VERSION = 11;
 
 const CACHE = `zenfit-${SW_BUILD}`;
@@ -84,12 +84,10 @@ const STATIC_ASSETS = [
   './assets/zen/soul_frequencies.mp3',
   './assets/zen/thunder.mp3',
   './assets/bg/berserk.jpg',
-  './assets/bg/holy.jpeg',
-  './assets/bg/kafka-honkai-star-rail-hr.jpg',
-  './assets/bg/knowledge.png',
-  './assets/bg/man.jpg',
-  './assets/bg/toji.jpg',
+  './assets/bg/vegeta.jpg',
   './assets/bg/violet evergarden.png',
+  './assets/bg/red-space.jpeg',
+  './assets/bg/endure.jpeg',
 ];
 
 const NEVER_CACHE_HOSTS = ['anthropic.com', 'openfoodfacts', 'peerjs.com', 'exercisedb', 'supabase.co'];
