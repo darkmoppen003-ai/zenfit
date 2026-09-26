@@ -148,6 +148,8 @@ export const GlobalBoard = {
   publishBroadcast: (title, body, target = 'all') => GlobalBoard.publish('global_broadcasts', { title, body, target }),
   publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '') => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image } : { title, descr, xp, status: 'live', target, image }),
   publishReward: (title, xp, code = '', target = 'all') => GlobalBoard.publish('global_rewards', { title, xp, code, target }),
+  publishAsset: (kind, name, url = '', data = null) => GlobalBoard.publish('global_assets', { kind, name, url, data }),
+  fetchAssets: (kind = null) => GlobalBoard.fetch('global_assets').then((rows) => kind ? rows.filter((r) => r.kind === kind) : rows),
   fetchBroadcasts: () => GlobalBoard.fetch('global_broadcasts'),
   fetchEvents: () => GlobalBoard.fetch('global_events'),
   fetchRewards: () => GlobalBoard.fetch('global_rewards'),
