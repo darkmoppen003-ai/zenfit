@@ -10,6 +10,10 @@ html {
   height: 100%;
 }
 
+html {
+  touch-action: pan-x pan-y;
+}
+
 body {
   background: var(--app-bg);
   color: var(--text-primary);
@@ -20,6 +24,21 @@ body {
   overscroll-behavior: none;
   overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch devices: no pinch-zoom gestures, no text selection, no hold callout.
+   Form fields stay editable/selectable. Desktop keeps full selection. */
+@media (pointer: coarse) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  input, textarea, select, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
 }
 
 @font-face {
