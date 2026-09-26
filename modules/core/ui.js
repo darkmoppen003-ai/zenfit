@@ -268,7 +268,7 @@ function renderParticles() {
   const density = 0.25 + 0.75 * Math.min(1, N / 150);
   const buildMatrix = () => {
     const cols = Math.max(10, Math.floor(c.width / 16));
-    parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(0, c.height), s: R(0.5, 1.6), gap: 18, active: Math.random() < density, trail: Array.from({ length: 8 }, () => null), seed: Math.random() }));
+    parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(-600, 0), s: R(5, 9), gap: 18, active: Math.random() < density, trail: Array.from({ length: 8 }, () => null), seed: Math.random() }));
   };
   const buildCyber = () => {
     parts = Array.from({ length: N }, () => ({ x: R(0, c.width), y: R(0, c.height), len: R(10, 30), s: R(0.5, 1.6), col: Math.random() > 0.5 }));
@@ -288,7 +288,7 @@ function renderParticles() {
       s: R(0.2, 0.8), ph: R(0, 6.28), sway: R(0, 1), vx: R(-0.3, 0.3),
     }));
   }
-  const glyphs = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ0123456789ABCDEFGHIJKLMNOPQRSTUXYZﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃ';
+  const glyphs = '0110100101アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃ';
   const hiddenWords = ['DARK', 'MOPPEN', 'SHIVAM', '8958'];
   let raf = 0, t = 0;
   const mx = { x: -9999, y: -9999 };
@@ -318,12 +318,16 @@ function renderParticles() {
           if (!tc) return;
           const yy = p.y - idx * p.gap;
           if (idx === 0) { ctx.fillStyle = '#fff'; ctx.globalAlpha = 1; }
+          else if (Math.random() < 0.1) { ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.85; }
           else { ctx.fillStyle = `hsla(${hue},85%,60%,1)`; ctx.globalAlpha = Math.max(0.2, 1 - idx * 0.13); }
           ctx.fillText(tc, p.x, yy);
         });
         ctx.globalAlpha = 1;
-        p.y += p.s * 0.8 * sp;
-        if (p.y - p.trail.length * p.gap > c.height + 20) { p.y = R(-40, 0); p.s = R(0.5, 1.6); p.seed = Math.random(); p.trail = Array.from({ length: 8 }, () => null); }
+        p.y += p.s * sp;
+        if (p.y - p.trail.length * p.gap > c.height + 20) {
+          if (Math.random() > 0.6) { p.y = R(-120, -20); p.s = R(5, 9); p.seed = Math.random(); p.trail = Array.from({ length: 8 }, () => null); }
+          else p.y = c.height + 100;
+        }
       });
       ctx.globalAlpha = 1;
     } else ctx.clearRect(0, 0, c.width, c.height);
