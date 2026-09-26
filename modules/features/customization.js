@@ -152,11 +152,16 @@ export function renderCustomization(host) {
   <div class="card mb8">
     <div><div style="font-size:13px;font-weight:600">🎨 Themes</div>
     <div style="font-size:11px;color:var(--text-muted)">Built-in & custom color schemes</div></div>
-    <div id="themes-builtin">
-      <div class="section-title mt12">Built-In Themes</div>
+    <div id="themes-wrap">
+      <div class="section-title mt12">Themes</div>
+      ${collapseHeader('themesBuiltin', 'Built-In Themes', '🎨', 'Four hand-tuned schemes', 'default-open')}
+      <div class="collapsible-body${S.collapsedSections?.['themesBuiltin'] ? ' collapsed' : ''}" id="themesBuiltin">
       <div class="grid2" id="theme-grid"></div>
-      <div class="section-title mt12">Custom Themes</div>
+      </div>
+      ${collapseHeader('themesCustom', 'Custom Themes', '🛠️', 'Yours + coach picks', 'default-open')}
+      <div class="collapsible-body${S.collapsedSections?.['themesCustom'] ? ' collapsed' : ''}" id="themesCustom">
       <div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
       <div id="th-creator-home" style="display:none"></div>
       <div id="th-creator" style="display:none">
       <div class="section-title mt12">Live preview & creator</div>
