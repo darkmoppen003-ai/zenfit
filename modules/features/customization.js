@@ -45,6 +45,8 @@ export function renderCustomization(host) {
     <div class="collapsible-body${isCollapsed('wallpaper-sliders') ? ' collapsed' : ''}" id="wallpaper-sliders">
       <div class="section-title mt12">Gallery</div>
       <div class="grid3" id="wp-gallery"></div>
+      <div class="section-title mt12">Coach picks (from your coach)</div>
+      <div class="grid3" id="wp-coach"><div style="font-size:11px;color:var(--text-muted)">Syncing…</div></div>
       <div class="flex gap8 mt8" style="flex-wrap:wrap">
         <label class="btn btn-sm" style="cursor:pointer">Upload<input type="file" id="wp-upload" accept="image/*" style="display:none"></label>
         <button class="btn btn-sm btn-ghost" id="wp-clear">Remove wallpaper</button>
@@ -231,6 +233,23 @@ export function renderCustomization(host) {
       showNotif(`Wallpaper: ${w.name}`, 'OK');
     };
   });
+  import('../core/cloud.js').then(({ GlobalBoard }) => GlobalBoard.fetchAssets('wallpaper')).then((rows) => {
+    const box = host.querySelector('#wp-coach');
+    if (!box) return;
+    const items = (rows || []).filter((r) => /^https?:\/\//i.test(r.url || '')).slice(0, 12);
+    if (!items.length) { box.innerHTML = '<div style="font-size:11px;color:var(--text-muted)">No coach picks yet.</div>'; return; }
+    box.innerHTML = items.map((w, i) => `
+      <div class="theme-preview" data-coachwp="${i}" style="height:84px;background:var(--bg-overlay) center/cover;position:relative" title="${escapeHtml(w.name || 'Coach pick')}">
+      <img src="${escapeHtml(w.url)}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">
+      <span class="badge badge-purple" style="position:absolute;bottom:4px;left:4px;font-size:9px">Coach</span></div>`).join('');
+    box.querySelectorAll('[data-coachwp]').forEach((t) => {
+      t.onclick = () => {
+        const w = items[Number(t.dataset.coachwp)];
+        update((s) => { s.bgImage = w.url; s.bgType = 'image'; s.bgScreen = s.bgScreen || 'dashboard'; });
+        showNotif(`Wallpaper: ${w.name || 'Coach pick'}`, 'OK');
+      };
+    });
+  }).catch(() => { const box = host.querySelector('#wp-coach'); if (box) box.innerHTML = '<div style="font-size:11px;color:var(--text-muted)">Offline.</div>'; });
   gal.querySelectorAll('[data-wpdel]').forEach((b) => {
     b.onclick = () => {
       const w = allImages[Number(b.dataset.wpdel)];
@@ -481,6 +500,36 @@ export function renderCustomization(host) {
     if (nw) nw.onclick = () => showThemeBuilder();
   };
   drawMine();
+  import('../core/cloud.js').then(({ GlobalBoard }) => GlobalBoard.fetchAssets('theme')).then((rows) => {
+    const box = host.querySelector('#custom-themes-grid');
+    if (!box || !(rows || []).length) return;
+    const have = new Set(getCustomThemes().map((t) => t.name));
+    const fresh = rows.filter((r) => r.data && r.data.primary && !have.has(r.data.name || r.name));
+    if (!fresh.length) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'grid-column:1/-1';
+    wrap.innerHTML = `<div class="section-title mt8">Coach themes (tap to save + apply)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`
+      + fresh.slice(0, 6).map((r, i) => {
+        const t = r.data;
+        return `<div data-gtheme="${i}" style="cursor:pointer;padding:10px 12px;border-radius:10px;border:2px dashed var(--primary);background:${t.bgSurface || '#111'}">
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase || '#000'}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.primary}"></div>
+          <div style="width:14px;height:14px;border-radius:50%;background:${t.textMuted || '#888'}"></div></div>
+        <div style="font-size:12px;font-weight:600;color:${t.textPrimary || '#fff'}">${escapeHtml(t.name || r.name || 'Coach theme')}</div>
+        <div style="font-size:10px;color:var(--primary);margin-top:2px">Coach pick</div></div>`;
+      }).join('') + `</div>`;
+    box.appendChild(wrap);
+    wrap.querySelectorAll('[data-gtheme]').forEach((c) => {
+      c.onclick = () => {
+        const r = fresh[Number(c.dataset.gtheme)];
+        const t = { ...normalizeTheme(r.data), id: `ct_${Date.now()}`, name: String(r.data.name || r.name || 'Coach theme').slice(0, 30) };
+        update((s) => { s.customThemes = [...(s.customThemes || []), t]; });
+        applyTheme(`custom:${t.id}`);
+        showNotif(`Theme "${t.name}" saved + applied!`, 'OK');
+      };
+    });
+  }).catch(() => {});
 
   /* creator live preview */
   const tpl = document.querySelector('#th-tpl');
