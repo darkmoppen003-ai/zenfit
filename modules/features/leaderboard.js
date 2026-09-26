@@ -65,14 +65,23 @@ function renderGlobal(body) {
     list.innerHTML = '<div class="card" style="text-align:center;padding:40px 16px"><div style="font-size:24px;margin-bottom:10px">⚡</div><div style="font-size:13px">Fetching global rankings…</div></div>';
     return;
   }
+  const myName = (S.profile?.name || S.player?.name || '').trim().toLowerCase();
+  const myIdx = (() => {
+    const byDevice = globalRows.findIndex((u) => u.device_id && u.device_id === S.deviceId);
+    if (byDevice >= 0) return byDevice;
+    if (myName) {
+      const byName = globalRows.findIndex((u) => (u.name || '').trim().toLowerCase() === myName);
+      if (byName >= 0) return byName;
+    }
+    return -1;
+  })();
   list.innerHTML = globalRows.length ? `<div class="card"><div class="section-title">Top Hunters Worldwide</div>` + globalRows.slice(0, 50).map((u, i) => `
-    <div class="flex-between mb8"${u.device_id && u.device_id === S.deviceId ? ' style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:10px;padding:6px 8px"' : ''}><div class="flex gap8">
+    <div class="flex-between mb8"${i === myIdx ? ' style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:10px;padding:6px 8px"' : ''}><div class="flex gap8">
       <span style="font-size:12px;color:var(--text-muted);width:26px">#${i + 1}</span>
-      <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}${u.device_id && u.device_id === S.deviceId ? ' <span class="badge badge-purple">You</span>' : ''}</div>
+      <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}${i === myIdx ? ' <span class="badge badge-purple">You</span>' : ''}</div>
       <div style="font-size:10px;color:var(--text-muted)">🔥 ${u.streak || 0} streak</div></div></div>
       <span class="badge">Lv ${u.level} · ${escapeHtml(u.rank || '')}</span></div>`).join('') + `</div>`
     : '<div class="card text-center" style="color:var(--text-muted)">Board is empty — be the first.</div>';
-  const myIdx = globalRows.findIndex((u) => u.device_id && u.device_id === S.deviceId);
   const myRow = myIdx >= 0 ? globalRows[myIdx] : null;
   const myAvatar = myRow?.avatar_b64 || S.profilePic || '';
   const myInit = escapeHtml(((myRow?.name || S.profile?.name || S.player?.name || 'H')[0] || 'H').toUpperCase());
