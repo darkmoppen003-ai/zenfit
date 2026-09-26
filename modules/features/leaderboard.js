@@ -76,7 +76,7 @@ function renderGlobal(body) {
     return -1;
   })();
   list.innerHTML = globalRows.length ? `<div class="card"><div class="section-title">Top Hunters Worldwide</div>` + globalRows.slice(0, 50).map((u, i) => `
-    <div class="flex-between mb8"${i === myIdx ? ' style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:10px;padding:6px 8px"' : ''}><div class="flex gap8">
+    <div class="flex-between mb8"${i === myIdx ? ' style="border:1.5px solid var(--primary);border-radius:10px;padding:6px 8px;transform:scale(1.02);box-shadow:0 0 14px var(--primary-dim)"' : ''}><div class="flex gap8">
       <span style="font-size:12px;color:var(--text-muted);width:26px">#${i + 1}</span>
       <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}${i === myIdx ? ' <span class="badge badge-purple">You</span>' : ''}</div>
       <div style="font-size:10px;color:var(--text-muted)">🔥 ${u.streak || 0} streak</div></div></div>
