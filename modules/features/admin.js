@@ -385,6 +385,8 @@ function renderBroadcast(body) {
       </select></label>
     </div>
     <input type="text" id="ad-nimg" placeholder="Image URL (https://…) — optional" maxlength="500" class="mt8">
+    <div class="flex gap8 mt8"><button class="btn btn-sm" id="ad-nimg-add">Add image</button></div>
+    <div id="ad-nimgs" class="mt8" style="display:flex;flex-direction:column;gap:6px"></div>
     <label class="flex-between mt8" style="font-size:13px">Confetti shower on open
       <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
       <input type="checkbox" id="ad-nconf" style="opacity:0;width:0;height:0">
@@ -401,12 +403,42 @@ function renderBroadcast(body) {
   <div class="flex gap8 mt8"><button class="btn btn-sm btn-danger" id="ad-nclear">Clear inbox</button></div>
   <div class="section-title mt12">Global outbox (all devices)</div>
   <div id="ad-goutbox"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div>`;
+  const nimgs = [];
+  const paintImgs = () => {
+    const box = body.querySelector('#ad-nimgs');
+    if (!box) return;
+    box.innerHTML = nimgs.map((u, i) => `<div class="flex-between" style="font-size:11px;gap:6px">
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">[img:${i + 1}] ${escapeHtml(u.slice(0, 60))}</span>
+      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-nins="${i}">Insert</button><button class="btn btn-sm btn-ghost" data-nrm="${i}">✕</button></span></div>`).join('')
+      || '<div style="font-size:11px;color:var(--text-muted)">No images — Add one, then Insert places [img:N] in the text.</div>';
+    box.querySelectorAll('[data-nins]').forEach((b) => {
+      b.onclick = () => {
+        const ta = body.querySelector('#ad-nbody');
+        ta.value = `${ta.value}${ta.value && !ta.value.endsWith(' ') ? ' ' : ''}[img:${Number(b.dataset.nins) + 1}] `;
+        paintPreview();
+        ta.focus();
+      };
+    });
+    box.querySelectorAll('[data-nrm]').forEach((b) => {
+      b.onclick = () => { nimgs.splice(Number(b.dataset.nrm), 1); paintImgs(); paintPreview(); };
+    });
+  };
+  body.querySelector('#ad-nimg-add').onclick = () => {
+    const u = cleanImageUrl(body.querySelector('#ad-nimg').value);
+    if (!u) { showNotif('Paste a full https:// image URL first', '!'); return; }
+    if (nimgs.length >= 5) { showNotif('Max 5 images per message', '!'); return; }
+    nimgs.push(u);
+    body.querySelector('#ad-nimg').value = '';
+    paintImgs(); paintPreview();
+  };
+  paintImgs();
   const collect = () => ({
     title: sanitizeText(body.querySelector('#ad-ntitle').value, 60) || 'ZenFit',
     body: sanitizeText(body.querySelector('#ad-nbody').value, 300) || '',
     bg: ['sunset', 'ocean', 'forest', 'royal', 'ember', 'midnight'].includes(body.querySelector('#ad-nbg').value) ? body.querySelector('#ad-nbg').value : 'none',
     hl: ['primary', 'success', 'warning', 'danger', 'info'].includes(body.querySelector('#ad-nhl').value) ? body.querySelector('#ad-nhl').value : 'none',
-    image: cleanImageUrl(body.querySelector('#ad-nimg').value),
+    image: nimgs[0] || '',
+    images: [...nimgs],
     confetti: !!body.querySelector('#ad-nconf').checked,
   });
   const paintPreview = () => {
@@ -437,7 +469,7 @@ function renderBroadcast(body) {
     const target = sanitizeText(body.querySelector('#ad-ntarget').value, 40) || 'all';
     showNotif(target === 'all' ? 'Broadcasting globally…' : `Sending to ${target}…`, 'OK');
     const { GlobalBoard } = await import('../core/cloud.js');
-    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, confetti: m.confetti });
+    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, images: m.images, confetti: m.confetti });
     showNotif(ok ? (target === 'all' ? 'Broadcast live globally — users get it in Inbox' : `Message queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-npush').onclick = () => {

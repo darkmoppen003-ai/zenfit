@@ -199,3 +199,8 @@ failing items get a "Log manually" switch, never silent drops.
 ## 17. Session round-15 additions (2026-09-26, persistence + collapse fixes)
 
 17.1. **Matrix persistence:** guarded constellation fallthrough — it ran on matrix columns (`r/ph/vx` undefined → NaN), killing rain after frame one. Matrix now persists across re-renders (verified pixel-stable).
+
+## 18. Reference matrix rain (2026-09-26, from `Downloads/particle-effect.html`)
+
+18.1. **Reference behavior:** uniform 0.8 rows/frame (~768px/s), staggered negative starts, 20% white-flicker chars, `>0.975` reset gate, binary-heavy charset, speed slider 0.1–3.
+18.2. **Adopted:** fall 5–9px/frame, pour-in starts, 10% white flicker (head stays solid white), reset gate, binary charset. Kept: hue body, hidden words, density-via-count, wallpaper-safe destination-out fade.

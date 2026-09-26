@@ -128,7 +128,7 @@ export const GlobalBoard = {
       const post = (body) => fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: { ...sbHdr(), Prefer: 'return=minimal' }, body: JSON.stringify(body) });
       let body = { ...row };
       let res = await post(body);
-      for (const k of ['confetti', 'image', 'bg', 'hl', 'rules', 'target']) {
+      for (const k of ['confetti', 'image', 'images', 'bg', 'hl', 'rules', 'target']) {
         if (!res.ok && k in body) {
           delete body[k];
           res = await post(body);

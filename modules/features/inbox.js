@@ -25,6 +25,22 @@ const gMarkRead = (id) => {
 };
 const isGRead = (m) => gReadIds().includes('g-' + (m.id || m.title));
 const isGHidden = (m) => (S.hiddenGlobals || []).includes('g-' + (m.id || m.title));
+const IMG_RE = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/;
+const okImg = (u) => IMG_RE.test(u || '') ? u : '';
+const stripTokens = (s) => String(s || '').replace(/\[img:\d+\]/g, '');
+/** Render body with [img:N] tokens swapped for images (allowlisted src only). */
+function renderRichBody(body, images) {
+  const imgs = Array.isArray(images) ? images.map(okImg).filter(Boolean) : [];
+  const parts = String(body || '').split(/(\[img:\d+\])/g);
+  return parts.map((p) => {
+    const mt = p.match(/^\[img:(\d+)\]$/);
+    if (mt) {
+      const u = imgs[Number(mt[1]) - 1];
+      return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
+    }
+    return escapeHtml(p);
+  }).join('');
+}
 const kindColor = (m) => {
   if (m.kind === 'reward') return Number(m.xp) < 0 ? 'var(--danger)' : 'var(--warning)';
   if (/penalty/i.test(m.title || '')) return 'var(--danger)';
@@ -82,7 +98,7 @@ export function renderInbox(host) {
         + `<span style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-display);background:${kindColor(m)}22;color:${kindColor(m)};border:1px solid ${kindColor(m)}">${init}</span>`
         + `<div style="flex:1;min-width:0"><div class="flex-between"><div style="font-size:13px;font-weight:${unread ? 800 : 600};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'ZenFit')}</div>`
         + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}</span></div>`
-        + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.body || '')}</div>`
+        + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(stripTokens(m.body || ''))}</div>`
         + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
         + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" data-global="${global ? 1 : ''}" style="color:var(--danger);flex-shrink:0" title="${global ? 'Hide for me' : 'Delete'}">×</button>`}</div>`;
     }).join('') || '<div class="card text-center" style="color:var(--text-muted)">No messages match. Challenges and rewards from your coach appear here.</div>';
@@ -176,14 +192,14 @@ function openDetail(host, mid, isGlobal = false) {
   const claimed = (S.claimedRewards || []).includes(mid);
   const bg = MSG_BGS[m.bg] || '';
   const hl = MSG_HLS[m.hl] || '';
-  const img = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(m.image || '') ? m.image : '';
+  const img = okImg(m.image || '');
   host.innerHTML = `
   <button class="btn btn-sm btn-ghost mb12" id="inbox-back">← Back to inbox</button>
   <div class="card" style="${bg ? `background:${bg};` : ''}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
     ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
     <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bg ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
     <div style="font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
-    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(m.body || '')}</div>
+    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images)}</div>
     ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
   </div>
   ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
@@ -224,7 +240,7 @@ async function syncGlobals(host) {
     gThreads = myCasts.slice(0, 20).map((b) => ({
       id: b.id, title: b.title || 'Broadcast', body: b.body || '',
       date: (b.created_at || '').slice(0, 10), created_at: b.created_at || '',
-      bg: b.bg || 'none', hl: b.hl || 'none', image: b.image || '', confetti: !!b.confetti,
+      bg: b.bg || 'none', hl: b.hl || 'none', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], confetti: !!b.confetti,
     }));
     try { host._repaintInbox && host._repaintInbox(); } catch {}
     if (myCasts?.length) {
