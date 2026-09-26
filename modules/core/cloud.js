@@ -52,7 +52,7 @@ export const LeaderboardAPI = {
   },
   async fetch(limit = 50) {
     const res = await fetch(
-      `${URL}/rest/v1/${TABLE}?select=name,level,xp,rank,streak&opted_in=eq.true&order=level.desc&limit=${limit}`,
+      `${URL}/rest/v1/${TABLE}?select=device_id,name,level,xp,rank,streak,avatar_b64&opted_in=eq.true&order=level.desc&limit=${limit}`,
       { headers: hdr() }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

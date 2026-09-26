@@ -66,12 +66,26 @@ function renderGlobal(body) {
     return;
   }
   list.innerHTML = globalRows.length ? `<div class="card"><div class="section-title">Top Hunters Worldwide</div>` + globalRows.slice(0, 50).map((u, i) => `
-    <div class="flex-between mb8"><div class="flex gap8">
+    <div class="flex-between mb8"${u.device_id && u.device_id === S.deviceId ? ' style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:10px;padding:6px 8px"' : ''}><div class="flex gap8">
       <span style="font-size:12px;color:var(--text-muted);width:26px">#${i + 1}</span>
-      <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}</div>
+      <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}${u.device_id && u.device_id === S.deviceId ? ' <span class="badge badge-purple">You</span>' : ''}</div>
       <div style="font-size:10px;color:var(--text-muted)">🔥 ${u.streak || 0} streak</div></div></div>
       <span class="badge">Lv ${u.level} · ${escapeHtml(u.rank || '')}</span></div>`).join('') + `</div>`
     : '<div class="card text-center" style="color:var(--text-muted)">Board is empty — be the first.</div>';
+  const myIdx = globalRows.findIndex((u) => u.device_id && u.device_id === S.deviceId);
+  const myRow = myIdx >= 0 ? globalRows[myIdx] : null;
+  const myAvatar = myRow?.avatar_b64 || S.profilePic || '';
+  const myInit = escapeHtml(((myRow?.name || S.profile?.name || S.player?.name || 'H')[0] || 'H').toUpperCase());
+  list.innerHTML += `<div class="card mt12" style="border:2px solid var(--primary);box-shadow:0 0 18px var(--primary-dim)">
+    <div class="section-title">Your standing</div>
+    <div class="flex-between" style="gap:10px">
+      <div class="flex gap8" style="align-items:center;min-width:0">
+      ${/^data:image\/[a-zA-Z+.\-]+;base64,[A-Za-z0-9+/=]+$/.test(myAvatar) ? `<img src="${myAvatar}" alt="" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);flex-shrink:0">`
+        : `<span style="width:46px;height:46px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;font-family:var(--font-display);background:var(--primary-dim);color:var(--primary);border:2px solid var(--primary)">${myInit}</span>`}
+      <div style="min-width:0"><div style="font-size:15px;font-weight:800;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(myRow?.name || S.profile?.name || S.player?.name || 'Hunter')}</div>
+      <div style="font-size:11px;color:var(--text-muted)">${myRow ? `Rank #${myIdx + 1} worldwide · 🔥 ${myRow.streak || 0} streak` : (optedIn ? 'Climbing — outside the top 50' : 'Join above to enter the ranks')}</div></div></div>
+      <div style="text-align:right;flex-shrink:0"><div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--primary)">${myRow ? `#${myIdx + 1}` : `Lv ${S.player?.level || 1}`}</div>
+      <div style="font-size:11px;color:var(--text-muted)">${myRow ? `Lv ${myRow.level} · ${escapeHtml(myRow.rank || '')}` : `${S.player?.xp || 0} XP`}</div></div></div></div>`;
 }
 
 
