@@ -204,3 +204,9 @@ failing items get a "Log manually" switch, never silent drops.
 
 18.1. **Reference behavior:** uniform 0.8 rows/frame (~768px/s), staggered negative starts, 20% white-flicker chars, `>0.975` reset gate, binary-heavy charset, speed slider 0.1–3.
 18.2. **Adopted:** fall 5–9px/frame, pour-in starts, 10% white flicker (head stays solid white), reset gate, binary charset. Kept: hue body, hidden words, density-via-count, wallpaper-safe destination-out fade.
+
+## 19. Asset registry + shared theme engine (2026-09-26)
+
+19.1. **global_assets table** (`wallpaper`|`theme` kinds, name/url/data jsonb): admin deploys, everyone reads, admin deletes. Users get Coach picks gallery + Coach themes (save-copy + apply).
+19.2. **Theme engine lives in `core/themes.js`** (THEMES, presets, applier). Features import from core — never feature-to-feature. Customization re-exports for compat.
+19.3. **User hiding:** `hiddenGlobals[]` filters threads/missions/rewards; read-gated × buttons; global deletes stay admin-only via outbox.
