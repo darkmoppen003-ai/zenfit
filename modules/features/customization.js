@@ -52,6 +52,8 @@ export function renderCustomization(host) {
         <label class="btn btn-sm" style="cursor:pointer">Upload<input type="file" id="wp-upload" accept="image/*" style="display:none"></label>
         <button class="btn btn-sm btn-ghost" id="wp-clear">Remove wallpaper</button>
       </div>
+      ${collapseHeader('wp-frameed', 'Frame Editor', '🖼️', 'Crop, zoom, position & fit', 'default-collapsed')}
+      <div class="collapsible-body${isCollapsed('wp-frameed') ? ' collapsed' : ''}" id="wp-frameed">
       <div class="section-title mt16">Frame editor — drag to move · pinch/scroll to zoom · 0 is centered</div>
       <div class="wp-frame" id="wp-frame">
         <img class="wp-img" id="wp-img" alt="">
@@ -76,6 +78,7 @@ export function renderCustomization(host) {
         </div>
       </div>
       <div class="flex gap8 mt8" style="font-size:11px;color:var(--text-muted)">Wallpaper applies to all screens.</div>
+      </div>
     </div>
   </div>
 
