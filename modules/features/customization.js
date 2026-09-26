@@ -8,6 +8,7 @@
 import { S, update, idbPutImage, idbDeleteImage, resolveBgSrc } from '../core/store.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
 import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles } from '../core/ui.js';
+import { toggleFullscreen, isFullscreen } from '../core/fullscreen.js';
 import { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme } from '../core/themes.js';
 export { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme };
 
@@ -115,7 +116,7 @@ export function renderCustomization(host) {
   <div class="section-title">Display</div>
   <div class="card mb8">
     <div class="flex-between"><div><div style="font-size:13px;font-weight:600">📱 Fullscreen Mode</div>
-      <div style="font-size:11px;color:var(--text-muted)">Auto fullscreen on splash for phones</div></div>
+      <div style="font-size:11px;color:var(--text-muted)">Toggles fullscreen immediately, plus auto on splash for phones</div></div>
       <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
         <input type="checkbox" id="fs-auto" ${S.fullscreenAutoStart !== false ? 'checked' : ''} style="opacity:0;width:0;height:0">
         <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${S.fullscreenAutoStart !== false ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;border:1px solid var(--border-strong)">
@@ -411,7 +412,14 @@ export function renderCustomization(host) {
   host.querySelector('#fx-speed').onchange = () => window.ZF.save();
 
   /* display */
-  host.querySelector('#fs-auto').onchange = (e) => update((s) => { s.fullscreenAutoStart = e.target.checked; });
+  host.querySelector('#fs-auto').onchange = (e) => {
+    const on = e.target.checked;
+    update((s) => { s.fullscreenAutoStart = on; });
+    try {
+      if (on && !isFullscreen()) toggleFullscreen();
+      else if (!on && isFullscreen()) toggleFullscreen();
+    } catch {}
+  };
 
   /* glass */
   host.querySelector('#fx-glass').onchange = (e) => update((s) => { s.glassMode = e.target.checked; });

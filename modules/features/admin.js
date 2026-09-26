@@ -9,7 +9,7 @@ import { S, update, idbDeleteImage } from '../core/store.js';
 import { uid } from '../core/utils.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { getTodayStr } from '../core/utils.js';
-import { showNotif, awardXP, MSG_BGS } from '../core/ui.js';
+import { showNotif, awardXP, MSG_BGS, openOverlay } from '../core/ui.js';
 import { MISSION_CATS, missionProgress } from '../core/missions.js';
 import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
@@ -602,16 +602,42 @@ function renderContent(body) {
     const ups = (S.bgImages || []).map((w, ix) => ({ w, id: typeof w === 'string' ? w : (w.id || w.src), name: typeof w === 'string' ? w : (w.name || 'Upload'), src: typeof w === 'string' ? w : (w.src || w.id) }))
       .filter((x) => x.id && !String(x.id).startsWith('preset:'));
     box.innerHTML = ups.map((x, i) => `<div class="flex-between" style="font-size:12px;gap:6px">
-      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${escapeHtml(x.name)}</span>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">${escapeHtml(x.name)}<br><span style="font-size:10px;color:var(--text-muted)">on this device only</span></span>
       <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-wpdeploy="${i}">Deploy</button><button class="btn btn-sm btn-ghost" data-wpdel="${i}">Remove</button></span></div>`).join('')
       || '<div style="font-size:11px;color:var(--text-muted)">No uploads yet.</div>';
     box.querySelectorAll('[data-wpdel]').forEach((b) => {
-      b.onclick = () => {
+      b.onclick = async () => {
         const x = ups[Number(b.dataset.wpdel)];
-        update((s) => { s.bgImages = (s.bgImages || []).filter((w) => (typeof w === 'string' ? w : (w.id || w.src)) !== x.id); });
-        try { idbDeleteImage(x.id); } catch {}
-        showNotif('Wallpaper removed from this device', 'OK');
-        paintWpList();
+        const removeLocal = () => {
+          update((s) => { s.bgImages = (s.bgImages || []).filter((w) => (typeof w === 'string' ? w : (w.id || w.src)) !== x.id); });
+          try { idbDeleteImage(x.id); } catch {}
+          paintWpList();
+        };
+        let deployed = [];
+        try {
+          const { GlobalBoard } = await import('../core/cloud.js');
+          deployed = ((await GlobalBoard.fetchAssets('wallpaper')) || []).filter((r) => r.url === x.src);
+        } catch {}
+        if (!deployed.length) { removeLocal(); showNotif('Wallpaper removed from this device', 'OK'); return; }
+        openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">“${escapeHtml(x.name)}” is live on all devices</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Remove it everywhere, or just from this device?</div>
+          <div style="display:flex;gap:8px;justify-content:center">
+          <button class="btn btn-sm btn-danger" id="wp-everywhere">Everywhere</button>
+          <button class="btn btn-sm" id="wp-here">This device only</button></div>`);
+        document.getElementById('wp-here').onclick = () => {
+          document.getElementById('zf-overlay')?.remove();
+          removeLocal();
+          showNotif('Removed from this device (still live globally)', 'OK');
+        };
+        document.getElementById('wp-everywhere').onclick = async () => {
+          const { sbDel } = await import('../core/cloud.js');
+          let okAll = true;
+          for (const r of deployed) { okAll = (await sbDel('global_assets', r.id)) && okAll; }
+          document.getElementById('zf-overlay')?.remove();
+          removeLocal();
+          showNotif(okAll ? 'Removed from all devices' : 'Global delete failed', okAll ? 'OK' : '!');
+          loadDeployedAssets();
+        };
       };
     });
     box.querySelectorAll('[data-wpdeploy]').forEach((b) => {
@@ -619,6 +645,8 @@ function renderContent(body) {
         const x = ups[Number(b.dataset.wpdeploy)];
         b.disabled = true;
         const { GlobalBoard } = await import('../core/cloud.js');
+        const existing = ((await GlobalBoard.fetchAssets('wallpaper')) || []).some((r) => r.url === x.src);
+        if (existing) { showNotif('Already deployed — see list below', '!'); b.disabled = false; return; }
         const ok = await GlobalBoard.publishAsset('wallpaper', x.name, x.src);
         showNotif(ok ? `“${x.name}” live on all devices` : 'Deploy failed', ok ? 'OK' : '!');
         b.disabled = false;
