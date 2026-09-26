@@ -3,10 +3,12 @@
      { id:'sleep', label:'Sleep', icon:'😴', render: renderSleep }
    in the SCREENS array below (+ import). Dashboard opens first —
    the V1 orb/home screen is intentionally gone (Step 7).
-   Hash routing (#/nutrition) → deep-linkable, back-button safe.
+   Hash routing (#/nutrition) → deep-linkable. In-app moves use
+   replaceState (no tab history): system back never walks tabs —
+   first back arms exit, second back exits the app.
 ────────────────────────────────────────────────────────────── */
 import { S } from './store.js';
-import { sfx, ICONS } from './ui.js';
+import { sfx, ICONS, showNotif } from './ui.js';
 import { animateScreenEnter } from './animations.js';
 import { renderDashboard } from '../features/dashboard.js';
 import { renderNutrition } from '../features/nutrition.js';
@@ -69,7 +71,7 @@ export function switchScreen(id, sub = null, dir = 'pop') {
   if (target.id !== currentScreen) sfx('nav');
   currentScreen = target.id;
   currentSub = sub;
-  if (location.hash !== `#/${target.id}`) history.pushState(null, '', `#/${target.id}`);
+  if (location.hash !== `#/${target.id}`) history.replaceState(null, '', `#/${target.id}`);
   renderActive(dir);
 }
 
@@ -253,14 +255,27 @@ function closeMorePopover() {
   document.removeEventListener('pointerdown', outsidePopoverCloser);
 }
 
-/* ── Swipe between screens (left/right) + hash/back support ── */
+/* ── Swipe between screens (left/right) + system-back-to-exit ──
+   No in-app history entries: first system back arms exit with a toast,
+   second back within 2s exits (PWA) instead of walking tabs. */
+let exitArmedUntil = 0;
 export function initRouter() {
   const fromHash = () => {
     const m = location.hash.match(/^#\/([a-z]+)/);
     currentScreen = m ? screenById(m[1]).id : 'dashboard';
   };
   fromHash();
-  window.addEventListener('popstate', () => { fromHash(); renderActive(); });
+  try { history.pushState({ zfTrap: 1 }, ''); } catch {}
+  window.addEventListener('popstate', () => {
+    if (Date.now() < exitArmedUntil) return;
+    exitArmedUntil = Date.now() + 2000;
+    try { showNotif('Press back again to exit', '!'); } catch {}
+    try {
+      history.pushState({ zfTrap: 1 }, '');
+      history.replaceState(null, '', `#/${currentScreen}`);
+    } catch {}
+    renderActive();
+  });
 
   let sx = null, sy = null;
   const host = document.getElementById('screens');
