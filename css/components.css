@@ -22,6 +22,10 @@
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .flex { display: flex; align-items: center; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
+/* Mobile alignment: inputs/selects stretch to row height so they sit
+   flush with sibling buttons (no 2–3px ragged edges on phones). */
+.flex > input, .flex-between > input, .flex > select, .flex-between > select { align-self: stretch; min-height: 0; }
+label.btn { display: inline-flex; align-items: center; justify-content: center; }
 .gap8 { gap: 8px; } .gap12 { gap: 12px; } .gap16 { gap: 16px; }
 .mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; } .mt16 { margin-top: 16px; }
 .mb8 { margin-bottom: 8px; } .mb10 { margin-bottom: 10px; } .mb12 { margin-bottom: 12px; } .mb16 { margin-bottom: 16px; }
