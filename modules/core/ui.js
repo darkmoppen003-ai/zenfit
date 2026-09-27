@@ -293,34 +293,51 @@ function renderParticles() {
     g.fillStyle = r;
     g.fillRect(0, 0, 64, 64);
   };
+  // ponytail: DPR-aware canvas (tekken port) — W/H stay in CSS px for all
+  // particle math; backing store scales by DPR (capped 2) for crisp lines.
+  // dprCap steps down sticky when frames run slow (phones), never up.
+  let W = innerWidth, H = innerHeight, DPR = 1, dprCap = 2;
   const buildMatrix = () => {
-    const cols = Math.max(10, Math.floor(c.width / 16));
+    const cols = Math.max(10, Math.floor(W / 16));
     parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(-600, 0), s: R(5, 9), gap: 18, active: Math.random() < density, trail: Array.from({ length: 8 }, () => null), seed: Math.random() }));
   };
   const buildCyber = () => {
-    parts = Array.from({ length: N }, () => ({ x: R(0, c.width), y: R(0, c.height), len: R(10, 30), s: R(0.5, 1.6), col: Math.random() > 0.5 }));
+    parts = Array.from({ length: N }, () => ({ x: R(0, W), y: R(0, H), len: R(10, 30), s: R(0.5, 1.6), col: Math.random() > 0.5 }));
   };
   const resize = () => {
-    c.width = innerWidth; c.height = innerHeight;
+    DPR = Math.min(window.devicePixelRatio || 1, 2, dprCap);
+    W = innerWidth; H = innerHeight;
+    c.width = Math.round(W * DPR); c.height = Math.round(H * DPR);
+    c.style.width = `${W}px`; c.style.height = `${H}px`;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (effect === 'matrix') buildMatrix();
     else if (effect === 'cyber') buildCyber();
-    else parts.forEach((p) => { p.x = Math.min(p.x, c.width); p.y = Math.min(p.y, c.height); });
+    else parts.forEach((p) => { p.x = Math.min(p.x, W); p.y = Math.min(p.y, H); });
   };
   resize();
   window.__zfResize = resize;
   window.addEventListener('resize', resize);
+  /* ── Embers: clean port of tekken-particles.html ──
+     ZenFit slider wiring — Count → N (particleCount), Hue → hue (particleHue),
+     Speed → sp (particleSpeed); direction dialog → diag (sparkDirection).
+     All three sliders rebuild via the pkey guard in renderParticles, so every
+     slider position takes effect on the next applyBg (debounced 120ms).
+     Reference-faithful: rise physics, glow sprite, gust, cooling, flicker,
+     trail geometry. ZenFit deltas: hero rate 25% (ref 1.5%), hero trail
+     36–48px (ref 18 units), slim halo+core stroke so heroes read on bright
+     wallpapers (reference assumes a near-black canvas). */
   const mkEmber = (anyY) => {
     const diag = (S.sparkDirection || 'straight') === 'diagonal';
     const r = Math.random(), hero = Math.random() < 0.25;
     return {
-      x: R(0, c.width), y: anyY ? R(0, c.height) : c.height + 10,
+      x: R(0, W), y: anyY ? R(0, H) : H + 10,
       vy: hero ? -(4 + Math.random() * 3) : -(1.5 + Math.random() * 3.5),
       vx: diag ? 0.3 + Math.random() * 0.5 : (Math.random() - 0.5) * 0.3,
       r: hero ? 4 + Math.random() * 2.5 : r < 0.75 ? 0.8 + Math.random() * 1.2 : r < 0.93 ? 2 + Math.random() * 1.5 : 3.5 + Math.random() * 1.5,
       life: 1, decay: hero ? 0.0015 : 0.002 + Math.random() * 0.005,
       h: Math.random() * 22 - 8, fl: 6 + Math.random() * 14, ph: R(0, 6.28),
       streak: hero || Math.random() < 0.12, hero,
-      tlen: hero ? 57 + Math.random() * 24 : 9,
+      tlen: hero ? 36 + Math.random() * 12 : 9,
       sway: 2 + Math.random() * 6, swf: 0.3 + Math.random() * 0.7, swp: R(0, 6.28),
     };
   };
@@ -330,22 +347,32 @@ function renderParticles() {
     parts = buildEmbers(true);
   } else if (effect !== 'matrix' && effect !== 'cyber') {
     parts = Array.from({ length: N }, () => ({
-      x: R(0, c.width), y: R(0, c.height), r: R(0.5, 2.5),
+      x: R(0, W), y: R(0, H), r: R(0.5, 2.5),
       s: R(0.2, 0.8), ph: R(0, 6.28), sway: R(0, 1), vx: R(-0.3, 0.3),
     }));
   }
   const glyphs = '0110100101アイウエオカキクケコサシスセソタチツテトナニヌネノABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃ';
   const hiddenWords = ['DARK', 'MOPPEN', 'SHIVAM', '8958'];
-  let raf = 0, t = 0;
+  let raf = 0, t = 0, fMark = 0, fAcc = 0, fCnt = 0;
   const mx = { x: -9999, y: -9999 };
   const onMove = (e) => { const p = e.touches?.[0] || e; mx.x = p.clientX; mx.y = p.clientY; };
+  window.__zfMove && window.removeEventListener('pointermove', window.__zfMove);
+  window.__zfMove = onMove;
   window.addEventListener('pointermove', onMove, { passive: true });
   const tick = () => {
+    // ponytail: sticky DPR step-down — sustained slow frames shrink backing store, never grow (no oscillation)
+    const now = performance.now();
+    if (fMark) { fAcc += now - fMark; fCnt++; }
+    fMark = now;
+    if (fCnt >= 90) {
+      const avg = fAcc / fCnt; fAcc = 0; fCnt = 0;
+      if (avg > 26 && dprCap > 1) { dprCap = Math.max(1, dprCap - 0.5); resize(); }
+    }
     t += 0.016 * sp;
     if (effect === 'matrix') {
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'source-over';
       ctx.font = 'bold 16px monospace';
       parts.forEach((p) => {
@@ -370,58 +397,55 @@ function renderParticles() {
         });
         ctx.globalAlpha = 1;
         p.y += p.s * sp;
-        if (p.y - p.trail.length * p.gap > c.height + 20) {
+        if (p.y - p.trail.length * p.gap > H + 20) {
           if (Math.random() > 0.6) { p.y = R(-120, -20); p.s = R(5, 9); p.seed = Math.random(); p.trail = Array.from({ length: 8 }, () => null); }
-          else p.y = c.height + 100;
+          else p.y = H + 100;
         }
       });
       ctx.globalAlpha = 1;
-    } else ctx.clearRect(0, 0, c.width, c.height);
+    } else ctx.clearRect(0, 0, W, H);
     if (effect === 'matrix') {
       // drawn above — skip per-particle branch
     } else if (effect === 'snow') {
       parts.forEach((p) => {
         p.y += (p.s + 0.4) * sp; p.x += Math.sin(t + p.ph) * 0.4 * sp;
-        if (p.y > c.height + 4) { p.y = -4; p.x = R(0, c.width); }
-        if (p.x > c.width + 4) p.x = -4; if (p.x < -4) p.x = c.width + 4;
+        if (p.y > H + 4) { p.y = -4; p.x = R(0, W); }
+        if (p.x > W + 4) p.x = -4; if (p.x < -4) p.x = W + 4;
         ctx.fillStyle = `hsla(${hue},85%,92%,${(0.3 + (p.r / 4) * 0.6).toFixed(2)})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
       });
     } else if (effect === 'embers') {
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
-      const gust = Math.sin(t * 0.23) * 0.25 + Math.sin(t * 0.71 + 1.7) * 0.15;
+      const gust = Math.sin(t * 0.23) * 0.25 + Math.sin(t * 0.71 + 1.7) * 0.15; // faint global breeze
       parts.forEach((p) => {
         p.x += (p.vx + gust) * sp; p.y += p.vy * sp; p.life -= p.decay * sp;
         if (p.y < -30 || p.life <= 0) { Object.assign(p, mkEmber(false)); return; }
-        const cool = 1 - p.life, sc = 0.45 + 0.55 * p.life;
+        const cool = 1 - p.life, sc = 0.45 + 0.55 * p.life; // shrink as it dies
         const a = Math.min(1, p.life * 2.5) * (0.7 + 0.3 * Math.sin(t * p.fl + p.ph));
-        const gs = p.r * 3.2 * sc * (p.hero ? 1.2 : 1);
+        const hh = (((hue + p.h - cool * 18) % 360) + 360) % 360 | 0, li = (48 + 22 * p.life) | 0; // hot amber → deep red
+        const dx = p.x + Math.sin(t * p.swf + p.swp) * p.sway, gs = p.r * 3.2 * sc * (p.hero ? 1.05 : 1);
         ctx.globalAlpha = a * 0.7;
-        ctx.drawImage(emberGlow, p.x - gs / 2, p.y - gs / 2, gs, gs);
+        ctx.drawImage(emberGlow, dx - gs / 2, p.y - gs / 2, gs, gs);
         ctx.globalAlpha = Math.min(1, a);
-        const hh = (((hue + p.h - cool * 18) % 360) + 360) % 360;
-        const li = 48 + 22 * p.life;
-        ctx.strokeStyle = ctx.fillStyle = `hsl(${hh | 0},100%,${li | 0}%)`;
-        const dx = p.x + Math.sin(t * p.swf + p.swp) * p.swa;
-        // ponytail: tlen is pixels of trail — normalize by speed (raw velocity×tlen drew 200-500px hairlines that washed out)
+        // tlen is pixels of trail — normalize by speed (reference multiplies raw
+        // velocity, which at our 57–81 range drew screen-long hairlines)
         const spd = Math.max(1, Math.hypot(p.vx + gust, p.vy)), tl = (p.tlen || 9) / spd * Math.min(sp, 1.6);
+        const ex = dx - (p.vx + gust) * tl, ey = p.y - p.vy * tl;
         if (p.streak) {
-          // ponytail: halo + core double-stroke — heroes read on bright wallpapers where the single thin tekken line washed out
-          const ex = dx - (p.vx + gust) * tl, ey = p.y - p.vy * tl;
-          const wCore = p.hero ? Math.max(2, p.r * 0.5 * sc) : 1;
-          if (p.hero) {
-            ctx.globalAlpha = Math.min(1, a) * 0.35;
-            ctx.strokeStyle = `hsl(${hh | 0},100%,${Math.min(80, (li | 0) + 10)}%)`;
-            ctx.lineWidth = wCore + 3;
+          const wCore = p.hero ? Math.max(1.5, p.r * 0.35 * sc) : 1;
+          if (p.hero) { // halo pass — heroes read on bright wallpapers (ref assumes near-black canvas)
+            ctx.globalAlpha = Math.min(1, a) * 0.25;
+            ctx.strokeStyle = `hsl(${hh},100%,${Math.min(80, li + 10)}%)`;
+            ctx.lineWidth = wCore + 1.5;
             ctx.beginPath(); ctx.moveTo(dx, p.y); ctx.lineTo(ex, ey); ctx.stroke();
             ctx.globalAlpha = Math.min(1, a);
-            ctx.strokeStyle = `hsl(${hh | 0},100%,${Math.min(88, (li | 0) + 18)}%)`;
           }
+          ctx.strokeStyle = p.hero ? `hsl(${hh},100%,${Math.min(88, li + 18)}%)` : `hsl(${hh},100%,${li}%)`;
           ctx.lineWidth = wCore;
           ctx.beginPath(); ctx.moveTo(dx, p.y); ctx.lineTo(ex, ey); ctx.stroke();
-        } else if (p.r < 2) ctx.fillRect(dx, p.y, p.r * sc, p.r * sc);
-        else { ctx.beginPath(); ctx.arc(dx, p.y, Math.max(0.5, p.r * 0.7 * sc), 0, 7); ctx.fill(); }
+        } else if (p.r < 2) { ctx.fillStyle = `hsl(${hh},100%,${li}%)`; ctx.fillRect(dx, p.y, p.r * sc, p.r * sc); }
+        else { ctx.fillStyle = `hsl(${hh},100%,${li}%)`; ctx.beginPath(); ctx.arc(dx, p.y, Math.max(0.5, p.r * 0.7 * sc), 0, 7); ctx.fill(); }
       });
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
@@ -448,14 +472,14 @@ function renderParticles() {
       parts.forEach((p) => {
         if (dir === 'diagonal') {
           p.x += p.s * 3 * sp; p.y += p.s * 1.5 * sp;
-          if (p.x > c.width + 20 || p.y > c.height + 20) {
-            if (Math.random() < 0.6) { p.x = R(0, c.width); p.y = R(-40, -10); }
-            else { p.x = R(-40, -10); p.y = R(0, c.height); }
+          if (p.x > W + 20 || p.y > H + 20) {
+            if (Math.random() < 0.6) { p.x = R(0, W); p.y = R(-40, -10); }
+            else { p.x = R(-40, -10); p.y = R(0, H); }
             p.s = R(0.5, 1.6);
           }
         } else {
           p.y += (p.s * 6 + 2) * sp;
-          if (p.y > c.height + 30) { p.y = -30; p.x = R(0, c.width); p.len = R(10, 30); p.s = R(0.5, 1.6); }
+          if (p.y > H + 30) { p.y = -30; p.x = R(0, W); p.len = R(10, 30); p.s = R(0.5, 1.6); }
         }
         ctx.strokeStyle = p.col ? `hsla(${hue},95%,60%,0.9)` : 'hsla(190,95%,60%,0.9)';
         ctx.shadowBlur = 8;
@@ -470,8 +494,8 @@ function renderParticles() {
         const dx = p.x - mx.x, dy = p.y - mx.y, d2 = dx * dx + dy * dy;
         if (d2 < 40000 && d2 > 1) { p.x += (dx / Math.sqrt(d2)) * 0.6 * sp; p.y += (dy / Math.sqrt(d2)) * 0.6 * sp; }
         p.x += p.vx * sp; p.y -= p.s * sp;
-        if (p.y < 0) { p.y = c.height; p.x = R(0, c.width); }
-        if (p.x < 0) p.x = c.width; if (p.x > c.width) p.x = 0;
+        if (p.y < 0) { p.y = H; p.x = R(0, W); }
+        if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
         const pulse = 0.7 + 0.3 * Math.sin(t * 3 + p.ph);
         if (p.r > 1.5) {
           ctx.fillStyle = `hsla(${hue},80%,70%,0.12)`;
