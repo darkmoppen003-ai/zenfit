@@ -56,13 +56,13 @@ function renderRichBody(body, images, headerImg = '') {
       const idx = Number(mt[1]) - 1;
       const u = imgs[idx];
       if (u) used.add(idx);
-      return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
+      return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
     }
     return escapeHtml(p);
   }).join('');
   // ponytail: untokened body images were invisible — append unreferenced ones (header already shown separately)
   const rest = imgs.filter((u, i) => !used.has(i) && u !== headerImg);
-  if (rest.length) html += rest.map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">`).join('');
+  if (rest.length) html += rest.map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">`).join('');
   return html;
 }
 const kindColor = (m) => {
@@ -91,7 +91,7 @@ export function renderInbox(host) {
   ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
     ${events.map((e) => {
       const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
-      return `<div class="card mb8">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
+      return `<div class="card mb8">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
       <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
@@ -306,7 +306,7 @@ async function syncGlobals(host) {
         return `<div class="card mb12" style="border-color:var(--primary)"><div class="flex-between">`
         + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display)">${escapeHtml(e.title || 'Event')}</div>`
         + `<span style="display:flex;gap:4px;align-items:center"><span class="badge badge-purple">Mission</span><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + gid)}" style="color:var(--danger)" title="Hide for me">×</button></span></div>`
-        + `${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:6px 0">` : ''}`
+        + `${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:6px 0">` : ''}`
         + `<div style="font-size:12px;color:var(--text-secondary);margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
         + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
         + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
