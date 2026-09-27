@@ -135,15 +135,71 @@ function renderBottomNav() {
       switchScreen(b.dataset.bnav);
     };
   });
+  // ponytail: desktop right-dock — flatten every tab into one scrollable list
+  // (6 visible, wheel reveals the rest like a list) + macOS proximity magnification.
+  const dockMode = !!window.matchMedia?.('(min-width: 1024px) and (pointer: fine)').matches;
+  bar.classList.toggle('dock-all', dockMode);
+  if (dockMode) {
+    bar.insertAdjacentHTML('beforeend', overflow.map((t) =>
+      `<div class="bottom-nav-item${currentScreen === t.id ? ' active' : ''}" data-bnav="${t.id}">
+        <span class="bni-icon">${DOCK_ICONS[t.id] || t.icon}</span><span class="bni-label">${t.label}</span></div>`).join('') +
+      `<div class="bottom-nav-item${currentScreen === 'inbox' ? ' active' : ''}" data-bnav="inbox" style="position:relative">
+        <span class="bni-icon">${ICONS.inbox}</span><span class="bni-label">Inbox</span>${(S.inboxUnread || 0) > 0 ? '<span class="nav-dot" style="position:absolute;top:4px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid var(--bg-base)"></span>' : ''}</div>` +
+      `<div class="bottom-nav-item" data-bnav="__navedit">
+        <span class="bni-icon">${ICONS.customization}</span><span class="bni-label">Nav-Edit</span></div>`);
+    bar.querySelectorAll('[data-bnav]').forEach((b) => {
+      b.onclick = (e) => {
+        if (b.dataset.bnav === '__more') { e.stopPropagation(); toggleMorePopover(); return; }
+        if (b.dataset.bnav === '__navedit') { closeMorePopover(); openNavEditor(); return; }
+        closeMorePopover();
+        switchScreen(b.dataset.bnav);
+      };
+    });
+  }
+  if (!bar.dataset.magDock) {
+    bar.dataset.magDock = '1';
+    const tip = document.createElement('div');
+    tip.id = 'dock-tip';
+    document.body.appendChild(tip);
+    const hideTip = () => tip.classList.remove('show');
+    bar.addEventListener('mousemove', (e) => {
+      if (!bar.classList.contains('dock-all')) { hideTip(); return; }
+      const hov = e.target.closest?.('.bottom-nav-item');
+      bar.querySelectorAll('.bottom-nav-item').forEach((it) => {
+        const r = it.getBoundingClientRect();
+        const d = Math.abs((r.top + r.height / 2) - e.clientY);
+        const s = 1 + 0.55 * Math.exp(-((d / 55) ** 2));
+        const icon = it.querySelector('.bni-icon');
+        if (icon) icon.style.transform = `scale(${s.toFixed(3)})`;
+      });
+      // ponytail: one shared tooltip names the hovered button (bar never widens)
+      if (hov && !document.body.classList.contains('nav-labels-off')) {
+        const label = hov.querySelector('.bni-label')?.textContent?.trim();
+        if (label) {
+          tip.textContent = label;
+          tip.classList.add('show');
+          const r = hov.getBoundingClientRect();
+          tip.style.top = `${r.top + r.height / 2}px`;
+          tip.style.transform = 'translateY(-50%)';
+          tip.style.left = `${Math.max(8, r.left - tip.offsetWidth - 12)}px`;
+        } else hideTip();
+      } else hideTip();
+    });
+    bar.addEventListener('mouseleave', () => {
+      bar.querySelectorAll('.bni-icon').forEach((ic) => { ic.style.transform = ''; });
+      hideTip();
+    });
+    bar.addEventListener('scroll', hideTip, { passive: true });
+  }
   let pop = document.getElementById('more-popover');
   if (!pop) { pop = document.createElement('div'); pop.id = 'more-popover'; pop.className = 'more-popover'; document.body.appendChild(pop); }
   pop.style.opacity = (S.navOpacity === false) ? '1' : String((S.navOpacityVal ?? 100) / 100);
   pop.innerHTML = overflow.map((t) =>
     `<div class="mp-item${currentScreen === t.id ? ' active-mp' : ''}" data-mp="${t.id}">
-      <span class="mp-icon">${DOCK_ICONS[t.id] || t.icon}</span><span class="mp-label">${t.label}</span></div>`).join('') +
-    `<div class="mp-item${currentScreen === 'inbox' ? ' active-mp' : ''}" data-mp="inbox">
-      <span class="mp-icon">${ICONS.inbox}</span><span class="mp-label">Inbox</span>${(S.inbox || []).length ? `<span class="mp-count">(${(S.inbox || []).length})</span>` : ''}${(S.inboxUnread || 0) > 0 ? '<span class="mp-dot"></span>' : ''}</div>` +
-    `<div class="mp-item" data-mp="__navedit"><span class="mp-icon">${ICONS.customization}</span><span class="mp-label">Nav-Edit</span></div>`;
+      <span class="mp-icon">${DOCK_ICONS[t.id] || t.icon}</span><span>${t.label}</span></div>`).join('') +
+    `<div class="mp-item${currentScreen === 'inbox' ? ' active-mp' : ''}" data-mp="inbox" style="position:relative">
+      <span class="mp-icon">${ICONS.inbox}</span><span>Inbox${(S.inbox || []).length ? ` (${S.inbox.length})` : ''}</span>${(S.inboxUnread || 0) > 0 ? '<span style="position:absolute;top:8px;right:10px;width:9px;height:9px;border-radius:50%;background:var(--danger)"></span>' : ''}</div>` +
+    `<div class="mp-item" data-mp="__navedit"><span class="mp-icon">${ICONS.customization}</span><span>Nav-Edit</span></div>`;
   pop.querySelectorAll('[data-mp]').forEach((m) => {
     m.onclick = () => {
       closeMorePopover();
