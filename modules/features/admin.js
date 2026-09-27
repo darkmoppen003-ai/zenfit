@@ -582,7 +582,19 @@ function renderBroadcast(body) {
       };
     });
     box.querySelectorAll('[data-nrm]').forEach((b) => {
-      b.onclick = () => { nimgs.splice(Number(b.dataset.nrm), 1); paintImgs(); paintPreview(); };
+      b.onclick = () => {
+        // ponytail: deleting an image renumbers higher tokens so [img:N] never dangles
+        const rm = Number(b.dataset.nrm);
+        nimgs.splice(rm, 1);
+        const ta = body.querySelector('#ad-nbody');
+        ta.value = ta.value.replace(/\[img:(\d+)\]/g, (m, n) => {
+          const k = Number(n);
+          if (k === rm + 1) return '';
+          if (k > rm + 1) return `[img:${k - 1}]`;
+          return m;
+        }).replace(/[ \t]{2,}/g, ' ');
+        paintImgs(); paintPreview();
+      };
     });
   };
   body.querySelector('#ad-nimg-add').onclick = () => {
@@ -607,9 +619,20 @@ function renderBroadcast(body) {
     const d = collect();
     const box = body.querySelector('#ad-npreview');
     if (!box) return;
+    // ponytail: preview mirrors the user view — header image + tokens resolved, so broken indexing is visible here first
+    const tokenHtml = String(d.body || '').split(/(\[img:\d+\])/g).map((part) => {
+      const mt = part.match(/^\[img:(\d+)\]$/);
+      if (mt) {
+        const u = d.images[Number(mt[1]) - 1];
+        return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;margin:4px 0">`
+          : `<span style="color:var(--danger)">[img:${mt[1]} → missing]</span>`;
+      }
+      return escapeHtml(part).slice(0, 120);
+    }).join('');
     box.innerHTML = `<div class="card-sm" style="${d.bg !== 'none' && MSG_BGS[d.bg] ? `background:${MSG_BGS[d.bg]};color:#fff;` : ''}${d.hl !== 'none' ? `border-color:var(--${d.hl});` : ''}">`
       + `<div style="font-size:12px;font-weight:700">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
-      + `<div style="font-size:11px;opacity:.85">${escapeHtml(d.body).slice(0, 80) || 'Preview…'}</div></div>`;
+      + (d.image ? `<img src="${escapeHtml(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;margin:4px 0">` : '')
+      + `<div style="font-size:11px;opacity:.85">${tokenHtml || 'Preview…'}</div></div>`;
   };
   ['#ad-ntitle', '#ad-nbody', '#ad-nbg', '#ad-nhl'].forEach((sel) => { body.querySelector(sel).oninput = paintPreview; });
   body.querySelector('#ad-nconf').onchange = (e) => {
