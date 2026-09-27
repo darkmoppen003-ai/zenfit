@@ -25,21 +25,45 @@ const gMarkRead = (id) => {
 };
 const isGRead = (m) => gReadIds().includes('g-' + (m.id || m.title));
 const isGHidden = (m) => (S.hiddenGlobals || []).includes('g-' + (m.id || m.title));
+const gVers = () => { try { return JSON.parse(localStorage.getItem('zf_global_versions') || '{}'); } catch { return {}; } };
+// ponytail: edited globals carry updated_at — version change re-marks as unread (silent replace, fresh badge)
+const gVerOf = (r) => r?.updated_at || `${r?.created_at || ''}|${(r?.title || '').length}-${(r?.body || r?.descr || r?.desc || '').length}`;
+const gNoteEdited = (gid, ver) => {
+  try {
+    const vs = gVers();
+    const prev = vs[gid];
+    vs[gid] = ver;
+    localStorage.setItem('zf_global_versions', JSON.stringify(vs));
+    if (prev && prev !== ver) {
+      const read = gReadIds().filter((id) => id !== gid);
+      localStorage.setItem('zf_global_read', JSON.stringify(read.slice(-100)));
+      return true;
+    }
+  } catch {}
+  return false;
+};
 const IMG_RE = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/;
 const okImg = (u) => IMG_RE.test(u || '') ? u : '';
 const stripTokens = (s) => String(s || '').replace(/\[img:\d+\]/g, '');
 /** Render body with [img:N] tokens swapped for images (allowlisted src only). */
-function renderRichBody(body, images) {
+function renderRichBody(body, images, headerImg = '') {
   const imgs = Array.isArray(images) ? images.map(okImg).filter(Boolean) : [];
+  const used = new Set();
   const parts = String(body || '').split(/(\[img:\d+\])/g);
-  return parts.map((p) => {
+  let html = parts.map((p) => {
     const mt = p.match(/^\[img:(\d+)\]$/);
     if (mt) {
-      const u = imgs[Number(mt[1]) - 1];
+      const idx = Number(mt[1]) - 1;
+      const u = imgs[idx];
+      if (u) used.add(idx);
       return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
     }
     return escapeHtml(p);
   }).join('');
+  // ponytail: untokened body images were invisible — append unreferenced ones (header already shown separately)
+  const rest = imgs.filter((u, i) => !used.has(i) && u !== headerImg);
+  if (rest.length) html += rest.map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">`).join('');
+  return html;
 }
 const kindColor = (m) => {
   if (m.kind === 'reward') return Number(m.xp) < 0 ? 'var(--danger)' : 'var(--warning)';
@@ -199,7 +223,7 @@ function openDetail(host, mid, isGlobal = false) {
     ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
     <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bg ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
     <div style="font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
-    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images)}</div>
+    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img)}</div>
     ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
   </div>
   ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
@@ -239,9 +263,22 @@ async function syncGlobals(host) {
     let html = '';
     gThreads = myCasts.slice(0, 20).map((b) => ({
       id: b.id, title: b.title || 'Broadcast', body: b.body || '',
-      date: (b.created_at || '').slice(0, 10), created_at: b.created_at || '',
+      date: (b.updated_at || b.created_at || '').slice(0, 10), created_at: b.created_at || '', updated_at: b.updated_at || '',
       bg: b.bg || 'none', hl: b.hl || 'none', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], confetti: !!b.confetti,
     }));
+    // edited globals → silent replace (same id) but fresh + unread
+    try {
+      let edited = 0;
+      [...(myCasts || []), ...(myEvts || []), ...(myRewards || [])].forEach((r) => {
+        const gid = 'g-' + (r.id || r.code || r.title);
+        if (gNoteEdited(gid, gVerOf(r))) edited++;
+      });
+      if (edited) {
+        update((s) => { s.inboxUnread = (s.inboxUnread || 0) + edited; }, { silent: true });
+        try { save(); } catch {}
+        showNotif(edited === 1 ? '📣 Updated broadcast — marked unread' : `📣 ${edited} updated — marked unread`, 'OK');
+      }
+    } catch {}
     try { host._repaintInbox && host._repaintInbox(); } catch {}
     if (myCasts?.length) {
       try {
