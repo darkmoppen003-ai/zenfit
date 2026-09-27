@@ -7,7 +7,7 @@
 import { S, update, getDeviceId, APP_VERSION, APP_BUILD } from '../core/store.js';
 import {
   calcBMI, bmiCategory, calcBMR, calcTDEE, calcBodyFat,
-  calcIdealWeight, calcWHR, macroSplit, goalLabel,
+  calcIdealWeight, calcWHR, macroSplit, goalLabel, GOAL_OPTS,
 } from '../core/utils.js';
 import { COUNTRY_TZ_MAP } from '../core/countries.js';
 import { escapeHtml, sanitizeText, sanitizeNumber, sanitizeEnum } from '../core/sanitize.js';
@@ -17,13 +17,6 @@ import { exportDataFile, importData, confirmReset } from '../core/backup.js';
 import { renderNotifSettings } from '../core/notify.js';
 import { LeaderboardAPI } from '../core/cloud.js';
 import { earnedIds } from '../core/achievements.js';
-
-const GOAL_OPTS = [
-  ['lose', 'Lose Weight (-500 kcal)'], ['lose_aggressive', 'Aggressive Cut (-750 kcal)'],
-  ['recomp', 'Body Recomposition'], ['gain', 'Gain Muscle (+350 kcal)'],
-  ['performance', 'Athletic Performance'], ['heart', 'Cardiovascular Health'],
-  ['maintain', 'Maintain Weight'],
-];
 const ACT_OPTS = [
   ['sedentary', 'Sedentary (desk job)'], ['light', 'Light (1-3 days/week)'],
   ['moderate', 'Moderate (3-5 days)'], ['active', 'Active (6-7 days)'],

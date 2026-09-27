@@ -90,6 +90,14 @@ export function goalLabel(goal) {
   }[goal] || 'Maintain';
 }
 
+/* Single source of truth for goal options (profile + onboarding stay linked). */
+export const GOAL_OPTS = [
+  ['lose', 'Lose Weight (-500 kcal)'], ['lose_aggressive', 'Aggressive Cut (-750 kcal)'],
+  ['recomp', 'Body Recomposition'], ['gain', 'Gain Muscle (+350 kcal)'],
+  ['performance', 'Athletic Performance'], ['heart', 'Cardiovascular Health'],
+  ['maintain', 'Maintain Weight'],
+];
+
 /* V1 macroSplit — goal-based macro targets from TDEE */
 export function macroSplit(tdee, goal) {
   if (goal === 'recomp') {

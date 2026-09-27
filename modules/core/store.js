@@ -17,9 +17,9 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 11;
+export const DATA_VERSION = 12;
 export const APP_VERSION = "8.8.3";
-export const APP_BUILD = "2026.09.26.32";
+export const APP_BUILD = "2026.09.27.33";
 
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
@@ -230,6 +230,10 @@ export function migrateData(saved) {
   if (version < 11) {
     if (saved.geminiApiKey !== undefined) delete saved.geminiApiKey;
     saved.dataVersion = 11;
+  }
+  if (version < 12) {
+    if (saved.particleEffect === 'sparks') saved.particleEffect = 'embers';
+    saved.dataVersion = 12;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

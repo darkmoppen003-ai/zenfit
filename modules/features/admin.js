@@ -564,7 +564,7 @@ function renderContent(body) {
       <label style="font-size:12px">Name<input type="text" id="adth-name" placeholder="Theme name" maxlength="30"></label>
       <label style="font-size:12px">Template<select id="adth-tpl"></select></label>
       <label style="font-size:12px">Wallpaper<select id="adth-wp"><option value="">— keep current —</option></select></label>
-      <label style="font-size:12px">Particles<select id="adth-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="sparks">🔥 Sparks</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
+      <label style="font-size:12px">Particles<select id="adth-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="embers">🔥 Embers</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
     </div>
     <div class="section-title mt12">Surfaces</div><div id="adth-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="section-title mt12">Text</div><div id="adth-texts" style="display:flex;flex-direction:column;gap:8px"></div>

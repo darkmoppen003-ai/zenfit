@@ -158,7 +158,7 @@ export function applyTheme(id) {
       try {
         if (t.bgImage) update((s) => { s.bgImage = t.bgImage; s.bgType = t.bgType || 'image'; }, { silent: true });
         update((s) => {
-          if (t.particleEffect) s.particleEffect = t.particleEffect;
+          if (t.particleEffect) s.particleEffect = t.particleEffect === 'sparks' ? 'embers' : t.particleEffect;
           if (t.p_hue != null) s.particleHue = Number(t.p_hue);
           if (t.particleSpeed != null) s.particleSpeed = Math.min(3, Math.max(0.2, Number(t.particleSpeed)));
           if (t.particleCount != null) s.particleCount = Math.min(150, Math.max(0, Number(t.particleCount)));
