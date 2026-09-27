@@ -246,14 +246,21 @@ export function applyBackgroundConfig() {
     if (dim) dim.style.opacity = '0';
   }
   if (st.accentColor) document.documentElement.style.setProperty('--primary', st.accentColor);
-  const navEls = document.querySelectorAll('.bottom-nav');
-  if (st.navOpacity === false || st.navOpacityVal < 100) {
-    navEls.forEach((b) => { b.style.opacity = String((st.navOpacityVal ?? 100) / 100); });
-  }
+  applyNavOpacity();
   renderParticles();
 }
 
+/** Nav + More popover share one opacity — applied synchronously so pop never lags behind slider. */
+export function applyNavOpacity() {
+  const v = (S.navOpacity === false) ? '1' : String((S.navOpacityVal ?? 100) / 100);
+  document.querySelectorAll('.bottom-nav, .more-popover').forEach((b) => { b.style.opacity = v; });
+}
+
 function renderParticles() {
+  // ponytail: nav opacity / theme-only changes must not restart particles (the stutter source)
+  const pkey = [S.particlesEnabled, S.particleCount, S.particleEffect, S.particleHue, S.particleSpeed, S.sparkDirection, S.cyberDirection].join('|');
+  if (window.__zfPkey === pkey && document.getElementById('zf-particles')) return;
+  window.__zfPkey = pkey;
   try { window.__zfRaf && cancelAnimationFrame(window.__zfRaf); } catch {}
   window.__zfResize && window.removeEventListener('resize', window.__zfResize);
   el('zf-particles')?.remove();
@@ -304,7 +311,7 @@ function renderParticles() {
   window.addEventListener('resize', resize);
   const mkEmber = (anyY) => {
     const diag = (S.sparkDirection || 'straight') === 'diagonal';
-    const r = Math.random(), hero = Math.random() < 0.04;
+    const r = Math.random(), hero = Math.random() < 0.25;
     return {
       x: R(0, c.width), y: anyY ? R(0, c.height) : c.height + 10,
       vy: hero ? -(4 + Math.random() * 3) : -(1.5 + Math.random() * 3.5),
@@ -313,6 +320,7 @@ function renderParticles() {
       life: 1, decay: hero ? 0.0015 : 0.002 + Math.random() * 0.005,
       h: Math.random() * 22 - 8, fl: 6 + Math.random() * 14, ph: R(0, 6.28),
       streak: hero || Math.random() < 0.12, hero,
+      tlen: hero ? 57 + Math.random() * 24 : 9,
       sway: 2 + Math.random() * 6, swf: 0.3 + Math.random() * 0.7, swp: R(0, 6.28),
     };
   };
@@ -395,11 +403,23 @@ function renderParticles() {
         const hh = (((hue + p.h - cool * 18) % 360) + 360) % 360;
         const li = 48 + 22 * p.life;
         ctx.strokeStyle = ctx.fillStyle = `hsl(${hh | 0},100%,${li | 0}%)`;
-        const dx = p.x + Math.sin(t * p.swf + p.swp) * p.swa, tl = (p.hero ? 26 : 9) * Math.min(sp, 1.6);
+        const dx = p.x + Math.sin(t * p.swf + p.swp) * p.swa;
+        // ponytail: tlen is pixels of trail — normalize by speed (raw velocity×tlen drew 200-500px hairlines that washed out)
+        const spd = Math.max(1, Math.hypot(p.vx + gust, p.vy)), tl = (p.tlen || 9) / spd * Math.min(sp, 1.6);
         if (p.streak) {
-          ctx.lineWidth = p.hero ? Math.max(1.5, p.r * 0.4 * sc) : 1;
-          ctx.beginPath(); ctx.moveTo(dx, p.y);
-          ctx.lineTo(dx - (p.vx + gust) * tl, p.y - p.vy * tl); ctx.stroke();
+          // ponytail: halo + core double-stroke — heroes read on bright wallpapers where the single thin tekken line washed out
+          const ex = dx - (p.vx + gust) * tl, ey = p.y - p.vy * tl;
+          const wCore = p.hero ? Math.max(2, p.r * 0.5 * sc) : 1;
+          if (p.hero) {
+            ctx.globalAlpha = Math.min(1, a) * 0.35;
+            ctx.strokeStyle = `hsl(${hh | 0},100%,${Math.min(80, (li | 0) + 10)}%)`;
+            ctx.lineWidth = wCore + 3;
+            ctx.beginPath(); ctx.moveTo(dx, p.y); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.globalAlpha = Math.min(1, a);
+            ctx.strokeStyle = `hsl(${hh | 0},100%,${Math.min(88, (li | 0) + 18)}%)`;
+          }
+          ctx.lineWidth = wCore;
+          ctx.beginPath(); ctx.moveTo(dx, p.y); ctx.lineTo(ex, ey); ctx.stroke();
         } else if (p.r < 2) ctx.fillRect(dx, p.y, p.r * sc, p.r * sc);
         else { ctx.beginPath(); ctx.arc(dx, p.y, Math.max(0.5, p.r * 0.7 * sc), 0, 7); ctx.fill(); }
       });

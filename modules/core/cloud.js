@@ -90,14 +90,14 @@ export function syncGlobalIfOptedIn() {
 }
 
 /* ── Global admin board (phase 1: Supabase-backed broadcasts/events/rewards) ──
-   Tables (run once in Supabase SQL editor):
-     create table global_broadcasts (id uuid default gen_random_uuid() primary key, title text, body text, target text default 'all', bg text default 'none', hl text default 'none', image text default '', confetti boolean default false, created_at timestamptz default now());
-     create table global_events (id uuid default gen_random_uuid() primary key, title text, descr text, xp int default 0, status text default 'live', target text default 'all', rules jsonb, image text default '', created_at timestamptz default now());
-     create table global_rewards (id uuid default gen_random_uuid() primary key, title text, xp int default 0, code text, target text default 'all', created_at timestamptz default now());
-     alter table global_broadcasts enable row level security; alter table global_events enable row level security; alter table global_rewards enable row level security;
-     create policy "public read" on global_broadcasts for select using (true);
-     create policy "public read" on global_events for select using (true);
-     create policy "public read" on global_rewards for select using (true);
+   Tables (run once in Supabase SQL editor — see supabase/migrations/*.sql, run all in order):
+     20260926000000_global_board.sql (base tables + read/insert)
+     20260925000001_global_delete.sql (anon delete)
+     20260926000002_broadcast_style.sql (bg/hl/image/confetti)
+     20260926000003_event_image.sql (event image)
+     20260926000004_broadcast_images.sql (images jsonb)
+     20260926000005_global_assets.sql (global_assets table)
+     20260927000000_global_update.sql (updated_at + anon update — required for edit)
    Config: Admin → Content stores custom URL/key in localStorage zf_supabase, else built-in leaderboard project is used.
 ────────────────────────────────────────────────────────────── */
 function sbCfg() {
@@ -120,6 +120,18 @@ export async function sbDel(table, id) {
     return res.ok;
   } catch { return false; }
 }
+/** Owner edit for broadcasts/missions — PATCH by id, stamps updated_at so clients treat it as fresh unread. */
+export async function sbUpdate(table, id, patch) {
+  try {
+    if (!/^[a-z_]+$/.test(table) || !id || !patch) return false;
+    const { url } = sbCfg();
+    const body = { ...patch, updated_at: new Date().toISOString() };
+    for (const k of ['image', 'url']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
+    if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
+    const res = await fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHdr(), body: JSON.stringify(body) });
+    return res.ok;
+  } catch { return false; }
+}
 
 export const GlobalBoard = {
   async publish(table, row) {
@@ -127,6 +139,9 @@ export const GlobalBoard = {
       const { url } = sbCfg();
       const post = (body) => fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: { ...sbHdr(), Prefer: 'return=minimal' }, body: JSON.stringify(body) });
       let body = { ...row };
+      // ponytail: remote-strict — global publish accepts https:// images only, drop anything else
+      for (const k of ['image', 'url']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
+      if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
       let res = await post(body);
       for (const k of ['confetti', 'image', 'images', 'bg', 'hl', 'rules', 'target']) {
         if (!res.ok && k in body) {

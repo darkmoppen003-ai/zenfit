@@ -104,7 +104,8 @@ export function renderCustomization(host) {
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span style="font-size:12px;color:var(--text-secondary)">Particle Hue</span>
-          <span style="font-size:12px;color:var(--primary)" id="fx-hue-v">${S.particleHue ?? 250}°</span></div>
+          <span style="font-size:12px;color:var(--primary)" id="fx-hue-v"><span id="fx-hue-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:hsl(${S.particleHue ?? 250},100%,60%);border:1px solid var(--border-strong);vertical-align:-1px;margin-right:4px"></span>${S.particleHue ?? 250}°</span></div>
+        <div style="height:8px;border-radius:4px;margin-bottom:6px;background:linear-gradient(to right,hsl(0,100%,55%),hsl(60,100%,55%),hsl(120,100%,55%),hsl(180,100%,55%),hsl(240,100%,55%),hsl(300,100%,55%),hsl(360,100%,55%))"></div>
         <input type="range" class="slider" id="fx-hue" min="0" max="360" value="${S.particleHue ?? 250}">
       </div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
@@ -125,6 +126,21 @@ export function renderCustomization(host) {
         <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${S.fullscreenAutoStart !== false ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;border:1px solid var(--border-strong)">
         <span style="position:absolute;height:18px;width:18px;left:${S.fullscreenAutoStart !== false ? '20px' : '3px'};bottom:2px;background:#fff;border-radius:50%"></span></span>
       </label></div>
+  </div>
+
+  <div class="card mb8">
+    ${collapseHeader('nav-opacity', 'Navigation Bar Opacity', '🧭', 'Bottom pill transparency', 'default-collapsed')}
+    <div class="collapsible-body${isCollapsed('nav-opacity') ? ' collapsed' : ''}" id="nav-opacity">
+      <div class="flex-between mt8"><div><div style="font-size:13px;font-weight:600">Transparent nav bar</div>
+      <div style="font-size:11px;color:var(--text-muted)">Applies the slider below to bottom bars</div></div>
+      <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+        <input type="checkbox" id="nav-opacity-toggle" ${S.navOpacity !== false ? 'checked' : ''} style="opacity:0;width:0;height:0">
+        <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${S.navOpacity !== false ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;border:1px solid var(--border-strong)">
+        <span style="position:absolute;height:18px;width:18px;left:${S.navOpacity !== false ? '20px' : '3px'};bottom:2px;background:#fff;border-radius:50%"></span></span>
+      </label></div>
+      <label style="font-size:12px">Opacity <span id="nav-opacity-v">${S.navOpacity === false ? 100 : (S.navOpacityVal || 100)}%</span>
+        <input type="range" class="slider" id="nav-opacity" min="40" max="100" value="${S.navOpacity === false ? 100 : (S.navOpacityVal || 100)}"></label>
+    </div>
   </div>
 
   <div class="card mb8">
@@ -404,7 +420,7 @@ export function renderCustomization(host) {
   };
   host.querySelector('#fx-count').onchange = () => window.ZF.save();
   host.querySelector('#fx-hue').oninput = (e) => {
-    host.querySelector('#fx-hue-v').textContent = `${e.target.value}°`;
+    host.querySelector('#fx-hue-v').innerHTML = `<span id="fx-hue-dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:hsl(${e.target.value},100%,60%);border:1px solid var(--border-strong);vertical-align:-1px;margin-right:4px"></span>${e.target.value}°`;
     update((s) => { s.particleHue = Number(e.target.value); }, { silent: true });
     document.documentElement.style.setProperty('--particle-hue', String(e.target.value));
     clearTimeout(host._fxT);
@@ -428,6 +444,24 @@ export function renderCustomization(host) {
       else if (!on && isFullscreen()) toggleFullscreen();
     } catch {}
   };
+
+  /* nav opacity (restored, collapsible, next to liquid glass) — direct DOM, no particle rebuild */
+  host.querySelector('#nav-opacity-toggle').onchange = (e) => {
+    const on = e.target.checked;
+    update((s) => { s.navOpacity = on; if (on && (s.navOpacityVal ?? 100) < 40) s.navOpacityVal = 100; });
+    import('../core/ui.js').then((m) => m.applyNavOpacity()).catch(() => window.ZF.applyBg());
+    window.ZF.save();
+    window.ZF.rerender();
+  };
+  host.querySelector('#nav-opacity').oninput = (e) => {
+    host.querySelector('#nav-opacity-v').textContent = `${e.target.value}%`;
+    update((s) => { s.navOpacityVal = Number(e.target.value); s.navOpacity = true; }, { silent: true });
+    const v = String(Number(e.target.value) / 100);
+    document.querySelectorAll('.bottom-nav, .more-popover').forEach((b) => { b.style.opacity = v; });
+    clearTimeout(host._navT);
+    host._navT = setTimeout(() => window.ZF.save(), 300);
+  };
+  host.querySelector('#nav-opacity').onchange = () => window.ZF.save();
 
   /* glass */
   host.querySelector('#fx-glass').onchange = (e) => update((s) => { s.glassMode = e.target.checked; });

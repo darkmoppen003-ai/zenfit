@@ -118,6 +118,7 @@ function renderBottomNav() {
     document.body.appendChild(bar);
   }
   bar.style.display = 'flex';
+  bar.style.opacity = (S.navOpacity === false) ? '1' : String((S.navOpacityVal ?? 100) / 100);
   document.body.classList.toggle('nav-labels-off', S.navLabels === false);
   const tabs = visibleTabs();
   const overflow = SCREENS.filter((s) => !s.hidden && !tabs.some((t) => t.id === s.id));
@@ -136,12 +137,13 @@ function renderBottomNav() {
   });
   let pop = document.getElementById('more-popover');
   if (!pop) { pop = document.createElement('div'); pop.id = 'more-popover'; pop.className = 'more-popover'; document.body.appendChild(pop); }
+  pop.style.opacity = (S.navOpacity === false) ? '1' : String((S.navOpacityVal ?? 100) / 100);
   pop.innerHTML = overflow.map((t) =>
     `<div class="mp-item${currentScreen === t.id ? ' active-mp' : ''}" data-mp="${t.id}">
-      <span class="mp-icon">${DOCK_ICONS[t.id] || t.icon}</span><span>${t.label}</span></div>`).join('') +
-    `<div class="mp-item${currentScreen === 'inbox' ? ' active-mp' : ''}" data-mp="inbox" style="position:relative">
-      <span class="mp-icon">${ICONS.inbox}</span><span>Inbox${(S.inbox || []).length ? ` (${S.inbox.length})` : ''}</span>${(S.inboxUnread || 0) > 0 ? '<span style="position:absolute;top:8px;right:10px;width:9px;height:9px;border-radius:50%;background:var(--danger)"></span>' : ''}</div>` +
-    `<div class="mp-item" data-mp="__navedit"><span class="mp-icon">${ICONS.customization}</span><span>Nav-Edit</span></div>`;
+      <span class="mp-icon">${DOCK_ICONS[t.id] || t.icon}</span><span class="mp-label">${t.label}</span></div>`).join('') +
+    `<div class="mp-item${currentScreen === 'inbox' ? ' active-mp' : ''}" data-mp="inbox">
+      <span class="mp-icon">${ICONS.inbox}</span><span class="mp-label">Inbox</span>${(S.inbox || []).length ? `<span class="mp-count">(${(S.inbox || []).length})</span>` : ''}${(S.inboxUnread || 0) > 0 ? '<span class="mp-dot"></span>' : ''}</div>` +
+    `<div class="mp-item" data-mp="__navedit"><span class="mp-icon">${ICONS.customization}</span><span class="mp-label">Nav-Edit</span></div>`;
   pop.querySelectorAll('[data-mp]').forEach((m) => {
     m.onclick = () => {
       closeMorePopover();
@@ -266,7 +268,27 @@ export function initRouter() {
   };
   fromHash();
   try { history.pushState({ zfTrap: 1 }, ''); } catch {}
+  // ponytail: manual #/admin (or any deep link) must render password screen, not exit trap
+  window.addEventListener('hashchange', () => {
+    const m = location.hash.match(/^#\/([a-z]+)/);
+    const id = m ? screenById(m[1]).id : null;
+    if (id && id !== currentScreen) {
+      currentScreen = id; currentSub = null;
+      renderActive();
+    }
+  });
   window.addEventListener('popstate', () => {
+    // back/forward to a different hash = navigate, not exit
+    try {
+      const m = location.hash.match(/^#\/([a-z]+)/);
+      const id = m ? screenById(m[1]).id : null;
+      if (id && id !== currentScreen) {
+        currentScreen = id; currentSub = null;
+        try { history.pushState({ zfTrap: 1 }, ''); } catch {}
+        renderActive();
+        return;
+      }
+    } catch {}
     if (Date.now() < exitArmedUntil) return;
     exitArmedUntil = Date.now() + 2000;
     try { showNotif('Press back again to exit', '!'); } catch {}

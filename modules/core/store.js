@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 12;
-export const APP_VERSION = "8.8.3";
-export const APP_BUILD = "2026.09.27.33";
+export const DATA_VERSION = 13;
+export const APP_VERSION = "8.8.9";
 
+export const APP_BUILD = "2026.09.27.35";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -109,6 +109,7 @@ export function defaultState() {
     glassBlur: 4,
     glassAlpha: 0.15,
     navOpacity: true,
+    navOpacityVal: 100,
     bgType: 'solid',
     bgImage: null,
     bgDim: 0,
@@ -234,6 +235,15 @@ export function migrateData(saved) {
   if (version < 12) {
     if (saved.particleEffect === 'sparks') saved.particleEffect = 'embers';
     saved.dataVersion = 12;
+  }
+  if (version < 13) {
+    if (typeof saved.navOpacityVal !== 'number') saved.navOpacityVal = 100;
+    if (!saved.profile) saved.profile = {};
+    if (typeof saved.profile.heightCm !== 'number') saved.profile.heightCm = 170;
+    if (saved.profile.waistCm == null) saved.profile.waistCm = 0;
+    if (saved.profile.hipCm == null) saved.profile.hipCm = 0;
+    if (saved.profile.country == null) saved.profile.country = '';
+    saved.dataVersion = 13;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

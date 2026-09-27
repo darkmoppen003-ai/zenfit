@@ -196,12 +196,88 @@ function renderRewards(body) {
     <div class="flex gap8 mt8">
       <button class="btn btn-sm btn-ghost" id="ad-streak">+1 zen streak day</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted)" class="mt8">Inbox rewards are claimed once via Claim button (negative XP = punishment). Instant grants apply immediately. Every grant is logged (see Overview).</div></div>`;
+    <div style="font-size:11px;color:var(--text-muted)" class="mt8">Inbox rewards are claimed once via Claim button (negative XP = punishment). Instant grants apply immediately. Every grant is logged (see Overview).</div></div>
+  <div class="card mt12"><div class="section-title">Recent inbox rewards (this device — edit)</div><div id="ad-rwlocal"></div></div>
+  <div class="card mt12"><div class="section-title">Global rewards (all devices — edit)</div><div id="ad-rwglobal"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div></div>`;
   const readXp = (allowNeg) => sanitizeNumber(body.querySelector('#ad-xp').value, { min: allowNeg ? -500 : 1, max: 1000, fallback: NaN, integer: true });
+  let editingRewardId = null, editingGlobalRewardId = null;
+  const paintLocalRewards = () => {
+    const box = body.querySelector('#ad-rwlocal');
+    if (!box) return;
+    const rows = (S.inbox || []).filter((m) => m.kind === 'reward').slice().reverse().slice(0, 10);
+    box.innerHTML = rows.length ? rows.map((m) => `<div class="flex-between mb8" style="gap:6px">
+      <div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'Reward')}</div>
+      <div style="font-size:11px;color:var(--text-muted)">${Number(m.xp) < 0 ? '' : '+'}${m.xp || 0} XP · ${escapeHtml(m.date || '')}</div></div>
+      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-rwedit="${escapeHtml(m.id || '')}">Edit</button><button class="btn btn-sm btn-ghost" data-rwdel="${escapeHtml(m.id || '')}">✕</button></span></div>`).join('')
+      : '<div style="font-size:12px;color:var(--text-muted)">No inbox rewards yet.</div>';
+    box.querySelectorAll('[data-rwdel]').forEach((b) => {
+      b.onclick = () => update((s) => { s.inbox = (s.inbox || []).filter((x) => x.id !== b.dataset.rwdel); s.inboxRead = (s.inboxRead || []).filter((id) => id !== b.dataset.rwdel); });
+    });
+    box.querySelectorAll('[data-rwedit]').forEach((b) => {
+      b.onclick = () => {
+        const m = (S.inbox || []).find((x) => x.id === b.dataset.rwedit);
+        if (!m) return;
+        editingRewardId = m.id; editingGlobalRewardId = null;
+        body.querySelector('#ad-xp').value = m.xp || '';
+        body.querySelector('#ad-reason').value = String(m.title || '').replace(/^(Reward|Penalty):\s*/, '');
+        body.querySelector('#ad-send-inbox').textContent = 'Update reward';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+    });
+  };
+  paintLocalRewards();
+  import('../core/cloud.js').then(async ({ GlobalBoard, sbDel, sbUpdate }) => {
+    const box = body.querySelector('#ad-rwglobal');
+    if (!box) return;
+    try {
+      const rows = await GlobalBoard.fetchRewards();
+      const byId = new Map((rows || []).map((r) => [r.id || r.code, r]));
+      box.innerHTML = rows.length ? rows.slice(0, 10).map((r) => {
+        const gid = r.id || r.code;
+        return `<div class="flex-between mb8" style="gap:6px">
+        <div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title || 'Reward')}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${Number(r.xp) < 0 ? '' : '+'}${r.xp || 0} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div>
+        <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-grwedit="${escapeHtml(gid || '')}">Edit</button><button class="btn btn-sm btn-danger" data-grwdel="${escapeHtml(gid || '')}">Delete</button></span></div>`;
+      }).join('') : '<div style="font-size:12px;color:var(--text-muted)">Nothing published yet.</div>';
+      box.querySelectorAll('[data-grwdel]').forEach((b) => {
+        b.onclick = async () => {
+          b.disabled = true;
+          const ok = await sbDel('global_rewards', b.dataset.grwdel);
+          showNotif(ok ? 'Reward removed globally' : 'Delete failed', ok ? 'OK' : '!');
+          if (ok) window.ZF.rerender(); else b.disabled = false;
+        };
+      });
+      box.querySelectorAll('[data-grwedit]').forEach((b) => {
+        b.onclick = () => {
+          const r = byId.get(b.dataset.grwedit);
+          if (!r) return;
+          editingGlobalRewardId = r.id; editingRewardId = null;
+          body.querySelector('#ad-xp').value = r.xp || '';
+          body.querySelector('#ad-reason').value = r.title || '';
+          if (body.querySelector('#ad-rtarget')) body.querySelector('#ad-rtarget').value = r.target || '';
+          body.querySelector('#ad-grant-global').textContent = 'Update global reward';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          showNotif('Editing global reward — Update replaces silently, fresh + unread', 'OK');
+        };
+      });
+    } catch { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Offline.</div>'; }
+  }).catch(() => {});
   body.querySelector('#ad-send-inbox').onclick = () => {
     const xp = readXp(true);
     const reason = sanitizeText(body.querySelector('#ad-reason').value, 80) || 'Reward';
     if (!Number.isFinite(xp) || xp === 0) { showNotif('Enter XP (−500…1000, ≠0)', '!'); return; }
+    if (editingRewardId) {
+      update((s) => {
+        s.inbox = (s.inbox || []).map((x) => x.id === editingRewardId ? { ...x, title: xp > 0 ? `Reward: ${reason}` : `Penalty: ${reason}`, body: `${xp > 0 ? '+' : ''}${xp} XP — tap Claim to apply (one-time).`, xp, ts: Date.now() } : x);
+        s.inboxRead = (s.inboxRead || []).filter((id) => id !== editingRewardId);
+        s.inboxUnread = (s.inboxUnread || 0) + 1;
+      });
+      editingRewardId = null;
+      body.querySelector('#ad-send-inbox').textContent = 'Send to inbox';
+      showNotif('Reward updated — fresh + unread (claim state kept, no double-XP)', 'OK');
+      window.ZF.rerender();
+      return;
+    }
     update((s) => {
       s.inbox = [...(s.inbox || []), { id: uid('reward'), kind: 'reward', title: xp > 0 ? `Reward: ${reason}` : `Penalty: ${reason}`, body: `${xp > 0 ? '+' : ''}${xp} XP — tap Claim to apply (one-time).`, xp, date: getTodayStr(), ts: Date.now() }];
       s.inboxUnread = (s.inboxUnread || 0) + 1;
@@ -221,8 +297,14 @@ function renderRewards(body) {
     const reason = sanitizeText(body.querySelector('#ad-reason').value, 80) || 'Admin reward';
     if (!Number.isFinite(xp)) { showNotif('Enter XP 1–1000', '!'); return; }
     const target = sanitizeText(body.querySelector('#ad-rtarget').value, 40) || 'all';
+    const { GlobalBoard, sbUpdate } = await import('../core/cloud.js');
+    if (editingGlobalRewardId) {
+      const ok = await sbUpdate('global_rewards', editingGlobalRewardId, { title: reason, xp, target });
+      showNotif(ok ? 'Global reward updated — fresh + unread (claimed stay claimed)' : 'Update failed', ok ? 'OK' : '!');
+      if (ok) { editingGlobalRewardId = null; body.querySelector('#ad-grant-global').textContent = 'Publish global reward'; window.ZF.rerender(); }
+      return;
+    }
     showNotif('Publishing global reward…', 'OK');
-    const { GlobalBoard } = await import('../core/cloud.js');
     const ok = await GlobalBoard.publishReward(reason, xp, `RW-${Date.now().toString(36).toUpperCase()}`, target);
     showNotif(ok ? (target === 'all' ? 'Global reward live — users claim from Inbox' : `Reward queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
@@ -258,20 +340,42 @@ function renderMissions(body) {
     <div style="flex:1"><div style="font-size:13px;font-weight:600">${escapeHtml(m.title)} ${m.status === 'done' ? '<span class="badge badge-green">done</span>' : '<span class="badge badge-amber">live</span>'}</div>
     <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(m.body || '')}</div>
     ${ruleSummary(m)}${prog}</div>
-    <button class="btn btn-sm btn-ghost" data-mdel="${m.id}">✕</button></div>`; }).join('') || '<div class="card">No missions yet.</div>'}`;
+    <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-medit="${m.id}">Edit</button><button class="btn btn-sm btn-ghost" data-mdel="${m.id}">✕</button></span></div>`; }).join('') || '<div class="card">No missions yet.</div>'}`;
+  let editingMissionId = null, editingGlobalMissionId = null;
+  const fillMissionForm = (m) => {
+    body.querySelector('#ad-mtitle').value = m.title || '';
+    body.querySelector('#ad-micon').value = m.icon || '';
+    body.querySelector('#ad-mbody').value = m.body || m.descr || m.desc || '';
+    body.querySelector('#ad-mimg').value = m.image || '';
+    body.querySelector('#ad-mxp').value = m.xp || 25;
+    body.querySelector('#ad-rules').innerHTML = '';
+    (Array.isArray(m.rules) && m.rules.length ? m.rules : [{ cat: 'water', target: 3000, days: 5 }]).forEach((r) => addRule(r));
+  };
   body.querySelector('#ad-msend').onclick = () => {
     const title = sanitizeText(body.querySelector('#ad-mtitle').value, 60);
     if (!title) { showNotif('Title required', '!'); return; }
     const rules = [...body.querySelectorAll('[data-rule]')].map((row) => readRuleRow(row)).filter(Boolean);
+    const patch = {
+      title, kind: 'mission',
+      icon: sanitizeText(body.querySelector('#ad-micon').value, 8) || '📯',
+      body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
+      image: cleanImageUrl(body.querySelector('#ad-mimg').value),
+      xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
+      rules, status: 'live', ts: Date.now(),
+    };
+    if (editingMissionId) {
+      update((s) => {
+        s.events = (s.events || []).map((x) => x.id === editingMissionId ? { ...x, ...patch, id: x.id } : x);
+        s.inboxUnread = (s.inboxUnread || 0) + 1;
+      });
+      editingMissionId = null;
+      body.querySelector('#ad-msend').textContent = 'Publish mission';
+      showNotif('Mission updated — fresh + unread', 'OK');
+      window.ZF.rerender();
+      return;
+    }
     update((s) => {
-      s.events = [...(s.events || []), {
-        id: uid('event'), title, kind: 'mission',
-        icon: sanitizeText(body.querySelector('#ad-micon').value, 8) || '📯',
-        body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
-        image: cleanImageUrl(body.querySelector('#ad-mimg').value),
-        xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
-        rules, status: 'live', ts: Date.now(),
-      }];
+      s.events = [...(s.events || []), { id: uid('event'), ...patch }];
     });
     showNotif(rules.length ? 'Mission live — auto-checks your logs' : 'Mission published (manual)', 'OK');
     import('../core/missions.js').then((m) => { try { m.checkMissions(); } catch {} }).catch(() => {});
@@ -299,7 +403,17 @@ function renderMissions(body) {
     const title = sanitizeText(body.querySelector('#ad-mtitle').value, 60);
     if (!title) { showNotif('Title required', '!'); return; }
     const rules = [...body.querySelectorAll('[data-rule]')].map((row) => readRuleRow(row)).filter(Boolean);
-    const { GlobalBoard } = await import('../core/cloud.js');
+    const { GlobalBoard, sbUpdate } = await import('../core/cloud.js');
+    if (editingGlobalMissionId) {
+      const ok = await sbUpdate('global_events', editingGlobalMissionId, {
+        title, descr: sanitizeText(body.querySelector('#ad-mbody').value, 200),
+        xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
+        rules: rules.length ? rules : null, image: cleanImageUrl(body.querySelector('#ad-mimg').value),
+      });
+      showNotif(ok ? 'Global mission updated — fresh + unread for users' : 'Update failed', ok ? 'OK' : '!');
+      if (ok) { editingGlobalMissionId = null; pubG.textContent = 'Publish same mission globally'; window.ZF.rerender(); }
+      return;
+    }
     const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value));
     showNotif(ok ? 'Mission live globally — users track it from Inbox' : 'Publish failed — check Supabase config', ok ? 'OK' : '!');
   };
@@ -311,10 +425,11 @@ function renderMissions(body) {
     const box = gSec.querySelector('#ad-gmissions');
     try {
       const rows = await GlobalBoard.fetchEvents();
+      const byId = new Map((rows || []).map((r) => [r.id, r]));
       box.innerHTML = rows.length ? rows.slice(0, 20).map((r) => `<div class="flex-between mb8" style="gap:6px">
         <div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title || 'Mission')}</div>
         <div style="font-size:11px;color:var(--text-muted)">${escapeHtml((r.descr || r.desc || '').slice(0, 60))}</div></div>
-        <button class="btn btn-sm btn-danger" data-gmdel="${escapeHtml(r.id || '')}">Delete</button></div>`).join('')
+        <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-gmedit="${escapeHtml(r.id || '')}">Edit</button><button class="btn btn-sm btn-danger" data-gmdel="${escapeHtml(r.id || '')}">Delete</button></span></div>`).join('')
         : '<div style="font-size:12px;color:var(--text-muted)">Nothing published yet.</div>';
       box.querySelectorAll('[data-gmdel]').forEach((b) => {
         b.onclick = async () => {
@@ -325,9 +440,32 @@ function renderMissions(body) {
           else b.disabled = false;
         };
       });
+      box.querySelectorAll('[data-gmedit]').forEach((b) => {
+        b.onclick = () => {
+          const r = byId.get(b.dataset.gmedit);
+          if (!r) return;
+          editingGlobalMissionId = r.id; editingMissionId = null;
+          body.querySelector('#ad-msend').textContent = 'Publish mission';
+          fillMissionForm({ title: r.title, body: r.descr || r.desc, image: r.image, xp: r.xp, rules: r.rules });
+          pubG.textContent = 'Update global mission';
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          showNotif('Editing global mission — Update replaces silently, fresh + unread', 'OK');
+        };
+      });
     } catch { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Offline.</div>'; }
   }).catch(() => {});
   body.querySelectorAll('[data-mdel]').forEach((b) => { b.onclick = () => update((s) => { s.events = s.events.filter((x) => x.id !== b.dataset.mdel); }); });
+  body.querySelectorAll('[data-medit]').forEach((b) => {
+    b.onclick = () => {
+      const m = (S.events || []).find((x) => x.id === b.dataset.medit);
+      if (!m) return;
+      editingMissionId = m.id; editingGlobalMissionId = null;
+      pubG.textContent = 'Publish same mission globally';
+      fillMissionForm(m);
+      body.querySelector('#ad-msend').textContent = 'Update mission';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  });
 }
 
 /** Read one designer row into a rule object (sanitized) or null. */
@@ -422,11 +560,12 @@ function renderBroadcast(body) {
       <button class="btn btn-sm btn-ghost" id="ad-npush">Send + push now</button>
     </div></div>
   <div class="section-title">Inbox history (this device)</div>
-  ${inbox.map((m, ix) => `<div class="insight"><div class="flex-between"><div><strong>${escapeHtml(m.title)}</strong><br>${escapeHtml(m.body)}<br><span style="font-size:10px;color:var(--text-muted)">${escapeHtml(m.date || '')}</span></div><button class="btn btn-icon btn-sm" data-hdel="${ix}" style="color:var(--danger);flex-shrink:0" title="Delete">×</button></div></div>`).join('') || '<div class="card">Empty.</div>'}
+  ${inbox.map((m, ix) => `<div class="insight"><div class="flex-between"><div><strong>${escapeHtml(m.title)}</strong><br>${escapeHtml(m.body)}<br><span style="font-size:10px;color:var(--text-muted)">${escapeHtml(m.date || '')}</span></div><span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-hedit="${ix}">Edit</button><button class="btn btn-icon btn-sm" data-hdel="${ix}" style="color:var(--danger)" title="Delete">×</button></span></div></div>`).join('') || '<div class="card">Empty.</div>'}
   <div class="flex gap8 mt8"><button class="btn btn-sm btn-danger" id="ad-nclear">Clear inbox</button></div>
   <div class="section-title mt12">Global outbox (all devices)</div>
   <div id="ad-goutbox"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div>`;
   const nimgs = [];
+  let editingLocalIx = null, editingGlobal = null;
   const paintImgs = () => {
     const box = body.querySelector('#ad-nimgs');
     if (!box) return;
@@ -480,9 +619,38 @@ function renderBroadcast(body) {
     paintPreview();
   };
   paintPreview();
+  const fillForm = (m) => {
+    body.querySelector('#ad-ntitle').value = m.title || '';
+    body.querySelector('#ad-nbody').value = m.body || m.descr || m.desc || '';
+    if (body.querySelector('#ad-ntarget') && m.target) body.querySelector('#ad-ntarget').value = m.target;
+    if (body.querySelector('#ad-nbg')) body.querySelector('#ad-nbg').value = m.bg || 'none';
+    if (body.querySelector('#ad-nhl')) body.querySelector('#ad-nhl').value = m.hl || 'none';
+    nimgs.length = 0;
+    (Array.isArray(m.images) && m.images.length ? m.images : (m.image ? [m.image] : [])).slice(0, 5).forEach((u) => nimgs.push(u));
+    if (body.querySelector('#ad-nconf')) body.querySelector('#ad-nconf').checked = !!m.confetti;
+    paintImgs(); paintPreview();
+  };
   body.querySelector('#ad-nsend').onclick = () => {
     const m = collect();
     if (!m.body) { showNotif('Message required', '!'); return; }
+    if (editingLocalIx != null) {
+      // ponytail: silent replace same slot, reset to fresh + unread
+      update((s) => {
+        const arr = (s.inbox || []).slice().reverse();
+        const cur = arr[editingLocalIx];
+        if (cur) {
+          const idx = (s.inbox || []).indexOf(cur);
+          if (idx >= 0) s.inbox[idx] = { ...s.inbox[idx], ...m, ts: Date.now() };
+          s.inboxRead = (s.inboxRead || []).filter((id) => id !== cur.id);
+        }
+        s.inboxUnread = (s.inboxUnread || 0) + 1;
+      });
+      editingLocalIx = null;
+      body.querySelector('#ad-nsend').textContent = 'Send to inbox (this device)';
+      showNotif('Message updated — fresh + unread', 'OK');
+      window.ZF.rerender();
+      return;
+    }
     update((s) => { s.inbox = [...(s.inbox || []), { ...m, date: getTodayStr(), ts: Date.now() }]; s.inboxUnread = (s.inboxUnread || 0) + 1; });
     showNotif('Broadcast sent (this device)', 'OK');
   };
@@ -490,8 +658,17 @@ function renderBroadcast(body) {
     const m = collect();
     if (!m.body) { showNotif('Message required', '!'); return; }
     const target = sanitizeText(body.querySelector('#ad-ntarget').value, 40) || 'all';
+    const { GlobalBoard, sbUpdate } = await import('../core/cloud.js');
+    if (editingGlobal) {
+      const patch = editingGlobal.table === 'global_events'
+        ? { title: m.title, descr: m.body, image: m.image, target }
+        : { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, images: m.images, confetti: m.confetti };
+      const ok = await sbUpdate(editingGlobal.table, editingGlobal.id, patch);
+      showNotif(ok ? 'Updated globally — users see fresh + unread' : 'Update failed', ok ? 'OK' : '!');
+      if (ok) { editingGlobal = null; body.querySelector('#ad-nglobal').textContent = 'Publish globally'; window.ZF.rerender(); }
+      return;
+    }
     showNotif(target === 'all' ? 'Broadcasting globally…' : `Sending to ${target}…`, 'OK');
-    const { GlobalBoard } = await import('../core/cloud.js');
     const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, images: m.images, confetti: m.confetti });
     showNotif(ok ? (target === 'all' ? 'Broadcast live globally — users get it in Inbox' : `Message queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
@@ -506,15 +683,35 @@ function renderBroadcast(body) {
   body.querySelectorAll('[data-hdel]').forEach((b) => {
     b.onclick = () => update((s) => { s.inbox = (s.inbox || []).filter((_, ix) => ix !== Number(b.dataset.hdel)); });
   });
-  loadGlobalOutbox(body);
+  body.querySelectorAll('[data-hedit]').forEach((b) => {
+    b.onclick = () => {
+      const rev = (S.inbox || []).slice().reverse();
+      const m = rev[Number(b.dataset.hedit)];
+      if (!m) return;
+      editingLocalIx = Number(b.dataset.hedit); editingGlobal = null;
+      body.querySelector('#ad-nglobal').textContent = 'Publish globally';
+      fillForm(m);
+      body.querySelector('#ad-nsend').textContent = 'Update message';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showNotif('Editing local message — Send updates it fresh', 'OK');
+    };
+  });
+  loadGlobalOutbox(body, fillForm, (g) => {
+    editingGlobal = g; editingLocalIx = null;
+    body.querySelector('#ad-nsend').textContent = 'Send to inbox (this device)';
+    body.querySelector('#ad-nglobal').textContent = 'Update globally';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
-async function loadGlobalOutbox(body) {
+async function loadGlobalOutbox(body, fillForm = null, onEdit = null) {
   const box = body.querySelector('#ad-goutbox');
   if (!box) return;
   try {
     const { GlobalBoard } = await import('../core/cloud.js');
     const [casts, evts, rewards] = await Promise.all([GlobalBoard.fetchBroadcasts(), GlobalBoard.fetchEvents(), GlobalBoard.fetchRewards()]);
+    const fullById = new Map();
+    [...(casts || []), ...(evts || []), ...(rewards || [])].forEach((r) => { if (r?.id) fullById.set(r.id, r); });
     const rows = [
       ...(casts || []).slice(0, 10).map((r) => ({ table: 'global_broadcasts', id: r.id, title: r.title || 'Broadcast', sub: (r.body || '').slice(0, 80) })),
       ...(evts || []).slice(0, 10).map((r) => ({ table: 'global_events', id: r.id, title: r.title || 'Mission', sub: (r.descr || r.desc || '').slice(0, 80) })),
@@ -522,7 +719,7 @@ async function loadGlobalOutbox(body) {
     ];
     box.innerHTML = rows.length ? rows.map((r) => `<div class="flex-between mb8"><div style="min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.title)}</div>
       <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(r.sub)}</div></div>
-      <button class="btn btn-sm btn-danger" data-gdel-table="${r.table}" data-gdel-id="${escapeHtml(r.id || '')}">Delete</button></div>`).join('')
+      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-gedit-table="${r.table}" data-gedit-id="${escapeHtml(r.id || '')}">Edit</button><button class="btn btn-sm btn-danger" data-gdel-table="${r.table}" data-gdel-id="${escapeHtml(r.id || '')}">Delete</button></span></div>`).join('')
       : '<div style="font-size:12px;color:var(--text-muted)">Nothing published yet.</div>';
     try {
       const { sbDel } = await import('../core/cloud.js');
@@ -533,6 +730,16 @@ async function loadGlobalOutbox(body) {
           showNotif(ok ? 'Deleted globally' : 'Delete failed', ok ? 'OK' : '!');
           if (ok) window.ZF.rerender();
           else b.disabled = false;
+        };
+      });
+      box.querySelectorAll('[data-gedit-id]').forEach((b) => {
+        b.onclick = () => {
+          const full = fullById.get(b.dataset.geditId);
+          if (!full) { showNotif('Full row not loaded — retry', '!'); return; }
+          if (b.dataset.geditTable === 'global_rewards') { showNotif('Rewards: delete + republish to edit', '!'); return; }
+          try { fillForm && fillForm(full); } catch {}
+          try { onEdit && onEdit({ table: b.dataset.geditTable, id: b.dataset.geditId }); } catch {}
+          showNotif('Editing global — Update replaces silently, fresh + unread', 'OK');
         };
       });
     } catch {}
