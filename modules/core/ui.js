@@ -266,12 +266,26 @@ function renderParticles() {
   else document.body.prepend(c);
   const ctx = c.getContext('2d');
   const N = Math.min(S.particleCount || 50, 150);
-  const effect = S.particleEffect || 'dust';
+  const effect = (S.particleEffect === 'sparks' ? 'embers' : S.particleEffect) || 'dust';
   const hue = Number(S.particleHue ?? (getComputedStyle(document.documentElement).getPropertyValue('--particle-hue').trim() || '250')) || 250;
   const sp = Number(S.particleSpeed ?? 1) || 1;
   const R = (a, b) => a + Math.random() * (b - a);
   let parts = [];
   const density = 0.25 + 0.75 * Math.min(1, N / 150);
+  // Tekken-style ember glow sprite: one pre-rendered radial gradient,
+  // stamped per particle — replaces per-particle shadowBlur (the lag source).
+  let emberGlow = null;
+  const makeEmberGlow = () => {
+    emberGlow = document.createElement('canvas');
+    emberGlow.width = emberGlow.height = 64;
+    const g = emberGlow.getContext('2d');
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, `hsla(${hue},100%,72%,1)`);
+    r.addColorStop(0.3, `hsla(${hue},100%,55%,0.5)`);
+    r.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = r;
+    g.fillRect(0, 0, 64, 64);
+  };
   const buildMatrix = () => {
     const cols = Math.max(10, Math.floor(c.width / 16));
     parts = Array.from({ length: cols }, (_, i) => ({ x: i * 16, y: R(-600, 0), s: R(5, 9), gap: 18, active: Math.random() < density, trail: Array.from({ length: 8 }, () => null), seed: Math.random() }));
@@ -288,7 +302,25 @@ function renderParticles() {
   resize();
   window.__zfResize = resize;
   window.addEventListener('resize', resize);
-  if (effect !== 'matrix' && effect !== 'cyber') {
+  const mkEmber = (anyY) => {
+    const diag = (S.sparkDirection || 'straight') === 'diagonal';
+    const r = Math.random(), hero = Math.random() < 0.04;
+    return {
+      x: R(0, c.width), y: anyY ? R(0, c.height) : c.height + 10,
+      vy: hero ? -(4 + Math.random() * 3) : -(1.5 + Math.random() * 3.5),
+      vx: diag ? 0.3 + Math.random() * 0.5 : (Math.random() - 0.5) * 0.3,
+      r: hero ? 4 + Math.random() * 2.5 : r < 0.75 ? 0.8 + Math.random() * 1.2 : r < 0.93 ? 2 + Math.random() * 1.5 : 3.5 + Math.random() * 1.5,
+      life: 1, decay: hero ? 0.0015 : 0.002 + Math.random() * 0.005,
+      h: Math.random() * 22 - 8, fl: 6 + Math.random() * 14, ph: R(0, 6.28),
+      streak: hero || Math.random() < 0.12, hero,
+      sway: 2 + Math.random() * 6, swf: 0.3 + Math.random() * 0.7, swp: R(0, 6.28),
+    };
+  };
+  const buildEmbers = (anyY) => Array.from({ length: N }, () => mkEmber(anyY));
+  if (effect === 'embers') {
+    makeEmberGlow();
+    parts = buildEmbers(true);
+  } else if (effect !== 'matrix' && effect !== 'cyber') {
     parts = Array.from({ length: N }, () => ({
       x: R(0, c.width), y: R(0, c.height), r: R(0.5, 2.5),
       s: R(0.2, 0.8), ph: R(0, 6.28), sway: R(0, 1), vx: R(-0.3, 0.3),
@@ -347,29 +379,31 @@ function renderParticles() {
         ctx.fillStyle = `hsla(${hue},85%,92%,${(0.3 + (p.r / 4) * 0.6).toFixed(2)})`;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
       });
-    } else if (effect === 'sparks') {
+    } else if (effect === 'embers') {
       ctx.globalCompositeOperation = 'lighter';
       ctx.lineCap = 'round';
-      const sdir = S.sparkDirection || 'straight';
+      const gust = Math.sin(t * 0.23) * 0.25 + Math.sin(t * 0.71 + 1.7) * 0.15;
       parts.forEach((p) => {
-        if (sdir === 'diagonal') {
-          p.x += p.s * 2 * sp; p.y -= (p.s + 0.8) * sp;
-          if (p.y < -12 || p.x > c.width + 12) { p.y = R(c.height * 0.5, c.height + 12); p.x = R(-12, c.width * 0.5); p.len = R(4, 12); }
-        } else {
-          p.y -= (p.s + 1.2) * sp; p.x += Math.sin(t * 3 + p.ph) * 0.9 * sp;
-          if (p.y < -12) { p.y = c.height + 12; p.x = R(0, c.width); p.len = R(4, 12); }
-        }
-        if (!p.len) p.len = R(4, 12);
-        const flick = 0.55 + 0.45 * Math.sin(t * 9 + p.ph);
-        const h = 18 + p.r * 8;
-        ctx.strokeStyle = `hsla(${h},100%,55%,${(0.9 * flick).toFixed(2)})`;
-        ctx.lineWidth = 1.6;
-        ctx.shadowBlur = 6;
-        ctx.shadowColor = `hsla(${h},100%,50%,0.9)`;
-        if (sdir === 'diagonal') { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.len * 0.8, p.y + p.len * 0.6); ctx.stroke(); }
-        else { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - p.len); ctx.stroke(); }
+        p.x += (p.vx + gust) * sp; p.y += p.vy * sp; p.life -= p.decay * sp;
+        if (p.y < -30 || p.life <= 0) { Object.assign(p, mkEmber(false)); return; }
+        const cool = 1 - p.life, sc = 0.45 + 0.55 * p.life;
+        const a = Math.min(1, p.life * 2.5) * (0.7 + 0.3 * Math.sin(t * p.fl + p.ph));
+        const gs = p.r * 3.2 * sc * (p.hero ? 1.2 : 1);
+        ctx.globalAlpha = a * 0.7;
+        ctx.drawImage(emberGlow, p.x - gs / 2, p.y - gs / 2, gs, gs);
+        ctx.globalAlpha = Math.min(1, a);
+        const hh = (((hue + p.h - cool * 18) % 360) + 360) % 360;
+        const li = 48 + 22 * p.life;
+        ctx.strokeStyle = ctx.fillStyle = `hsl(${hh | 0},100%,${li | 0}%)`;
+        const dx = p.x + Math.sin(t * p.swf + p.swp) * p.swa, tl = (p.hero ? 26 : 9) * Math.min(sp, 1.6);
+        if (p.streak) {
+          ctx.lineWidth = p.hero ? Math.max(1.5, p.r * 0.4 * sc) : 1;
+          ctx.beginPath(); ctx.moveTo(dx, p.y);
+          ctx.lineTo(dx - (p.vx + gust) * tl, p.y - p.vy * tl); ctx.stroke();
+        } else if (p.r < 2) ctx.fillRect(dx, p.y, p.r * sc, p.r * sc);
+        else { ctx.beginPath(); ctx.arc(dx, p.y, Math.max(0.5, p.r * 0.7 * sc), 0, 7); ctx.fill(); }
       });
-      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     } else if (effect === 'firefly') {
       ctx.globalCompositeOperation = 'lighter';

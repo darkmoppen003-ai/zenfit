@@ -6,7 +6,7 @@
 import { S, update } from '../core/store.js';
 import { sanitizeText, sanitizeNumber, sanitizeEnum } from '../core/sanitize.js';
 import { showNotif } from '../core/ui.js';
-import { getTodayStr } from '../core/utils.js';
+import { getTodayStr, GOAL_OPTS } from '../core/utils.js';
 
 export function maybeOnboard() {
   if (S.onboarding?.completed) return;
@@ -90,12 +90,11 @@ function askWeight(stash) {
 }
 
 function askGoal(stash) {
-  stepShell(4, "Pick your main quest!", "I tune your calorie + macro targets around it. Changeable anytime in Profile.",
-    `<div class="onboarding-field"><select id="g-goal">
-      <option value="lose">🔥 Fat loss</option><option value="maintain" selected>⚖ Maintain</option><option value="gain">💪 Muscle gain</option></select></div>`,
+  stepShell(4, "Pick your main quest!", "Same 7 goals as Profile — I tune your calorie + macro targets around it. Changeable anytime in Profile.",
+    `<div class="onboarding-field"><select id="g-goal">${GOAL_OPTS.map(([v, l]) => `<option value="${v}"${v === 'maintain' ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`,
     'Enter the dashboard →',
     (c) => {
-      stash.goal = sanitizeEnum(c.querySelector('#g-goal').value, ['lose', 'maintain', 'gain'], 'maintain');
+      stash.goal = sanitizeEnum(c.querySelector('#g-goal').value, GOAL_OPTS.map((o) => o[0]), 'maintain');
       saveOnboarding(stash);
     },
     () => { stash.goal = 'maintain'; saveOnboarding(stash); });

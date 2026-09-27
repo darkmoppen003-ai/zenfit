@@ -21,7 +21,7 @@ function isCollapsed(key) {
 }
 
 const EFFECT_LABELS = {
-  dust: '✨ Constellation', snow: '❄️ Snow', sparks: '🔥 Sparks',
+  dust: '✨ Constellation', snow: '❄️ Snow', embers: '🔥 Embers',
   firefly: '✨ Firefly', matrix: '🌧️ Matrix Rain', cyber: '⚡ Cyber Spark',
 };
 
@@ -175,7 +175,7 @@ export function renderCustomization(host) {
         <label style="font-size:12px">Name<input type="text" id="th-name" placeholder="Theme name" maxlength="30"></label>
         <label style="font-size:12px">Template<select id="th-tpl"></select></label>
         <label style="font-size:12px">Wallpaper<select id="th-wp"><option value="">— keep current —</option></select></label>
-        <label style="font-size:12px">Particles<select id="th-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="sparks">🔥 Sparks</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
+        <label style="font-size:12px">Particles<select id="th-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="embers">🔥 Embers</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
       </div>
       <div class="section-title mt12">Surfaces</div>
       <div id="th-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -393,7 +393,7 @@ export function renderCustomization(host) {
     b.onclick = () => {
       update((s) => { s.particleEffect = b.dataset.fx; });
       if (b.dataset.fx === 'cyber') askCyberDirection();
-      if (b.dataset.fx === 'sparks') askSparkDirection();
+      if (b.dataset.fx === 'embers') askSparkDirection();
     };
   });
   host.querySelector('#fx-count').oninput = (e) => {
@@ -571,7 +571,7 @@ export function renderCustomization(host) {
     { sec: 'accents', key: 'glow2', label: 'Glow 2' },
     { sec: 'accents', key: 'glow3', label: 'Glow 3' },
   ];
-  const thVal = (id) => host.querySelector(`#th-c-${id}`)?.value;
+  const thVal = (id) => document.querySelector(`#th-c-${id}`)?.value;
   const buildRows = () => {
     const groups = { surfaces: document.querySelector('#th-surfaces'), texts: document.querySelector('#th-texts'), accents: document.querySelector('#th-accents') };
     for (const { sec, key, label } of TH_FIELDS) {
@@ -628,8 +628,8 @@ export function renderCustomization(host) {
       ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
       : THEMES[key] || THEMES.midnight;
     for (const { key: k } of TH_FIELDS) {
-      const picker = host.querySelector(`#th-c-${k}`);
-      const hex = host.querySelector(`#th-c-${k}-hex`);
+      const picker = document.querySelector(`#th-c-${k}`);
+      const hex = document.querySelector(`#th-c-${k}-hex`);
       if (picker && base[k]) picker.value = base[k];
       if (hex && base[k]) hex.value = base[k];
     }
@@ -798,7 +798,7 @@ export function renderCustomization(host) {
 }
 
 function askSparkDirection() {
-  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">🔥 Sparks direction</div>
+  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">🔥 Embers direction</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Straight rises vertically like embers. Diagonal slants with the wind.</div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="btn ${S.sparkDirection !== 'diagonal' ? 'btn-primary' : ''}" id="sp-straight">Straight</button>
@@ -806,7 +806,7 @@ function askSparkDirection() {
   const pick = (dir) => {
     update((s) => { s.sparkDirection = dir; });
     document.getElementById('zf-overlay')?.remove();
-    showNotif(`Sparks: ${dir}`, 'OK');
+    showNotif(`Embers: ${dir}`, 'OK');
   };
   document.getElementById('sp-straight').onclick = () => pick('straight');
   document.getElementById('sp-diag').onclick = () => pick('diagonal');
