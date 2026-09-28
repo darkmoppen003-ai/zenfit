@@ -53,7 +53,7 @@ export function renderProfile(host) {
   <div class="card mb12" style="display:flex;align-items:center;gap:16px;padding:16px">
     <div class="profile-pic-wrap" id="pf-pic" title="Change photo">
       ${S.profilePic ? `<img src="${S.profilePic}" alt="Profile" style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid var(--primary)">`
-        : `<div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--info));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;border:2px solid var(--primary)">${escapeHtml(((pr.name || p.name || 'W')[0] || 'W').toUpperCase())}</div>`}
+        : `<div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--info));display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;font-family:var(--font-display);color:#fff;border:2px solid var(--primary)">${escapeHtml(((pr.name || p.name || 'W')[0] || 'W').toUpperCase())}</div>`}
       <div class="profile-pic-edit">✎</div>
     </div>
     <div style="flex:1"><div style="font-size:18px;font-weight:700;font-family:var(--font-display)">${escapeHtml(pr.name || p.name)}</div>

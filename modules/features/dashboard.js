@@ -94,12 +94,12 @@ export function renderDashboard(host) {
       <div style="font-size:22px;font-weight:700;font-family:var(--font-display)">${escapeHtml(name)}</div>
       <div id="dash-avatar" style="width:46px;height:46px;border-radius:50%;overflow:hidden;border:2px solid ${rc};cursor:pointer;flex-shrink:0">
         ${S.profilePic ? `<img src="${S.profilePic}" alt="" style="width:100%;height:100%;object-fit:cover">`
-          : `<div style="width:100%;height:100%;background:${rc}22;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${rc}">${escapeHtml(((name || 'H')[0] || 'H').toUpperCase())}</div>`}
+          : `<div style="width:100%;height:100%;background:${rc}22;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;font-family:var(--font-display);color:${rc}">${escapeHtml(((name || 'H')[0] || 'H').toUpperCase())}</div>`}
       </div>
     </div>
     <div class="flex-between">
       <div><div style="font-size:11px;color:var(--text-muted)">STREAK</div>
-      <div style="font-size:18px;font-weight:800"><div>🔥</div><div>${streak}d</div></div></div>
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div>🔥</div><div>${streak}d</div></div></div>
       <div class="text-center"><div style="font-size:11px;color:var(--text-muted)">Level ${p.level}</div>
       <div id="dash-rank" title="Rank" style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${rc};cursor:pointer">RANK ${escapeHtml(p.rank)}</div>
       <div style="font-size:10px;color:var(--text-muted)">${RANK_NAMES[p.rank] || ''}</div></div>
@@ -162,7 +162,7 @@ export function renderDashboard(host) {
     </div>
     <div class="card-sm text-center">
       <div style="font-size:11px;color:var(--text-muted)">🚶 Steps Today</div>
-      <div style="font-size:24px;font-weight:700;color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
+      <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
       <div style="font-size:10px;color:var(--text-muted)">~${Math.round(steps * 0.04)} kcal burned</div>
       <div class="flex gap8 mt8"><input type="number" id="steps-input" placeholder="add steps" min="0" style="text-align:center;flex:1;min-width:0" aria-label="Add steps">
       <button class="btn btn-primary btn-sm" id="steps-add">+Add</button></div>
@@ -173,13 +173,13 @@ export function renderDashboard(host) {
   <div class="grid2 mb12">
     <div class="card-sm text-center">
       <div style="font-size:11px;color:var(--text-muted)">${rest ? '🛌 Resting Today' : '🛌 Rest Day'}</div>
-      <div style="font-size:22px;font-weight:700">${rest ? 'Resting' : 'Active'}</div>
+      <div style="font-size:22px;font-weight:700;font-family:var(--font-display);">${rest ? 'Resting' : 'Active'}</div>
       <div style="font-size:10px;color:var(--text-muted)">${rest ? 'No XP deduction' : 'Max 3/week (Mon–Sat)'}</div>
       <button class="btn btn-sm ${rest ? 'btn-primary' : 'btn-ghost'} mt8" id="dash-rest">${rest ? '✓ Set' : 'Set Rest'}</button>
     </div>
     <div class="card-sm text-center">
       <div style="font-size:11px;color:var(--text-muted)">⚖️ Log Today's Weight</div>
-      <div style="font-size:22px;font-weight:700" id="dash-weight-val">${wToday ? `${wToday.kg} kg` : '— kg'}</div>
+      <div style="font-size:22px;font-weight:700;font-family:var(--font-display);" id="dash-weight-val">${wToday ? `${wToday.kg} kg` : '— kg'}</div>
       <div class="flex gap8 mt8"><input type="number" id="dw-input" placeholder="kg" min="20" max="400" step="0.1" style="text-align:center;flex:1;min-width:0" aria-label="Weight in kg">
       <button class="btn btn-primary btn-sm" id="dw-log">Log</button></div>
       <div id="dash-wdetail" style="font-size:11px;color:var(--info);margin-top:6px;cursor:pointer">Tap for details →</div>
@@ -326,7 +326,7 @@ function ring(size, center, frac, color) {
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="7"/>`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"`
     + ` stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.min(1, Math.max(0, frac)))}"/></svg>`
-    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
+    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
 }
 
 function paintChar(box, rc) {

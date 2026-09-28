@@ -94,7 +94,7 @@ function openIntensityPopup(m, t) {
   ov.addEventListener('click', (e) => { if (e.target === ov) { unlockScreen(); ov.remove(); } });
   ov.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
     <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${m.emoji}" style="width:72px;height:72px;display:block;margin:0 auto 8px" onerror="this.style.display='none'">
-    <div style="font-size:20px;font-weight:700;margin-bottom:4px">${m.label}</div>
+    <div style="font-size:20px;font-weight:700;font-family:var(--font-display);margin-bottom:4px">${m.label}</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How intense was this feeling?</div>
     <div style="position:relative;padding:0 8px">
       <input type="range" min="1" max="10" value="5" step="1" id="mood-int-slider" class="mood-slider"

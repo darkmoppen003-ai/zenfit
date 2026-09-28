@@ -32,12 +32,12 @@ export function renderAdmin(host) {
   const body = host.querySelector('#admin-body');
   if (tab === 'overview') {
     body.innerHTML = `<div class="grid2">
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">LEVEL</div><div style="font-size:22px;font-weight:800">${S.player.level} · ${escapeHtml(S.player.rank)}</div></div>
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL XP EARNED</div><div style="font-size:22px;font-weight:800">${totalXp()}</div></div>
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">WORKOUTS</div><div style="font-size:22px;font-weight:800">${S.workouts.length}</div></div>
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">MEALS LOGGED</div><div style="font-size:22px;font-weight:800">${S.nutrition.entries.length}</div></div>
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">HABITS</div><div style="font-size:22px;font-weight:800">${(S.habits || []).length}</div></div>
-      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">ZEN SESSIONS</div><div style="font-size:22px;font-weight:800">${S.zen.totalSessions}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">LEVEL</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${S.player.level} · ${escapeHtml(S.player.rank)}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL XP EARNED</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${totalXp()}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">WORKOUTS</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${S.workouts.length}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">MEALS LOGGED</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${S.nutrition.entries.length}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">HABITS</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${(S.habits || []).length}</div></div>
+      <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">ZEN SESSIONS</div><div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${S.zen.totalSessions}</div></div>
     </div>
     <div class="card mt12"><div class="section-title">Recent rewards granted</div>
     ${rewards.map((r) => `<div style="font-size:12px" class="mb8">+${r.xp} XP — ${escapeHtml(r.reason)} <span style="color:var(--text-muted)">(${escapeHtml(r.date)})</span></div>`).join('') || '<div style="font-size:12px;color:var(--text-muted)">None yet.</div>'}</div>`;
