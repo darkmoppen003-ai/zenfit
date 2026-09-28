@@ -794,6 +794,7 @@ function renderContent(body) {
       <label style="font-size:12px">Name<input type="text" id="adth-name" placeholder="Theme name" maxlength="30"></label>
       <label style="font-size:12px">Template<select id="adth-tpl"></select></label>
       <label style="font-size:12px">Wallpaper<select id="adth-wp"><option value="">— keep current —</option></select></label>
+      <label style="font-size:12px;grid-column:1/-1">Wallpaper image URL (https://… — overrides selection)<input type="text" id="adth-wpurl" placeholder="https://…/image.jpg" maxlength="500"></label>
       <label style="font-size:12px">Particles<select id="adth-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="embers">🔥 Embers</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
     </div>
     <div class="section-title mt12">Surfaces</div><div id="adth-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -1049,8 +1050,13 @@ function wireThemeStudio(body) {
     const t = { ...base, ...draft, id: `ct_${Date.now()}`, name };
     try {
       const wp = q('#adth-wp')?.value || '';
+      const wpu = sanitizeText(q('#adth-wpurl')?.value || '', 500).trim();
       const fx = q('#adth-fx')?.value || '';
-      if (wp) { t.bgImage = wp; t.bgType = 'image'; }
+      // ponytail: pasted https URL wins over the dropdown (same bgImage path as presets/uploads)
+      if (wpu) {
+        if (!/^https:\/\/[^\s"'<>]+$/.test(wpu)) { showNotif('Wallpaper URL must start with https://', '!'); return null; }
+        t.bgImage = wpu; t.bgType = 'image';
+      } else if (wp) { t.bgImage = wp; t.bgType = 'image'; }
       if (fx) { t.particleEffect = fx; t.p_hue = t.p_hue || draft.p_hue; }
     } catch {}
     return t;
