@@ -147,6 +147,13 @@ export function applyThemeObject(t, key) {
     P('--primary', S.accentColor);
     P('--primary-rgb', hexToRgb(S.accentColor));
   }
+  // ponytail: persist critical tokens so the inline head script can pre-paint
+  // the splash in the right theme before modules load (no hardcoded colors)
+  try {
+    localStorage.setItem('zf_theme_critical', JSON.stringify({
+      bg: t.bgBase, primary: S.accentColor || t.primary, text: t.textPrimary,
+    }));
+  } catch {}
   window.ZF.applyBg();
 }
 

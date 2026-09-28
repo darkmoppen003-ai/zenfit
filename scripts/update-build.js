@@ -25,6 +25,20 @@ storeContent = storeContent.replace(
 );
 fs.writeFileSync(storePath, storeContent);
 
+// Keep the static splash version in step with APP_VERSION (boot JS re-asserts it too)
+try {
+  const htmlPath = path.join(__dirname, '..', 'index.html');
+  let html = fs.readFileSync(htmlPath, 'utf8');
+  const verMatch = storeContent.match(/export const APP_VERSION = ['"]([^'"]+)['"]/);
+  if (verMatch) {
+    html = html.replace(
+      /<div class="splash-ver">v[^<]*<\/div>/,
+      `<div class="splash-ver">v${verMatch[1]}</div>`
+    );
+    fs.writeFileSync(htmlPath, html);
+  }
+} catch {}
+
 const swPath = path.join(__dirname, '..', 'sw.js');
 let swContent = fs.readFileSync(swPath, 'utf8');
 swContent = swContent.replace(
