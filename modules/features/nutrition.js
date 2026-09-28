@@ -114,7 +114,8 @@ function mCard(label, val, goal, unit, color) {
 export function renderNutrition(host, subTab) {
   if (subTab === 'today' || subTab === 'calculator' || subTab === 'mealplans') tab = subTab;
   const nut = todayNutrition();
-  const g = S.nutrition.dailyGoal;
+  // ponytail: pre-sugar-goal saves lack fiber/sugar keys (whole-object merge) — backfill so Goal never reads undefined
+  const g = { fiber: 25, sugar: 25, ...(S.nutrition.dailyGoal || {}) };
 
   host.innerHTML = `
   <div class="chart-tab-bar" data-no-swipe>
@@ -411,8 +412,8 @@ export function showFoodDetails(e) {
       <div class="food-detail-item"><div class="fdv" style="color:var(--success)">${nn(n.protein ?? n.prot)}g</div><div class="fdl">Protein</div></div>
       <div class="food-detail-item"><div class="fdv" style="color:var(--info)">${nn(n.carbs)}g</div><div class="fdl">Carbs</div></div>
       <div class="food-detail-item"><div class="fdv" style="color:var(--primary)">${nn(n.fat)}g</div><div class="fdl">Fat</div></div>
-      <div class="food-detail-item"><div class="fdv">${nn(n.fiber)}g</div><div class="fdl">Fiber</div></div>
-      <div class="food-detail-item"><div class="fdv">${nn(n.sugar)}g</div><div class="fdl">Sugar</div></div>
+      <div class="food-detail-item"><div class="fdv" style="color:var(--success)">${nn(n.fiber)}g</div><div class="fdl">Fiber</div></div>
+      <div class="food-detail-item"><div class="fdv" style="color:var(--energy)">${nn(n.sugar)}g</div><div class="fdl">Sugar</div></div>
     </div>`);
 }
 

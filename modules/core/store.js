@@ -17,7 +17,7 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 13;
+export const DATA_VERSION = 14;
 export const APP_VERSION = "8.8.9";
 
 export const APP_BUILD = "2026.09.27.35";
@@ -244,6 +244,13 @@ export function migrateData(saved) {
     if (saved.profile.hipCm == null) saved.profile.hipCm = 0;
     if (saved.profile.country == null) saved.profile.country = '';
     saved.dataVersion = 13;
+  }
+  if (version < 14) {
+    if (!saved.nutrition) saved.nutrition = {};
+    if (!saved.nutrition.dailyGoal || typeof saved.nutrition.dailyGoal !== 'object') saved.nutrition.dailyGoal = {};
+    if (typeof saved.nutrition.dailyGoal.fiber !== 'number') saved.nutrition.dailyGoal.fiber = 25;
+    if (typeof saved.nutrition.dailyGoal.sugar !== 'number') saved.nutrition.dailyGoal.sugar = 25;
+    saved.dataVersion = 14;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
