@@ -4,7 +4,7 @@
   "start_url": "./",
   "display": "standalone",
   "background_color": "#080A10",
-  "theme_color": "#7B5EFF",
+  "theme_color": "#080A10",
   "description": "ZenFit is a modern fitness and wellness RPG tracker — workouts, nutrition, hydration, body metrics, habits, and health with a neon cyberpunk interface. Fully offline capable.",
   "lang": "en",
   "id": "com.zenfit.app.v9",
