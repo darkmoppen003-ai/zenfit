@@ -333,6 +333,12 @@ export function initRouter() {
       renderActive();
     }
   });
+  // ponytail: crossing the dock breakpoint (rotate/resize) re-renders nav —
+  // dock CSS unapplies but flattened items persist, so rebuild the pill.
+  try {
+    const dockMQ = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
+    dockMQ.addEventListener?.('change', () => { closeMorePopover(); renderActive(); });
+  } catch {}
   window.addEventListener('popstate', () => {
     // back/forward to a different hash = navigate, not exit
     try {
