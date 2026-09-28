@@ -345,6 +345,15 @@ function renderParticles() {
   if (effect === 'embers') {
     makeEmberGlow();
     parts = buildEmbers(true);
+    // ponytail: +50% ambient dots only — derived from mkEmber with hero/streak
+    // stripped and size clamped small, so hero count and streaks never change
+    const extraDots = Math.round(N * 0.5);
+    for (let i = 0; i < extraDots; i++) {
+      const d = mkEmber(true);
+      d.hero = false; d.streak = false; d.tlen = 9;
+      if (d.r >= 2) d.r = 0.8 + Math.random() * 1.2;
+      parts.push(d);
+    }
   } else if (effect !== 'matrix' && effect !== 'cyber') {
     parts = Array.from({ length: N }, () => ({
       x: R(0, W), y: R(0, H), r: R(0.5, 2.5),
