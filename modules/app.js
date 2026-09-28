@@ -61,6 +61,11 @@ function boot() {
     }
   } catch {}
   try { applyTheme(S.theme || 'midnight'); } catch {}
+  // ponytail: splash version follows the store (stamped statically too) — never drifts
+  try {
+    const sv = document.querySelector('.splash-ver');
+    if (sv) sv.textContent = `v${APP_VERSION}`;
+  } catch {}
   applyBackgroundConfig();
 
   initRouter();
