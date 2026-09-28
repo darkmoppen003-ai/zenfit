@@ -126,7 +126,7 @@ function renderBottomNav() {
   bar.innerHTML = tabs.map((t) =>
     `<div class="bottom-nav-item${currentScreen === t.id ? ' active' : ''}" data-bnav="${t.id}">
       <span class="bni-icon">${DOCK_ICONS[t.id] || t.icon}</span><span class="bni-label">${t.label}</span></div>`).join('') +
-    `<div class="bottom-nav-item${overflowActive ? ' active' : ''}" data-bnav="__more" title="More" style="position:relative">
+    `<div class="bottom-nav-item${overflowActive ? ' active' : ''}" data-bnav="__more" style="position:relative">
       <span class="bni-icon">${ICONS.more}</span><span class="bni-label">More</span>${(S.inboxUnread || 0) > 0 ? '<span class="nav-dot" style="position:absolute;top:4px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:2px solid var(--bg-base)"></span>' : ''}</div>`;
   bar.querySelectorAll('[data-bnav]').forEach((b) => {
     b.onclick = (e) => {
@@ -139,6 +139,8 @@ function renderBottomNav() {
   // (6 visible, wheel reveals the rest like a list) + macOS proximity magnification.
   const dockMode = !!window.matchMedia?.('(min-width: 1024px) and (pointer: fine)').matches;
   bar.classList.toggle('dock-all', dockMode);
+  // ponytail: rebuilds destroy the hovered node without mouseleave — never leave a stale dock tooltip behind
+  document.getElementById('dock-tip')?.classList.remove('show');
   if (dockMode) {
     bar.insertAdjacentHTML('beforeend', overflow.map((t) =>
       `<div class="bottom-nav-item${currentScreen === t.id ? ' active' : ''}" data-bnav="${t.id}">
@@ -149,6 +151,7 @@ function renderBottomNav() {
         <span class="bni-icon">${ICONS.customization}</span><span class="bni-label">Nav-Edit</span></div>`);
     bar.querySelectorAll('[data-bnav]').forEach((b) => {
       b.onclick = (e) => {
+        document.getElementById('dock-tip')?.classList.remove('show');
         if (b.dataset.bnav === '__more') { e.stopPropagation(); toggleMorePopover(); return; }
         if (b.dataset.bnav === '__navedit') { closeMorePopover(); openNavEditor(); return; }
         closeMorePopover();
@@ -172,16 +175,18 @@ function renderBottomNav() {
         const icon = it.querySelector('.bni-icon');
         if (icon) icon.style.transform = `scale(${s.toFixed(3)})`;
       });
-      // ponytail: one shared tooltip names the hovered button (bar never widens)
+      // ponytail: one shared tooltip names the hovered button (bar never widens),
+      // clamped inside the viewport so it can never park in a corner
       if (hov && !document.body.classList.contains('nav-labels-off')) {
         const label = hov.querySelector('.bni-label')?.textContent?.trim();
         if (label) {
           tip.textContent = label;
           tip.classList.add('show');
           const r = hov.getBoundingClientRect();
-          tip.style.top = `${r.top + r.height / 2}px`;
+          const w = tip.offsetWidth, h = tip.offsetHeight || 30;
+          tip.style.top = `${Math.min(Math.max(r.top + r.height / 2, h / 2 + 8), innerHeight - h / 2 - 8)}px`;
           tip.style.transform = 'translateY(-50%)';
-          tip.style.left = `${Math.max(8, r.left - tip.offsetWidth - 12)}px`;
+          tip.style.left = `${Math.min(Math.max(r.left - w - 12, 8), Math.max(8, innerWidth - w - 8))}px`;
         } else hideTip();
       } else hideTip();
     });
@@ -190,6 +195,7 @@ function renderBottomNav() {
       hideTip();
     });
     bar.addEventListener('scroll', hideTip, { passive: true });
+    window.addEventListener('blur', hideTip);
   }
   let pop = document.getElementById('more-popover');
   if (!pop) { pop = document.createElement('div'); pop.id = 'more-popover'; pop.className = 'more-popover'; document.body.appendChild(pop); }
