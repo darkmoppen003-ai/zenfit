@@ -45,7 +45,7 @@ export function renderWater(host) {
       </div>
       <div class="water-pct-label">${pct}%</div>
     </div>
-    <div style="font-size:22px;font-weight:500;color:var(--water)">${Math.round(total / 100) / 10}L <span style="color:var(--text-muted);font-size:13px">/ ${goal / 1000}L</span></div>
+    <div style="font-size:22px;font-weight:700;font-family:var(--font-display);color:var(--water)">${Math.round(total / 100) / 10}L <span style="color:var(--text-muted);font-size:13px">/ ${goal / 1000}L</span></div>
     <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${pct}% of daily goal · Tap tank to add 250ml</div>
   </div>
   <div class="card mb16">

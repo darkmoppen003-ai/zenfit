@@ -326,7 +326,7 @@ function ring(size, center, frac, color) {
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="7"/>`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"`
     + ` stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.min(1, Math.max(0, frac)))}"/></svg>`
-    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
+    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
 }
 
 function paintChar(box, rc) {
