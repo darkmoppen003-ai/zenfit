@@ -325,13 +325,13 @@ export function viewPartnerStats(i) {
   const pos = allUsers.findIndex((u) => u.name === p.name) + 1;
   openOverlay(`<div style="text-align:left;max-height:70vh;overflow-y:auto">
     <div class="flex gap12 mb12"><div class="rank-badge">${escapeHtml((p.name || '?')[0])}</div>
-    <div><div style="font-size:16px;font-weight:700">${escapeHtml(p.name)} ${p.peerId && peerConnections[p.peerId] ? '<span class="badge badge-green">● live</span>' : ''}</div>
+    <div><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${escapeHtml(p.name)} ${p.peerId && peerConnections[p.peerId] ? '<span class="badge badge-green">● live</span>' : ''}</div>
     <div style="font-size:12px;color:var(--text-muted)">Rank #${pos} among friends · Lv ${p.level} · ${escapeHtml(p.rank || '')}</div></div></div>
     <div class="grid2 gap8">
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800">${cached.level ?? p.level}</div><div style="font-size:10px;color:var(--text-muted)">Level</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800">${cached.xp ?? p.xp ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">XP</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800">${cached.streak ?? p.streak ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Streak</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800">${cached.workouts ?? p.workouts ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Workouts</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.level ?? p.level}</div><div style="font-size:10px;color:var(--text-muted)">Level</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.xp ?? p.xp ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">XP</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.streak ?? p.streak ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Streak</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.workouts ?? p.workouts ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Workouts</div></div>
     </div>
     <div class="flex gap8 mt12">
       ${p.peerId ? '<button class="btn btn-sm btn-primary" id="ps-chat">Chat</button>' : ''}

@@ -549,10 +549,10 @@ function renderAnOverview(body) {
   </div>
   <div class="section-title">Calorie Trends</div>
   <div class="grid2 mb12">
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG CAL</div><div style="font-size:20px;font-weight:800">${summary.avgCal}</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG BURNED</div><div style="font-size:20px;font-weight:800">${summary.avgBurned}</div></div>
-    <div class="card-sm text-center"><div style="font-size:16px;font-weight:700;color:var(--info)">${(S.workouts || []).filter((w) => w.date === getTodayStr()).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">HABITS DONE</div><div style="font-size:20px;font-weight:800">${data.reduce((a, d) => a + d.habits, 0)}</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG CAL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgCal}</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG BURNED</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgBurned}</div></div>
+    <div class="card-sm text-center"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--info)">${(S.workouts || []).filter((w) => w.date === getTodayStr()).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">HABITS DONE</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${data.reduce((a, d) => a + d.habits, 0)}</div></div>
   </div>
   <div class="card mb12"><div class="section-title">Calories vs Burned (TDEE ${tdee})</div>
   <div style="position:relative;height:200px"><canvas id="c_overview"></canvas></div></div>`;
@@ -567,7 +567,7 @@ function xpForLevelOf(l) {
 }
 function compareSummary(label, cur, prev, unit) {
   if (!compare) return `<div style="font-size:${unit === '%' ? '20px' : '16px'};font-weight:700">${cur}${unit}</div>`;
-  return `<div><div style="font-size:16px;font-weight:700">${cur}${unit}</div>`
+  return `<div><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${cur}${unit}</div>`
     + `<div style="font-size:10px;color:${cur >= prev ? 'var(--success)' : 'var(--danger)'}">${deltaPct(cur, prev)}</div></div>`;
 }
 
@@ -751,16 +751,16 @@ function renderAnMind(body) {
     </div>
     <div style="flex:1">
       <div class="grid2" style="gap:6px">
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700">${recent.length}</div><div style="font-size:9px;color:var(--text-muted)">SESSIONS</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700">${avgSession}m</div><div style="font-size:9px;color:var(--text-muted)">AVG LENGTH</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700">${daysTracked}</div><div style="font-size:9px;color:var(--text-muted)">DAYS</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700">${streak}</div><div style="font-size:9px;color:var(--text-muted)">STREAK</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${recent.length}</div><div style="font-size:9px;color:var(--text-muted)">SESSIONS</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${avgSession}m</div><div style="font-size:9px;color:var(--text-muted)">AVG LENGTH</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${daysTracked}</div><div style="font-size:9px;color:var(--text-muted)">DAYS</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${streak}</div><div style="font-size:9px;color:var(--text-muted)">STREAK</div></div>
       </div>
     </div>
   </div>
   <div class="grid2 mb12">
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL MINDFUL</div><div style="font-size:20px;font-weight:800">${totalMinutes}m</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL STUDY</div><div style="font-size:20px;font-weight:800">${studyTotal}m</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL MINDFUL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${totalMinutes}m</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL STUDY</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${studyTotal}m</div></div>
   </div>
   ${top5.length ? `<div class="section-title">Top Soundscapes</div><div class="card mb12">${top5.map(([s, n]) => `
     <div class="flex-between mb8"><span style="font-size:13px">${escapeHtml(s)}</span><span class="badge">${n}×</span></div>`).join('')}</div>` : ''}`;
@@ -791,10 +791,10 @@ function renderAnProgress(body) {
   <div class="section-title">Body Stats</div>
   <div class="grid2 mb12">
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">BMI</div>
-      <div style="font-size:20px;font-weight:800;color:${bmiCat.color}">${bmi || '—'}</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${bmiCat.color}">${bmi || '—'}</div>
       <div style="font-size:10px;color:${bmiCat.color}">${bmiCat.label}</div></div>
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">BODY FAT</div>
-      <div style="font-size:20px;font-weight:800">${bf != null ? `${bf}%` : '—'}</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${bf != null ? `${bf}%` : '—'}</div>
       <div style="font-size:10px;color:var(--text-muted)">estimate</div></div>
   </div>
   ${prediction ? `<div class="insight">📉 Trend: ${prediction.perWeek >= 0 ? '+' : ''}${prediction.perWeek} kg/week → ~${prediction.in30} kg in 30 days.</div>` : ''}`;
@@ -920,10 +920,10 @@ function renderAnMood(body) {
   <div class="card mb12" style="padding:12px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Intensity</div>
-      <div style="font-size:22px;font-weight:800">${avgI || '—'}${avgI ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
+      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${avgI || '—'}${avgI ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
     <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Energy</div>
-      <div style="font-size:22px;font-weight:800">${avgE || '—'}${avgE ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
+      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${avgE || '—'}${avgE ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
   </div></div>
   <div class="section-title">Recent Check-ins</div>
   <div class="card mb12">${recent20.filter((d) => d.mood).map((d) => {

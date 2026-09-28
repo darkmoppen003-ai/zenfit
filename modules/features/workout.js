@@ -168,7 +168,7 @@ function renderLog(body) {
     <div id="w-preview" style="display:none;background:var(--bg-raised);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid var(--border-mid)">
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;letter-spacing:1px">LIVE PREVIEW</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-        <div id="wp-cal" style="font-size:22px;font-weight:800;color:var(--danger)">0<span style="font-size:12px;color:var(--text-muted);font-weight:400"> kcal</span></div>
+        <div id="wp-cal" style="font-size:22px;font-weight:800;font-family:var(--font-display);color:var(--danger)">0<span style="font-size:12px;color:var(--text-muted);font-weight:400"> kcal</span></div>
         <div id="wp-vol" style="font-size:14px;font-weight:600;color:var(--info)"></div>
         <div id="wp-met" style="font-size:11px;color:var(--text-muted)"></div>
       </div>
@@ -577,7 +577,7 @@ function renderBurn(body) {
     }
     box.innerHTML = `<div style="background:rgba(255,77,106,.09);border:1px solid rgba(255,77,106,.27);border-radius:8px;padding:12px">
       <div style="font-size:13px;font-weight:500;text-transform:capitalize;margin-bottom:6px">${escapeHtml(parsed.actName)} · ${parsed.duration} min · MET ${parsed.met}</div>
-      <div style="font-size:18px;font-weight:800;color:var(--danger)">🔥 ${cal} kcal</div></div>`;
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);color:var(--danger)">🔥 ${cal} kcal</div></div>`;
     btn.style.display = 'block';
   };
   body.querySelector('#log-act-btn').onclick = () => {
@@ -639,6 +639,6 @@ function burnCalcPreview(body) {
   }
   const cal = Math.round(calcBurn(met, dur, wt));
   box.innerHTML = `<div style="font-size:11px;color:var(--text-muted)">ESTIMATE</div>
-    <div style="font-size:24px;font-weight:800;color:var(--danger)">🔥 ${cal} <span style="font-size:12px">kcal</span></div>
+    <div style="font-size:24px;font-weight:800;font-family:var(--font-display);color:var(--danger)">🔥 ${cal} <span style="font-size:12px">kcal</span></div>
     <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(act)} · ${dur} min · MET ${met.toFixed(1)} · ${wt}kg</div>`;
 }
