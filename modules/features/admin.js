@@ -9,11 +9,11 @@ import { S, update, idbDeleteImage } from '../core/store.js';
 import { uid } from '../core/utils.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { getTodayStr } from '../core/utils.js';
-import { showNotif, awardXP, MSG_BGS, openOverlay } from '../core/ui.js';
+import { showNotif, awardXP, MSG_BGS, openOverlay, closeOverlay } from '../core/ui.js';
 import { MISSION_CATS, missionProgress } from '../core/missions.js';
 import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
-import { renderRichBody, msgBgStyle } from './inbox.js';
+import { renderRichBody, msgBgStyle, bodyImg, cleanImgMeta } from './inbox.js';
 
 let unlocked = false;
 let tab = 'overview';
@@ -333,7 +333,9 @@ function renderMissions(body) {
     <div class="flex gap8 mt8">
       <button class="btn btn-primary btn-sm" id="ad-msend">Publish mission</button>
     </div>
-    <div style="font-size:11px;color:var(--text-muted)" class="mt8">Example: 50 squats + 3000ml water + 5 habits, 5 days in a row. Leave rules empty for a manual mission.</div></div>
+    <div style="font-size:11px;color:var(--text-muted)" class="mt8">Example: 50 squats + 3000ml water + 5 habits, 5 days in a row. Leave rules empty for a manual mission.</div>
+    <div class="flex gap8 mt8"><button class="btn btn-sm" id="ad-madjust">Adjust image</button></div>
+    <div id="ad-mpreview" class="mt8"></div></div>
   <div class="section-title">Live & past</div>
   ${events.slice().reverse().map((m) => {
     let prog = '';
@@ -344,6 +346,7 @@ function renderMissions(body) {
     ${ruleSummary(m)}${prog}</div>
     <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-medit="${m.id}">Edit</button><button class="btn btn-sm btn-ghost" data-mdel="${m.id}">✕</button></span></div>`; }).join('') || '<div class="card">No missions yet.</div>'}`;
   let editingMissionId = null, editingGlobalMissionId = null;
+  let mmeta = {};
   const fillMissionForm = (m) => {
     body.querySelector('#ad-mtitle').value = m.title || '';
     body.querySelector('#ad-micon').value = m.icon || '';
@@ -351,9 +354,46 @@ function renderMissions(body) {
     body.querySelector('#ad-mimg').value = m.image || '';
     body.querySelector('#ad-mbgimg').value = m.bgImage || '';
     body.querySelector('#ad-mxp').value = m.xp || 25;
+    mmeta = (m.imgMeta && typeof m.imgMeta === 'object' && !Array.isArray(m.imgMeta)) ? { ...m.imgMeta } : {};
     body.querySelector('#ad-rules').innerHTML = '';
     (Array.isArray(m.rules) && m.rules.length ? m.rules : [{ cat: 'water', target: 3000, days: 5 }]).forEach((r) => addRule(r));
+    paintMissionPreview();
   };
+  const collectMission = () => ({
+    title: sanitizeText(body.querySelector('#ad-mtitle').value, 60) || 'Mission',
+    icon: sanitizeText(body.querySelector('#ad-micon').value, 8) || '📯',
+    body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
+    image: cleanImageUrl(body.querySelector('#ad-mimg').value),
+    bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value),
+    xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
+    rules: [...body.querySelectorAll('[data-rule]')].map((row) => readRuleRow(row)).filter(Boolean),
+    imgMeta: { ...mmeta },
+  });
+  const paintMissionPreview = () => {
+    const box = body.querySelector('#ad-mpreview');
+    if (!box) return;
+    // ponytail: full-length mirror of the user-side global mission card
+    const d = collectMission();
+    const ebg = msgBgStyle(d);
+    box.innerHTML = `<div class="section-title mt8">Preview — exactly as users see it</div>`
+      + `<div class="card mb12" style="border-color:var(--primary);${ebg.style}"><div class="flex-between">`
+      + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display);${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(d.title)}</div>`
+      + `<span class="badge badge-purple">Mission</span></div>`
+      + bodyImg(d.image, d.imgMeta, { h: 180 })
+      + `<div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'};margin:4px 0">${escapeHtml(d.body) || 'Details…'}</div>`
+      + (d.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${d.xp} XP on completion</div>` : '')
+      + (d.rules.length ? `<div style="font-size:11px;color:var(--text-muted)">Rules: ${d.rules.length} condition${d.rules.length > 1 ? 's' : ''}</div>` : '<div style="font-size:11px;color:var(--text-muted)">Manual mission</div>')
+      + `<button class="btn btn-sm btn-primary mt8" disabled>Track this mission</button></div>`;
+  };
+  body.querySelector('#ad-madjust').onclick = () => {
+    const u = cleanImageUrl(body.querySelector('#ad-mimg').value);
+    if (!u) { showNotif('Paste an image URL first', '!'); return; }
+    openImgEditor(u, mmeta, (m) => { mmeta = m; paintMissionPreview(); });
+  };
+  ['#ad-mtitle', '#ad-micon', '#ad-mbody', '#ad-mimg', '#ad-mbgimg', '#ad-mxp'].forEach((sel) => {
+    body.querySelector(sel).oninput = paintMissionPreview;
+  });
+  paintMissionPreview();
   body.querySelector('#ad-msend').onclick = () => {
     const title = sanitizeText(body.querySelector('#ad-mtitle').value, 60);
     if (!title) { showNotif('Title required', '!'); return; }
@@ -364,6 +404,7 @@ function renderMissions(body) {
       body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
       image: cleanImageUrl(body.querySelector('#ad-mimg').value),
       bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value),
+      imgMeta: { ...mmeta },
       xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
       rules, status: 'live', ts: Date.now(),
     };
@@ -392,14 +433,15 @@ function renderMissions(body) {
       <select data-rcat style="flex:1">${MISSION_CATS.map((c) => `<option value="${c.id}"${preset.cat === c.id ? ' selected' : ''}>${c.label}</option>`).join('')}</select>
       <button class="btn btn-sm btn-ghost" data-rrm>✕</button></div>
       <div data-rfields style="display:flex;gap:6px;flex-wrap:wrap"></div>`;
-    row.querySelector('[data-rrm]').onclick = () => row.remove();
+    row.querySelector('[data-rrm]').onclick = () => { row.remove(); try { paintMissionPreview(); } catch {} };
     const paint = () => paintRuleFields(row, preset);
     row.querySelector('[data-rcat]').onchange = (e) => { preset = { cat: e.target.value }; paint(); };
     body.querySelector('#ad-rules').appendChild(row);
     paint();
   };
-  body.querySelector('#ad-rule-add').onclick = () => addRule();
+  body.querySelector('#ad-rule-add').onclick = () => { addRule(); try { paintMissionPreview(); } catch {} };
   addRule({ cat: 'water', target: 3000, days: 5 });
+  try { paintMissionPreview(); } catch {}
   const pubG = document.createElement('button');
   pubG.className = 'btn btn-sm mt8';
   pubG.textContent = 'Publish same mission globally';
@@ -413,13 +455,13 @@ function renderMissions(body) {
         title, descr: sanitizeText(body.querySelector('#ad-mbody').value, 200),
         xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
         rules: rules.length ? rules : null, image: cleanImageUrl(body.querySelector('#ad-mimg').value),
-        bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value),
+        bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value), imgMeta: { ...mmeta },
       });
       showNotif(ok ? 'Global mission updated — fresh + unread for users' : 'Update failed', ok ? 'OK' : '!');
       if (ok) { editingGlobalMissionId = null; pubG.textContent = 'Publish same mission globally'; window.ZF.rerender(); }
       return;
     }
-    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value), cleanImageUrl(body.querySelector('#ad-mbgimg').value));
+    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value), cleanImageUrl(body.querySelector('#ad-mbgimg').value), { ...mmeta });
     showNotif(ok ? 'Mission live globally — users track it from Inbox' : 'Publish failed — check Supabase config', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-msend').after(pubG);
@@ -543,6 +585,71 @@ async function announceAsset(kind, name, detail) {
   } catch {}
 }
 
+/** Per-image Adjust editor: drag pan, corner-handle stretch, wheel/slider zoom,
+    fit + height + focal presets. Writes back clamped imgMeta via onSave. */
+function openImgEditor(url, meta, onSave) {
+  const m = { fit: 'cover', h: 220, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1, ...(meta || {}) };
+  openOverlay(`<div style="text-align:left;max-width:420px;width:94%">
+    <div style="font-size:14px;font-weight:700;margin-bottom:2px">Adjust image</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Drag to pan · corner handle stretches · wheel zooms</div>
+    <div id="ie-stage" style="position:relative;overflow:hidden;border-radius:10px;border:1px solid var(--border-mid);height:220px;touch-action:none;cursor:grab;background:var(--bg-overlay)">
+      <img id="ie-img" src="${escapeHtml(url)}" alt="" draggable="false" style="width:100%;height:100%;user-select:none;pointer-events:none">
+      <div id="ie-handle" title="Stretch" style="position:absolute;right:4px;bottom:4px;width:20px;height:20px;border-radius:6px;background:var(--primary);cursor:nwse-resize;opacity:.9"></div>
+    </div>
+    <div class="flex gap8 mt8" id="ie-fits">${['cover', 'contain', 'fill'].map((f) => `<button class="btn btn-sm${m.fit === f ? ' btn-primary' : ''}" data-iefit="${f}">${f}</button>`).join('')}</div>
+    <div class="flex gap8 mt8" id="ie-pos">${['top', 'center', 'bottom'].map((p) => `<button class="btn btn-sm${m.pos === p ? ' btn-primary' : ''}" data-iepos="${p}">${p}</button>`).join('')}</div>
+    <label style="font-size:12px;display:block;margin-top:8px">Height <span id="ie-h-v">${m.h}px</span><input type="range" class="slider" id="ie-h" min="60" max="400" value="${m.h}"></label>
+    <label style="font-size:12px;display:block;margin-top:4px">Zoom <span id="ie-z-v">${m.zoom}×</span><input type="range" class="slider" id="ie-z" min="0.5" max="3" step="0.1" value="${m.zoom}"></label>
+    <div class="flex gap8 mt12"><button class="btn btn-primary btn-sm" style="flex:1" id="ie-save">Done</button>
+    <button class="btn btn-sm" id="ie-reset">Reset</button>
+    <button class="btn btn-sm btn-ghost" id="ie-cancel">Cancel</button></div></div>`);
+  const ov = document.getElementById('zf-overlay');
+  const stage = ov.querySelector('#ie-stage'), img = ov.querySelector('#ie-img');
+  const paint = () => {
+    img.style.objectFit = m.fit; img.style.objectPosition = m.pos;
+    img.style.transform = `translate(${m.x}px,${m.y}px) scale(${m.zoom * m.sw},${m.zoom * m.sh})`;
+    stage.style.height = `${m.h}px`;
+    ov.querySelector('#ie-h-v').textContent = `${Math.round(m.h)}px`;
+    ov.querySelector('#ie-z-v').textContent = `${(+m.zoom).toFixed(1)}×`;
+    ov.querySelectorAll('[data-iefit]').forEach((b) => b.classList.toggle('btn-primary', b.dataset.iefit === m.fit));
+    ov.querySelectorAll('[data-iepos]').forEach((b) => b.classList.toggle('btn-primary', b.dataset.iepos === m.pos));
+  };
+  paint();
+  ov.querySelectorAll('[data-iefit]').forEach((b) => { b.onclick = () => { m.fit = b.dataset.iefit; paint(); }; });
+  ov.querySelectorAll('[data-iepos]').forEach((b) => { b.onclick = () => { m.pos = b.dataset.iepos; m.x = 0; m.y = 0; paint(); }; });
+  ov.querySelector('#ie-h').oninput = (e) => { m.h = Number(e.target.value); paint(); };
+  ov.querySelector('#ie-z').oninput = (e) => { m.zoom = Number(e.target.value); paint(); };
+  let drag = null, stretch = null;
+  stage.addEventListener('pointerdown', (e) => {
+    if (e.target.id === 'ie-handle') { stretch = { x: e.clientX, y: e.clientY, sw: m.sw, sh: m.sh, w: img.clientWidth || 1, h: img.clientHeight || 1 }; }
+    else { drag = { x: e.clientX, y: e.clientY, ox: m.x, oy: m.y }; stage.style.cursor = 'grabbing'; }
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+  });
+  stage.addEventListener('pointermove', (e) => {
+    if (stretch) {
+      m.sw = Math.min(3, Math.max(0.3, stretch.sw * (1 + (e.clientX - stretch.x) / Math.max(1, stretch.w))));
+      m.sh = Math.min(3, Math.max(0.3, stretch.sh * (1 + (e.clientY - stretch.y) / Math.max(1, stretch.h))));
+      paint();
+    } else if (drag) {
+      m.x = Math.min(300, Math.max(-300, drag.ox + (e.clientX - drag.x)));
+      m.y = Math.min(300, Math.max(-300, drag.oy + (e.clientY - drag.y)));
+      paint();
+    }
+  });
+  const endDrag = () => { drag = stretch = null; stage.style.cursor = 'grab'; };
+  stage.addEventListener('pointerup', endDrag);
+  stage.addEventListener('pointercancel', endDrag);
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    m.zoom = Math.min(3, Math.max(0.5, +(m.zoom + (e.deltaY < 0 ? 0.1 : -0.1)).toFixed(2)));
+    ov.querySelector('#ie-z').value = m.zoom;
+    paint();
+  }, { passive: false });
+  ov.querySelector('#ie-reset').onclick = () => { Object.assign(m, { fit: 'cover', h: 220, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 }); ov.querySelector('#ie-h').value = 220; ov.querySelector('#ie-z').value = 1; paint(); };
+  ov.querySelector('#ie-cancel').onclick = () => closeOverlay();
+  ov.querySelector('#ie-save').onclick = () => { try { onSave(cleanImgMeta(m)); } catch { onSave({ ...m }); } closeOverlay(); };
+}
+
 /* ── Broadcast notifications ── */
 function cleanImageUrl(v) {
   const u = sanitizeText(v, 500).trim();
@@ -586,13 +693,24 @@ function renderBroadcast(body) {
   <div class="section-title mt12">Global outbox (all devices)</div>
   <div id="ad-goutbox"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div>`;
   const nimgs = [];
+  const nmeta = [];
+  const metaOf = (i) => (nmeta[i] && typeof nmeta[i] === 'object' ? nmeta[i] : {});
+  const metaBadge = (i) => {
+    const m = metaOf(i);
+    const bits = [];
+    if (m.fit && m.fit !== 'cover') bits.push(m.fit);
+    if (m.h != null) bits.push(`${m.h}px`);
+    if (m.zoom && m.zoom !== 1) bits.push(`${m.zoom}×`);
+    if ((m.x || m.y) || (m.sw !== 1 || m.sh !== 1)) bits.push('adjusted');
+    return bits.length ? ` <span style="color:var(--primary)">[${bits.join(' · ')}]</span>` : '';
+  };
   let editingLocalIx = null, editingGlobal = null;
   const paintImgs = () => {
     const box = body.querySelector('#ad-nimgs');
     if (!box) return;
     box.innerHTML = nimgs.map((u, i) => `<div class="flex-between" style="font-size:11px;gap:6px">
-      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">[img:${i + 1}] ${escapeHtml(u.slice(0, 60))}</span>
-      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-nins="${i}">Insert</button><button class="btn btn-sm btn-ghost" data-nrm="${i}">✕</button></span></div>`).join('')
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">[img:${i + 1}] ${escapeHtml(u.slice(0, 60))}${metaBadge(i)}</span>
+      <span style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm" data-nins="${i}">Insert</button><button class="btn btn-sm" data-nadj="${i}">Adjust</button><button class="btn btn-sm btn-ghost" data-nrm="${i}">✕</button></span></div>`).join('')
       || '<div style="font-size:11px;color:var(--text-muted)">No images — Add one, then Insert places [img:N] in the text.</div>';
     box.querySelectorAll('[data-nins]').forEach((b) => {
       b.onclick = () => {
@@ -602,11 +720,17 @@ function renderBroadcast(body) {
         ta.focus();
       };
     });
+    box.querySelectorAll('[data-nadj]').forEach((b) => {
+      b.onclick = () => openImgEditor(nimgs[Number(b.dataset.nadj)], metaOf(Number(b.dataset.nadj)), (m) => {
+        nmeta[Number(b.dataset.nadj)] = m;
+        paintImgs(); paintPreview();
+      });
+    });
     box.querySelectorAll('[data-nrm]').forEach((b) => {
       b.onclick = () => {
         // ponytail: deleting an image renumbers higher tokens so [img:N] never dangles
         const rm = Number(b.dataset.nrm);
-        nimgs.splice(rm, 1);
+        nimgs.splice(rm, 1); nmeta.splice(rm, 1);
         const ta = body.querySelector('#ad-nbody');
         ta.value = ta.value.replace(/\[img:(\d+)\]/g, (m, n) => {
           const k = Number(n);
@@ -622,7 +746,7 @@ function renderBroadcast(body) {
     const u = cleanImageUrl(body.querySelector('#ad-nimg').value);
     if (!u) { showNotif('Paste a full https:// image URL first', '!'); return; }
     if (nimgs.length >= 5) { showNotif('Max 5 images per message', '!'); return; }
-    nimgs.push(u);
+    nimgs.push(u); nmeta.push({});
     body.querySelector('#ad-nimg').value = '';
     paintImgs(); paintPreview();
   };
@@ -635,6 +759,7 @@ function renderBroadcast(body) {
     bgImage: cleanImageUrl(body.querySelector('#ad-nbgimg').value),
     image: nimgs[0] || '',
     images: [...nimgs],
+    imgMeta: nimgs.map((_, i) => ({ ...(typeof nmeta[i] === 'object' && nmeta[i] ? nmeta[i] : {}) })),
     confetti: !!body.querySelector('#ad-nconf').checked,
   });
   body.querySelector('#ad-nbgimg').onchange = (e) => {
@@ -645,15 +770,16 @@ function renderBroadcast(body) {
     const d = collect();
     const box = body.querySelector('#ad-npreview');
     if (!box) return;
-    // ponytail: preview uses the exact user-side renderer — what breaks here breaks in inboxes
+    // ponytail: full-length user-card mirror — same DOM, sizes and type as the inbox detail view
     let rich = '';
-    try { rich = renderRichBody(d.body, d.images, d.image); } catch { rich = escapeHtml(d.body).slice(0, 120); }
-    rich = rich.replace(/max-height:220px/g, 'max-height:90px').replace(/margin:6px 0/g, 'margin:4px 0');
+    try { rich = renderRichBody(d.body, d.images, d.image, d.imgMeta); } catch { rich = escapeHtml(d.body).slice(0, 120); }
     const pbg = msgBgStyle(d);
-    box.innerHTML = `<div class="card-sm" style="${pbg.style}${pbg.light ? 'color:#fff;' : ''}${d.hl !== 'none' ? `border-color:var(--${d.hl});` : ''}">`
-      + `<div style="font-size:12px;font-weight:700;font-family:var(--font-display);${pbg.light ? 'text-shadow:0 1px 4px rgba(0,0,0,.5);' : ''}">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
-      + (d.image ? `<img src="${escapeHtml(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;margin:4px 0">` : '')
-      + `<div style="font-size:11px;opacity:.85">${rich || 'Preview…'}</div></div>`;
+    box.innerHTML = `<div class="section-title mt8">Preview — exactly as users see it</div>`
+      + `<div class="card" style="${pbg.style}${d.hl !== 'none' ? `border-color:var(--${d.hl});box-shadow:0 0 18px var(--${d.hl})55;` : ''}">`
+      + bodyImg(d.image, (d.imgMeta || [])[0], { h: 220, mb: '0 0 10px' })
+      + `<div style="font-size:17px;font-weight:800;font-family:var(--font-display);${pbg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
+      + `<div style="font-size:10px;${pbg.light ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">just now · preview</div>`
+      + `<div style="font-size:13px;line-height:1.7;${pbg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${rich || 'Preview…'}</div></div>`;
   };
   ['#ad-ntitle', '#ad-nbody', '#ad-nbg', '#ad-nhl'].forEach((sel) => { body.querySelector(sel).oninput = paintPreview; });
   body.querySelector('#ad-nconf').onchange = (e) => {
@@ -670,8 +796,10 @@ function renderBroadcast(body) {
     if (body.querySelector('#ad-nbg')) body.querySelector('#ad-nbg').value = m.bg || 'none';
     if (body.querySelector('#ad-nhl')) body.querySelector('#ad-nhl').value = m.hl || 'none';
     if (body.querySelector('#ad-nbgimg')) body.querySelector('#ad-nbgimg').value = m.bgImage || '';
-    nimgs.length = 0;
+    nimgs.length = 0; nmeta.length = 0;
     (Array.isArray(m.images) && m.images.length ? m.images : (m.image ? [m.image] : [])).slice(0, 5).forEach((u) => nimgs.push(u));
+    (Array.isArray(m.imgMeta) ? m.imgMeta : []).slice(0, 5).forEach((mm) => nmeta.push({ ...(mm || {}) }));
+    while (nmeta.length < nimgs.length) nmeta.push({});
     if (body.querySelector('#ad-nconf')) body.querySelector('#ad-nconf').checked = !!m.confetti;
     paintImgs(); paintPreview();
   };
@@ -707,14 +835,14 @@ function renderBroadcast(body) {
     if (editingGlobal) {
       const patch = editingGlobal.table === 'global_events'
         ? { title: m.title, descr: m.body, image: m.image, target }
-        : { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, confetti: m.confetti };
+        : { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, imgMeta: m.imgMeta, confetti: m.confetti };
       const ok = await sbUpdate(editingGlobal.table, editingGlobal.id, patch);
       showNotif(ok ? 'Updated globally — users see fresh + unread' : 'Update failed', ok ? 'OK' : '!');
       if (ok) { editingGlobal = null; body.querySelector('#ad-nglobal').textContent = 'Publish globally'; window.ZF.rerender(); }
       return;
     }
     showNotif(target === 'all' ? 'Broadcasting globally…' : `Sending to ${target}…`, 'OK');
-    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, confetti: m.confetti });
+    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, imgMeta: m.imgMeta, confetti: m.confetti });
     showNotif(ok ? (target === 'all' ? 'Broadcast live globally — users get it in Inbox' : `Message queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-npush').onclick = () => {

@@ -143,7 +143,7 @@ export const GlobalBoard = {
       for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
       if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
       let res = await post(body);
-      for (const k of ['confetti', 'image', 'images', 'bg', 'bgImage', 'hl', 'rules', 'target']) {
+      for (const k of ['confetti', 'image', 'images', 'imgMeta', 'bg', 'bgImage', 'hl', 'rules', 'target']) {
         if (!res.ok && k in body) {
           delete body[k];
           res = await post(body);
@@ -161,7 +161,7 @@ export const GlobalBoard = {
     } catch { return []; }
   },
   publishBroadcast: (title, body, target = 'all') => GlobalBoard.publish('global_broadcasts', { title, body, target }),
-  publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '', bgImage = '') => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image, bgImage } : { title, descr, xp, status: 'live', target, image, bgImage }),
+  publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '', bgImage = '', imgMeta = null) => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image, bgImage, imgMeta } : { title, descr, xp, status: 'live', target, image, bgImage, imgMeta }),
   publishReward: (title, xp, code = '', target = 'all') => GlobalBoard.publish('global_rewards', { title, xp, code, target }),
   publishAsset: (kind, name, url = '', data = null) => GlobalBoard.publish('global_assets', { kind, name, url, data }),
   fetchAssets: (kind = null) => GlobalBoard.fetch('global_assets').then((rows) => kind ? rows.filter((r) => r.kind === kind) : rows),

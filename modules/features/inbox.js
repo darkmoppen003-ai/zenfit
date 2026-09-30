@@ -99,9 +99,37 @@ export function plainBody(s) {
     .replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1$2')
     .replace(/__([^_\n]+)__/g, '$1').replace(/##([^#\n]+)##/g, '$1');
 }
+const IMG_META_DEF = { fit: 'cover', h: null, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 };
+/** Clamp stored per-image geometry (fit/height/position/zoom/pan/stretch). h:null = site default. */
+export function cleanImgMeta(m) {
+  if (!m || typeof m !== 'object') return { ...IMG_META_DEF };
+  const num = (v, d, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+  return {
+    fit: ['cover', 'contain', 'fill'].includes(m.fit) ? m.fit : 'cover',
+    h: m.h == null ? null : num(m.h, null, 60, 400),
+    pos: ['top', 'center', 'bottom'].includes(m.pos) ? m.pos : 'center',
+    zoom: num(m.zoom, 1, 0.5, 3), x: num(m.x, 0, -300, 300), y: num(m.y, 0, -300, 300),
+    sw: num(m.sw, 1, 0.3, 3), sh: num(m.sh, 1, 0.3, 3),
+  };
+}
+const IMG_ATTRS = 'alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()"';
+/** Image with per-image geometry. Untouched meta emits the legacy markup verbatim. */
+export function bodyImg(u, meta, o = {}) {
+  const src = okImg(u);
+  if (!src) return '';
+  const m = cleanImgMeta(meta);
+  const H = o.h || 220, rad = o.radius || 10, mb = o.mb || '6px 0';
+  const esc = escapeHtml(src);
+  const custom = (meta && meta.h != null) || m.fit !== 'cover' || m.pos !== 'center' || m.zoom !== 1 || m.x || m.y || m.sw !== 1 || m.sh !== 1;
+  if (!custom) return `<img src="${esc}" ${IMG_ATTRS} style="width:100%;max-height:${H}px;object-fit:cover;border-radius:${rad}px;margin:${mb}">`;
+  const h = (meta && meta.h != null) ? m.h : H;
+  const zx = (m.zoom * m.sw).toFixed(3), zy = (m.zoom * m.sh).toFixed(3);
+  return `<span style="display:block;overflow:hidden;height:${h}px;border-radius:${rad}px;margin:${mb}"><img src="${esc}" ${IMG_ATTRS} style="width:100%;height:100%;object-fit:${m.fit};object-position:${m.pos};transform:translate(${m.x}px,${m.y}px) scale(${zx},${zy})"></span>`;
+}
 /** Render body with [img:N] tokens swapped for images (allowlisted src only). */
-export function renderRichBody(body, images, headerImg = '') {
+export function renderRichBody(body, images, headerImg = '', imgMetas = null) {
   const imgs = Array.isArray(images) ? images.map(okImg).filter(Boolean) : [];
+  const metas = Array.isArray(imgMetas) ? imgMetas : [];
   const used = new Set();
   const parts = String(body || '').split(/(\[img:\d+\])/g);
   let html = parts.map((p) => {
@@ -110,13 +138,13 @@ export function renderRichBody(body, images, headerImg = '') {
       const idx = Number(mt[1]) - 1;
       const u = imgs[idx];
       if (u) used.add(idx);
-      return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
+      return u ? bodyImg(u, metas[idx]) : '';
     }
     return renderRichText(p);
   }).join('');
   // ponytail: untokened body images were invisible — append unreferenced ones (header already shown separately)
-  const rest = imgs.filter((u, i) => !used.has(i) && u !== headerImg);
-  if (rest.length) html += rest.map((u) => `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">`).join('');
+  const rest = imgs.map((u, i) => ({ u, i })).filter(({ u, i }) => !used.has(i) && u !== headerImg);
+  if (rest.length) html += rest.map(({ u, i }) => bodyImg(u, metas[i])).join('');
   return html;
 }
 const kindColor = (m) => {
@@ -144,9 +172,8 @@ export function renderInbox(host) {
   <div id="inbox-threads"></div>
   ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
     ${events.map((e) => {
-      const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
       const ebg = msgBgStyle(e);
-      return `<div class="card mb8" style="${ebg.style}">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700;${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Mission')}</div>
+      return `<div class="card mb8" style="${ebg.style}">${bodyImg(e.image, e.imgMeta, { h: 160, mb: '0 0 8px' })}<div style="font-size:13px;font-weight:700;${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Mission')}</div>
       <div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
@@ -278,10 +305,10 @@ function openDetail(host, mid, isGlobal = false) {
   host.innerHTML = `
   <button class="btn btn-sm btn-ghost mb12" id="inbox-back">← Back to inbox</button>
   <div class="card" style="${bgs.style}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
-    ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
+    ${bodyImg(img, (m.imgMeta || [])[0], { h: 220, mb: '0 0 10px' })}
     <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bgs.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
     <div style="font-size:10px;${bgs.light ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
-    <div style="font-size:13px;line-height:1.7;${bgs.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img)}</div>
+    <div style="font-size:13px;line-height:1.7;${bgs.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img, m.imgMeta)}</div>
     ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
   </div>
   ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
@@ -322,7 +349,7 @@ async function syncGlobals(host) {
     gThreads = myCasts.slice(0, 20).map((b) => ({
       id: b.id, title: b.title || 'Broadcast', body: b.body || '',
       date: (b.updated_at || b.created_at || '').slice(0, 10), created_at: b.created_at || '', updated_at: b.updated_at || '',
-      bg: b.bg || 'none', hl: b.hl || 'none', bgImage: b.bgImage || '', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], confetti: !!b.confetti,
+      bg: b.bg || 'none', hl: b.hl || 'none', bgImage: b.bgImage || '', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], imgMeta: Array.isArray(b.imgMeta) ? b.imgMeta.slice(0, 5) : [], confetti: !!b.confetti,
     }));
     // edited globals → silent replace (same id) but fresh + unread
     try {
@@ -360,12 +387,11 @@ async function syncGlobals(host) {
         const tracked = (S.events || []).some((x) => x.globalId === gid);
         const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
         const rules = Array.isArray(e.rules) ? e.rules : [];
-        const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
         const ebg = msgBgStyle(e);
         return `<div class="card mb12" style="border-color:var(--primary);${ebg.style}"><div class="flex-between">`
         + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display);${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Event')}</div>`
         + `<span style="display:flex;gap:4px;align-items:center"><span class="badge badge-purple">Mission</span><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + gid)}" style="color:var(--danger)" title="Hide for me">×</button></span></div>`
-        + `${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:6px 0">` : ''}`
+        + `${bodyImg(e.image, e.imgMeta, { h: 180 })}`
         + `<div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'};margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
         + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
         + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
