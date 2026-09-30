@@ -157,7 +157,7 @@ export function renderDashboard(host) {
   <div class="grid2 mb12">
     <div class="card-sm text-center" id="dash-ach" style="cursor:pointer">
       <div style="font-size:20px;line-height:1;margin-bottom:6px">🏆</div>
-      ${ring(84, `${earned.size}/${ACHIEVEMENTS.length}`, earned.size / ACHIEVEMENTS.length, 'var(--warning)')}
+      ${ring(84, `${earned.size}/${ACHIEVEMENTS.length}`, earned.size / ACHIEVEMENTS.length, 'var(--warning)', 28, 11)}
       <div style="font-size:11px;color:var(--text-muted)" class="mt8">${achPct}% complete</div>
     </div>
     <div class="card-sm text-center">
@@ -319,14 +319,14 @@ function zenStreak() {
   return S.zen?.currentStreak || 0;
 }
 
-function ring(size, center, frac, color) {
-  const r = 26, c = 2 * Math.PI * r;
+function ring(size, center, frac, color, rr = 26, fs = 15) {
+  const r = rr, c = 2 * Math.PI * r;
   return `<div style="position:relative;width:${size}px;height:${size}px;margin:0 auto">`
     + `<svg width="${size}" height="${size}" viewBox="0 0 64 64" style="transform:rotate(-90deg);display:block">`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="7"/>`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"`
     + ` stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.min(1, Math.max(0, frac)))}"/></svg>`
-    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
+    + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
 }
 
 function paintChar(box, rc) {
