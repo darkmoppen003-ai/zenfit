@@ -44,9 +44,47 @@ const gNoteEdited = (gid, ver) => {
 };
 const IMG_RE = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/;
 const okImg = (u) => IMG_RE.test(u || '') ? u : '';
-const stripTokens = (s) => String(s || '').replace(/\[img:\d+\]/g, '');
+/** Card background: custom image (cover + scrim for legibility) wins, else gradient preset. */
+export function msgBgStyle(m) {
+  const img = okImg(m?.bgImage);
+  if (img) return { style: `background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),url('${img}') center/cover;`, light: true };
+  const bg = MSG_BGS[m?.bg] || '';
+  if (bg) return { style: `background:${bg};`, light: true };
+  return { style: '', light: false };
+}
+const stripTokens = (s) => plainBody(s);
+/** Mini-markup for broadcasts: **bold** *italic* __underline__ ##display## [label](url) + bare-URL cards. XSS-safe (escape first). */
+export function renderRichText(s) {
+  let h = escapeHtml(String(s || ''));
+  h = h.replace(/\[([^\]\n]{1,80})\]\((https?:\/\/[^\s"'<>)]+)\)/g, (m, t, u) => {
+    const url = u.replace(/&amp;/g, '&');
+    return `<a href="${url}" target="_blank" rel="noopener" style="color:var(--info);font-weight:600">${t}</a>`;
+  });
+  h = h.replace(/(^|[\s>])(https?:\/\/[^\s"'<>]+)/g, (m, pre, u) => {
+    const url = u.replace(/&amp;/g, '&');
+    let host = '';
+    try { host = new URL(url).hostname; } catch { return m; }
+    const short = url.length > 60 ? `${url.slice(0, 60)}…` : url;
+    return `${pre}<a href="${url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;margin:6px 0;padding:8px 10px;border:1px solid var(--border-mid);border-radius:10px;background:var(--bg-overlay);text-decoration:none">`
+      + `<img src="https://www.google.com/s2/favicons?domain=${host}&sz=64" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:20px;height:20px;border-radius:4px;flex-shrink:0">`
+      + `<span style="min-width:0"><span style="display:block;font-size:12px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${host}</span>`
+      + `<span style="display:block;font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${short}</span></span></a>`;
+  });
+  h = h.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  h = h.replace(/__([^_\n]+)__/g, '<u>$1</u>');
+  h = h.replace(/##([^#\n]+)##/g, '<span style="font-family:var(--font-display);font-weight:700">$1</span>');
+  return h.replace(/\n/g, '<br>');
+}
+/** Plaintext variant for list previews, search and notifications. */
+export function plainBody(s) {
+  return String(s || '').replace(/\[img:\d+\]/g, '')
+    .replace(/\[([^\]\n]{1,80})\]\(https?:\/\/[^\s"'<>)]+\)/g, '$1')
+    .replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1$2')
+    .replace(/__([^_\n]+)__/g, '$1').replace(/##([^#\n]+)##/g, '$1');
+}
 /** Render body with [img:N] tokens swapped for images (allowlisted src only). */
-function renderRichBody(body, images, headerImg = '') {
+export function renderRichBody(body, images, headerImg = '') {
   const imgs = Array.isArray(images) ? images.map(okImg).filter(Boolean) : [];
   const used = new Set();
   const parts = String(body || '').split(/(\[img:\d+\])/g);
@@ -58,7 +96,7 @@ function renderRichBody(body, images, headerImg = '') {
       if (u) used.add(idx);
       return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:6px 0">` : '';
     }
-    return escapeHtml(p);
+    return renderRichText(p);
   }).join('');
   // ponytail: untokened body images were invisible — append unreferenced ones (header already shown separately)
   const rest = imgs.filter((u, i) => !used.has(i) && u !== headerImg);
@@ -387,4 +425,47 @@ async function syncGlobals(host) {
   } catch {
     host.querySelector('#inbox-global') && (host.querySelector('#inbox-global').innerHTML = '');
   }
+}
+
+/** Background poll: new/edited broadcasts notify even when inbox was never
+   opened (in-app toast + OS notification + unread bump). No server push exists. */
+function notifyGlobal(title, body) {
+  try { showNotif(`📣 ${title || 'New broadcast'}`, 'OK'); } catch {}
+  try {
+    const b = plainBody(body || '').slice(0, 120);
+    if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage({ type: 'SHOW_NOTIFICATION', payload: { title: `📣 ${title || 'New broadcast'}`, body: b } });
+    else if ('Notification' in window && Notification.permission === 'granted') new Notification(`📣 ${title || 'New broadcast'}`, { body: b });
+  } catch {}
+}
+export async function checkGlobalUpdates() {
+  try {
+    const { GlobalBoard } = await import('../core/cloud.js');
+    const casts = await GlobalBoard.fetchBroadcasts().catch(() => []);
+    if (!casts?.length) return false;
+    const mine = [S.deviceId, S.profile?.name, S.player?.name].filter(Boolean).map(String);
+    const myCasts = casts.filter((r) => !r?.target || r.target === 'all' || mine.includes(String(r.target)));
+    if (!myCasts.length) return false;
+    let fresh = 0;
+    try {
+      const latest = myCasts[0];
+      const seen = localStorage.getItem('zf_global_notified');
+      if (latest?.id && seen !== String(latest.id)) {
+        localStorage.setItem('zf_global_notified', String(latest.id));
+        fresh++;
+        notifyGlobal(latest.title, latest.body);
+      }
+    } catch {}
+    myCasts.slice(0, 20).forEach((r) => {
+      if (gNoteEdited('g-' + (r.id || r.title), gVerOf(r))) {
+        fresh++;
+        notifyGlobal('Updated: ' + (r.title || 'broadcast'), r.body);
+      }
+    });
+    if (fresh) {
+      update((s) => { s.inboxUnread = (s.inboxUnread || 0) + fresh; }, { silent: true });
+      try { save(); } catch {}
+      try { window.ZF?.rerender(); } catch {}
+    }
+    return fresh > 0;
+  } catch { return false; }
 }
