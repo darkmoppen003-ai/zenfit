@@ -881,6 +881,7 @@ function renderContent(body) {
         if (existing) { showNotif('Already deployed — see list below', '!'); b.disabled = false; return; }
         const ok = await GlobalBoard.publishAsset('wallpaper', x.name, x.src);
         showNotif(ok ? `“${x.name}” live on all devices` : 'Deploy failed', ok ? 'OK' : '!');
+        if (ok) announceAsset('wallpaper', x.name);
         b.disabled = false;
         loadDeployedAssets();
       };
@@ -968,6 +969,7 @@ function wireThemeStudio(body) {
   if (mine) {
     mine.innerHTML = getCustomThemes().map((t) => `
       <div style="position:relative;cursor:pointer;padding:10px 12px;border-radius:10px;border:2px solid ${S.theme === `custom:${t.id}` ? 'var(--primary)' : 'var(--border-mid)'};background:${t.bgSurface}" data-adctheme="${t.id}">
+        <button class="btn btn-sm" data-adcship="${t.id}" title="Ship this theme to all devices" style="position:absolute;top:6px;right:6px;padding:2px 8px;font-size:10px">Ship</button>
         <div style="display:flex;gap:6px;margin-bottom:6px">
           <div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase}"></div>
           <div style="width:14px;height:14px;border-radius:50%;background:${t.primary}"></div>
@@ -976,6 +978,21 @@ function wireThemeStudio(body) {
         ${S.theme === `custom:${t.id}` ? `<div style="font-size:10px;color:${t.primary};margin-top:2px">Active</div>` : ''}</div>`).join('');
     mine.querySelectorAll('[data-adctheme]').forEach((c) => {
       c.onclick = () => { applyTheme(`custom:${c.dataset.adctheme}`); showNotif('Custom theme applied', 'OK'); };
+    });
+    // ponytail: ship already-created themes without rebuilding them in the creator
+    mine.querySelectorAll('[data-adcship]').forEach((b) => {
+      b.onclick = async (e) => {
+        e.stopPropagation();
+        const t = getCustomThemes().find((x) => x.id === b.dataset.adcship);
+        if (!t) { showNotif('Theme not found', '!'); return; }
+        b.disabled = true;
+        showNotif(`Shipping “${t.name}”…`, 'OK');
+        const { GlobalBoard } = await import('../core/cloud.js');
+        const ok = await GlobalBoard.publishAsset('theme', t.name, '', t);
+        showNotif(ok ? `“${t.name}” live on all devices` : 'Ship failed — check Supabase config', ok ? 'OK' : '!');
+        if (ok) announceAsset('theme', t.name, t.particleEffect ? `Your coach shipped **${t.name}** with ##${t.particleEffect}## particles. Open Customization to try it!` : '');
+        b.disabled = false;
+      };
     });
   }
   const tpl = q('#adth-tpl');
@@ -1078,6 +1095,7 @@ function wireThemeStudio(body) {
     const { GlobalBoard } = await import('../core/cloud.js');
     const ok = await GlobalBoard.publishAsset('theme', t.name, '', t);
     showNotif(ok ? `“${t.name}” live on all devices` : 'Ship failed', ok ? 'OK' : '!');
+    if (ok) announceAsset('theme', t.name, t.particleEffect ? `Your coach shipped **${t.name}** with ##${t.particleEffect}## particles. Open Customization to try it!` : '');
     btn.disabled = false;
   };
   q('#adth-try').onclick = () => {
