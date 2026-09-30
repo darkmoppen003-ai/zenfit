@@ -127,6 +127,8 @@ export function renderTasks(host) {
       }];
     });
     showNotif(`[ TASK ADDED ] "${title.trim()}"`, 'OK');
+    // ponytail: deadline alerts only scheduled at boot — reschedule on every mutation
+    import('../core/notify.js').then((m) => { try { m.initNotifications(); } catch {} }).catch(() => {});
   };
 
   const paintRow = (t, box) => {
@@ -170,10 +172,12 @@ export function completeTask(taskId) {
   if (overdue) showNotif(`[ TASK COMPLETE ] Late — +${xp} XP (half reward)`, '⚡');
   else showNotif(`[ TASK COMPLETE ] +${xp} XP — Discipline +3`, '⚔️');
   checkAchievements();
+  import('../core/notify.js').then((m) => { try { m.initNotifications(); } catch {} }).catch(() => {});
 }
 
 export function deleteTask(taskId) {
   const t = (S.tasks || []).find((x) => x.id === taskId);
   if (t?.completedAt && t.xpAwarded) deductXP(t.xpAwarded, 'Task deleted: ' + (t.title || ''));
   update((s) => { s.tasks = (s.tasks || []).filter((x) => x.id !== taskId); });
+  import('../core/notify.js').then((m) => { try { m.initNotifications(); } catch {} }).catch(() => {});
 }
