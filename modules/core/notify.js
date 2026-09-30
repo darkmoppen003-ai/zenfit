@@ -11,8 +11,8 @@ import { todayWater, today } from './selectors.js';
 export const NOTIF_DEFAULTS = {
   water: { enabled: false, intervalMins: 90 },
   task: { enabled: false, offsetMins: 30 },
-  study: { enabled: false, hour: 20 },
-  streak: { enabled: false, hour: 21 },
+  study: { enabled: false, hour: 20, minute: 0 },
+  streak: { enabled: false, hour: 21, minute: 0 },
 };
 
 export function getNotifSettings() {
@@ -63,10 +63,21 @@ export function fireLocalNotif(title, body) {
 
 /** Best-effort background delivery via the service worker (like water). */
 function swSchedule(title, body, tag, delayMs) {
+  const ms = Math.min(Math.max(0, delayMs), 86400000);
+  // ponytail: TimestampTrigger (Chromium) survives SW shutdown — real scheduled delivery, silent fallback elsewhere
+  try {
+    if ('showTrigger' in Notification.prototype && navigator.serviceWorker?.ready) {
+      navigator.serviceWorker.ready.then((reg) => {
+        try {
+          reg.showNotification(title, { body, tag, icon: 'zenfit.png', badge: 'zenfit.png', showTrigger: new TimestampTrigger(Date.now() + ms), data: { url: './' } });
+        } catch {}
+      }).catch(() => {});
+    }
+  } catch {}
   try {
     if (navigator.serviceWorker?.controller) {
       navigator.serviceWorker.controller.postMessage({
-        type: 'SCHEDULE_REMINDER', payload: { title, body, tag, url: './', delayMs: Math.min(Math.max(0, delayMs), 86400000) },
+        type: 'SCHEDULE_REMINDER', payload: { title, body, tag, url: './', delayMs: ms },
       });
     }
   } catch {}
@@ -102,11 +113,16 @@ function scheduleTaskReminder(task) {
   swSchedule('[ TASK DUE SOON ]', `"${task.title}" deadline approaching!`, `zenfit-task-${task.id || 'x'}`, delay);
 }
 
+function atTime(hour, minute) {
+  const target = new Date();
+  target.setHours(hour || 0, minute || 0, 0, 0);
+  if (target <= new Date()) target.setDate(target.getDate() + 1);
+  return target;
+}
 function scheduleDailyReminders() {
   const ns = getNotifSettings();
   if (ns.study?.enabled) {
-    const target = new Date(); target.setHours(ns.study.hour || 20, 0, 0, 0);
-    if (target <= new Date()) target.setDate(target.getDate() + 1);
+    const target = atTime(ns.study.hour ?? 20, ns.study.minute ?? 0);
     const id = setTimeout(() => {
       const mins = (S.study.sessions || []).filter((s) => s.date === today()).reduce((a, b) => a + (b.duration || 0), 0);
       if (mins < 30) fireLocalNotif('[ SYSTEM ALERT ] Daily Focus Session Pending', 'Your study session awaits. Knowledge is power, hunter.');
@@ -116,8 +132,7 @@ function scheduleDailyReminders() {
     swSchedule('[ SYSTEM ALERT ] Daily Focus Session Pending', 'Your study session awaits. Knowledge is power, hunter.', 'zenfit-study', target - new Date());
   }
   if (ns.streak?.enabled) {
-    const target = new Date(); target.setHours(ns.streak.hour || 21, 0, 0, 0);
-    if (target <= new Date()) target.setDate(target.getDate() + 1);
+    const target = atTime(ns.streak.hour ?? 21, ns.streak.minute ?? 0);
     const id = setTimeout(() => {
       const undone = (S.habits || []).filter((h) => !((h.completedDates || h.doneDates || []).includes(today()))).length;
       if (undone > 0) fireLocalNotif(`[ STREAK ALERT ] ${undone} Habit${undone > 1 ? 's' : ''} Remaining`, 'Protect your streak — close one out tonight.');
@@ -128,12 +143,45 @@ function scheduleDailyReminders() {
   }
 }
 
+/** Catch-up: SW/page timers die in background — fire anything due when the app becomes visible. */
+export function fireDueReminders() {
+  try {
+    if (S.notificationsEnabled === false) return;
+    const ns = getNotifSettings();
+    const now = new Date();
+    if (ns.study?.enabled) {
+      const t = new Date(); t.setHours(ns.study.hour ?? 20, ns.study.minute ?? 0, 0, 0);
+      if (now >= t && ns._studyFiredOn !== today()) {
+        const mins = (S.study.sessions || []).filter((s) => s.date === today()).reduce((a, b) => a + (b.duration || 0), 0);
+        if (mins < 30) fireLocalNotif('[ SYSTEM ALERT ] Daily Focus Session Pending', 'Your study session awaits. Knowledge is power, hunter.');
+        update((s) => { s.notifSettings._studyFiredOn = today(); }, { silent: true });
+        try { save(); } catch {}
+      }
+    }
+    if (ns.streak?.enabled) {
+      const t = new Date(); t.setHours(ns.streak.hour ?? 21, ns.streak.minute ?? 0, 0, 0);
+      if (now >= t && ns._streakFiredOn !== today()) {
+        const undone = (S.habits || []).filter((h) => !((h.completedDates || h.doneDates || []).includes(today()))).length;
+        if (undone > 0) fireLocalNotif(`[ STREAK ALERT ] ${undone} Habit${undone > 1 ? 's' : ''} Remaining`, 'Protect your streak — close one out tonight.');
+        update((s) => { s.notifSettings._streakFiredOn = today(); }, { silent: true });
+        try { save(); } catch {}
+      }
+    }
+  } catch {}
+}
+
+let visWired = false;
 export function initNotifications() {
   clearAllNotifTimers();
   if (S.notificationsEnabled === false) return;
   scheduleWaterReminders();
   scheduleDailyReminders();
   (S.tasks || []).forEach((t) => { if (!t.completedAt) scheduleTaskReminder(t); });
+  fireDueReminders();
+  if (!visWired) {
+    visWired = true;
+    try { document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { initNotifications(); } }); } catch {}
+  }
 }
 
 /** Settings UI (V1 renderNotifSettings) into a container element. */
@@ -160,16 +208,19 @@ export function renderNotifSettings(box) {
     + reminderRow('⚔️ Task Deadline Alerts', 'Warn before task deadlines', 'task', !!ns.task?.enabled,
       `Alert <input type="number" data-nsnum="task.offsetMins" value="${ns.task?.offsetMins || 30}" min="5" max="240" style="width:64px;text-align:center"> min before`)
     + reminderRow('📚 Study Reminder', 'Daily evening focus alert', 'study', !!ns.study?.enabled,
-      `At hour <input type="number" data-nsnum="study.hour" value="${ns.study?.hour ?? 20}" min="0" max="23" style="width:64px;text-align:center"> :00`)
+      `At <input type="number" data-nsnum="study.hour" value="${ns.study?.hour ?? 20}" min="0" max="23" style="width:56px;text-align:center"> : <input type="number" data-nsnum="study.minute" value="${ns.study?.minute ?? 0}" min="0" max="59" style="width:56px;text-align:center">`)
     + reminderRow('🔥 Streak Reminder', 'Protect your habit streak', 'streak', !!ns.streak?.enabled,
-      `At hour <input type="number" data-nsnum="streak.hour" value="${ns.streak?.hour ?? 21}" min="0" max="23" style="width:64px;text-align:center"> :00`)
+      `At <input type="number" data-nsnum="streak.hour" value="${ns.streak?.hour ?? 21}" min="0" max="23" style="width:56px;text-align:center"> : <input type="number" data-nsnum="streak.minute" value="${ns.streak?.minute ?? 0}" min="0" max="59" style="width:56px;text-align:center">`)
     + `</div>`
     + `<div style="font-size:11px;color:var(--text-muted);margin-top:8px">All reminders run locally on your device. Service worker delivers notifications even when the app is in the background.</div>`;
 
   function reminderRow(title, sub, key, on, extra) {
     return `<div class="card-sm"><div class="flex-between mb8"><div>`
       + `<div style="font-size:13px;font-weight:600">${title}</div><div style="font-size:11px;color:var(--text-muted)">${sub}</div></div>`
-      + `<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" data-nscheck="${key}" ${on ? 'checked' : ''} style="width:20px"> On</label></div>`
+      + `<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0">`
+      + `<input type="checkbox" data-nscheck="${key}" ${on ? 'checked' : ''} style="opacity:0;width:0;height:0">`
+      + `<span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${on ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:20px;transition:.3s;border:1px solid var(--border-strong)">`
+      + `<span style="position:absolute;height:16px;width:16px;left:${on ? '19px' : '3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span></label></div>`
       + `<div style="font-size:12px;color:var(--text-secondary)">${extra}</div></div>`;
   }
 
