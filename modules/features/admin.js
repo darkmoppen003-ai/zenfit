@@ -536,6 +536,7 @@ function renderBroadcast(body) {
   body.innerHTML = `<div class="card mb12"><div class="section-title">Design message</div>
     <input type="text" id="ad-ntitle" placeholder="Title" maxlength="60">
     <textarea id="ad-nbody" placeholder="Message…" maxlength="300" class="mt8"></textarea>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:4px">Format: **bold** *italic* __underline__ ##display## [link](https://…) + bare URLs get preview cards · Insert adds [img:N]</div>
     <input type="text" id="ad-ntarget" placeholder="To: blank = broadcast to all, or name" maxlength="40" class="mt8">
     <div class="grid2 gap8 mt8">
       <label style="font-size:12px">Background<select id="ad-nbg">
