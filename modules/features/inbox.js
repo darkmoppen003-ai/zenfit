@@ -145,8 +145,9 @@ export function renderInbox(host) {
   ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
     ${events.map((e) => {
       const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
-      return `<div class="card mb8">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700">${escapeHtml(e.title || 'Mission')}</div>
-      <div style="font-size:12px;color:var(--text-secondary)">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
+      const ebg = msgBgStyle(e);
+      return `<div class="card mb8" style="${ebg.style}">${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px">` : ''}<div style="font-size:13px;font-weight:700;${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Mission')}</div>
+      <div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
   let filter = 'all';
@@ -271,16 +272,16 @@ function openDetail(host, mid, isGlobal = false) {
   }
   const isReward = isRewardMsg(m);
   const claimed = (S.claimedRewards || []).includes(mid);
-  const bg = MSG_BGS[m.bg] || '';
+  const bgs = msgBgStyle(m);
   const hl = MSG_HLS[m.hl] || '';
   const img = okImg(m.image || '');
   host.innerHTML = `
   <button class="btn btn-sm btn-ghost mb12" id="inbox-back">← Back to inbox</button>
-  <div class="card" style="${bg ? `background:${bg};` : ''}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
+  <div class="card" style="${bgs.style}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
     ${img ? `<img src=\"${escapeHtml(img)}\" alt=\"\" loading=\"lazy\" style=\"width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:10px\">` : ''}
-    <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bg ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
-    <div style="font-size:10px;${bg ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
-    <div style="font-size:13px;line-height:1.7;${bg ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img)}</div>
+    <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bgs.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
+    <div style="font-size:10px;${bgs.light ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
+    <div style="font-size:13px;line-height:1.7;${bgs.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img)}</div>
     ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
   </div>
   ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
@@ -321,7 +322,7 @@ async function syncGlobals(host) {
     gThreads = myCasts.slice(0, 20).map((b) => ({
       id: b.id, title: b.title || 'Broadcast', body: b.body || '',
       date: (b.updated_at || b.created_at || '').slice(0, 10), created_at: b.created_at || '', updated_at: b.updated_at || '',
-      bg: b.bg || 'none', hl: b.hl || 'none', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], confetti: !!b.confetti,
+      bg: b.bg || 'none', hl: b.hl || 'none', bgImage: b.bgImage || '', image: b.image || '', images: Array.isArray(b.images) ? b.images.slice(0, 5) : [], confetti: !!b.confetti,
     }));
     // edited globals → silent replace (same id) but fresh + unread
     try {
@@ -360,11 +361,12 @@ async function syncGlobals(host) {
         const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
         const rules = Array.isArray(e.rules) ? e.rules : [];
         const eimg = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '';
-        return `<div class="card mb12" style="border-color:var(--primary)"><div class="flex-between">`
-        + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display)">${escapeHtml(e.title || 'Event')}</div>`
+        const ebg = msgBgStyle(e);
+        return `<div class="card mb12" style="border-color:var(--primary);${ebg.style}"><div class="flex-between">`
+        + `<div style="font-size:14px;font-weight:800;font-family:var(--font-display);${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Event')}</div>`
         + `<span style="display:flex;gap:4px;align-items:center"><span class="badge badge-purple">Mission</span><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + gid)}" style="color:var(--danger)" title="Hide for me">×</button></span></div>`
         + `${eimg ? `<img src="${escapeHtml(eimg)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin:6px 0">` : ''}`
-        + `<div style="font-size:12px;color:var(--text-secondary);margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
+        + `<div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'};margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
         + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
         + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
           const cat = r.cat || 'task';
@@ -415,6 +417,7 @@ async function syncGlobals(host) {
             id: `g-${Date.now()}`, globalId: gid, kind: 'mission', title: String(e.title || 'Mission').slice(0, 60),
             icon: '📯', body: String(e.descr || e.desc || '').slice(0, 200),
             image: /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '',
+            bgImage: /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.bgImage || '') ? e.bgImage : '',
             xp: Math.min(500, Math.max(1, Number(e.xp) || 25)),
             rules: (e.rules || []).slice(0, 5).map((r) => {
               if (r.cat === 'workout') return { cat: 'workout', exercise: String(r.exercise || '').slice(0, 40), sets: Number(r.sets) || 0, reps: Number(r.reps) || 0, days: Number(r.days) || 1 };

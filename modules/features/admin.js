@@ -13,6 +13,7 @@ import { showNotif, awardXP, MSG_BGS, openOverlay } from '../core/ui.js';
 import { MISSION_CATS, missionProgress } from '../core/missions.js';
 import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
+import { renderRichBody, msgBgStyle } from './inbox.js';
 
 let unlocked = false;
 let tab = 'overview';
@@ -323,6 +324,7 @@ function renderMissions(body) {
       <input type="text" id="ad-micon" placeholder="Icon emoji" maxlength="8">
       <input type="text" id="ad-mbody" placeholder="Details…" maxlength="200" style="grid-column:1/-1">
       <input type="text" id="ad-mimg" placeholder="Image URL (https://…) — optional" maxlength="500" style="grid-column:1/-1">
+      <input type="text" id="ad-mbgimg" placeholder="Background image URL (https://…) — optional" maxlength="500" style="grid-column:1/-1">
       <input type="number" id="ad-mxp" placeholder="Reward XP" min="1" max="500">
     </div>
     <div class="section-title mt12">Completion rules — matched against user logs (all rows must hold)</div>
@@ -347,6 +349,7 @@ function renderMissions(body) {
     body.querySelector('#ad-micon').value = m.icon || '';
     body.querySelector('#ad-mbody').value = m.body || m.descr || m.desc || '';
     body.querySelector('#ad-mimg').value = m.image || '';
+    body.querySelector('#ad-mbgimg').value = m.bgImage || '';
     body.querySelector('#ad-mxp').value = m.xp || 25;
     body.querySelector('#ad-rules').innerHTML = '';
     (Array.isArray(m.rules) && m.rules.length ? m.rules : [{ cat: 'water', target: 3000, days: 5 }]).forEach((r) => addRule(r));
@@ -360,6 +363,7 @@ function renderMissions(body) {
       icon: sanitizeText(body.querySelector('#ad-micon').value, 8) || '📯',
       body: sanitizeText(body.querySelector('#ad-mbody').value, 200),
       image: cleanImageUrl(body.querySelector('#ad-mimg').value),
+      bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value),
       xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
       rules, status: 'live', ts: Date.now(),
     };
@@ -409,12 +413,13 @@ function renderMissions(body) {
         title, descr: sanitizeText(body.querySelector('#ad-mbody').value, 200),
         xp: sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }),
         rules: rules.length ? rules : null, image: cleanImageUrl(body.querySelector('#ad-mimg').value),
+        bgImage: cleanImageUrl(body.querySelector('#ad-mbgimg').value),
       });
       showNotif(ok ? 'Global mission updated — fresh + unread for users' : 'Update failed', ok ? 'OK' : '!');
       if (ok) { editingGlobalMissionId = null; pubG.textContent = 'Publish same mission globally'; window.ZF.rerender(); }
       return;
     }
-    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value));
+    const ok = await GlobalBoard.publishEvent(title, sanitizeText(body.querySelector('#ad-mbody').value, 200), sanitizeNumber(body.querySelector('#ad-mxp').value, { min: 1, max: 500, fallback: 25, integer: true }), 'all', rules.length ? rules : null, cleanImageUrl(body.querySelector('#ad-mimg').value), cleanImageUrl(body.querySelector('#ad-mbgimg').value));
     showNotif(ok ? 'Mission live globally — users track it from Inbox' : 'Publish failed — check Supabase config', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-msend').after(pubG);
@@ -446,7 +451,7 @@ function renderMissions(body) {
           if (!r) return;
           editingGlobalMissionId = r.id; editingMissionId = null;
           body.querySelector('#ad-msend').textContent = 'Publish mission';
-          fillMissionForm({ title: r.title, body: r.descr || r.desc, image: r.image, xp: r.xp, rules: r.rules });
+          fillMissionForm({ title: r.title, body: r.descr || r.desc, image: r.image, bgImage: r.bgImage, xp: r.xp, rules: r.rules });
           pubG.textContent = 'Update global mission';
           window.scrollTo({ top: 0, behavior: 'smooth' });
           showNotif('Editing global mission — Update replaces silently, fresh + unread', 'OK');
@@ -524,6 +529,20 @@ function ruleSummary(m) {
   }).join(' + ')}</div>`;
 }
 
+/** Auto-announce shipped assets so users hear about them without opening anything.
+    Fire-and-forget: ship toasts stay authoritative, announce failures stay silent. */
+async function announceAsset(kind, name, detail) {
+  try {
+    const { GlobalBoard } = await import('../core/cloud.js');
+    const label = kind === 'wallpaper' ? '🖼️ New wallpaper' : kind === 'theme' ? '🎨 New theme' : '🎁 New addition';
+    await GlobalBoard.publish('global_broadcasts', {
+      title: `${label}: ${name}`,
+      body: detail || `Your coach added **${name}**. Open Customization to try it!`,
+      target: 'all', bg: 'none', hl: 'info', bgImage: '', image: '', images: [], confetti: false,
+    });
+  } catch {}
+}
+
 /* ── Broadcast notifications ── */
 function cleanImageUrl(v) {
   const u = sanitizeText(v, 500).trim();
@@ -546,6 +565,7 @@ function renderBroadcast(body) {
         <option value="none">None</option><option value="primary">Purple</option><option value="success">Green</option><option value="warning">Gold</option><option value="danger">Red</option><option value="info">Blue</option>
       </select></label>
     </div>
+    <input type="text" id="ad-nbgimg" placeholder="Background image URL (https://…) — overrides gradient" maxlength="500" class="mt8">
     <input type="text" id="ad-nimg" placeholder="Image URL (https://…) — optional" maxlength="500" class="mt8">
     <div class="flex gap8 mt8"><button class="btn btn-sm" id="ad-nimg-add">Add image</button></div>
     <div id="ad-nimgs" class="mt8" style="display:flex;flex-direction:column;gap:6px"></div>
@@ -612,28 +632,28 @@ function renderBroadcast(body) {
     body: sanitizeText(body.querySelector('#ad-nbody').value, 300) || '',
     bg: ['sunset', 'ocean', 'forest', 'royal', 'ember', 'midnight'].includes(body.querySelector('#ad-nbg').value) ? body.querySelector('#ad-nbg').value : 'none',
     hl: ['primary', 'success', 'warning', 'danger', 'info'].includes(body.querySelector('#ad-nhl').value) ? body.querySelector('#ad-nhl').value : 'none',
+    bgImage: cleanImageUrl(body.querySelector('#ad-nbgimg').value),
     image: nimgs[0] || '',
     images: [...nimgs],
     confetti: !!body.querySelector('#ad-nconf').checked,
   });
+  body.querySelector('#ad-nbgimg').onchange = (e) => {
+    const v = sanitizeText(e.target.value, 500).trim();
+    if (v && !/^https:\/\/[^\s"'<>]+$/.test(v)) showNotif('Background image must be a full https:// URL', '!');
+  };
   const paintPreview = () => {
     const d = collect();
     const box = body.querySelector('#ad-npreview');
     if (!box) return;
-    // ponytail: preview mirrors the user view — header image + tokens resolved, so broken indexing is visible here first
-    const tokenHtml = String(d.body || '').split(/(\[img:\d+\])/g).map((part) => {
-      const mt = part.match(/^\[img:(\d+)\]$/);
-      if (mt) {
-        const u = d.images[Number(mt[1]) - 1];
-        return u ? `<img src="${escapeHtml(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;margin:4px 0">`
-          : `<span style="color:var(--danger)">[img:${mt[1]} → missing]</span>`;
-      }
-      return escapeHtml(part).slice(0, 120);
-    }).join('');
-    box.innerHTML = `<div class="card-sm" style="${d.bg !== 'none' && MSG_BGS[d.bg] ? `background:${MSG_BGS[d.bg]};color:#fff;` : ''}${d.hl !== 'none' ? `border-color:var(--${d.hl});` : ''}">`
-      + `<div style="font-size:12px;font-weight:700">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
+    // ponytail: preview uses the exact user-side renderer — what breaks here breaks in inboxes
+    let rich = '';
+    try { rich = renderRichBody(d.body, d.images, d.image); } catch { rich = escapeHtml(d.body).slice(0, 120); }
+    rich = rich.replace(/max-height:220px/g, 'max-height:90px').replace(/margin:6px 0/g, 'margin:4px 0');
+    const pbg = msgBgStyle(d);
+    box.innerHTML = `<div class="card-sm" style="${pbg.style}${pbg.light ? 'color:#fff;' : ''}${d.hl !== 'none' ? `border-color:var(--${d.hl});` : ''}">`
+      + `<div style="font-size:12px;font-weight:700;font-family:var(--font-display);${pbg.light ? 'text-shadow:0 1px 4px rgba(0,0,0,.5);' : ''}">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
       + (d.image ? `<img src="${escapeHtml(d.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" decoding="async" onerror="this.remove()" style="width:100%;max-height:90px;object-fit:cover;border-radius:8px;margin:4px 0">` : '')
-      + `<div style="font-size:11px;opacity:.85">${tokenHtml || 'Preview…'}</div></div>`;
+      + `<div style="font-size:11px;opacity:.85">${rich || 'Preview…'}</div></div>`;
   };
   ['#ad-ntitle', '#ad-nbody', '#ad-nbg', '#ad-nhl'].forEach((sel) => { body.querySelector(sel).oninput = paintPreview; });
   body.querySelector('#ad-nconf').onchange = (e) => {
@@ -649,6 +669,7 @@ function renderBroadcast(body) {
     if (body.querySelector('#ad-ntarget') && m.target) body.querySelector('#ad-ntarget').value = m.target;
     if (body.querySelector('#ad-nbg')) body.querySelector('#ad-nbg').value = m.bg || 'none';
     if (body.querySelector('#ad-nhl')) body.querySelector('#ad-nhl').value = m.hl || 'none';
+    if (body.querySelector('#ad-nbgimg')) body.querySelector('#ad-nbgimg').value = m.bgImage || '';
     nimgs.length = 0;
     (Array.isArray(m.images) && m.images.length ? m.images : (m.image ? [m.image] : [])).slice(0, 5).forEach((u) => nimgs.push(u));
     if (body.querySelector('#ad-nconf')) body.querySelector('#ad-nconf').checked = !!m.confetti;
@@ -686,14 +707,14 @@ function renderBroadcast(body) {
     if (editingGlobal) {
       const patch = editingGlobal.table === 'global_events'
         ? { title: m.title, descr: m.body, image: m.image, target }
-        : { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, images: m.images, confetti: m.confetti };
+        : { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, confetti: m.confetti };
       const ok = await sbUpdate(editingGlobal.table, editingGlobal.id, patch);
       showNotif(ok ? 'Updated globally — users see fresh + unread' : 'Update failed', ok ? 'OK' : '!');
       if (ok) { editingGlobal = null; body.querySelector('#ad-nglobal').textContent = 'Publish globally'; window.ZF.rerender(); }
       return;
     }
     showNotif(target === 'all' ? 'Broadcasting globally…' : `Sending to ${target}…`, 'OK');
-    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, image: m.image, images: m.images, confetti: m.confetti });
+    const ok = await GlobalBoard.publish('global_broadcasts', { title: m.title, body: m.body, target, bg: m.bg, hl: m.hl, bgImage: m.bgImage, image: m.image, images: m.images, confetti: m.confetti });
     showNotif(ok ? (target === 'all' ? 'Broadcast live globally — users get it in Inbox' : `Message queued for ${target}`) : 'Publish failed — check Supabase config (Content tab)', ok ? 'OK' : '!');
   };
   body.querySelector('#ad-npush').onclick = () => {

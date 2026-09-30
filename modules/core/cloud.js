@@ -126,7 +126,7 @@ export async function sbUpdate(table, id, patch) {
     if (!/^[a-z_]+$/.test(table) || !id || !patch) return false;
     const { url } = sbCfg();
     const body = { ...patch, updated_at: new Date().toISOString() };
-    for (const k of ['image', 'url']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
+    for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
     if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
     const res = await fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHdr(), body: JSON.stringify(body) });
     return res.ok;
@@ -140,10 +140,10 @@ export const GlobalBoard = {
       const post = (body) => fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: { ...sbHdr(), Prefer: 'return=minimal' }, body: JSON.stringify(body) });
       let body = { ...row };
       // ponytail: remote-strict — global publish accepts https:// images only, drop anything else
-      for (const k of ['image', 'url']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
+      for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
       if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
       let res = await post(body);
-      for (const k of ['confetti', 'image', 'images', 'bg', 'hl', 'rules', 'target']) {
+      for (const k of ['confetti', 'image', 'images', 'bg', 'bgImage', 'hl', 'rules', 'target']) {
         if (!res.ok && k in body) {
           delete body[k];
           res = await post(body);
@@ -161,7 +161,7 @@ export const GlobalBoard = {
     } catch { return []; }
   },
   publishBroadcast: (title, body, target = 'all') => GlobalBoard.publish('global_broadcasts', { title, body, target }),
-  publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '') => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image } : { title, descr, xp, status: 'live', target, image }),
+  publishEvent: (title, descr, xp = 0, target = 'all', rules = null, image = '', bgImage = '') => GlobalBoard.publish('global_events', rules?.length ? { title, descr, xp, status: 'live', target, rules, image, bgImage } : { title, descr, xp, status: 'live', target, image, bgImage }),
   publishReward: (title, xp, code = '', target = 'all') => GlobalBoard.publish('global_rewards', { title, xp, code, target }),
   publishAsset: (kind, name, url = '', data = null) => GlobalBoard.publish('global_assets', { kind, name, url, data }),
   fetchAssets: (kind = null) => GlobalBoard.fetch('global_assets').then((rows) => kind ? rows.filter((r) => r.kind === kind) : rows),
