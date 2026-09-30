@@ -84,6 +84,15 @@ function boot() {
   });
   initPWA();
   try { initNotifications(); } catch {}
+  // ponytail: global broadcasts have no server push — poll lightly so they
+  // notify (toast + unread + OS ping) without opening the inbox first
+  try {
+    const pollGlobals = () => { import('./features/inbox.js').then((m) => { try { m.checkGlobalUpdates(); } catch {} }).catch(() => {}); };
+    setTimeout(pollGlobals, 15000);
+    setInterval(pollGlobals, 60000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollGlobals(); });
+    window.addEventListener('online', pollGlobals);
+  } catch {}
   loadAnime();
   runSplash();
   // Check achievements on every load (catches anything earned offline)

@@ -25,6 +25,22 @@ const gMarkRead = (id) => {
 };
 const isGRead = (m) => gReadIds().includes('g-' + (m.id || m.title));
 const isGHidden = (m) => (S.hiddenGlobals || []).includes('g-' + (m.id || m.title));
+function trueUnreadCount() {
+  try {
+    const hidden = new Set(S.hiddenGlobals || []);
+    const g = gThreads.filter((m) => !hidden.has('g-' + (m.id || m.title)) && !isGRead(m)).length;
+    const l = (S.inbox || []).filter((m) => !isRead(m.id)).length;
+    return g + l;
+  } catch { return null; }
+}
+/** Downward-only heal: the badge can only get stuck HIGH (reads that never
+   decremented), so trim it to truth without ever inflating it. */
+export function healUnreadCount() {
+  const t = trueUnreadCount();
+  if (t == null) return;
+  update((s) => { if ((s.inboxUnread || 0) > t) s.inboxUnread = t; }, { silent: true });
+  try { save(); } catch {}
+}
 const gVers = () => { try { return JSON.parse(localStorage.getItem('zf_global_versions') || '{}'); } catch { return {}; } };
 // ponytail: edited globals carry updated_at — version change re-marks as unread (silent replace, fresh badge)
 const gVerOf = (r) => r?.updated_at || `${r?.created_at || ''}|${(r?.title || '').length}-${(r?.body || r?.descr || r?.desc || '').length}`;
@@ -192,6 +208,7 @@ export function renderInbox(host) {
       s.inboxRead = (s.inboxRead || []).filter((id) => id !== mid);
       if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
     });
+    healUnreadCount();
     window.ZF.rerender();
   };
   host.querySelector('#inbox-q').oninput = paint;
@@ -233,6 +250,7 @@ function openDetail(host, mid, isGlobal = false) {
   const wasUnread = isGlobal ? !isGRead(m) : !isRead(mid);
   if (isGlobal) {
     gMarkRead(mid);
+    healUnreadCount();
     if (wasUnread) {
       try {
         const latest = gThreads[0];
@@ -249,6 +267,7 @@ function openDetail(host, mid, isGlobal = false) {
       if (wasUnread) s.inboxUnread = Math.max(0, (s.inboxUnread || 0) - 1);
     }, { silent: true });
     try { save(); } catch {}
+    healUnreadCount();
   }
   const isReward = isRewardMsg(m);
   const claimed = (S.claimedRewards || []).includes(mid);
@@ -422,6 +441,7 @@ async function syncGlobals(host) {
         window.ZF.rerender();
       };
     });
+    healUnreadCount();
   } catch {
     host.querySelector('#inbox-global') && (host.querySelector('#inbox-global').innerHTML = '');
   }
