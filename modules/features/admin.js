@@ -588,7 +588,7 @@ async function announceAsset(kind, name, detail) {
 /** Per-image Adjust editor: drag pan, corner-handle stretch, wheel/slider zoom,
     fit + height + focal presets. Writes back clamped imgMeta via onSave. */
 function openImgEditor(url, meta, onSave) {
-  const m = { fit: 'cover', h: 220, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1, ...(meta || {}) };
+  const m = { fit: 'cover', h: 220, w: 100, align: 'center', pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1, ...(meta || {}) };
   openOverlay(`<div style="text-align:left;max-width:420px;width:94%">
     <div style="font-size:14px;font-weight:700;margin-bottom:2px">Adjust image</div>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Drag to pan · corner handle stretches · wheel zooms</div>
@@ -599,6 +599,8 @@ function openImgEditor(url, meta, onSave) {
     <div class="flex gap8 mt8" id="ie-fits">${['cover', 'contain', 'fill'].map((f) => `<button class="btn btn-sm${m.fit === f ? ' btn-primary' : ''}" data-iefit="${f}">${f}</button>`).join('')}</div>
     <div class="flex gap8 mt8" id="ie-pos">${['top', 'center', 'bottom'].map((p) => `<button class="btn btn-sm${m.pos === p ? ' btn-primary' : ''}" data-iepos="${p}">${p}</button>`).join('')}</div>
     <label style="font-size:12px;display:block;margin-top:8px">Height <span id="ie-h-v">${m.h}px</span><input type="range" class="slider" id="ie-h" min="60" max="400" value="${m.h}"></label>
+    <label style="font-size:12px;display:block;margin-top:4px">Width <span id="ie-w-v">${m.w ?? 100}%</span><input type="range" class="slider" id="ie-w" min="20" max="100" value="${m.w ?? 100}"></label>
+    <div class="flex gap8 mt8" id="ie-align">${['left', 'center', 'right'].map((a) => `<button class="btn btn-sm${(m.align || 'center') === a ? ' btn-primary' : ''}" data-iealign="${a}">${a}</button>`).join('')}</div>
     <label style="font-size:12px;display:block;margin-top:4px">Zoom <span id="ie-z-v">${m.zoom}×</span><input type="range" class="slider" id="ie-z" min="0.5" max="3" step="0.1" value="${m.zoom}"></label>
     <div class="flex gap8 mt12"><button class="btn btn-primary btn-sm" style="flex:1" id="ie-save">Done</button>
     <button class="btn btn-sm" id="ie-reset">Reset</button>
@@ -610,14 +612,18 @@ function openImgEditor(url, meta, onSave) {
     img.style.transform = `translate(${m.x}px,${m.y}px) scale(${m.zoom * m.sw},${m.zoom * m.sh})`;
     stage.style.height = `${m.h}px`;
     ov.querySelector('#ie-h-v').textContent = `${Math.round(m.h)}px`;
+    ov.querySelector('#ie-w-v').textContent = `${Math.round(m.w ?? 100)}%`;
     ov.querySelector('#ie-z-v').textContent = `${(+m.zoom).toFixed(1)}×`;
     ov.querySelectorAll('[data-iefit]').forEach((b) => b.classList.toggle('btn-primary', b.dataset.iefit === m.fit));
     ov.querySelectorAll('[data-iepos]').forEach((b) => b.classList.toggle('btn-primary', b.dataset.iepos === m.pos));
+    ov.querySelectorAll('[data-iealign]').forEach((b) => b.classList.toggle('btn-primary', (b.dataset.iealign === (m.align || 'center'))));
   };
   paint();
   ov.querySelectorAll('[data-iefit]').forEach((b) => { b.onclick = () => { m.fit = b.dataset.iefit; paint(); }; });
   ov.querySelectorAll('[data-iepos]').forEach((b) => { b.onclick = () => { m.pos = b.dataset.iepos; m.x = 0; m.y = 0; paint(); }; });
   ov.querySelector('#ie-h').oninput = (e) => { m.h = Number(e.target.value); paint(); };
+  ov.querySelector('#ie-w').oninput = (e) => { m.w = Number(e.target.value); paint(); };
+  ov.querySelectorAll('[data-iealign]').forEach((b) => { b.onclick = () => { m.align = b.dataset.iealign; paint(); }; });
   ov.querySelector('#ie-z').oninput = (e) => { m.zoom = Number(e.target.value); paint(); };
   let drag = null, stretch = null;
   stage.addEventListener('pointerdown', (e) => {
@@ -645,7 +651,7 @@ function openImgEditor(url, meta, onSave) {
     ov.querySelector('#ie-z').value = m.zoom;
     paint();
   }, { passive: false });
-  ov.querySelector('#ie-reset').onclick = () => { Object.assign(m, { fit: 'cover', h: 220, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 }); ov.querySelector('#ie-h').value = 220; ov.querySelector('#ie-z').value = 1; paint(); };
+  ov.querySelector('#ie-reset').onclick = () => { Object.assign(m, { fit: 'cover', h: 220, w: 100, align: 'center', pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 }); ov.querySelector('#ie-h').value = 220; ov.querySelector('#ie-w').value = 100; ov.querySelector('#ie-z').value = 1; paint(); };
   ov.querySelector('#ie-cancel').onclick = () => closeOverlay();
   ov.querySelector('#ie-save').onclick = () => { try { onSave(cleanImgMeta(m)); } catch { onSave({ ...m }); } closeOverlay(); };
 }
@@ -700,6 +706,7 @@ function renderBroadcast(body) {
     const bits = [];
     if (m.fit && m.fit !== 'cover') bits.push(m.fit);
     if (m.h != null) bits.push(`${m.h}px`);
+    if (m.w != null) bits.push(`${m.w}%${m.align && m.align !== 'center' ? ` ${m.align}` : ''}`);
     if (m.zoom && m.zoom !== 1) bits.push(`${m.zoom}×`);
     if ((m.x || m.y) || (m.sw !== 1 || m.sh !== 1)) bits.push('adjusted');
     return bits.length ? ` <span style="color:var(--primary)">[${bits.join(' · ')}]</span>` : '';
