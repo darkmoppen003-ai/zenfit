@@ -178,6 +178,9 @@ self.addEventListener('fetch', (e) => {
   if (shouldNeverCache(url)) return;
   const reqPath = e.request.url.split('?')[0];
   if (STATIC_ASSETS.some((a) => reqPath.includes(a))) { e.respondWith(staleWhileRevalidate(e.request)); return; }
+  // ponytail: non-precached images (inbox, remote wallpapers, favicons) stream
+  // straight through — caching them would silently fill the storage pool
+  if (e.request.destination === 'image') return;
   if (url.origin === self.location.origin) {
     if (/\.html?$|\/$/.test(url.pathname)) e.respondWith(networkFirst(e.request));
     else e.respondWith(cacheFirst(e.request));
