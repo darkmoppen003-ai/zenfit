@@ -99,14 +99,16 @@ export function plainBody(s) {
     .replace(/\*\*([^*\n]+)\*\*/g, '$1').replace(/(^|[^*\w])\*([^*\n]+)\*/g, '$1$2')
     .replace(/__([^_\n]+)__/g, '$1').replace(/##([^#\n]+)##/g, '$1');
 }
-const IMG_META_DEF = { fit: 'cover', h: null, pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 };
-/** Clamp stored per-image geometry (fit/height/position/zoom/pan/stretch). h:null = site default. */
+const IMG_META_DEF = { fit: 'cover', h: null, w: null, align: 'center', pos: 'center', zoom: 1, x: 0, y: 0, sw: 1, sh: 1 };
+/** Clamp stored per-image geometry (fit/height/width/align/position/zoom/pan/stretch). h/w null = site default. */
 export function cleanImgMeta(m) {
   if (!m || typeof m !== 'object') return { ...IMG_META_DEF };
   const num = (v, d, lo, hi) => { const n = Number(v); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
   return {
     fit: ['cover', 'contain', 'fill'].includes(m.fit) ? m.fit : 'cover',
     h: m.h == null ? null : num(m.h, null, 60, 400),
+    w: m.w == null ? null : num(m.w, null, 20, 100),
+    align: ['left', 'center', 'right'].includes(m.align) ? m.align : 'center',
     pos: ['top', 'center', 'bottom'].includes(m.pos) ? m.pos : 'center',
     zoom: num(m.zoom, 1, 0.5, 3), x: num(m.x, 0, -300, 300), y: num(m.y, 0, -300, 300),
     sw: num(m.sw, 1, 0.3, 3), sh: num(m.sh, 1, 0.3, 3),
@@ -120,11 +122,13 @@ export function bodyImg(u, meta, o = {}) {
   const m = cleanImgMeta(meta);
   const H = o.h || 220, rad = o.radius || 10, mb = o.mb || '6px 0';
   const esc = escapeHtml(src);
-  const custom = (meta && meta.h != null) || m.fit !== 'cover' || m.pos !== 'center' || m.zoom !== 1 || m.x || m.y || m.sw !== 1 || m.sh !== 1;
+  const custom = (meta && (meta.h != null || (meta.w != null && meta.w !== 100))) || m.fit !== 'cover' || m.pos !== 'center' || m.zoom !== 1 || m.x || m.y || m.sw !== 1 || m.sh !== 1;
   if (!custom) return `<img src="${esc}" ${IMG_ATTRS} style="width:100%;max-height:${H}px;object-fit:cover;border-radius:${rad}px;margin:${mb}">`;
   const h = (meta && meta.h != null) ? m.h : H;
+  const w = (meta && meta.w != null) ? m.w : 100;
+  const mg = w >= 100 ? mb : (m.align === 'left' ? `6px auto 6px 0` : m.align === 'right' ? `6px 0 6px auto` : `6px auto`);
   const zx = (m.zoom * m.sw).toFixed(3), zy = (m.zoom * m.sh).toFixed(3);
-  return `<span style="display:block;overflow:hidden;height:${h}px;border-radius:${rad}px;margin:${mb}"><img src="${esc}" ${IMG_ATTRS} style="width:100%;height:100%;object-fit:${m.fit};object-position:${m.pos};transform:translate(${m.x}px,${m.y}px) scale(${zx},${zy})"></span>`;
+  return `<span style="display:block;overflow:hidden;width:${w}%;height:${h}px;border-radius:${rad}px;margin:${mg}"><img src="${esc}" ${IMG_ATTRS} style="width:100%;height:100%;object-fit:${m.fit};object-position:${m.pos};transform:translate(${m.x}px,${m.y}px) scale(${zx},${zy})"></span>`;
 }
 /** Render body with [img:N] tokens swapped for images (allowlisted src only). */
 export function renderRichBody(body, images, headerImg = '', imgMetas = null) {
