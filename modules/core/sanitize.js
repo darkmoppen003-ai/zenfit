@@ -28,12 +28,15 @@ export function sanitizeText(value, maxLen = 500) {
   return s;
 }
 
-/** Strict number parse with bounds; returns fallback on garbage. */
-export function sanitizeNumber(value, { min = 0, max = 100000, fallback = 0, integer = false } = {}) {
+/** Strict number parse with bounds; returns fallback on garbage.
+    Non-integers round to `decimals` places app-wide (default 2). */
+export function sanitizeNumber(value, { min = 0, max = 100000, fallback = 0, integer = false, decimals = 2 } = {}) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   const clamped = Math.min(max, Math.max(min, n));
-  return integer ? Math.floor(clamped) : clamped;
+  if (integer) return Math.floor(clamped);
+  const p = Math.min(10, Math.max(0, decimals | 0));
+  return Math.round(clamped * 10 ** p) / 10 ** p;
 }
 
 /** Allow-list check for enum-like fields (tabs, difficulty, gender…). */
