@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 15;
-export const APP_VERSION = "8.9.2";
+export const DATA_VERSION = 16;
+export const APP_VERSION = "8.9.2.1";
 
-export const APP_BUILD = "2026.10.08.39";
+export const APP_BUILD = "2026.10.08.40";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -275,6 +275,22 @@ export function migrateData(saved) {
       }
     }
     saved.dataVersion = 15;
+  }
+  if (version < 16) {
+    // ponytail: 2-decimal rule applies to stored floats too, not just new inputs
+    const r2 = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v * 100) / 100 : v);
+    if (saved.profile) {
+      if (typeof saved.profile.weightKg === 'number') saved.profile.weightKg = r2(saved.profile.weightKg);
+      if (typeof saved.profile.heightCm === 'number') saved.profile.heightCm = r2(saved.profile.heightCm);
+    }
+    if (saved.player && typeof saved.player.weightKg === 'number') saved.player.weightKg = r2(saved.player.weightKg);
+    if (Array.isArray(saved.weightLog)) saved.weightLog.forEach((w) => { if (w && typeof w.kg === 'number') w.kg = r2(w.kg); });
+    if (saved.nutrition?.dailyGoal) {
+      for (const k of ['cal', 'protein', 'carbs', 'fat', 'fiber', 'sugar']) {
+        if (typeof saved.nutrition.dailyGoal[k] === 'number') saved.nutrition.dailyGoal[k] = r2(saved.nutrition.dailyGoal[k]);
+      }
+    }
+    saved.dataVersion = 16;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.9.2.1', 'Mood radar empty state, stored-value 2-decimal migration'],
   ['v8.9.2', 'Dish calculator per-food weights, manual serving fix, mood radar fill, weekly habit grid, 2-decimal rounding'],
   ['v8.9.1.1', 'Image canvas width + alignment control in Adjust editor'],
   ['v8.9.1', 'Per-image sizing/crop/fit with drag editor, full-length designer previews, no image caching'],

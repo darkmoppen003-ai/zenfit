@@ -1081,8 +1081,9 @@ function renderAnMood(body) {
     return `<div class="flex-between mb8"><span style="font-size:13px">${m ? `${m.emoji} ${m.label}` : escapeHtml(d.mood)}</span><span style="font-size:11px;color:var(--text-muted)">${escapeHtml(d.ds)}</span></div>`;
   }).join('') || '<div style="font-size:12px;color:var(--text-muted)">No check-ins in this period.</div>'}</div>
   <div class="section-title">Mood Radar</div>
-  <div class="card mb12"><div style="position:relative;height:260px"><canvas id="c_mood_radar"></canvas></div>
-  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods</div></div>`;
+  <div class="card mb12">${total ? `<div style="position:relative;height:260px"><canvas id="c_mood_radar"></canvas></div>
+  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods</div>`
+    : '<div style="text-align:center;padding:22px 12px;font-size:12px;color:var(--text-muted)">🛰️ No check-ins yet — log moods daily and your radar fills in here.</div>'}</div>`;
   wirePeriodTabs(body);
-  drawRadar('c_mood_radar', MOODS.map((m) => `${m.emoji} ${m.label}`), MOODS.map((m) => counts[m.key] || 0), '#c084fc');
+  if (total) drawRadar('c_mood_radar', MOODS.map((m) => `${m.emoji} ${m.label}`), MOODS.map((m) => counts[m.key] || 0), '#c084fc');
 }
