@@ -45,9 +45,26 @@ const ZEN_SOUNDS_BUILTIN = [
 ];
 const MODE_ICONS = { equal: '⚖️', box: '⬜', '4-7-8': '🔢', hold: '🫁', custom: '🎛️' };
 
-/* ── Study timer state ── */
+/* ── Study timer state ──
+   Timestamp-anchored: intervals freeze in background tabs, wall-clock doesn't.
+   timerBase = banked seconds, timerAnchor = Date.now() at (re)start, null when paused. */
 let timerRunning = false, timerSeconds = 0, timerSubject = '', timerTopic = '', timerDiff = 'medium';
-let timerInterval = null;
+let timerInterval = null, timerBase = 0, timerAnchor = null, timerTicks = 0, timerVisWired = false;
+function studyElapsed() {
+  const live = timerRunning && timerAnchor ? Math.max(0, Math.floor((Date.now() - timerAnchor) / 1000)) : 0;
+  return timerBase + live;
+}
+function studyRingFrac(elapsed) { return ((elapsed % 600) / 600); }
+function paintStudyClock() {
+  const el = studyElapsed();
+  const t = document.querySelector('#st-time');
+  if (t) t.textContent = `${String(Math.floor(el / 60)).padStart(2, '0')}:${String(el % 60).padStart(2, '0')}`;
+  const ring = document.querySelector('#st-ring');
+  if (ring) {
+    const circ = 2 * Math.PI * 54;
+    ring.setAttribute('stroke-dashoffset', String(circ * (1 - studyRingFrac(el))));
+  }
+}
 
 /* V1 mood set (twemoji images, static PNG + animated webp on hover) */
 export const MOODS = [
@@ -586,9 +603,11 @@ function renderStudy(host) {
   const todayS = (S.study.sessions || []).filter((s) => s.date === t);
   const totalMins = todayS.reduce((a, b) => a + (b.duration || 0), 0);
   const subjects = S.study.subjects || [];
+  timerSeconds = studyElapsed();
   const mm = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
   const ss = String(timerSeconds % 60).padStart(2, '0');
   const circ = 2 * Math.PI * 54;
+  const ringFrac = studyRingFrac(timerSeconds);
 
   host.innerHTML = `
   <div class="card mb16">
@@ -610,8 +629,8 @@ function renderStudy(host) {
       <div style="position:relative;width:140px;height:140px;margin:0 auto">
         <svg width="140" height="140" class="timer-ring">
           <circle cx="70" cy="70" r="54" fill="none" stroke="var(--bg-overlay)" stroke-width="8"/>
-          <circle id="st-ring" cx="70" cy="70" r="54" fill="none" stroke="${timerRunning ? 'var(--success)' : 'var(--primary)'}" stroke-width="8"
-            stroke-dasharray="${circ}" stroke-dashoffset="${timerRunning ? 0 : circ}" stroke-linecap="round" style="transition:stroke-dashoffset .5s"/>
+          <circle id="st-ring" cx="70" cy="70" r="54" fill="none" stroke="var(--primary)" stroke-width="8"
+            stroke-dasharray="${circ}" stroke-dashoffset="${circ * (1 - ringFrac)}" stroke-linecap="round" style="transition:stroke-dashoffset .5s"/>
         </svg>
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column">
           <div class="timer-display" id="st-time" style="color:${timerRunning ? 'var(--success)' : 'var(--text-primary)'}">${mm}:${ss}</div>
@@ -646,13 +665,17 @@ function renderStudy(host) {
   paintTimerBtns(host);
 
   const tickUI = () => {
-    const m2 = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-    const s2 = String(timerSeconds % 60).padStart(2, '0');
-    const t = host.querySelector('#st-time');
-    if (t) t.textContent = `${m2}:${s2}`;
+    timerSeconds = studyElapsed();
+    timerTicks++;
+    paintStudyClock();
   };
   if (timerRunning && !timerInterval) {
-    timerInterval = setInterval(() => { timerSeconds++; tickUI(); }, 1000);
+    if (!timerAnchor) timerAnchor = Date.now();
+    timerInterval = setInterval(tickUI, 1000);
+  }
+  if (!timerVisWired) {
+    timerVisWired = true;
+    try { document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && timerRunning) { timerSeconds = studyElapsed(); paintStudyClock(); } }); } catch {}
   }
 
   host.querySelector('#s-duration').oninput = () => previewSXP(host);
@@ -699,7 +722,9 @@ function renderStudy(host) {
       + `<div style="font-size:11px;color:var(--text-muted)">${sess.duration} min · ${escapeHtml(sess.difficulty || 'medium')} · +${sess.xp ?? calcStudyXP(sess.duration, sess.difficulty)} XP</div></div>`
       + `<button class="btn btn-icon btn-sm" data-sdel="${gi}" style="color:var(--danger)">×</button>`;
     row.querySelector('[data-sdel]').onclick = () => {
-      const xp = S.study.sessions[gi]?.xp || 0;
+      // ponytail: legacy entries carry xp, newer ones xpAwarded — refund whichever exists
+      const sess = S.study.sessions[gi];
+      const xp = sess?.xpAwarded ?? sess?.xp ?? (sess ? calcStudyXP(sess.duration || 0, sess.difficulty) : 0);
       update((s) => { s.study.sessions.splice(gi, 1); });
       if (xp > 0) deductXP(xp, 'Study removed');
     };
@@ -718,6 +743,7 @@ function paintTimerBtns(host) {
   if (timerRunning) {
     box.innerHTML = `<button class="btn btn-danger btn-sm" id="st-pause">❚❚ Pause</button><button class="btn btn-green btn-sm" id="st-save">✓ Save Session</button>`;
     box.querySelector('#st-pause').onclick = () => {
+      timerBase = studyElapsed(); timerAnchor = null;
       timerRunning = false;
       clearInterval(timerInterval); timerInterval = null;
       window.ZF.rerender();
@@ -732,21 +758,27 @@ function paintTimerBtns(host) {
       if (top) timerTopic = top;
       timerDiff = host.querySelector('#t-diff').value || 'medium';
       timerRunning = true;
+      timerAnchor = Date.now(); timerTicks = 0;
       clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        timerSeconds++;
-        const t = document.querySelector('#st-time');
-        if (t) t.textContent = `${String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:${String(timerSeconds % 60).padStart(2, '0')}`;
-      }, 1000);
+      timerInterval = setInterval(() => { timerSeconds = studyElapsed(); timerTicks++; paintStudyClock(); }, 1000);
       window.ZF.rerender();
     };
     const reset = box.querySelector('#st-reset');
-    if (reset) reset.onclick = () => { timerSeconds = 0; window.ZF.rerender(); };
+    if (reset) reset.onclick = () => { timerSeconds = 0; timerBase = 0; timerAnchor = null; timerTicks = 0; window.ZF.rerender(); };
   }
 }
 
 function stopStudyTimer() {
-  timerRunning = false;
+  // ponytail: canonical time = stop − start wall-clock; tick count is only a cross-check
+  const stopAt = Date.now();
+  const elapsedTs = timerRunning && timerAnchor ? Math.max(0, Math.floor((stopAt - timerAnchor) / 1000)) : 0;
+  const elapsedTicks = timerTicks;
+  if (timerRunning && Math.abs(elapsedTs - elapsedTicks) > 120) {
+    try { console.warn('[ZenFit] study timer drift, trusting timestamps', { elapsedTs, elapsedTicks }); } catch {}
+  }
+  timerBase = timerBase + elapsedTs;
+  timerSeconds = timerBase;
+  timerRunning = false; timerAnchor = null;
   clearInterval(timerInterval); timerInterval = null;
   const dur = Math.max(1, Math.round(timerSeconds / 60));
   const subj = timerSubject || 'Study';
@@ -763,7 +795,8 @@ function stopStudyTimer() {
   awardXP(xp, `${subj} study session!`);
   checkAutoQuests();
   checkAchievements();
-  timerSeconds = 0; timerSubject = ''; timerTopic = ''; timerDiff = 'medium';
+  timerSeconds = 0; timerBase = 0; timerAnchor = null; timerTicks = 0;
+  timerSubject = ''; timerTopic = ''; timerDiff = 'medium';
   showNotif(`Session saved: ${dur} min of ${subj} (+${xp} XP)`, '📚');
 }
 
