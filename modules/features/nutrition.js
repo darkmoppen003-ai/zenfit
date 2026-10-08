@@ -11,7 +11,7 @@ import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, celebrateFirst, openOverlay } from '../core/ui.js';
 import { todayNutrition } from '../core/selectors.js';
 import {
-  parseFoodInput, gradeFood, gradeLabel, nn, recalcFood, FOOD_UNIT,
+  parseFoodInput, gradeFood, gradeLabel, nn, recalcFood, FOOD_UNIT, SERVING_METRICS,
   fetchOFFBarcode, fetchGeminiFood,
 } from '../core/nutrition-parse.js';
 import { checkAutoQuests } from './quests.js';
@@ -38,14 +38,26 @@ const COOKING_METHODS = {
 const ingNutritionDB = () => (typeof window !== 'undefined' && window.INGREDIENT_NUTRITION) || {};
 const commonIngredients = () => (typeof window !== 'undefined' && window.COMMON_INGREDIENTS) || [];
 
+function ingFoodKey(name) {
+  const k = String(name || '').toLowerCase().trim();
+  const keys = Object.keys(FOOD_UNIT);
+  if (FOOD_UNIT[k]) return k;
+  // ponytail: longest-key match — "chicken rice" must not resolve to plain "chicken"
+  let best = '';
+  for (const key of keys) {
+    if ((k.includes(key) || key.includes(k)) && key.length > best.length) best = key;
+  }
+  return best || '';
+}
 function getIngNutrition(name) {
   const k = name.toLowerCase().trim();
   const db = ingNutritionDB();
   let val;
   if (db[k]) val = db[k];
   else {
-    for (const [key, v] of Object.entries(db)) {
-      if (k.includes(key) || key.includes(k)) { val = v; break; }
+    let best = '';
+    for (const key of Object.keys(db)) {
+      if ((k.includes(key) || key.includes(k)) && key.length > best.length) { best = key; val = db[key]; }
     }
   }
   if (val) {
@@ -54,23 +66,29 @@ function getIngNutrition(name) {
   }
   const cf = (S.customFoods || []).find((f) => (f.name || '').toLowerCase().trim() === k);
   if (cf) {
-    const sz = cf.servingSize || 100;
-    return [(cf.cal || 0) / sz * 100, (cf.protein || 0) / sz * 100, (cf.carbs || 0) / sz * 100,
-      (cf.fat || 0) / sz * 100, (cf.fiber || 0) / sz * 100, (cf.sugar || 0) / sz * 100];
+    // ponytail: serving UNIT matters — 200kcal per 1 cup is 83/100g, not 20000 (was dividing by bare count)
+    const grams = toGrams(cf.servingSize || 100, cf.servingUnit || 'g', cf.name || k) || 100;
+    return [(cf.cal || 0) / grams * 100, (cf.protein || 0) / grams * 100, (cf.carbs || 0) / grams * 100,
+      (cf.fat || 0) / grams * 100, (cf.fiber || 0) / grams * 100, (cf.sugar || 0) / grams * 100];
   }
   return null;
 }
 
-function toGrams(qty, unit) {
+function toGrams(qty, unit, name = '') {
   unit = (unit || 'g').replace(/s$/, '');
   if (unit === 'g' || unit === 'gram') return qty;
   if (unit === 'ml') return qty;
   if (unit === 'kg') return qty * 1000;
-  if (unit === 'piece' || unit === 'pc') return qty * 100;
+  // ponytail: per-food piece weights (chapati 40g, egg 50g…) — flat 100g inflated protein 2-2.5×
+  if (unit === 'piece' || unit === 'pc') {
+    const key = ingFoodKey(name);
+    const g = (key && FOOD_UNIT[key] && FOOD_UNIT[key].g) || 100;
+    return qty * g;
+  }
   if (unit === 'cup') return qty * 240;
   if (unit === 'tbsp' || unit === 'tablespoon') return qty * 15;
   if (unit === 'tsp' || unit === 'teaspoon') return qty * 5;
-  if (unit === 'bowl') return qty * 250;
+  if (unit === 'bowl') return qty * 240;
   if (unit === 'glass') return qty * 250;
   if (unit === 'serving') return qty * 200;
   if (unit === 'slice') return qty * 30;
@@ -85,7 +103,7 @@ function calcDishNutrition() {
   let totalCal = 0, totalProt = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0, totalSugar = 0;
   const missing = [];
   dishIngredients.forEach((ing) => {
-    const g = toGrams(parseFloat(ing.qty) || 0, ing.unit || 'g');
+    const g = toGrams(parseFloat(ing.qty) || 0, ing.unit || 'g', ing.name);
     const n = getIngNutrition(ing.name);
     if (n) {
       const f = g / 100;
@@ -141,7 +159,8 @@ function renderToday(body, nut, g) {
   body.innerHTML = `
   <div class="grid5 mb16">${mCard('Calories', nut.cal, g.cal, 'kcal', 'var(--warning)')}${mCard('Protein', nut.protein, g.protein, 'g', 'var(--danger)')}${mCard('Carbs', nut.carbs, g.carbs, 'g', 'var(--info)')}${mCard('Fat', nut.fat, g.fat, 'g', 'var(--primary)')}${mCard('Sugar', nut.sugar, g.sugar, 'g', 'var(--energy)')}</div>
   <div class="card mb16">
-    <div class="section-title">Log Food</div>
+    <div class="flex-between"><div class="section-title" style="margin:0">Log Food</div>
+    <button class="btn btn-icon btn-sm" id="serv-info" title="Serving sizes guide" style="color:var(--info)">ⓘ</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn btn-sm${ft === 'text' ? ' btn-primary' : ''}" data-ft="text">📝 Text</button>
       <button class="btn btn-sm${ft === 'barcode' ? ' btn-primary' : ''}" data-ft="barcode">📷 Barcode</button>
@@ -181,14 +200,16 @@ function renderToday(body, nut, g) {
         <input type="number" id="m-fiber" placeholder="Fiber (g)">
         <input type="number" id="m-sugar" placeholder="Sugar (g)">
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--bg-raised);border-radius:8px">
-        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">Serving size:</span>
-        <input type="number" id="m-ss" value="100" min="0.1" step="any" style="width:60px;text-align:center">
-        <select id="m-su" style="width:80px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:8px 10px;background:var(--bg-raised);border-radius:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">Per serving:</span>
+        <input type="number" id="m-ss" value="100" min="0.1" step="any" style="width:60px;text-align:center" aria-label="Serving size">
+        <select id="m-su" style="width:80px" aria-label="Serving unit">
           <option value="g">g</option><option value="ml">ml</option><option value="piece">piece</option>
           <option value="cup">cup</option><option value="bowl">bowl</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
         </select>
-        <span style="font-size:11px;color:var(--text-muted)">— nutrients above are per this serving</span>
+        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">× ate:</span>
+        <input type="number" id="m-serv" value="1" min="0.25" step="0.25" style="width:56px;text-align:center" aria-label="Servings eaten">
+        <span style="font-size:11px;color:var(--text-muted)">nutrients above are for 1 serving</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer" id="m-save-wrap">
         <div id="m-save-toggle" style="width:36px;height:20px;border-radius:10px;background:var(--success);transition:background .2s;position:relative;flex-shrink:0">
@@ -210,6 +231,14 @@ function renderToday(body, nut, g) {
   body.querySelectorAll('[data-ft]').forEach((b) => {
     b.onclick = () => { ft = b.dataset.ft; parsedFood = null; window.ZF.rerender(); };
   });
+  body.querySelector('#serv-info').onclick = () => {
+    openOverlay(`<div style="text-align:left;max-width:360px">
+      <div style="font-size:15px;font-weight:700;font-family:var(--font-display);margin-bottom:4px">Serving sizes used in ZenFit</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Same metrics everywhere: text log, calculator, manual entry and meal plans.</div>
+      ${SERVING_METRICS.map(([u, v]) => `<div class="flex-between" style="padding:6px 2px;border-bottom:1px solid var(--border-mid);font-size:12px"><span style="font-weight:600">1 ${escapeHtml(u)}</span><span style="color:var(--text-secondary)">${escapeHtml(v)}</span></div>`).join('')}
+      <div style="font-size:10px;color:var(--text-muted);margin-top:10px">ml ≈ grams is a water-equivalent approximation (off for oil, flour, honey).</div>
+      <div class="flex mt12"><button class="btn btn-primary btn-full" onclick="document.getElementById('zf-overlay')?.remove()">Got it</button></div></div>`);
+  };
 
   /* Text parse */
   const input = body.querySelector('#food-input');
@@ -436,8 +465,11 @@ function readManual(body) {
 
 function logMF(body) {
   const { name, n, servingSize, servingUnit } = readManual(body);
+  // ponytail: nutrients are per 1 serving — scale by servings eaten (was silently dropped)
+  const servings = Math.max(0.25, sanitizeNumber(body.querySelector('#m-serv')?.value, { min: 0.25, max: 20, fallback: 1 }));
+  const scaled = scaleTo(n, servings);
   update((s) => {
-    s.nutrition.entries.push({ name, qty: servingSize, unit: servingUnit, nutrients: n, date: getTodayStr(), xpAwarded: 30 });
+    s.nutrition.entries.push({ name, qty: servingSize, unit: servingUnit, servings, nutrients: scaled, date: getTodayStr(), xpAwarded: 30 });
   });
   celebrateFirst('nutritionFirstMeal', '🥗 First meal logged! Your nutrition journey begins.');
   if (body.querySelector('#m-save-food')?.checked !== false && name !== 'Custom') {
@@ -481,10 +513,10 @@ function showMyFoods() {
   document.querySelectorAll('[data-mflog]').forEach((b) => {
     b.onclick = () => {
       const f = S.customFoods[Number(b.dataset.mflog)];
-      const r = parseFoodInput(`100g ${f.name}`, S.customFoods).parsed[0]
-        || { name: f.name, qty: 100, unit: 'g', nutrients: { cal: f.cal, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber, sugar: f.sugar } };
+      // ponytail: log the food's own saved serving — the old hardcoded 100g mis-scaled everything else
+      const r = { name: f.name, qty: f.servingSize || 100, unit: f.servingUnit || 'g', nutrients: { cal: f.cal, protein: f.protein, carbs: f.carbs, fat: f.fat, fiber: f.fiber, sugar: f.sugar } };
       update((s) => {
-        s.nutrition.entries.push({ name: r.name, qty: r.qty, unit: r.unit, nutrients: r.nutrients, date: getTodayStr(), xpAwarded: 30 });
+        s.nutrition.entries.push({ ...r, servings: 1, date: getTodayStr(), xpAwarded: 30 });
       });
       document.getElementById('zf-overlay')?.remove();
       awardXP(30, 'Meal logged!');
@@ -655,6 +687,9 @@ function renderCalculator(body) {
       <div class="food-detail-item"><div class="fdv" style="color:var(--warning)">${n.cal}</div><div class="fdl">kcal</div></div>
       <div class="food-detail-item"><div class="fdv" style="color:var(--success)">${n.prot}g</div><div class="fdl">protein</div></div>
       <div class="food-detail-item"><div class="fdv" style="color:var(--info)">${n.carbs}g</div><div class="fdl">carbs</div></div>
+      <div class="food-detail-item"><div class="fdv" style="color:var(--primary)">${n.fat}g</div><div class="fdl">fat</div></div>
+      <div class="food-detail-item"><div class="fdv" style="color:var(--success)">${n.fiber}g</div><div class="fdl">fiber</div></div>
+      <div class="food-detail-item"><div class="fdv" style="color:var(--energy)">${n.sugar}g</div><div class="fdl">sugar</div></div>
     </div>
     ${n.missing.length ? `<div style="font-size:11px;color:var(--warning)" class="mt8">Unknown: ${escapeHtml(n.missing.join(', '))} (skipped)</div>` : ''}
     <div class="flex gap8 mt12"><input type="text" id="dish-name-log" placeholder="Dish name…" maxlength="60" style="flex:1">

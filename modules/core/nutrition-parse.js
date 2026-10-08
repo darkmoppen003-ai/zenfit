@@ -24,6 +24,14 @@ export const ALIASES = {
   kaddu: 'pumpkin sabzi', 'paneer ki sabzi': 'paneer sabzi',
 };
 
+/* Canonical serving metrics (shown in the nutrition ⓘ guide; calculator + parser agree on these).
+   ml≈g is a water-equivalent approximation; piece varies per food (table above); slice ≈ 30g bread. */
+export const SERVING_METRICS = [
+  ['cup', '240 g / ml'], ['bowl', '240 g / ml'], ['glass', '250 ml'],
+  ['tbsp', '15 g / ml'], ['tsp', '5 g / ml'], ['serving', '200 g'],
+  ['slice', '≈30 g bread'], ['piece', 'per food (egg 50g · chapati 40g · banana 100g…)'],
+  ['ml', '≈ grams (water-equivalent)'],
+];
 export const FOOD_UNIT = {
   apple: { u: 'piece', d: 1, g: 100 }, banana: { u: 'piece', d: 1, g: 100 },
   mango: { u: 'piece', d: 1, g: 150 }, orange: { u: 'piece', d: 1, g: 130 },
