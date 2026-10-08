@@ -33,13 +33,13 @@ export function checkOverdueTasks() {
     if (now > task.deadlineTs) {
       task.overdueCharged = true;
       const loss = TASK_XP_LOSS[task.difficulty] || 35;
-      S.player.xp = Math.max(0, S.player.xp - loss);
       changed = true;
+      // ponytail: route through deductXP (notifies + repaints) instead of silent direct mutation
+      deductXP(loss, `Overdue: ${task.title}`);
       showNotif(`[ DISCIPLINE PENALTY ] -${loss} XP — "${task.title}" overdue`, '⚠️');
     }
   });
   if (changed) {
-    update(() => {}, { silent: true });
     window.ZF.save();
   }
 }

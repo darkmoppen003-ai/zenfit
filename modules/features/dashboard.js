@@ -7,14 +7,14 @@
 import { S, update } from '../core/store.js';
 import { xpForLevel } from '../core/utils.js';
 import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, openOverlay, onEnter } from '../core/ui.js';
+import { showNotif, awardXP, openOverlay, onEnter } from '../core/ui.js';
 import { icon } from '../core/icons.js';
 import {
   today, todayNutrition, todayWater, todayBurned, todayStudyMinutes,
   latestWeight, stepsToday, tasksDueToday, tasksDoneToday,
   isRestDay, weekRestCount,
 } from '../core/selectors.js';
-import { ensureDailyQuests, completeQuest } from './quests.js';
+import { ensureDailyQuests, completeQuest, checkAutoQuests } from './quests.js';
 import { MOODS, logMoodDay, moodImgs } from './zen.js';
 import { ACHIEVEMENTS, earnedIds, checkAchievements } from '../core/achievements.js';
 
@@ -256,6 +256,8 @@ export function renderDashboard(host) {
   host.querySelector('#steps-add').onclick = () => {
     const v = sanitizeNumber(host.querySelector('#steps-input').value, { min: 0, max: 200000, fallback: NaN, integer: true });
     if (!Number.isFinite(v) || v <= 0) { showNotif('Enter a valid step count', '!'); return; }
+    // ponytail: +1 XP per 500 steps logged (burn-only before — no toast, no quests, no achievements)
+    const xp = Math.max(1, Math.round(v / 500));
     update((s) => {
       s.steps = s.steps || [];
       const ex = s.steps.findIndex((e) => e.date === t);
@@ -264,10 +266,13 @@ export function renderDashboard(host) {
       s.burned = s.burned || [];
       const bi = s.burned.findIndex((e) => e.date === t && e.source === 'steps');
       const cal = Math.round(total * 0.04);
-      if (bi >= 0) s.burned[bi].calories = cal;
-      else s.burned.push({ activity: 'steps', duration: 0, met: 2, weightKg: latestWeight(), calories: cal, date: t, ts: Date.now(), source: 'steps' });
+      if (bi >= 0) { s.burned[bi].calories = cal; s.burned[bi].xpAwarded = (s.burned[bi].xpAwarded || 0) + xp; }
+      else s.burned.push({ activity: 'steps', duration: 0, met: 2, weightKg: latestWeight(), calories: cal, date: t, ts: Date.now(), source: 'steps', xpAwarded: xp });
     });
-    showNotif(`+${v} steps`, 'OK');
+    showNotif(`+${v} steps (~${Math.round(v * 0.04)} kcal)`, 'OK');
+    awardXP(xp, 'Steps logged!');
+    checkAutoQuests();
+    checkAchievements();
   };
 
   /* Rest */

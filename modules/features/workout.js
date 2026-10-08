@@ -219,8 +219,13 @@ function renderLog(body) {
         ${vol > 0 ? `<span style="color:var(--info)">${vol >= 1000 ? (vol / 1000).toFixed(1) + 'k' : vol} kg·vol</span>` : ''}
       </div>${w.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${escapeHtml(w.notes)}</div>` : ''}`;
     row.querySelector('[data-wdel]').onclick = () => {
-      const xp = S.workouts[idx]?.xpAwarded || 0;
-      update((s) => { s.workouts.splice(idx, 1); });
+      const w = S.workouts[idx];
+      const xp = w?.xpAwarded || 0;
+      // ponytail: workout owns its mirrored burn kcal — delete both together
+      update((s) => {
+        s.workouts.splice(idx, 1);
+        if (w) s.burned = (s.burned || []).filter((e) => e.workoutTs !== w.ts);
+      });
       if (xp > 0) deductXP(xp, 'Workout removed');
     };
     list.appendChild(row);
@@ -269,18 +274,20 @@ export function logWorkout(override = null) {
   const caloriesBurned = duration > 0 ? calcBurn(met, duration, effectiveWeight) : 0;
   const xpW = caloriesBurned > 0 ? 15 : 8;
   const day = today();
+  const wTs = Date.now();
   update((s) => {
     s.workouts = [...(s.workouts || []), {
       name, type, sets,
       reps: override?.reps ?? sanitizeNumber(g('w-reps'), { min: 0, max: 5000, fallback: 0, integer: true }),
       weight: wt, duration,
       notes: sanitizeText(override?.notes || g('w-notes') || '', 200),
-      date: day, ts: Date.now(), caloriesBurned, xpAwarded: xpW,
+      date: day, ts: wTs, caloriesBurned, xpAwarded: xpW,
     }];
     if (caloriesBurned > 0) {
       s.burned = [...(s.burned || []), {
         activity: name, duration, met, weightKg: effectiveWeight,
         calories: caloriesBurned, date: day, ts: Date.now(), source: 'workout',
+        workoutTs: wTs, xpAwarded: 0,
       }];
     }
   });
@@ -612,14 +619,17 @@ function renderBurn(body) {
   if (fromA.length) html2 += `<div class="section-title">Manual Activities (${fromA.length})</div>` + fromA.map((e) => row(e, S.burned.indexOf(e), false)).join('');
   if (!fromW.length && !fromA.length) html2 += '<div class="card text-center" style="color:var(--text-muted)">No burned calories yet today.</div>';
   lists.innerHTML = html2;
-  lists.querySelectorAll('[data-bdel]').forEach((b) => {
-    b.onclick = () => {
-      const gi = Number(b.dataset.bdel);
-      const xp = S.burned[gi]?.xpAwarded || 0;
-      update((s) => { s.burned.splice(gi, 1); });
-      if (xp > 0) deductXP(xp, 'Activity removed');
-    };
-  });
+    lists.querySelectorAll('[data-bdel]').forEach((b) => {
+      b.onclick = () => {
+        const gi = Number(b.dataset.bdel);
+        const e = S.burned[gi];
+        // ponytail: workout mirrors are owned by their workout — delete there so XP + kcal stay linked
+        if (e?.workoutTs) { showNotif('Delete the workout to remove its burn', '!'); return; }
+        const xp = e?.xpAwarded || 0;
+        update((s) => { s.burned.splice(gi, 1); });
+        if (xp > 0) deductXP(xp, 'Activity removed');
+      };
+    });
 }
 
 function burnCalcPreview(body) {

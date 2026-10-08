@@ -4,9 +4,9 @@
    S.achievements entries are {id, date} (V1 shape).
 ────────────────────────────────────────────────────────────── */
 import { S, save } from './store.js';
-import { getTodayStr, rankForLevel } from './utils.js';
+import { getTodayStr } from './utils.js';
 import { escapeHtml } from './sanitize.js';
-import { showNotif, showLevelUp } from './ui.js';
+import { awardXP } from './ui.js';
 import { todayBurned, habitStreak, entryNutrients } from './selectors.js';
 
 export const ACHIEVEMENTS = [
@@ -183,18 +183,9 @@ export function checkAchievements() {
     }
   });
   if (!fresh.length) return fresh;
-  // Award XP without recursion — direct increment (V1)
+  // ponytail: route through awardXP — XP toast, level-up overlay, rerender, peer/cloud sync (was a silent direct increment)
   fresh.forEach((a) => {
-    S.player.xp += a.xp;
-    let lvl = S.player.level;
-    while (S.player.xp >= xpForLevel(lvl)) {
-      S.player.xp -= xpForLevel(lvl);
-      lvl++;
-      showLevelUp(lvl);
-    }
-    S.player.level = lvl;
-    S.player.rank = rankForLevel(lvl);
-    showNotif(`🏆 Achievement: ${a.name}! +${a.xp} XP`, '★');
+    awardXP(a.xp, `Achievement: ${a.name}`);
   });
   save();
   return fresh;

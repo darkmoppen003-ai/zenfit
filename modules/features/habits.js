@@ -162,7 +162,9 @@ export function toggleHabit(i) {
       x.streak = calcHabitStreak(x.completedDates);
       x.bestStreak = Math.max(x.bestStreak || 0, x.streak);
     });
-    awardXP(HABIT_XP[h.difficulty] || 20, 'Habit: ' + h.name);
+    // ponytail: rest-day checks skip the uncheck deduction — don't award what can't be taken back (XP farm)
+    if (!isRestDay(t)) awardXP(HABIT_XP[h.difficulty] || 20, 'Habit: ' + h.name);
+    else showNotif('Rest day — done, no XP either way', 'OK');
     updStat('discipline', 2);
   }
   checkAutoQuests();

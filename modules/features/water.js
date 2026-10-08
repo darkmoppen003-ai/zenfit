@@ -21,7 +21,11 @@ export function addWater(ml) {
   celebrateFirst('waterFirstGlass', '💧 First glass logged! Stay hydrated.');
   awardXP(5, 'Hydrating!');
   updStat('health', 1);
-  if (todayWater() >= (S.water.dailyGoalMl || 3000) && prev < (S.water.dailyGoalMl || 3000)) awardXP(50, 'Water goal!');
+  // ponytail: goal bonus once per day — tracked so delete/re-add can't re-farm it
+  if (todayWater() >= (S.water.dailyGoalMl || 3000) && prev < (S.water.dailyGoalMl || 3000) && S.water.goalBonusDate !== today()) {
+    update((s) => { s.water.goalBonusDate = today(); }, { silent: true });
+    awardXP(50, 'Water goal!');
+  }
   checkAutoQuests();
   checkAchievements();
 }
@@ -82,6 +86,13 @@ export function renderWater(host) {
       const xp = S.water.entries[gi]?.xpAwarded || 0;
       update((s) => { s.water.entries.splice(gi, 1); });
       if (xp > 0) deductXP(xp, 'Water removed');
+      // ponytail: dropping back below goal revokes the daily bonus (re-earn on refill, still once per award)
+      update((s) => {
+        if ((s.water.goalBonusDate === today()) && todayWater() < (s.water.dailyGoalMl || 3000)) {
+          s.water.goalBonusDate = null;
+          deductXP(50, 'Water goal lost');
+        }
+      });
     };
     hist.appendChild(row);
   });
