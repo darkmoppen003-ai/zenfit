@@ -194,7 +194,8 @@ function bgOffsets() {
   if (bgOffX == null && bgPosX != null) {
     bgOffX = Math.round((bgPosX - 50) * 2);
     bgOffY = Math.round(((bgPosY ?? 50) - 50) * 2);
-    S.bgOffX = bgOffX; S.bgOffY = bgOffY;
+    // ponytail: never mutate S without persisting (v15 migrates this properly)
+    try { update((s) => { s.bgOffX = bgOffX; s.bgOffY = bgOffY; }, { silent: true }); } catch {}
   }
   return { x: bgOffX ?? 0, y: bgOffY ?? 0 };
 }

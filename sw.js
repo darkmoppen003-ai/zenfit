@@ -1,8 +1,8 @@
 // ZenFit V2 Service Worker — offline shell + updates.
 // Cache names derive from build → every deploy refreshes cleanly.
 
-const SW_BUILD = "2026.09.30.38";
-const SCHEMA_VERSION = 14;
+const SW_BUILD = "2026.10.08.39";
+const SCHEMA_VERSION = 15;
 
 const CACHE = `zenfit-${SW_BUILD}`;
 const STATIC_CACHE = `zenfit-static-${SW_BUILD}`;
@@ -209,6 +209,26 @@ self.addEventListener('message', (e) => {
     case 'SKIP_WAITING':
       self.skipWaiting();
       break;
+    case 'CACHE_WALLPAPER': {
+      // ponytail: single-slot temp cache for the applied remote wallpaper (page CSP can't fetch it)
+      const src = data && data.url;
+      if (typeof src !== 'string' || !/^https:\/\//i.test(src)) break;
+      e.waitUntil((async () => {
+        try {
+          const hit = await caches.match(src, { cacheName: 'zenfit-wallpaper-temp' });
+          if (hit) return;
+          const res = await fetch(src);
+          if (res && res.ok) {
+            const c = await caches.open('zenfit-wallpaper-temp');
+            const keys = await c.keys();
+            for (const k of keys) { try { if (k.url !== src) await c.delete(k); } catch {} }
+            await c.put(src, res.clone());
+            try { e.source && e.source.postMessage({ type: 'ZF_WP_CACHED', url: src }); } catch {}
+          }
+        } catch {}
+      })());
+      break;
+    }
     case 'BUILD_UPDATED':
       self.skipWaiting();
       break;

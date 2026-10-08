@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 14;
-export const APP_VERSION = "8.9.1.1";
+export const DATA_VERSION = 15;
+export const APP_VERSION = "8.9.2";
 
-export const APP_BUILD = "2026.09.30.38";
+export const APP_BUILD = "2026.10.08.39";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -50,7 +50,7 @@ const SCHEMA = {
   // V2 additions
   inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array', hiddenGlobals: 'array',
   customThemes: 'array', customDishes: 'array', notifSettings: 'object',
-  navOpacityVal: 'number',
+  navOpacityVal: 'number', streakScope: 'array', analyticsArchive: 'array',
 };
 
 const DB_NAME = 'zenfit';
@@ -146,9 +146,11 @@ export function defaultState() {
     events: [],           // admin-created events / missions
     adminRewards: [],     // history of granted rewards
     claimedRewards: [],   // global reward IDs already claimed (no double-XP)
-    adminPin: null,       // hashed-lite PIN for admin console
     customThemes: [],     // user-created themes (besides THEMES key)
+    customDishes: [],     // dish-builder saved dishes
+    streakScope: [],      // empty = all progress-streak activities count
     _analyticsSection: 'overview',
+    _analyticsPeriod: '1w',
   };
 }
 
@@ -252,6 +254,28 @@ export function migrateData(saved) {
     if (typeof saved.nutrition.dailyGoal.sugar !== 'number') saved.nutrition.dailyGoal.sugar = 25;
     saved.dataVersion = 14;
   }
+  if (version < 15) {
+    if (saved._analyticsPeriod == null) saved._analyticsPeriod = '1w';
+    if (!Array.isArray(saved.customDishes)) saved.customDishes = [];
+    if (!Array.isArray(saved.streakScope)) saved.streakScope = [];
+    if (!Array.isArray(saved.analyticsArchive)) saved.analyticsArchive = [];
+    delete saved.adminPin;
+    // ponytail: fold the lazy offset migration in — single versioned home
+    if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
+      saved.bgOffX = Math.round((saved.bgPosX - 50) * 2);
+      saved.bgOffY = Math.round(((saved.bgPosY ?? 50) - 50) * 2);
+    }
+    // ponytail: backfill reminder minute precision on old saves
+    if (saved.notifSettings) {
+      for (const k of ['study', 'streak']) {
+        if (saved.notifSettings[k] && typeof saved.notifSettings[k].minute !== 'number') saved.notifSettings[k].minute = 0;
+      }
+      for (const [k, f] of [['water', 'intervalMins'], ['task', 'offsetMins']]) {
+        if (saved.notifSettings[k] && typeof saved.notifSettings[k][f] !== 'number') delete saved.notifSettings[k][f];
+      }
+    }
+    saved.dataVersion = 15;
+  }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
     saved.bgOffX = Math.round((saved.bgPosX - 50) * 2);
@@ -340,10 +364,104 @@ export function idbDeleteImage(id) {
 }
 const objectUrlCache = {};
 /** Resolve stored wallpaper refs → usable URLs (preset:, idb:, data:, http). */
+/* Remote wallpaper temp cache — applied wallpapers stream once, then serve from
+   Cache API for 7 days (single slot: applying a new one evicts the old). */
+const WP_CACHE = 'zenfit-wallpaper-temp';
+const WP_TTL = 7 * 864e5;
+let wpMsgWired = false, wpSwOk = false;
+function wireWpAck() {
+  if (wpMsgWired) return;
+  wpMsgWired = true;
+  // ponytail: freshness timestamp is set only on SW-confirmed put — never optimistic
+  try {
+    navigator.serviceWorker.addEventListener('message', (e) => {
+      if (e?.data?.type === 'ZF_WP_CACHED' && typeof e.data.url === 'string') {
+        wpSwOk = true;
+        try { localStorage.setItem('zf_wp_cache_ts', String(Date.now())); } catch {}
+      }
+    });
+  } catch {}
+}
+/** CORS-canvas fallback: same bytes via the already-allowed <img> path,
+    downscaled to bound cache size. No-op where the CDN omits ACAO headers. */
+function cacheViaCanvas(src) {
+  try {
+    const im = new Image();
+    im.crossOrigin = 'anonymous';
+    const to = setTimeout(() => { try { im.src = ''; } catch {} }, 20000);
+    im.onload = async () => {
+      clearTimeout(to);
+      try {
+        const sc = Math.min(1, 1920 / Math.max(im.naturalWidth, im.naturalHeight, 1));
+        const cv = document.createElement('canvas');
+        cv.width = Math.max(1, Math.round(im.naturalWidth * sc));
+        cv.height = Math.max(1, Math.round(im.naturalHeight * sc));
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        const blob = await new Promise((r) => cv.toBlob(r, 'image/jpeg', 0.85));
+        if (!blob) return;
+        const c = await caches.open(WP_CACHE);
+        const keys = await c.keys();
+        for (const k of keys) { try { if (k.url !== src) await c.delete(k); } catch {} }
+        await c.put(src, new Response(blob, { headers: { 'Content-Type': 'image/jpeg' } }));
+        try { localStorage.setItem('zf_wp_cache_ts', String(Date.now())); } catch {}
+      } catch {}
+    };
+    im.onerror = () => clearTimeout(to);
+    im.src = src;
+  } catch {}
+}
+export async function cacheWallpaperTemp(src) {
+  try {
+    if (!/^https:\/\//i.test(src || '')) return;
+    // ponytail: page CSP blocks cross-origin fetch, so the SW (outside page CSP)
+    // performs the single-slot put; direct fetch is only a same-origin fallback
+    if (navigator.serviceWorker?.controller) {
+      wireWpAck();
+      try {
+        const lastReq = +localStorage.getItem('zf_wp_cache_req') || 0;
+        if (Date.now() - lastReq < 60000) return;
+        localStorage.setItem('zf_wp_cache_req', String(Date.now()));
+      } catch {}
+      navigator.serviceWorker.controller.postMessage({ type: 'CACHE_WALLPAPER', url: src });
+      if (wpSwOk) return;
+      cacheViaCanvas(src);
+      return;
+    }
+    const c = await caches.open(WP_CACHE);
+    if (await c.match(src)) return;
+    const res = await fetch(src);
+    if (res?.ok) {
+      const keys = await c.keys();
+      for (const k of keys) { try { await c.delete(k); } catch {} }
+      await c.put(src, res.clone());
+      try { localStorage.setItem('zf_wp_cache_ts', String(Date.now())); } catch {}
+    }
+  } catch {}
+}
 export async function resolveBgSrc(src) {
   if (!src) return '';
   if (src.startsWith('preset:')) return `./assets/bg/${src.slice(7)}`;
-  if (/^(data:|blob:|https?:)/i.test(src)) return src;
+  if (/^(data:|blob:|https?:)/i.test(src)) {
+    // ponytail: serve the temp-cached copy when present (touching freshness);
+    // evict only when provably stale with no usable entry
+    if (/^https:\/\//i.test(src)) {
+      try {
+        const c = await caches.open(WP_CACHE);
+        const hit = await c.match(src);
+        if (hit) {
+          const blob = await hit.blob();
+          const url = URL.createObjectURL(blob);
+          objectUrlCache[`wp:${src}`] = url;
+          try { localStorage.setItem('zf_wp_cache_ts', String(Date.now())); } catch {}
+          return url;
+        }
+        const ts = +localStorage.getItem('zf_wp_cache_ts') || 0;
+        if (Date.now() - ts > WP_TTL) { try { await caches.delete(WP_CACHE); } catch {} }
+      } catch {}
+      cacheWallpaperTemp(src);
+    }
+    return src;
+  }
   if (objectUrlCache[src]) return objectUrlCache[src];
   try {
     const blob = await idbGetImage(src);
@@ -427,7 +545,10 @@ function trimOldData() {
   } catch { /* never break save on trim */ }
 }
 
-/* ── Persist (debounced) ── */
+/* ── Persist (debounced) ──
+   ponytail: localStorage and IDB writes are independent — a quota throw on the
+   first must not skip the mirror (the exact case that needs it). */
+function snapshotState() { return JSON.parse(JSON.stringify(S)); }
 let saveTimer = null;
 export function save() {
   clearTimeout(saveTimer);
@@ -435,9 +556,10 @@ export function save() {
     try {
       S.lastSaved = Date.now();
       trimOldData();
-      localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S));
-      idbSave(STORAGE_KEYS.STATE, JSON.parse(JSON.stringify(S)));
-    } catch (e) { console.warn('[ZenFit] save error:', e); }
+    } catch (e) { console.warn('[ZenFit] trim error:', e); }
+    try { localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S)); }
+    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); }
+    try { idbSave(STORAGE_KEYS.STATE, snapshotState()); } catch {}
   }, 250);
 }
 /** Synchronous write-through (page hide/close) — never debounced. */
@@ -446,8 +568,9 @@ export function flushSave() {
     clearTimeout(saveTimer);
     S.lastSaved = Date.now();
     try { trimOldData(); } catch {}
-    localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S));
-    idbSave(STORAGE_KEYS.STATE, JSON.parse(JSON.stringify(S)));
+    try { localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S)); }
+    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); }
+    try { idbSave(STORAGE_KEYS.STATE, snapshotState()); } catch {}
   } catch (e) { console.warn('[ZenFit] save error:', e); }
 }
 /** Wipe ALL local data (reset flow): localStorage + IndexedDB. */
