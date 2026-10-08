@@ -11,7 +11,7 @@ import {
   getTodayStr,
 } from '../core/utils.js';
 import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif } from '../core/ui.js';
+import { showNotif, openOverlay } from '../core/ui.js';
 import { todayWater, todayNutrition, isRestDay, today } from '../core/selectors.js';
 import { checkAchievements, achievementsGridHTML } from '../core/achievements.js';
 import { MOODS } from './zen.js';
@@ -349,21 +349,49 @@ function destroyCharts() {
   Object.values(charts).forEach((c) => { try { c.destroy(); } catch {} });
   Object.keys(charts).forEach((k) => delete charts[k]);
 }
-let chartReady = null;
+// ponytail: guard double-draws into the same canvas id (stale flush after tab switch)
+function killChart(id) {
+  const c = charts[id];
+  if (c) { try { c.destroy(); } catch {} delete charts[id]; }
+}
+let chartReady = null, renderGen = 0;
 /** Load Chart.js on first analytics visit (precached → offline-safe). */
 function ensureChart() {
-  if (window.Chart) return Promise.resolve(true);
+  if (window.Chart) {
+    try {
+      window.Chart.defaults.font.family = 'Inter,system-ui,sans-serif';
+      window.Chart.defaults.color = '#8a94b8';
+    } catch {}
+    return Promise.resolve(true);
+  }
   if (!chartReady) {
     chartReady = new Promise((resolve) => {
       const s = document.createElement('script');
       s.src = './chart.umd.js';
-      s.onload = () => resolve(!!window.Chart);
+      s.onload = () => {
+        try {
+          window.Chart.defaults.font.family = 'Inter,system-ui,sans-serif';
+          window.Chart.defaults.color = '#8a94b8';
+        } catch {}
+        resolve(!!window.Chart);
+      };
       s.onerror = () => resolve(false);
       document.head.appendChild(s);
       setTimeout(() => resolve(!!window.Chart), 5000);
     });
   }
   return chartReady;
+}
+function chartClickToast() {
+  return {
+    onClick: (evt, els, chart) => {
+      if (!els?.length) return;
+      try {
+        const i = els[0].index, d = chart.data.datasets[els[0].datasetIndex];
+        showNotif(`${chart.data.labels[i]} — ${d.label}: ${d.data[i]}`, 'OK');
+      } catch {}
+    },
+  };
 }
 function baseScales() {
   return {
@@ -378,12 +406,15 @@ function drawLine(id, labels, datasets) {
   }
   const el = document.getElementById(id);
   if (!el) return;
+  killChart(id);
   charts[id] = new window.Chart(el, {
     type: 'line',
     data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 10 }, boxWidth: 10 } } },
+      ...chartClickToast(),
+      elements: { point: { radius: 3, hoverRadius: 6 }, line: { borderWidth: 2 } },
+      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 11 }, boxWidth: 10 } } },
       scales: baseScales(),
     },
   });
@@ -395,13 +426,33 @@ function drawBars(id, labels, datasets) {
   }
   const el = document.getElementById(id);
   if (!el) return;
+  killChart(id);
   charts[id] = new window.Chart(el, {
     type: 'bar',
     data: { labels, datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 10 }, boxWidth: 10 } } },
+      ...chartClickToast(),
+      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 11 }, boxWidth: 10 } } },
       scales: baseScales(),
+    },
+  });
+}
+function drawRadar(id, labels, data, color) {
+  if (!window.Chart) {
+    pendingDraws.push({ type: 'radar', id, labels, datasets: [{ data, color }] });
+    return;
+  }
+  const el = document.getElementById(id);
+  if (!el) return;
+  killChart(id);
+  charts[id] = new window.Chart(el, {
+    type: 'radar',
+    data: { labels, datasets: [{ label: 'Check-ins', data, backgroundColor: `${color}55`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: { min: 0, ticks: { display: false }, grid: { color: '#2a305055' }, angleLines: { color: '#2a305055' }, pointLabels: { color: '#8a94b8', font: { size: 10 } } } },
     },
   });
 }
@@ -411,7 +462,9 @@ function flushDraws() {
     const j = pendingDraws.shift();
     if (!document.getElementById(j.id)) continue;
     if (j.type === 'doughnut') drawDoughnut(j.id, j.muscleData);
+    else if (j.type === 'radar') drawRadar(j.id, j.labels, j.datasets[0].data, j.datasets[0].color);
     else if (j.type === 'line') {
+      killChart(j.id);
       charts[j.id] = new window.Chart(document.getElementById(j.id), {
         type: 'line',
         data: { labels: j.labels, datasets: j.datasets },
@@ -429,6 +482,7 @@ function flushDraws() {
 function drawDoughnut(id, muscleData) {
   const el = document.getElementById(id);
   if (!el || !window.Chart) return;
+  killChart(id);
   charts[id] = new window.Chart(el, {
     type: 'doughnut',
     data: { labels: muscleData.map((m) => m.type), datasets: [{ data: muscleData.map((m) => m.count), backgroundColor: muscleData.map((m) => m.color), borderWidth: 0 }] },
@@ -483,7 +537,10 @@ export function renderAnalytics(host, subTab) {
     gamification: renderAnGamification, mood: renderAnMood,
   })[section](body);
   // Charts paint after the lazy library arrives (precached = offline-safe).
+  // ponytail: generation guard — a slow load must not paint the previous tab's queued charts
+  const gen = ++renderGen;
   ensureChart().then((okChart) => {
+    if (gen !== renderGen) return;
     if (!okChart) {
       document.querySelectorAll('#an-body canvas').forEach((c) => {
         if (!c.closest('.card')) return;
@@ -596,6 +653,40 @@ function renderAnHabits(body) {
   const ds = [{ label: 'Habits Done', data: data.map((d) => d.habits), backgroundColor: '#4cdb8a44', borderColor: '#4cdb8a', borderWidth: 1.5, borderRadius: 3, fill: true, tension: 0.3 }];
   if (compare && comp) ds.push({ label: 'Prev Habits', data: comp.previous.map((d) => d.habits), backgroundColor: '#4cdb8a22', borderColor: '#4cdb8a44', borderWidth: 1, borderRadius: 3, borderDash: [3, 3], pointRadius: 2 });
   drawLine('c_habits_overview', data.map((d) => d.label), ds);
+  paintHabitCalendar(body);
+}
+/* ── Habits weekly overview: rows = habits, columns = last 7 days ── */
+function paintHabitCalendar(body) {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
+    days.push({ ds: `${y}-${m}-${dd}`, label: d.toLocaleDateString([], { weekday: 'narrow' }), num: d.getDate(), today: i === 0 });
+  }
+  const habits = S.habits || [];
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="section-title">Habit Week</div>
+  <div class="card mb12" style="overflow-x:auto"><div style="display:grid;grid-template-columns:minmax(90px,1.2fr) repeat(7,minmax(34px,1fr));gap:4px;align-items:center;min-width:340px">
+    <div></div>${days.map((d) => `<div style="text-align:center;font-size:9px;color:${d.today ? 'var(--primary)' : 'var(--text-muted)'};font-weight:${d.today ? 700 : 400}">${d.label}<br><span style="font-size:11px">${d.num}</span></div>`).join('')}
+    ${habits.map((h) => {
+      const c = habitColor(habits.indexOf(h));
+      return `<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(h.icon || '✅')} ${escapeHtml(h.name)}</div>`
+        + days.map((d) => {
+          const done = (h.completedDates || []).includes(d.ds);
+          return `<div class="hm-cell ${done ? '' : 'hm-0'}${d.today ? ' hm-today' : ''}" data-calday="${d.ds}" data-calhabit="${escapeHtml(h.name)}" title="${escapeHtml(h.name)} · ${d.ds}${done ? ' ✓' : ''}" style="aspect-ratio:1;cursor:pointer;${done ? `background:${c}55;border-color:${c}` : ''}"></div>`;
+        }).join('');
+    }).join('') || '<div style="grid-column:1/-1;font-size:12px;color:var(--text-muted);text-align:center;padding:8px">No habits yet — add some in the Habits tab.</div>'}
+  </div></div>`;
+  body.appendChild(wrap);
+  wrap.querySelectorAll('[data-calday]').forEach((c) => {
+    c.onclick = () => {
+      const ds = c.dataset.calday;
+      const done = (S.habits || []).filter((h) => (h.completedDates || []).includes(ds));
+      openOverlay(`<div style="text-align:left;max-width:340px"><div style="font-size:14px;font-weight:700;margin-bottom:8px">${ds}</div>`
+        + (done.length ? done.map((h) => `<div style="font-size:12px;margin-bottom:4px">✅ ${escapeHtml(h.name)}</div>`).join('') : '<div style="font-size:12px;color:var(--text-muted)">No habits completed.</div>')
+        + `<button class="btn btn-primary btn-full mt12" onclick="document.getElementById('zf-overlay')?.remove()">Close</button></div>`);
+    };
+  });
 }
 function habitColor(i) {
   const c = ['#4a9eff', '#f5a623', '#00d4aa', '#4cdb8a', '#ff5a5a', '#c084fc', '#f472b6', '#fb923c'];
@@ -841,18 +932,66 @@ function renderAnInsights(body) {
 }
 
 /* ── GAMIFICATION ── */
+/* ── Progress streak: consecutive days where every SELECTED activity is done ── */
+const STREAK_ACTS = [
+  { id: 'habits', label: 'Habits', icon: '✅', color: '#4cdb8a' },
+  { id: 'tasks', label: 'Tasks', icon: '📋', color: '#4a9eff' },
+  { id: 'water', label: 'Water goal', icon: '💧', color: '#00b6ff' },
+  { id: 'workout', label: 'Workout', icon: '🏋️', color: '#f5a623' },
+  { id: 'mind', label: 'Meditate', icon: '🧘', color: '#c084fc' },
+  { id: 'study', label: 'Study', icon: '📚', color: '#4a9eff' },
+  { id: 'nutrition', label: 'Nutrition goal', icon: '🍽️', color: '#ff7a1a' },
+];
+function streakScope() {
+  const s = S.streakScope;
+  return Array.isArray(s) && s.length ? s : STREAK_ACTS.map((a) => a.id);
+}
+function streakDayDone(act, ds) {
+  if (act === 'habits') return (S.habits || []).some((h) => (h.completedDates || []).includes(ds));
+  if (act === 'tasks') return (S.tasks || []).some((t) => t.completedDate === ds);
+  if (act === 'water') return (S.water.entries || []).filter((e) => e.date === ds).reduce((a, e) => a + (e.ml || 0), 0) >= (S.water.dailyGoalMl || 3000);
+  if (act === 'workout') return (S.workouts || []).some((w) => w.date === ds);
+  if (act === 'mind') return (S.zen?.sessions || []).some((z) => z.date === ds) || (S.mood?.entries || []).some((e) => e.date === ds);
+  if (act === 'study') return (S.study?.sessions || []).some((s) => s.date === ds);
+  if (act === 'nutrition') return (S.nutrition?.entries || []).some((e) => e.date === ds);
+  return false;
+}
+function calcActStreak(act) {
+  let n = 0;
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (!streakDayDone(act, localDs(d))) d.setDate(d.getDate() - 1);
+  while (streakDayDone(act, localDs(d))) { n++; d.setDate(d.getDate() - 1); if (n > 3650) break; }
+  return n;
+}
+function calcProgressStreak(scope) {
+  let n = 0;
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  const ok = (dd) => scope.every((a) => streakDayDone(a, localDs(dd)));
+  if (!ok(d)) d.setDate(d.getDate() - 1);
+  while (ok(d)) { n++; d.setDate(d.getDate() - 1); if (n > 3650) break; }
+  return n;
+}
 function renderAnGamification(body) {
-  const habits = S.habits || [];
-  const topStreaks = [...habits].sort((a, b) => (b.streak || 0) - (a.streak || 0)).slice(0, 5);
+  const scope = streakScope();
+  const prog = calcProgressStreak(scope);
   body.innerHTML = `
-  <div class="section-title">Current Streaks</div>
-  <div class="card mb12">${topStreaks.length === 0 ? '<div style="text-align:center;padding:14px;font-size:12px;color:var(--text-muted)">Add habits to build streaks</div>'
-    : topStreaks.map((h) => {
-      const c = habitColor(habits.indexOf(h));
-      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
-        <div style="width:36px;height:36px;border-radius:8px;background:${c}22;border:1px solid ${c}55;display:flex;align-items:center;justify-content:center;font-size:16px">${escapeHtml(h.icon || '✅')}</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:600">${escapeHtml(h.name)}</div><div style="font-size:10px;color:var(--text-muted)">Best: ${h.bestStreak || h.streak || 0} days</div></div>
-        <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${c}">${h.streak || 0}</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
+  <div class="section-title">Progress Streak</div>
+  <div class="card mb12 text-center" style="padding:16px">
+    <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">🔥 ${prog}</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">day${prog === 1 ? '' : 's'} — every selected activity complete</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:12px">
+      ${STREAK_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}">${a.icon} ${a.label}</button>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Tap to choose which streaks count</div>
+  </div>
+  <div class="section-title">Activity Streaks</div>
+  <div class="card mb12">${STREAK_ACTS.map((a) => {
+      const n = calcActStreak(a.id);
+      const on = scope.includes(a.id);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid);${on ? '' : 'opacity:.45'}">
+        <div style="width:36px;height:36px;border-radius:8px;background:${a.color}22;border:1px solid ${a.color}55;display:flex;align-items:center;justify-content:center;font-size:16px">${a.icon}</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.label}</div><div style="font-size:10px;color:var(--text-muted)">${on ? 'counted' : 'skipped'}</div></div>
+        <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${a.color}">${n}</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
     }).join('')}</div>
   <div class="section-title">Activity Heatmap — Last 91 Days</div>
   <div class="card mb12">
@@ -867,6 +1006,17 @@ function renderAnGamification(body) {
     <div class="hm-grid" style="grid-template-columns:repeat(13,1fr)">${heatmapCells()}</div>
   </div>
   <div id="an-ach-grid"></div>`;
+  body.querySelectorAll('[data-scope]').forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.scope;
+      update((s) => {
+        const cur = Array.isArray(s.streakScope) && s.streakScope.length ? [...s.streakScope] : STREAK_ACTS.map((a) => a.id);
+        s.streakScope = cur.includes(id) && cur.length > 1 ? cur.filter((x) => x !== id) : [...new Set([...cur, id])];
+      });
+      window.ZF.save();
+      window.ZF.rerender();
+    };
+  });
   const gridHost = body.querySelector('#an-ach-grid');
   const tmp = document.createElement('div');
   tmp.innerHTML = achievementsGridHTML();
@@ -929,6 +1079,10 @@ function renderAnMood(body) {
   <div class="card mb12">${recent20.filter((d) => d.mood).map((d) => {
     const m = MOODS.find((x) => x.key === d.mood);
     return `<div class="flex-between mb8"><span style="font-size:13px">${m ? `${m.emoji} ${m.label}` : escapeHtml(d.mood)}</span><span style="font-size:11px;color:var(--text-muted)">${escapeHtml(d.ds)}</span></div>`;
-  }).join('') || '<div style="font-size:12px;color:var(--text-muted)">No check-ins in this period.</div>'}</div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--text-muted)">No check-ins in this period.</div>'}</div>
+  <div class="section-title">Mood Radar</div>
+  <div class="card mb12"><div style="position:relative;height:260px"><canvas id="c_mood_radar"></canvas></div>
+  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods</div></div>`;
   wirePeriodTabs(body);
+  drawRadar('c_mood_radar', MOODS.map((m) => `${m.emoji} ${m.label}`), MOODS.map((m) => counts[m.key] || 0), '#c084fc');
 }

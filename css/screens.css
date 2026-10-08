@@ -159,6 +159,7 @@
 .hm-1 { background: var(--hm-1-bg); border-color: var(--hm-1-border); }
 .hm-2 { background: var(--hm-2-bg); border-color: var(--hm-2-border); }
 .hm-3 { background: var(--hm-3-bg); border-color: var(--hm-3-border); }
+.hm-today { outline: 2px solid var(--primary); outline-offset: 1px; }
 .ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .ach-card { background: var(--bg-raised); border: 1px solid var(--border-mid); border-radius: 10px; padding: 10px 8px; text-align: center; }
 .ach-card.earned { border-color: var(--warning); }
