@@ -34,6 +34,8 @@ const PERIODS = [['1w', '1W'], ['2w', '2W'], ['1m', '1M'], ['3m', '3M'], ['6m', 
 function localDs(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+/** ponytail: legacy habits carry doneDates — every reader must accept both, or old data goes blank */
+function hDates(h) { return h.completedDates || h.doneDates || []; }
 function getAnalyticsPeriodConfig(p) {
   const cfg = { count: 7, step: 1 };
   if (p === '1w') { cfg.count = 7; cfg.step = 1; }
@@ -64,7 +66,7 @@ function getAnalyticsData(p, offsetDays) {
       burned += (S.burned || []).filter((e) => e.date === dds).reduce((a, e) => a + (e.calories ?? e.cal ?? 0), 0);
       waterL += (S.water.entries || []).filter((e) => e.date === dds).reduce((a, e) => a + (e.ml || 0), 0) / 1000;
       study += (S.study.sessions || []).filter((s) => s.date === dds).reduce((a, b) => a + (b.duration || 0), 0);
-      habits += (S.habits || []).filter((h) => h.completedDates?.includes(dds)).length;
+      habits += (S.habits || []).filter((h) => hDates(h).includes(dds)).length;
       const se = (S.steps || []).find((e) => e.date === dds);
       if (se) steps += se.steps;
       screentime += (S.screenTime || {})[dds] || 0;
@@ -93,6 +95,8 @@ function deltaPct(cur, prev) {
   if (v < 0) return `↓${Math.abs(v)}%`;
   return '→ 0%';
 }
+/** Display-round fractional slot sums (kills 36.400000000000006-style FP tails). */
+function r1(v) { return Math.round((+v || 0) * 10) / 10; }
 function getAnalyticsSummary(data) {
   const activeDays = data.filter((d) => d.cal > 0 || d.burned > 0 || d.water > 0);
   const avgCal = activeDays.length ? Math.round(activeDays.reduce((a, d) => a + d.cal, 0) / activeDays.length) : 0;
@@ -203,10 +207,10 @@ function getInsights(data) {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i); last7dates.push(localDs(d));
   }
-  const slipping = habits.filter((h) => (h.streak || 0) >= 3 && !((h.completedDates || []).includes(localDs(new Date()))));
+  const slipping = habits.filter((h) => (h.streak || 0) >= 3 && !(hDates(h).includes(localDs(new Date()))));
   if (slipping.length) {
     const names = slipping.map((h) => h.name).join(', ');
-    const hit = last7dates.filter((d) => slipping.some((h) => h.completedDates?.includes(d))).length;
+    const hit = last7dates.filter((d) => slipping.some((h) => hDates(h).includes(d))).length;
     ins.push({ icon: '⚠️', title: 'Streak at Risk', body: `"${names}" ${slipping.length > 1 ? 'streaks are' : 'streak is'} slipping — only ${hit} day${hit !== 1 ? 's' : ''} this week. Complete today to protect your streak.`, color: 'var(--danger)' });
   }
   if (activeStreaks.length >= 3) ins.push({ icon: '✦', title: 'Momentum Building', body: `${activeStreaks.length} habits with 3+ day streaks.`, color: 'var(--success)' });
@@ -249,7 +253,7 @@ function getRecommendations() {
   if (todayWater() < (S.water.dailyGoalMl || 3000) * 0.5) recs.push({ icon: '💧', text: 'Drink a glass of water right now' });
   if (!S.nutrition.entries.some((e) => e.date === t)) recs.push({ icon: '🍽️', text: 'Log your next meal — rough beats none' });
   if (!(S.workouts || []).some((w) => w.date === t)) recs.push({ icon: '🏋️', text: 'Move for 10 minutes today' });
-  const open = (S.habits || []).filter((h) => !(h.completedDates || []).includes(t));
+  const open = (S.habits || []).filter((h) => !(hDates(h).includes(t)));
   if (open.length) recs.push({ icon: '☑️', text: `Close one habit: ${open[0].name}` });
   if (!(S.mood.entries || []).some((e) => e.date === t)) recs.push({ icon: '🧘', text: 'Check in with your mood' });
   return recs.slice(0, 5);
@@ -331,11 +335,12 @@ function calcZenStreak() {
   }
   return streak;
 }
-function getAnalyticsMoodData(p) {
+function getAnalyticsMoodData(p, offsetDays) {
   const cfg = getAnalyticsPeriodConfig(p);
+  const offset = offsetDays || 0;
   const out = [];
   for (let i = cfg.count - 1; i >= 0; i--) {
-    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i - offset);
     const ds = localDs(d);
     const dayEntries = (S.mood.entries || []).filter((e) => e.date === ds);
     const label = p === '1w' ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -438,17 +443,20 @@ function drawBars(id, labels, datasets) {
     },
   });
 }
-function drawRadar(id, labels, data, color) {
+function drawRadar(id, labels, data, color, prevData) {
   if (!window.Chart) {
-    pendingDraws.push({ type: 'radar', id, labels, datasets: [{ data, color }] });
+    pendingDraws.push({ type: 'radar', id, labels, datasets: [{ data, color, prevData }] });
     return;
   }
   const el = document.getElementById(id);
   if (!el) return;
   killChart(id);
+  // ponytail: compare overlays the previous period dashed gray — current stays solid violet
+  const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}55`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }];
+  if (prevData) sets.push({ label: 'Previous', data: prevData, backgroundColor: 'transparent', borderColor: '#8a94b8', borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
   charts[id] = new window.Chart(el, {
     type: 'radar',
-    data: { labels, datasets: [{ label: 'Check-ins', data, backgroundColor: `${color}55`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }] },
+    data: { labels, datasets: sets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
@@ -462,7 +470,7 @@ function flushDraws() {
     const j = pendingDraws.shift();
     if (!document.getElementById(j.id)) continue;
     if (j.type === 'doughnut') drawDoughnut(j.id, j.muscleData);
-    else if (j.type === 'radar') drawRadar(j.id, j.labels, j.datasets[0].data, j.datasets[0].color);
+    else if (j.type === 'radar') drawRadar(j.id, j.labels, j.datasets[0].data, j.datasets[0].color, j.datasets[0].prevData);
     else if (j.type === 'line') {
       killChart(j.id);
       charts[j.id] = new window.Chart(document.getElementById(j.id), {
@@ -609,7 +617,7 @@ function renderAnOverview(body) {
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG CAL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgCal}</div></div>
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG BURNED</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgBurned}</div></div>
     <div class="card-sm text-center"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--info)">${(S.workouts || []).filter((w) => w.date === getTodayStr()).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">HABITS DONE</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${data.reduce((a, d) => a + d.habits, 0)}</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG HABITS DONE</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${r1(data.reduce((a, d) => a + d.habits, 0))}</div></div>
   </div>
   <div class="card mb12"><div class="section-title">Calories vs Burned (TDEE ${tdee})</div>
   <div style="position:relative;height:200px"><canvas id="c_overview"></canvas></div></div>`;
@@ -640,7 +648,7 @@ function renderAnHabits(body) {
   <div class="card mb12"><div style="position:relative;height:180px"><canvas id="c_habits_overview"></canvas></div></div>
   <div class="section-title">Habit Breakdown</div>
   <div class="card mb12">${habits.length ? habits.map((h, i) => {
-      const doneDates = h.completedDates || [];
+      const doneDates = hDates(h);
       const pDone = doneDates.filter((d) => (new Date() - new Date(`${d}T00:00:00`)) <= getAnalyticsPeriodConfig(period).count * 864e5).length;
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:${i < habits.length - 1 ? '1px solid var(--border-mid)' : 'none'}">`
         + `<div style="width:4px;height:32px;border-radius:2px;background:${habitColor(i)}"></div>`
@@ -655,33 +663,45 @@ function renderAnHabits(body) {
   drawLine('c_habits_overview', data.map((d) => d.label), ds);
   paintHabitCalendar(body);
 }
-/* ── Habits weekly overview: rows = habits, columns = last 7 days ── */
-function paintHabitCalendar(body) {
+/* ── Habits calendar: rows = habits, columns = days in the selected period ──
+   Compare mode stacks the previous period beneath, dimmed and labeled. */
+function habitGridDays(offsetDays, count) {
   const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i);
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i - offsetDays);
     const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), dd = String(d.getDate()).padStart(2, '0');
-    days.push({ ds: `${y}-${m}-${dd}`, label: d.toLocaleDateString([], { weekday: 'narrow' }), num: d.getDate(), today: i === 0 });
+    days.push({ ds: `${y}-${m}-${dd}`, label: d.toLocaleDateString([], { weekday: 'narrow' }), num: d.getDate(), today: offsetDays === 0 && i === 0 });
   }
+  return days;
+}
+function habitGridHTML(days, title, dimmed) {
   const habits = S.habits || [];
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `<div class="section-title">Habit Week</div>
-  <div class="card mb12" style="overflow-x:auto"><div style="display:grid;grid-template-columns:minmax(90px,1.2fr) repeat(7,minmax(34px,1fr));gap:4px;align-items:center;min-width:340px">
+  const n = days.length;
+  return `<div class="section-title">${title}</div>
+  <div class="card mb12" style="overflow-x:auto;${dimmed ? 'opacity:.75;border-style:dashed;' : ''}"><div style="display:grid;grid-template-columns:minmax(90px,1.2fr) repeat(${n},minmax(34px,1fr));gap:4px;align-items:center;min-width:${Math.max(340, 110 + n * 38)}px">
     <div></div>${days.map((d) => `<div style="text-align:center;font-size:9px;color:${d.today ? 'var(--primary)' : 'var(--text-muted)'};font-weight:${d.today ? 700 : 400}">${d.label}<br><span style="font-size:11px">${d.num}</span></div>`).join('')}
     ${habits.map((h) => {
       const c = habitColor(habits.indexOf(h));
       return `<div style="font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(h.icon || '✅')} ${escapeHtml(h.name)}</div>`
         + days.map((d) => {
-          const done = (h.completedDates || []).includes(d.ds);
+          const done = hDates(h).includes(d.ds);
           return `<div class="hm-cell ${done ? '' : 'hm-0'}${d.today ? ' hm-today' : ''}" data-calday="${d.ds}" data-calhabit="${escapeHtml(h.name)}" title="${escapeHtml(h.name)} · ${d.ds}${done ? ' ✓' : ''}" style="aspect-ratio:1;cursor:pointer;${done ? `background:${c}55;border-color:${c}` : ''}"></div>`;
         }).join('');
     }).join('') || '<div style="grid-column:1/-1;font-size:12px;color:var(--text-muted);text-align:center;padding:8px">No habits yet — add some in the Habits tab.</div>'}
   </div></div>`;
+}
+function paintHabitCalendar(body) {
+  // ponytail: grid follows the period tabs (capped at 31 daily columns for usability)
+  const cfg = getAnalyticsPeriodConfig(period);
+  const n = Math.min(cfg.count, 31);
+  const wrap = document.createElement('div');
+  wrap.innerHTML = habitGridHTML(habitGridDays(0, n), n >= cfg.count ? `Habit Calendar — ${getAnalyticsPeriodLabel(period)}` : `Habit Calendar — last ${n} days`)
+    + (compare ? habitGridHTML(habitGridDays(cfg.count, n), `Previous ${getAnalyticsPeriodLabel(period)}`, true) : '');
   body.appendChild(wrap);
   wrap.querySelectorAll('[data-calday]').forEach((c) => {
     c.onclick = () => {
       const ds = c.dataset.calday;
-      const done = (S.habits || []).filter((h) => (h.completedDates || []).includes(ds));
+      const done = (S.habits || []).filter((h) => hDates(h).includes(ds));
       openOverlay(`<div style="text-align:left;max-width:340px"><div style="font-size:14px;font-weight:700;margin-bottom:8px">${ds}</div>`
         + (done.length ? done.map((h) => `<div style="font-size:12px;margin-bottom:4px">✅ ${escapeHtml(h.name)}</div>`).join('') : '<div style="font-size:12px;color:var(--text-muted)">No habits completed.</div>')
         + `<button class="btn btn-primary btn-full mt12" onclick="document.getElementById('zf-overlay')?.remove()">Close</button></div>`);
@@ -947,7 +967,7 @@ function streakScope() {
   return Array.isArray(s) && s.length ? s : STREAK_ACTS.map((a) => a.id);
 }
 function streakDayDone(act, ds) {
-  if (act === 'habits') return (S.habits || []).some((h) => (h.completedDates || []).includes(ds));
+  if (act === 'habits') return (S.habits || []).some((h) => hDates(h).includes(ds));
   if (act === 'tasks') return (S.tasks || []).some((t) => t.completedDate === ds);
   if (act === 'water') return (S.water.entries || []).filter((e) => e.date === ds).reduce((a, e) => a + (e.ml || 0), 0) >= (S.water.dailyGoalMl || 3000);
   if (act === 'workout') return (S.workouts || []).some((w) => w.date === ds);
@@ -1034,7 +1054,7 @@ function renderAnGamification(body) {
       const ds = localDs(d);
       let intensity = 0;
       const hasWater = (S.water.entries || []).some((e) => e.date === ds);
-      const habitsDone = (S.habits || []).filter((h) => (h.completedDates || []).includes(ds)).length;
+      const habitsDone = (S.habits || []).filter((h) => hDates(h).includes(ds)).length;
       const hasWorkout = (S.workouts || []).some((w) => w.date === ds);
       if (hasWater || habitsDone > 0) intensity = 1;
       if (hasWorkout || habitsDone >= 2) intensity = 2;
@@ -1052,6 +1072,11 @@ function renderAnMood(body) {
   const logged = data.filter((d) => d.mood);
   const counts = {};
   data.forEach((d) => { if (d.mood) counts[d.mood] = (counts[d.mood] || 0) + 1; });
+  // ponytail: legacy/renamed mood keys still count — bucketed as Other instead of dropped
+  const knownKeys = new Set(MOODS.map((m) => m.key));
+  const otherCount = Object.entries(counts).filter(([k]) => !knownKeys.has(k)).reduce((a, [, v]) => a + v, 0);
+  const radarLabels = [...MOODS.map((m) => `${m.emoji} ${m.label}`), ...(otherCount ? ['❓ Other'] : [])];
+  const radarData = [...MOODS.map((m) => counts[m.key] || 0), ...(otherCount ? [otherCount] : [])];
   const total = logged.length;
   const pct = (m) => (total ? Math.round(((counts[m] || 0) / total) * 100) : 0);
   const allEntries = (S.mood?.entries || []).filter((e) => e.intensity != null);
@@ -1085,5 +1110,16 @@ function renderAnMood(body) {
   <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods</div>`
     : '<div style="text-align:center;padding:22px 12px;font-size:12px;color:var(--text-muted)">🛰️ No check-ins yet — log moods daily and your radar fills in here.</div>'}</div>`;
   wirePeriodTabs(body);
-  if (total) drawRadar('c_mood_radar', MOODS.map((m) => `${m.emoji} ${m.label}`), MOODS.map((m) => counts[m.key] || 0), '#c084fc');
+  if (total) {
+    // ponytail: compare adds the previous window dashed — same axes, instant distinction
+    let prevRadar = null;
+    if (compare) {
+      const cfg = getAnalyticsPeriodConfig(period);
+      const prevData = getAnalyticsMoodData(period, cfg.count);
+      const prevCounts = {};
+      prevData.forEach((d) => { if (d.mood) prevCounts[d.mood] = (prevCounts[d.mood] || 0) + 1; });
+      prevRadar = [...MOODS.map((m) => prevCounts[m.key] || 0), ...(otherCount ? [Object.entries(prevCounts).filter(([k]) => !knownKeys.has(k)).reduce((a, [, v]) => a + v, 0)] : [])];
+    }
+    drawRadar('c_mood_radar', radarLabels, radarData, '#c084fc', prevRadar);
+  }
 }
