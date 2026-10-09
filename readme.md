@@ -41,7 +41,7 @@ modules/
     router.js           ← ★ screen registry + hash routing + swipe + bottom nav
     ui.js               ← toasts, overlays, background engine, 6-mode particles, SFX
     animations.js       ← anime.js loader, directional transitions, tab glide, count-ups
-    nutrition-parse.js  ← ★ food engine: regex → OpenFoodFacts → Gemini worker → local DB
+    nutrition-parse.js  ← ★ food engine: regex → OpenFoodFacts → AI worker → local DB
     backup.js           ← share-first export / validated import / reset
     peer.js             ← ★ P2P friends (PeerJS handshake, chat, challenges)
     cloud.js            ← ★ Supabase global leaderboard API + throttled sync

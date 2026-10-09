@@ -17,7 +17,7 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 16;
+export const DATA_VERSION = 17;
 export const APP_VERSION = "8.9.2.1";
 
 export const APP_BUILD = "2026.10.08.40";
@@ -291,6 +291,11 @@ export function migrateData(saved) {
       }
     }
     saved.dataVersion = 16;
+  }
+  if (version < 17) {
+    // ponytail: food-parser model is never named — rewrite stored labels
+    if (Array.isArray(saved.customFoods)) saved.customFoods.forEach((f) => { if (f && f.source === 'gemini') f.source = 'ai'; });
+    saved.dataVersion = 17;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

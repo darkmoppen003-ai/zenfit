@@ -2,7 +2,7 @@
 // Cache names derive from build → every deploy refreshes cleanly.
 
 const SW_BUILD = "2026.10.08.40";
-const SCHEMA_VERSION = 16;
+const SCHEMA_VERSION = 17;
 
 const CACHE = `zenfit-${SW_BUILD}`;
 const STATIC_CACHE = `zenfit-static-${SW_BUILD}`;

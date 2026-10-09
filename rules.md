@@ -127,7 +127,7 @@ rings, profile links, More → Inbox).
 ## 10. Food pipeline staging (fixed order)
 
 10.1. Text input: split on commas → `parseFood` (custom foods → ALIASES →
-INGR_DB → plural fallback) → failures go to the Gemini worker (`{text}`, 15s timeout) → still
+INGR_DB → plural fallback) → failures go to the AI worker (`{text}`, 15s timeout) → still
 failing items get a "Log manually" switch, never silent drops.
 10.2. Barcode/search use OpenFoodFacts product API (barcode + text search). Dish calculator uses
 `INGREDIENT_NUTRITION` + `COOKING_METHODS`. Grades always via

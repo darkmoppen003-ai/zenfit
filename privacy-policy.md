@@ -33,7 +33,7 @@ Use **Profile → Data Management → Reset All Data** to wipe everything.
 
 ### 2.1 Food lookups
 - **OpenFoodFacts** (search + barcode): sends your search text or barcode number, receives public nutrition facts. See `world.openfoodfacts.org` privacy policy.
-- **Gemini-via-Cloudflare-Worker** (fuzzy dish parsing fallback): sends the dish text you typed, receives estimated nutrition. No identity is attached.
+- **AI food-parsing worker via Cloudflare** (fuzzy dish parsing fallback): sends the dish text you typed, receives estimated nutrition. No identity is attached. (The underlying model is never named in-app.)
 
 ### 2.2 Global leaderboard (opt-in only)
 Off by default. When you toggle it on (Leaderboard → Global, filled profile
