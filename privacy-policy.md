@@ -60,23 +60,23 @@ CDN and the PeerJS library from public CDNs. These providers see standard
 web-request metadata (IP, user agent) as with any website. All of these have
 offline fallbacks except first-load library fetches.
 
-## 4. Children
+## 3. Children
 
 ZenFit is a general wellness tracker with no age gate. A guardian should
 supervise use by children, as with any health app.
 
-## 5. Changes
+## 4. Changes
 
 Material changes to this policy will be noted in the in-app changelog
 ([ SYSTEM UPDATE ] popup) when the app updates.
 
-## 6. Contact
+## 5. Contact
 
 This is a self-hosted personal project. For privacy questions or deletion
 help with the optional global board, contact the instance owner who gave
 you the app link.
 
-## 7. Wallpaper credit
+## 6. Wallpaper credit
 
 Thank you to the original creators of the awesome wallpapers bundled with
 ZenFit — we do not own any of the wallpapers, and all credit is due to
