@@ -5,7 +5,7 @@
    liquid glass, V1 theme engine (4 built-ins + custom
    builder + accent + import/export), bottom-nav editor.
 ────────────────────────────────────────────────────────────── */
-import { S, update, idbPutImage, idbDeleteImage, resolveBgSrc } from '../core/store.js';
+import { S, update, idbPutImage, idbDeleteImage, idbGetImage, resolveBgSrc } from '../core/store.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
 import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles } from '../core/ui.js';
 import { toggleFullscreen, isFullscreen } from '../core/fullscreen.js';
@@ -244,16 +244,43 @@ export function renderCustomization(host) {
       <img data-wpthumb="${i}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">
       ${w.id && !String(w.id).startsWith('preset:') && !/^data:/.test(String(w.src)) ? `<button data-wpdel="${i}" style="position:absolute;top:4px;right:4px;padding:2px 7px;font-size:10px;background:var(--danger);color:#fff;border:none;border-radius:6px">Del</button>` : ''}
     </div>`).join('');
+  // ponytail: uploads whose blobs are gone (eviction/private mode) resolve '' —
+  // mark them for one-tap replacement instead of a silent placeholder
+  let replaceIx = null;
+  const deadTiles = new Set();
+  const picker = host.querySelector('#wp-upload');
   allImages.forEach((w, i) => {
     resolveBgSrc(w.src).then((url) => {
       const th = gal.querySelector(`[data-wpthumb="${i}"]`);
-      if (th && url) th.src = url;
+      if (th && url) { th.src = url; return; }
+      const tile = gal.querySelector(`[data-wp="${i}"]`);
+      const isUpload = w.id && !String(w.id).startsWith('preset:') && !/^data:/.test(String(w.src)) && !/^https?:/.test(String(w.src));
+      if (tile && isUpload) {
+        deadTiles.add(i);
+        tile.style.outline = '2px dashed var(--warning)';
+        tile.title = `${w.name} — file missing, tap to re-upload`;
+      }
     });
+  });
+  picker.addEventListener('change', () => {
+    if (replaceIx != null) {
+      const w = allImages[replaceIx];
+      if (w?.id) { try { idbDeleteImage(w.id); } catch {} }
+      update((s) => { s.bgImages = (s.bgImages || []).filter((x) => (x.id || x.src || x) !== w.id); });
+      replaceIx = null;
+    }
   });
   gal.querySelectorAll('[data-wp]').forEach((t) => {
     t.onclick = (e) => {
       if (e.target.closest('[data-wpdel]')) return;
-      const w = allImages[Number(t.dataset.wp)];
+      const ix = Number(t.dataset.wp);
+      if (deadTiles.has(ix)) {
+        replaceIx = ix;
+        showNotif('Pick a replacement image', 'OK');
+        picker.click();
+        return;
+      }
+      const w = allImages[ix];
       update((s) => { s.bgImage = w.src; s.bgType = 'image'; s.bgScreen = s.bgScreen || 'dashboard'; });
       showNotif(`Wallpaper: ${w.name}`, 'OK');
     };
@@ -290,13 +317,35 @@ export function renderCustomization(host) {
     if (!f) return;
     if (f.size > 10 * 1024 * 1024) { showNotif('Image too large — max 10MB', '!'); return; }
     const id = `bg_${Date.now().toString(36)}`;
-    idbPutImage(id, f).then(() => {
-      update((s) => {
-        s.bgImages = [...(s.bgImages || []), { id, name: sanitizeText(f.name, 40) }];
-        s.bgImage = id; s.bgType = 'image';
+    // ponytail: downscale to bound IDB size (evictionfragility) + read-back verify (silent put failures = ghost tiles)
+    const finishUpload = (blob) => {
+      idbPutImage(id, blob).then(async () => {
+        const ok = await idbGetImage(id).then((b) => !!b).catch(() => false);
+        if (!ok) { try { await idbDeleteImage(id); } catch {} showNotif('Storage unavailable — wallpaper not kept (private mode?)', '!'); return; }
+        update((s) => {
+          s.bgImages = [...(s.bgImages || []), { id, name: sanitizeText(f.name, 40) }];
+          s.bgImage = id; s.bgType = 'image';
+        });
+        showNotif('Wallpaper uploaded', 'OK');
       });
-      showNotif('Wallpaper uploaded', 'OK');
-    });
+    };
+    try {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(f);
+      img.onload = () => {
+        try {
+          const sc = Math.min(1, 1920 / Math.max(img.naturalWidth, img.naturalHeight, 1));
+          if (sc >= 1) { URL.revokeObjectURL(objUrl); finishUpload(f); return; }
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(img.naturalWidth * sc); cv.height = Math.round(img.naturalHeight * sc);
+          cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+          URL.revokeObjectURL(objUrl);
+          cv.toBlob((b) => finishUpload(b || f), 'image/jpeg', 0.85);
+        } catch { URL.revokeObjectURL(objUrl); finishUpload(f); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); finishUpload(f); };
+      img.src = objUrl;
+    } catch { finishUpload(f); }
   };
   host.querySelector('#wp-clear').onclick = () => update((s) => { s.bgImage = null; s.bgType = 'solid'; });
 
