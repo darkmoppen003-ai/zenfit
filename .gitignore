@@ -9,3 +9,7 @@ node_modules/
 dist/
 *.log
 supabase/
+graphify-out/
+.archify/
+legacy-v1/
+brag-output/
