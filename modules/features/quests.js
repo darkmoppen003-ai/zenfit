@@ -4,8 +4,9 @@
    20-item bonus pool (5 random/day), dashboard specials
    (q1 auto-logs water, q2 logs a meal plan, q4 needs 2 habits).
 ────────────────────────────────────────────────────────────── */
-import { S, update } from '../core/store.js';
+import { S, update, deductXP } from '../core/store.js';
 import { getTodayStr } from '../core/utils.js';
+import { isRestDay } from '../core/selectors.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, sfx, openOverlay } from '../core/ui.js';
 import { todayWater, todayBurned } from '../core/selectors.js';
@@ -50,8 +51,26 @@ export function generateBonusTasks() {
 }
 
 export function ensureDailyQuests() {
+  chargeInactivity();
   generateQuests();
   generateBonusTasks();
+}
+/** Inactivity rule (no V1 precedent — new): on day rollover, a non-rest day
+    with 4 or fewer completed quests (daily + bonus) costs 100 XP. Runs once —
+    the lists it reads are replaced right after, so it can't double-charge. */
+function chargeInactivity() {
+  try {
+    const t = getTodayStr();
+    const oldQ = S.quests || {}, oldB = S.bonusTasks || {};
+    const oldDate = oldQ.date || oldB.date;
+    if (!oldDate || oldDate >= t) return;
+    const done = [...(oldQ.list || []), ...(oldB.list || [])].filter((q) => q.done).length;
+    if (isRestDay(oldDate)) return;
+    if (done <= 4) {
+      deductXP(100, `Inactive ${oldDate} (${done}/11 quests)`);
+      showNotif(`[ INACTIVITY ] -100 XP — only ${done} quests done on ${oldDate}`, '⚠️');
+    }
+  } catch {}
 }
 
 /** Auto-complete quests whose conditions are now met (called after logged actions). */

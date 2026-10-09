@@ -210,3 +210,10 @@ failing items get a "Log manually" switch, never silent drops.
 19.1. **global_assets table** (`wallpaper`|`theme` kinds, name/url/data jsonb): admin deploys, everyone reads, admin deletes. Users get Coach picks gallery + Coach themes (save-copy + apply).
 19.2. **Theme engine lives in `core/themes.js`** (THEMES, presets, applier). Features import from core — never feature-to-feature. Customization re-exports for compat.
 19.3. **User hiding:** `hiddenGlobals[]` filters threads/missions/rewards; read-gated × buttons; global deletes stay admin-only via outbox.
+
+## 20. Addition durability rule (standing — applies to every new datum, function, feature, chart, or surface)
+
+20.1. **Backward compatible with older saves, always.** Bump `DATA_VERSION` + `SCHEMA_VERSION`, add a `migrateData` branch, and read legacy shapes with fallback (`x.completedDates || x.doneDates || []` style — never assume the new shape). Logged history is immutable: migrations backfill defaults, never rewrite earned data.
+20.2. **Degrade gracefully.** Every new surface renders a meaningful empty/loading/error state (no blank screens, no NaN, no dangling tokens or dead buttons when its data is absent).
+20.3. **Zero jank budget.** Reuse existing engines and caches; debounce inputs; skip redundant rebuilds and re-renders (pkey-style guards, generation counters); no layout thrash, no leaked timers/listeners/observers. Must hold 60fps on mid-range phones — verify with FPS + longtask measurement, not by feel.
+20.4. **Quality stays maximal.** Display type in Syne, body in Inter; empty states explain the next action; toasts confirm every mutation; destructive actions confirm first.

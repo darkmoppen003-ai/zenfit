@@ -678,7 +678,7 @@ function habitGridHTML(days, title, dimmed) {
   const habits = S.habits || [];
   const n = days.length;
   return `<div class="section-title">${title}</div>
-  <div class="card mb12" style="overflow-x:auto;${dimmed ? 'opacity:.75;border-style:dashed;' : ''}"><div style="display:grid;grid-template-columns:minmax(90px,1.2fr) repeat(${n},minmax(34px,1fr));gap:4px;align-items:center;min-width:${Math.max(340, 110 + n * 38)}px">
+  <div class="card mb12" style="overflow-x:auto;${dimmed ? 'opacity:.75;border-style:dashed;' : ''}">  <div data-no-swipe style="display:grid;grid-template-columns:minmax(90px,1.2fr) repeat(${n},minmax(34px,1fr));gap:4px;align-items:center;min-width:${Math.max(340, 110 + n * 38)}px">
     <div></div>${days.map((d) => `<div style="text-align:center;font-size:9px;color:${d.today ? 'var(--primary)' : 'var(--text-muted)'};font-weight:${d.today ? 700 : 400}">${d.label}<br><span style="font-size:11px">${d.num}</span></div>`).join('')}
     ${habits.map((h) => {
       const c = habitColor(habits.indexOf(h));
@@ -995,24 +995,27 @@ function renderAnGamification(body) {
   const scope = streakScope();
   const prog = calcProgressStreak(scope);
   body.innerHTML = `
-  <div class="section-title">Progress Streak</div>
-  <div class="card mb12 text-center" style="padding:16px">
-    <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">🔥 ${prog}</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">day${prog === 1 ? '' : 's'} — every selected activity complete</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:12px">
-      ${STREAK_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}">${a.icon} ${a.label}</button>`).join('')}
-    </div>
-    <div style="font-size:10px;color:var(--text-muted);margin-top:6px">Tap to choose which streaks count</div>
-  </div>
   <div class="section-title">Activity Streaks</div>
-  <div class="card mb12">${STREAK_ACTS.map((a) => {
+  <div class="card mb12" style="padding:16px">
+    <div class="flex-between" style="align-items:center">
+      <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">🔥 ${prog}</div>
+      <button class="btn btn-icon" id="streak-gear" title="Choose tracked activities" aria-label="Choose which activities count toward the streak" aria-expanded="false" style="width:40px;height:40px;font-size:18px">⚙️</button>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">day${prog === 1 ? '' : 's'} — every selected activity complete</div>
+    <div id="scope-panel" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+        ${STREAK_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}" aria-pressed="${scope.includes(a.id)}">${a.icon} ${a.label}</button>`).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center">Tap to choose which streaks count</div>
+    </div>
+    <div style="margin-top:12px">${STREAK_ACTS.filter((a) => scope.includes(a.id)).map((a) => {
       const n = calcActStreak(a.id);
-      const on = scope.includes(a.id);
-      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid);${on ? '' : 'opacity:.45'}">
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
         <div style="width:36px;height:36px;border-radius:8px;background:${a.color}22;border:1px solid ${a.color}55;display:flex;align-items:center;justify-content:center;font-size:16px">${a.icon}</div>
-        <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.label}</div><div style="font-size:10px;color:var(--text-muted)">${on ? 'counted' : 'skipped'}</div></div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.label}</div></div>
         <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${a.color}">${n}</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
     }).join('')}</div>
+  </div>
   <div class="section-title">Activity Heatmap — Last 91 Days</div>
   <div class="card mb12">
     <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -1026,6 +1029,15 @@ function renderAnGamification(body) {
     <div class="hm-grid" style="grid-template-columns:repeat(13,1fr)">${heatmapCells()}</div>
   </div>
   <div id="an-ach-grid"></div>`;
+  const gear = body.querySelector('#streak-gear');
+  const panel = body.querySelector('#scope-panel');
+  if (gear && panel) {
+    gear.onclick = () => {
+      const open = panel.style.display !== 'none';
+      panel.style.display = open ? 'none' : 'block';
+      gear.setAttribute('aria-expanded', String(!open));
+    };
+  }
   body.querySelectorAll('[data-scope]').forEach((b) => {
     b.onclick = () => {
       const id = b.dataset.scope;
