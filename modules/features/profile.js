@@ -192,6 +192,7 @@ export function renderProfile(host) {
     <div style="margin-bottom:4px;font-weight:600;color:var(--text-secondary)">ZenFit Health RPG</div>
     <div id="pf-ver">v${APP_VERSION} · Build ${APP_BUILD}</div>
     <button class="btn btn-sm mt8" id="pf-update" style="border-color:var(--primary);color:var(--primary);font-size:11px">🔄 Check for Update</button>
+    <div><button class="btn btn-sm mt8" id="pf-privacy" style="font-size:11px">🔒 Privacy Policy</button></div>
   </div>`;
 
   function goalRow(label, id, val, unit, todayVal) {
@@ -300,6 +301,7 @@ export function renderProfile(host) {
     });
   };
   host.querySelector('#pf-export').onclick = exportDataFile;
+  host.querySelector('#pf-privacy').onclick = () => window.ZF.go('privacy');
   host.querySelector('#pf-import').onchange = (e) => { if (e.target.files[0]) importData(e.target.files[0]); };
   host.querySelector('#pf-reset').onclick = confirmReset;
   host.querySelector('#pf-update').onclick = async () => {

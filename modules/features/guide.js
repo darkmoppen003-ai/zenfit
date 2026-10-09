@@ -189,7 +189,7 @@ export function startExplorationTour() {
     { screen: 'habits', steps: [['#h-add', 'Mochi: habits', 'Easy +20, Medium +40, Hard +70. Chain days to build your fire streak — my favorite game!']] },
     { screen: 'mind', sub: 'zen', steps: [['.zen-stage, [data-mtab="zen"]', 'Mochi: zen', 'Equal/Box/4-7-8 breathing. Follow the ring for XP + calm.'], ['[data-mtab="study"]', 'Mochi: study', 'Focus timer + manual log. Sessions feed analytics + Scholar badges.'], ['[data-mtab="screentime"]', 'Mochi: screen time', 'Log daily minutes — lower is better, missions treat it as max-goal.']] },
     { screen: 'analytics', steps: [['.chart-tab-bar, .an-sec-bar', 'Mochi: analytics overview', 'Overview first: 7-day cal/burn/water/study/habits/steps/screentime. Drill in only if curious — no need to open every subtab.']] },
-    { screen: 'quests', steps: [['#q-list', 'Mochi: quests', 'Dailies auto-complete as you track. Clear all for bonus pool. Coach missions land here too.']] },
+    { screen: 'quests', steps: [['#q-list', 'Mochi: quests', 'Dailies auto-complete as you track. Clear all for bonus pool. Coach missions land here too. Heads up: a day with 4 or fewer quests done costs 100 XP (rest days are safe)!']] },
     { screen: 'profile', steps: [['#pf-save', 'Mochi: profile', 'Save recalculates BMI/BMR/TDEE + macros for your goal. Same 7 goals as onboarding.']] },
     { screen: 'leaderboard', steps: [['.chart-tab-bar', 'Mochi: leaderboard', 'Global/Friends/Challenges. Global needs opt-in. Achievements live in the hidden gallery.']] },
     { screen: 'customization', steps: [['#wp-frame', 'Mochi: makeover', 'Frame wallpapers with the thirds grid, then play with particles and themes. My aesthetic era.']] },
@@ -258,7 +258,7 @@ export function startDashboardTour(onDone) {
     steps: [
       step('#bottom-nav', 'Mochi: your pill bar (1/10)', "Hiya, it's me again! These 5 tabs are home base. Everything else naps under More — and hey, you can swipe left and right between screens too. More → Nav-Edit lets you rearrange us."),
       step('#dash-blocks', 'Today at a glance (2/10)', "Ooh, shiny! Six live blocks — water, calories, net burn, habits, tasks and mind. Log anywhere and every number here updates instantly, like magic. Tap a block to teleport to its screen."),
-      step('#dash-quests', 'Daily quests (3/10)', "Snack time! Fresh quests every morning, most finish themselves while you track — water, meals, workouts, habits. Each pays 100+ XP. Clear them all and bonus treats appear."),
+      step('#dash-quests', 'Daily quests (3/10)', "Snack time! Fresh quests every morning, most finish themselves while you track — water, meals, workouts, habits. Each pays 100+ XP. Clear them all and bonus treats appear. Skip a day with 4 or fewer done (no rest day) and you lose 100 XP!"),
       step('#dw-input', 'Weigh in daily (4/10)', "Hop on the scale each morning and type it here — once a day does it. I beam it to your profile, analytics and character instantly. Tap for details to see your history."),
       step('#dash-char', 'Your hunter (5/10)', "This one's you! Level grows on a 100·level^1.5 XP curve, rank climbs E→S every 8 levels. Stats fatten with every log. Poke a rank step and I'll show exactly what each tier demands."),
       step('#dash-ach', 'Trophy shelf (6/10)', "43 shiny achievements, each with instant XP — no take-backs. The ring tracks your haul. Tap it to sneak into the hidden gallery (psst — Profile links there too)."),

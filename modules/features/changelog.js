@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.9.2.5.1', 'Privacy page + profile button, policy history purge'],
   ['v8.9.2.5', 'Unified streak card, inactivity XP rule, calendar swipe guard'],
   ['v8.9.2.3', 'Serving base 100g, katori bowl, AI rename, calendar compare, decimal tails'],
   ['v8.9.2.1', 'Mood radar empty state, stored-value 2-decimal migration'],

@@ -25,6 +25,7 @@ import { renderCustomization } from '../features/customization.js';
 import { renderAdmin } from '../features/admin.js';
 import { renderAchievements } from '../features/achievements-screen.js';
 import { renderInbox } from '../features/inbox.js';
+import { renderPrivacy } from '../features/privacy.js';
 
 export const SCREENS = [
   { id: 'dashboard', label: 'Dashboard', icon: '&#9783;', render: renderDashboard },
@@ -39,10 +40,11 @@ export const SCREENS = [
   { id: 'leaderboard', label: 'Leaderboard', icon: '&#127942;', render: renderLeaderboard },
   { id: 'profile', label: 'Profile', icon: '&#128100;', render: renderProfile },
   { id: 'customization', label: 'Customization', icon: '&#9881;', render: renderCustomization },
-  // Admin + achievements + inbox are hidden: no nav entry.
+  // Admin + achievements + inbox + privacy are hidden: no nav entry.
   { id: 'admin', label: 'Admin', icon: '&#128737;', render: renderAdmin, hidden: true },
   { id: 'achievements', label: 'Achievements', icon: '&#127942;', render: renderAchievements, hidden: true },
   { id: 'inbox', label: 'Inbox', icon: ICONS.inbox, render: renderInbox, hidden: true },
+  { id: 'privacy', label: 'Privacy', icon: '&#128274;', render: renderPrivacy, hidden: true },
 ];
 
 /* Bottom-dock icons stay SVG line-art (V1 bottom dock parity) */

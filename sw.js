@@ -1,7 +1,7 @@
 // ZenFit V2 Service Worker — offline shell + updates.
 // Cache names derive from build → every deploy refreshes cleanly.
 
-const SW_BUILD = "2026.10.10.42";
+const SW_BUILD = "2026.10.10.43";
 const SCHEMA_VERSION = 17;
 
 const CACHE = `zenfit-${SW_BUILD}`;
@@ -13,6 +13,7 @@ const PRECACHE = [
   './',
   './index.html',
   './offline.html',
+  './privacy-policy.md',
   './export.html',
   './manifest.json',
   './zenfit.png',

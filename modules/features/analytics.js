@@ -1002,6 +1002,7 @@ function renderAnGamification(body) {
       <button class="btn btn-icon" id="streak-gear" title="Choose tracked activities" aria-label="Choose which activities count toward the streak" aria-expanded="false" style="width:40px;height:40px;font-size:18px">⚙️</button>
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:4px">day${prog === 1 ? '' : 's'} — every selected activity complete</div>
+    <div style="font-size:11px;color:var(--warning);margin-top:6px">😴 Skip a day (4 or fewer quests, no rest day): −100 XP</div>
     <div id="scope-panel" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
         ${STREAK_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}" aria-pressed="${scope.includes(a.id)}">${a.icon} ${a.label}</button>`).join('')}
