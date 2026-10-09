@@ -12,7 +12,7 @@ import { showNotif, awardXP, celebrateFirst, openOverlay } from '../core/ui.js';
 import { todayNutrition } from '../core/selectors.js';
 import {
   parseFoodInput, gradeFood, gradeLabel, nn, recalcFood, FOOD_UNIT, SERVING_METRICS,
-  fetchOFFBarcode, fetchGeminiFood,
+  fetchOFFBarcode, fetchAiFood,
 } from '../core/nutrition-parse.js';
 import { checkAutoQuests } from './quests.js';
 import { checkAchievements } from '../core/achievements.js';
@@ -90,7 +90,7 @@ function toGrams(qty, unit, name = '') {
   if (unit === 'tsp' || unit === 'teaspoon') return qty * 5;
   if (unit === 'bowl') return qty * 240;
   if (unit === 'glass') return qty * 250;
-  if (unit === 'serving') return qty * 200;
+  if (unit === 'serving') return qty * 100;
   if (unit === 'slice') return qty * 30;
   return qty;
 }
@@ -207,7 +207,7 @@ function renderToday(body, nut, g) {
           <option value="g">g</option><option value="ml">ml</option><option value="piece">piece</option>
           <option value="cup">cup</option><option value="bowl">bowl</option><option value="tbsp">tbsp</option><option value="tsp">tsp</option>
         </select>
-        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">× ate:</span>
+        <span style="font-size:12px;color:var(--text-secondary);flex-shrink:0">Servings:</span>
         <input type="number" id="m-serv" value="1" min="0.25" step="0.25" style="width:56px;text-align:center" aria-label="Servings eaten">
         <span style="font-size:11px;color:var(--text-muted)">nutrients above are for 1 serving</span>
       </div>
@@ -316,9 +316,9 @@ function parseFoodInputUI(body) {
     return;
   }
   box.innerHTML = `<div style="color:var(--text-muted);font-size:13px;padding:4px 0">Recognizing with AI: ${escapeHtml(failed.join(', '))}…</div>`;
-  fetchGeminiFood(failed.join(', ')).then((aiParsed) => {
+  fetchAiFood(failed.join(', ')).then((aiParsed) => {
     if (!aiParsed?.length) { fallbackPrompt(body, parsed, failed); return; }
-    aiParsed.forEach((f) => saveGeminiFoodToCustom(f));
+    aiParsed.forEach((f) => saveAiFoodToCustom(f));
     parsedFood = parsed.concat(aiParsed);
     drawPreview(body);
   }).catch(() => fallbackPrompt(body, parsed, failed));
@@ -387,7 +387,7 @@ function drawPreview(body) {
 
 function logParsedFood() {
   if (!parsedFood?.length) return;
-  parsedFood.forEach((f) => saveGeminiFoodToCustom(f));
+      parsedFood.forEach((f) => saveAiFoodToCustom(f));
   const t = getTodayStr();
   update((s) => {
     parsedFood.forEach((f) => s.nutrition.entries.push({
@@ -402,8 +402,8 @@ function logParsedFood() {
   checkAchievements();
 }
 
-export function saveGeminiFoodToCustom(f) {
-  if (!f || f.source !== 'gemini') return;
+export function saveAiFoodToCustom(f) {
+  if (!f || (f.source !== 'ai' && f.source !== 'gemini')) return;
   if ((S.customFoods || []).some((x) => (x.name || '').toLowerCase() === (f.name || '').toLowerCase())) return;
   const qty = Number(f.qty) || 1;
   const unit = String(f.unit || 'g').toLowerCase().replace(/s$/, '');
@@ -424,7 +424,7 @@ export function saveGeminiFoodToCustom(f) {
     servingSize = 1; servingUnit = unit || 'serving';
   }
   update((s) => {
-    s.customFoods = [...(s.customFoods || []), { name: f.name, ...scaled, source: 'gemini', servingSize, servingUnit }];
+    s.customFoods = [...(s.customFoods || []), { name: f.name, ...scaled, source: 'ai', servingSize, servingUnit }];
   }, { silent: true });
 }
 
@@ -506,7 +506,7 @@ function showMyFoods() {
     ${S.customFoods.map((f, i) => `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${escapeHtml(f.name)}</div>
       <div style="font-size:10px;color:var(--text-muted)">${f.cal} kcal · P:${f.protein}g · C:${f.carbs}g · F:${f.fat}g · S:${f.sugar || 0}g</div>
-      <div style="font-size:9px;color:var(--text-muted)">per ${f.servingSize || 100}${f.servingUnit || 'g'} · ${escapeHtml(f.source || 'manual')}</div></div>
+      <div style="font-size:9px;color:var(--text-muted)">per ${f.servingSize || 100}${f.servingUnit || 'g'} · ${escapeHtml((f.source === 'gemini' ? 'ai' : f.source) || 'manual')}</div></div>
       <button class="btn btn-sm" data-mflog="${i}">Log</button>
       <button class="btn btn-sm btn-ghost" data-mfdel="${i}">✕</button></div>`).join('')}
     <button class="btn btn-ghost btn-full mt12" onclick="document.getElementById('zf-overlay')?.remove()">Close</button></div>`);

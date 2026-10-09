@@ -5,7 +5,7 @@
               FOOD_UNIT + resolveQty, custom foods, INGR_DB
               (bundled worldfooddb.js global), plural fallback.
      Tier 2 — OpenFoodFacts (search + barcode product API).
-     Tier 3 — Cloudflare Worker Gemini proxy.
+     Tier 3 — Cloudflare Worker AI proxy.
    gradeFood(nutrients) + gradeLabel + recalcFood + nn: V1 exact.
 ────────────────────────────────────────────────────────────── */
 import { sanitizeText } from './sanitize.js';
@@ -27,8 +27,8 @@ export const ALIASES = {
 /* Canonical serving metrics (shown in the nutrition ⓘ guide; calculator + parser agree on these).
    ml≈g is a water-equivalent approximation; piece varies per food (table above); slice ≈ 30g bread. */
 export const SERVING_METRICS = [
-  ['cup', '240 g / ml'], ['bowl', '240 g / ml'], ['glass', '250 ml'],
-  ['tbsp', '15 g / ml'], ['tsp', '5 g / ml'], ['serving', '200 g'],
+  ['cup', '240 g / ml'], ['bowl', '150 g / ml (katori)'], ['glass', '250 ml'],
+  ['tbsp', '15 g / ml'], ['tsp', '5 g / ml'], ['serving', '100 g'],
   ['slice', '≈30 g bread'], ['piece', 'per food (egg 50g · chapati 40g · banana 100g…)'],
   ['ml', '≈ grams (water-equivalent)'],
 ];
@@ -97,7 +97,7 @@ export function resolveQty(qty, unit, dbKey) {
   }
   if (u === 'glass') { const sv = qty * 250 / (m.d || 250); return { s: sv, dq: qty, du: 'glass' }; }
   if (u === 'bowl') {
-    const g = qty * 240;
+    const g = qty * 150;
     if (m.u === 'piece') { const p = g / (m.g || 100); return { s: p, dq: qty, du: 'bowl' }; }
     return { s: g / (m.d || 100), dq: qty, du: 'bowl' };
   }
@@ -112,7 +112,7 @@ export function resolveQty(qty, unit, dbKey) {
     return { s: g / (m.d || 100), dq: qty, du: 'tsp' };
   }
   if (u === 'serving') {
-    const g = qty * 200;
+    const g = qty * 100;
     if (m.u === 'piece') { const p = g / (m.g || 100); return { s: p, dq: qty, du: 'serving' }; }
     return { s: g / (m.d || 100), dq: qty, du: 'serving' };
   }
@@ -160,20 +160,22 @@ function scaleCustom(f, qty, unit) {
   const sv = f.servingSize || 100;
   const su = (f.servingUnit || 'g').replace(/s$/, '');
   const pu = (unit || '').replace(/s$/, '');
+  // ponytail: route BOTH sides through grams — the old branch table divided by bare
+  // counts whenever the saved serving wasn't g/ml (100g of a 1-cup food read as 100 servings)
+  const G = { cup: 240, bowl: 150, glass: 250, tbsp: 15, tsp: 5, serving: 100, slice: 30 };
+  const toG = (q, u) => {
+    if (u === 'g' || u === 'gram' || u === 'ml' || u === 'milliliter' || u === '') return q;
+    if (u === 'kg') return q * 1000;
+    if (u === 'piece' || u === 'pc') {
+      const key = Object.keys(FOOD_UNIT).find((k) => f.name.includes(k) || k.includes(f.name));
+      const fu = key ? FOOD_UNIT[key] : null;
+      return q * (fu && fu.u === 'piece' && fu.g ? fu.g : 50);
+    }
+    return G[u] != null ? q * G[u] : NaN;
+  };
+  const haveG = toG(qty, pu), savedG = toG(sv, su);
   let s = 1;
-  if (pu === su || pu === 'gram' || pu === 'milliliter' || pu === '' ) s = qty / sv;
-  else if (pu === 'g' && su === 'g') s = qty / sv;
-  else if (pu === 'ml' && su === 'ml') s = qty / sv;
-  else if ((pu === 'g' || pu === 'gram') && su === 'ml') s = qty / sv;
-  else if ((pu === 'ml' || pu === 'milliliter') && su === 'g') s = qty / sv;
-  else if (pu === 'kg' && su === 'g') s = qty * 1000 / sv;
-  else if (pu === 'kg' && su === 'ml') s = qty * 1000 / sv;
-  else if (pu === 'piece' || pu === 'pc') s = su === 'piece' ? qty : qty / sv;
-  else if (pu === 'cup') { const g = qty * 240; s = (su === 'g' || su === 'ml') ? g / sv : qty; }
-  else if (pu === 'bowl') { const g = qty * 240; s = (su === 'g' || su === 'ml') ? g / sv : qty; }
-  else if (pu === 'serving') { const g = qty * 200; s = (su === 'g' || su === 'ml') ? g / sv : qty; }
-  else if (pu === 'tbsp') { const g = qty * 15; s = (su === 'g' || su === 'ml') ? g / sv : qty; }
-  else if (pu === 'tsp') { const g = qty * 5; s = (su === 'g' || su === 'ml') ? g / sv : qty; }
+  if (Number.isFinite(haveG) && savedG > 0) s = haveG / savedG;
   else s = qty / sv;
   const dq = Math.round(qty * 10) / 10;
   return {
@@ -239,8 +241,8 @@ export function recalcFood(f, newQty, newUnit) {
     else if (nu === 'cup') g = newQty * 240;
     else if (nu === 'tbsp') g = newQty * 15;
     else if (nu === 'tsp') g = newQty * 5;
-    else if (nu === 'bowl') g = newQty * 240;
-    else if (nu === 'serving') g = newQty * 200;
+    else if (nu === 'bowl') g = newQty * 150;
+    else if (nu === 'serving') g = newQty * 100;
     if (g > 0) {
       if (b.per1g > 0) cal = g * b.per1g;
       else if (b.perPiece) {
@@ -274,7 +276,7 @@ export function parseFoodInput(raw, customFoods = []) {
     const per1ml = (pu === 'ml' || pu === 'milliliter') ? pc / pq : 0;
     const isPiece = pu === 'piece' || pu === 'pc' || pu === 'pieces';
     const perPiece = isPiece ? pc / pq : 0;
-    const gPerUnit = { cup: 240, tbsp: 15, tsp: 5, bowl: 240, serving: 200 };
+    const gPerUnit = { cup: 240, tbsp: 15, tsp: 5, bowl: 150, serving: 100 };
     const per1gAlt = gPerUnit[pu] ? pc / (pq * gPerUnit[pu]) : 0;
     let per1gFromPiece = 0;
     if (isPiece && perPiece) {
@@ -307,8 +309,8 @@ export async function fetchOFFBarcode(code) {
   };
 }
 
-/* ── Tier 3: Gemini via Cloudflare Worker (V1 parity: {text}, timeout, passthrough) ── */
-export async function fetchGeminiFood(text, signal) {
+/* ── Tier 3: AI food model via Cloudflare Worker (V1 parity: {text}, timeout, passthrough) ── */
+export async function fetchAiFood(text, signal) {
   const ctl = new AbortController();
   const to = setTimeout(() => { try { ctl.abort(); } catch {} }, 15000);
   try {
@@ -316,12 +318,12 @@ export async function fetchGeminiFood(text, signal) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }), signal: signal || ctl.signal,
     });
-    if (!r.ok) throw new Error('Gemini worker failed');
+    if (!r.ok) throw new Error('AI worker failed');
     const j = await r.json();
     const items = Array.isArray(j) ? j : j.foods || j.items || [];
     return items.map((f) => {
-      if (f?.nutrients && typeof f.nutrients === 'object') return { ...f, source: 'gemini', _edit: f._edit || null };
-      return geminiFoodToParsed(f, text);
+      if (f?.nutrients && typeof f.nutrients === 'object') return { ...f, source: 'ai', _edit: f._edit || null };
+      return aiFoodToParsed(f, text);
     });
   } finally { clearTimeout(to); }
 }
@@ -344,7 +346,7 @@ export async function fetchNutritionOnline(query) {
   };
 }
 
-export function geminiFoodToParsed(g, queryText = '') {
+export function aiFoodToParsed(g, queryText = '') {
   const qty = Number(g.quantity ?? g.qty ?? 1) || 1;
   const cal = Math.round(g.cal ?? g.calories ?? g.kcal ?? 0);
   const protein = +(g.protein ?? g.protein_g ?? 0);
@@ -367,7 +369,7 @@ export function geminiFoodToParsed(g, queryText = '') {
   return {
     name: g.name || 'Dish', qty, unit,
     nutrients: { cal, protein, carbs, fat, fiber, sugar },
-    source: 'gemini',
+    source: 'ai',
     _edit: { baseQty: qty, baseUnit: unit, per1g: per1g || per1ml, per1ml: per1ml || per1g, perPiece },
   };
 }
