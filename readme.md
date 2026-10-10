@@ -4,9 +4,10 @@
 
 ## 🔗 Notable links
 
-- **Website:** https://darkmoppen003-ai.github.io/zenfit/ (lite APK recommended for a better, smoother experience)
-- **Android app (full APK):** https://drive.google.com/file/d/1JaKQuEWZyRfaw_nn_UYGB3-BRcK0M64t/view?usp=sharing
+- **Website:** https://darkmoppen003-ai.github.io/zenfit/
+- (lite APK recommended for a better, smoother experience)
 - **Lite APK:** https://drive.google.com/file/d/1UR4XsoVRzaZ5Vah7Uethx-aa6z8Sh1Vz/view?usp=sharing
+- **Android app (full APK):** https://drive.google.com/file/d/1JaKQuEWZyRfaw_nn_UYGB3-BRcK0M64t/view?usp=sharing
 
 A complete reconstruction of the ZenFit PWA: same soul, clean architecture.
 Fully static — no build step. Host as-is on **GitHub Pages**, **Cloudflare Workers/Pages**, or any static host.
