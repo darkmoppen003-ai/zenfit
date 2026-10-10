@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.9.3', 'Wallpaper no longer rebuilds per tab (guard + preload-swap), bottom-nav in-place active flip, particles pause when hidden, charts freed on leaving analytics'],
   ['v8.9.2.5.1', 'Privacy page + profile button, policy history purge'],
   ['v8.9.2.5', 'Unified streak card, inactivity XP rule, calendar swipe guard'],
   ['v8.9.2.3', 'Serving base 100g, katori bowl, AI rename, calendar compare, decimal tails'],

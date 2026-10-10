@@ -354,6 +354,9 @@ function destroyCharts() {
   Object.values(charts).forEach((c) => { try { c.destroy(); } catch {} });
   Object.keys(charts).forEach((k) => delete charts[k]);
 }
+/* ponytail: router calls this when LEAVING analytics — renderActive wipes
+   innerHTML, which would otherwise orphan Chart.js instances (GPU + listeners) */
+export const destroyAnalyticsCharts = destroyCharts;
 // ponytail: guard double-draws into the same canvas id (stale flush after tab switch)
 function killChart(id) {
   const c = charts[id];

@@ -217,3 +217,10 @@ failing items get a "Log manually" switch, never silent drops.
 20.2. **Degrade gracefully.** Every new surface renders a meaningful empty/loading/error state (no blank screens, no NaN, no dangling tokens or dead buttons when its data is absent).
 20.3. **Zero jank budget.** Reuse existing engines and caches; debounce inputs; skip redundant rebuilds and re-renders (pkey-style guards, generation counters); no layout thrash, no leaked timers/listeners/observers. Must hold 60fps on mid-range phones — verify with FPS + longtask measurement, not by feel.
 20.4. **Quality stays maximal.** Display type in Syne, body in Inter; empty states explain the next action; toasts confirm every mutation; destructive actions confirm first.
+
+## 21. Wallpaper rebuild-per-tab fix + conservative lag pass (2026-10-10, v8.9.3)
+
+21.1. **Root cause:** `renderActive()` → `applyBg()` every tab; `applyBackgroundConfig()` blanked `backgroundImage='none'` then async `resolveBgSrc()` (flash); `https:` path minted a fresh object URL per call with no reuse (leak + re-decode + `caches.open()` per tab).
+21.2. **Fix:** `__zfCssSig`/`__zfBgSig` guards (unchanged tabs = no-op); preload-via-`Image` swap (never blank first); same-src framing fast path (sliders go sync, no re-resolve); `resolveBgSrc` in-memory `wp:` URL reuse + revoke-on-replace.
+21.3. **Conservative pass:** bottom-nav flips `active` classes in place (`__navSig`, full rebuild only on membership/unread/opacity/dockmode change); particles cancel `rAF` when hidden, rebuild on visible; `destroyAnalyticsCharts()` exported + router destroys on leaving analytics. No visual-default changes.
+21.4. **Verified headless (Playwright):** preset wallpaper survives 6 tab switches, 0 blanked samples, 0 pageerrors; zoom-150 slider path paints `scale(1.5)` without blanking. Install-App button (profile) added then reverted per owner — do not re-add.

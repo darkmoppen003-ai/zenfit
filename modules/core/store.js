@@ -18,9 +18,9 @@ export const STORAGE_KEYS = {
   THEMES: 'zenfit_themes_v1',
 };
 export const DATA_VERSION = 17;
-export const APP_VERSION = "8.9.2.5.1";
+export const APP_VERSION = "8.9.3";
 
-export const APP_BUILD = "2026.10.10.43";
+export const APP_BUILD = "2026.10.10.44";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -462,16 +462,20 @@ export async function cacheWallpaperTemp(src) {
 export async function resolveBgSrc(src) {
   if (!src) return '';
   if (src.startsWith('preset:')) return `./assets/bg/${src.slice(7)}`;
-  if (/^(data:|blob:|https?:)/i.test(src)) {
-    // ponytail: serve the temp-cached copy when present (touching freshness);
-    // evict only when provably stale with no usable entry
+  if (/^(data:|blob:)/i.test(src)) return src;
+  if (/^https?:/i.test(src)) {
+    // ponytail: reuse the minted object URL — every tab switch re-resolved
+    // through caches.open() + createObjectURL (flash + leak), now a map hit
+    if (objectUrlCache[`wp:${src}`]) return objectUrlCache[`wp:${src}`];
     if (/^https:\/\//i.test(src)) {
       try {
         const c = await caches.open(WP_CACHE);
         const hit = await c.match(src);
         if (hit) {
           const blob = await hit.blob();
+          const prev = objectUrlCache[`wp:${src}`];
           const url = URL.createObjectURL(blob);
+          if (prev && prev !== url) { try { URL.revokeObjectURL(prev); } catch {} }
           objectUrlCache[`wp:${src}`] = url;
           try { localStorage.setItem('zf_wp_cache_ts', String(Date.now())); } catch {}
           return url;

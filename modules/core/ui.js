@@ -203,12 +203,24 @@ export function bgPosPercent() {
   const { x, y } = bgOffsets();
   return { x: 50 + x / 2, y: 50 + y / 2 };
 }
-export function applyBackgroundConfig() {
+/* Tab switches hit renderActive() → applyBackgroundConfig() every time.
+   Without the guards below the wallpaper blanked + async-reloaded per tab
+   (flash/glitch) and every slider tick re-resolved the image. */
+let __zfCssSig = null, __zfBgSig = null, __zfBgReq = 0, __zfBgPaintedSrc = null;
+export function applyBackgroundConfig(opts = {}) {
   const st = S;
-  document.body.classList.toggle('glass-mode', !!st.glassMode);
-  document.documentElement.style.setProperty('--glass-blur', `${st.glassBlur ?? 4}px`);
-  document.documentElement.style.setProperty('--glass-alpha', `${st.glassAlpha ?? 0.55}`);
-  if (st.particleHue != null) document.documentElement.style.setProperty('--particle-hue', String(st.particleHue));
+  const force = opts === true || opts?.force === true;
+  // Cheap CSS-var path — tab switches with no visual change are ~1ms no-ops.
+  const cssSig = [st.glassMode, st.glassBlur ?? 4, st.glassAlpha ?? 0.55, st.particleHue ?? '', st.accentColor || '', st.navOpacity, st.navOpacityVal ?? 100].join('|');
+  if (force || __zfCssSig !== cssSig) {
+    __zfCssSig = cssSig;
+    document.body.classList.toggle('glass-mode', !!st.glassMode);
+    document.documentElement.style.setProperty('--glass-blur', `${st.glassBlur ?? 4}px`);
+    document.documentElement.style.setProperty('--glass-alpha', `${st.glassAlpha ?? 0.55}`);
+    if (st.particleHue != null) document.documentElement.style.setProperty('--particle-hue', String(st.particleHue));
+    if (st.accentColor) document.documentElement.style.setProperty('--primary', st.accentColor);
+    applyNavOpacity();
+  }
   let bg = el('zf-bg');
   if (!bg) {
     bg = document.createElement('div');
@@ -219,6 +231,7 @@ export function applyBackgroundConfig() {
     dim.id = 'zf-bg-dim';
     dim.style.cssText = 'position:fixed;inset:0;z-index:0;background:#000;opacity:0;pointer-events:none;';
     bg.after(dim);
+    __zfBgSig = null;
   }
   const dim = el('zf-bg-dim');
   if (st.bgType === 'image' && st.bgImage) {
@@ -227,27 +240,55 @@ export function applyBackgroundConfig() {
     }
   }
   if (st.bgType === 'image' && st.bgImage) {
-    bg.style.backgroundImage = 'none';
-    bg.style.background = 'var(--app-bg)';
-    resolveBgSrc(st.bgImage).then((url) => {
-      if (!url || S.bgImage !== st.bgImage) return;
+    const pos = bgPosPercent();
+    const imgSig = ['img', st.bgImage, S.bgFit || 'cover', pos.x, pos.y, S.bgZoom ?? 100, st.bgDim ?? 40].join('|');
+    if (!force && __zfBgSig === imgSig) { renderParticles(); return; } // unchanged → keep painted layer, no re-resolve
+    // Same image, only framing changed (slider drag) → sync geometry, no async.
+    if (!force && __zfBgPaintedSrc === st.bgImage && bg.style.backgroundImage && bg.style.backgroundImage !== 'none') {
+      __zfBgSig = imgSig;
+      bg.style.backgroundSize = S.bgFit || 'cover';
+      bg.style.backgroundPosition = `${pos.x}% ${pos.y}%`;
+      const z = (S.bgZoom ?? 100) / 100;
+      bg.style.transform = z === 1 ? '' : `scale(${z})`;
+      if (dim) dim.style.opacity = String((st.bgDim ?? 40) / 100);
+      return;
+    }
+    const wantSrc = st.bgImage;
+    const myReq = ++__zfBgReq;
+    __zfBgSig = imgSig; // claim now — concurrent tab switches coalesce, no re-resolve
+    resolveBgSrc(wantSrc).then((url) => {
+      if (!url || myReq !== __zfBgReq || S.bgImage !== wantSrc) return;
       const layer = document.getElementById('zf-bg');
       if (!layer) return;
-      layer.style.backgroundImage = `url("${url}")`;
-      layer.style.backgroundSize = S.bgFit || 'cover';
-      const pos = bgPosPercent();
-      layer.style.backgroundPosition = `${pos.x}% ${pos.y}%`;
-      const z = (S.bgZoom ?? 100) / 100;
-      layer.style.transform = z === 1 ? '' : `scale(${z})`;
+      const paint = () => {
+        if (myReq !== __zfBgReq || S.bgImage !== wantSrc) return;
+        // ponytail: swap only after bytes are ready — never blank first (the flash source)
+        layer.style.backgroundImage = `url("${url}")`;
+        layer.style.backgroundSize = S.bgFit || 'cover';
+        const p = bgPosPercent();
+        layer.style.backgroundPosition = `${p.x}% ${p.y}%`;
+        const z = (S.bgZoom ?? 100) / 100;
+        layer.style.transform = z === 1 ? '' : `scale(${z})`;
+        __zfBgPaintedSrc = wantSrc;
+      };
+      if (/^(data:|blob:)/i.test(url) || url.startsWith('./assets/bg/')) { paint(); return; }
+      const im = new Image();
+      try { im.decoding = 'async'; } catch {}
+      im.onload = paint;
+      im.onerror = paint; // stale paint beats a blank layer
+      im.src = url;
     });
     if (dim) dim.style.opacity = String((st.bgDim ?? 40) / 100);
   } else {
+    const solidSig = 'solid';
+    if (!force && __zfBgSig === solidSig) { renderParticles(); return; }
+    __zfBgSig = solidSig;
+    __zfBgReq++;
+    __zfBgPaintedSrc = null;
     bg.style.backgroundImage = 'none';
     bg.style.background = 'var(--app-bg)';
     if (dim) dim.style.opacity = '0';
   }
-  if (st.accentColor) document.documentElement.style.setProperty('--primary', st.accentColor);
-  applyNavOpacity();
   renderParticles();
 }
 
@@ -260,7 +301,8 @@ export function applyNavOpacity() {
 function renderParticles() {
   // ponytail: nav opacity / theme-only changes must not restart particles (the stutter source)
   const pkey = [S.particlesEnabled, S.particleCount, S.particleEffect, S.particleHue, S.particleSpeed, S.sparkDirection, S.cyberDirection].join('|');
-  if (window.__zfPkey === pkey && document.getElementById('zf-particles')) return;
+  // ponytail: __zfRaf==0 means the loop was parked by the visibility handler — rebuild, don't no-op
+  if (window.__zfPkey === pkey && document.getElementById('zf-particles') && window.__zfRaf) return;
   window.__zfPkey = pkey;
   try { window.__zfRaf && cancelAnimationFrame(window.__zfRaf); } catch {}
   window.__zfResize && window.removeEventListener('resize', window.__zfResize);
@@ -533,6 +575,15 @@ function renderParticles() {
   };
   tick();
   c._stop = () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', onMove); window.removeEventListener('resize', resize); };
+  // ponytail: hidden tabs throttle rAF anyway — cancel outright so particles cost zero battery in background
+  if (!window.__zfVisWired) {
+    window.__zfVisWired = true;
+    document.addEventListener('visibilitychange', () => {
+      const live = document.getElementById('zf-particles');
+      if (document.hidden) { try { window.__zfRaf && cancelAnimationFrame(window.__zfRaf); } catch {} window.__zfRaf = 0; }
+      else if (live && !window.__zfRaf) renderParticles();
+    });
+  }
 }
 
 /* ── SFX: WebAudio tone engine (V1 parity, no assets) ── */

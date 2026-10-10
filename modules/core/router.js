@@ -81,6 +81,12 @@ export function switchScreen(id, sub = null, dir = 'pop') {
 export function renderActive(dir = 'up') {
   const host = document.getElementById('screens');
   if (!host) return;
+  // ponytail: leaving analytics orphans Chart.js instances (GPU + listeners
+  // survive innerHTML wipe) — destroy before teardown
+  if (renderActive._prev === 'analytics' && currentScreen !== 'analytics') {
+    try { import('../features/analytics.js').then((m) => { try { m.destroyAnalyticsCharts(); } catch {} }).catch(() => {}); } catch {}
+  }
+  renderActive._prev = currentScreen;
   host.innerHTML = '';
   const target = screenById(currentScreen);
   const d = document.createElement('div');
@@ -112,6 +118,9 @@ function visibleTabs() {
   return ids.map(screenById).filter((t) => t && !t.hidden);
 }
 
+/* ponytail: tab switches re-rendered the whole dock (innerHTML + rewire +
+   magnification reset) per tab — now only the active classes flip in place */
+let __navSig = null;
 function renderBottomNav() {
   let bar = document.getElementById('bottom-nav');
   if (!bar) {
@@ -125,6 +134,22 @@ function renderBottomNav() {
   const tabs = visibleTabs();
   const overflow = SCREENS.filter((s) => !s.hidden && !tabs.some((t) => t.id === s.id));
   const overflowActive = overflow.some((s) => s.id === currentScreen);
+  const dockMode = !!window.matchMedia?.('(min-width: 1024px) and (pointer: fine)').matches;
+  const sig = [tabs.map((t) => t.id).join(','), S.inboxUnread || 0, (S.inbox || []).length, S.navOpacity, S.navOpacityVal ?? 100, S.navLabels, dockMode].join('|');
+  if (bar.dataset.built === '1' && __navSig === sig) {
+    bar.querySelectorAll('[data-bnav]').forEach((b) => {
+      const id = b.dataset.bnav;
+      if (id === '__more') b.classList.toggle('active', overflowActive);
+      else if (id === '__navedit') b.classList.remove('active');
+      else b.classList.toggle('active', id === currentScreen);
+    });
+    document.getElementById('more-popover')?.querySelectorAll('[data-mp]').forEach((m) => {
+      m.classList.toggle('active-mp', m.dataset.mp === currentScreen);
+    });
+    document.getElementById('dock-tip')?.classList.remove('show');
+    return;
+  }
+  __navSig = sig;
   bar.innerHTML = tabs.map((t) =>
     `<div class="bottom-nav-item${currentScreen === t.id ? ' active' : ''}" data-bnav="${t.id}">
       <span class="bni-icon">${DOCK_ICONS[t.id] || t.icon}</span><span class="bni-label">${t.label}</span></div>`).join('') +
@@ -139,7 +164,6 @@ function renderBottomNav() {
   });
   // ponytail: desktop right-dock — flatten every tab into one scrollable list
   // (6 visible, wheel reveals the rest like a list) + macOS proximity magnification.
-  const dockMode = !!window.matchMedia?.('(min-width: 1024px) and (pointer: fine)').matches;
   bar.classList.toggle('dock-all', dockMode);
   // ponytail: rebuilds destroy the hovered node without mouseleave — never leave a stale dock tooltip behind
   document.getElementById('dock-tip')?.classList.remove('show');
@@ -215,6 +239,7 @@ function renderBottomNav() {
       else switchScreen(m.dataset.mp);
     };
   });
+  bar.dataset.built = '1';
 }
 
 /* ── Nav editor overlay (V1): pick up to 6 dock tabs ── */
