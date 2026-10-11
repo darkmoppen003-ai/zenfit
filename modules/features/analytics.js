@@ -350,6 +350,21 @@ function getAnalyticsMoodData(p, offsetDays) {
 }
 
 /* ── Chart helpers (V1 dark theme, lazy-loaded) ── */
+/* ponytail: chart chrome follows the active theme + interface style —
+   one reader so ticks/grids/legends recolor with color pickers, and HUD
+   gets its mono font. Dataset colors stay as passed (content, not chrome). */
+function cssVar(n, fb) {
+  try { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return v || fb; } catch { return fb; }
+}
+function chartTheme() {
+  const hud = (S.uiStyle || 'liquid') === 'hud';
+  return {
+    tick: cssVar('--text-muted', '#8a94b8'),
+    grid: hud ? 'rgba(57,255,20,0.12)' : '#2a305022',
+    gridStrong: hud ? 'rgba(57,255,20,0.22)' : '#2a305055',
+    font: hud ? 'JetBrains Mono,monospace' : 'Inter,system-ui,sans-serif',
+  };
+}
 function destroyCharts() {
   Object.values(charts).forEach((c) => { try { c.destroy(); } catch {} });
   Object.keys(charts).forEach((k) => delete charts[k]);
@@ -367,8 +382,9 @@ let chartReady = null, renderGen = 0;
 function ensureChart() {
   if (window.Chart) {
     try {
-      window.Chart.defaults.font.family = 'Inter,system-ui,sans-serif';
-      window.Chart.defaults.color = '#8a94b8';
+      const ct = chartTheme();
+      window.Chart.defaults.font.family = ct.font;
+      window.Chart.defaults.color = ct.tick;
     } catch {}
     return Promise.resolve(true);
   }
@@ -378,8 +394,9 @@ function ensureChart() {
       s.src = './chart.umd.js';
       s.onload = () => {
         try {
-          window.Chart.defaults.font.family = 'Inter,system-ui,sans-serif';
-          window.Chart.defaults.color = '#8a94b8';
+          const ct = chartTheme();
+          window.Chart.defaults.font.family = ct.font;
+          window.Chart.defaults.color = ct.tick;
         } catch {}
         resolve(!!window.Chart);
       };
@@ -402,9 +419,10 @@ function chartClickToast() {
   };
 }
 function baseScales() {
+  const ct = chartTheme();
   return {
-    x: { grid: { color: '#2a305022' }, ticks: { color: '#8a94b8', font: { size: 10 }, maxTicksLimit: 8 } },
-    y: { grid: { color: '#2a305022' }, ticks: { color: '#8a94b8', font: { size: 10 } } },
+    x: { grid: { color: ct.grid }, ticks: { color: ct.tick, font: { size: 10, family: ct.font }, maxTicksLimit: 8 } },
+    y: { grid: { color: ct.grid }, ticks: { color: ct.tick, font: { size: 10, family: ct.font } } },
   };
 }
 function drawLine(id, labels, datasets) {
@@ -422,7 +440,7 @@ function drawLine(id, labels, datasets) {
       responsive: true, maintainAspectRatio: false,
       ...chartClickToast(),
       elements: { point: { radius: 3, hoverRadius: 6 }, line: { borderWidth: 2 } },
-      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 11 }, boxWidth: 10 } } },
+      plugins: { legend: { labels: { color: chartTheme().tick, font: { size: 11, family: chartTheme().font }, boxWidth: 10 } } },
       scales: baseScales(),
     },
   });
@@ -441,7 +459,7 @@ function drawBars(id, labels, datasets) {
     options: {
       responsive: true, maintainAspectRatio: false,
       ...chartClickToast(),
-      plugins: { legend: { labels: { color: '#8a94b8', font: { size: 11 }, boxWidth: 10 } } },
+      plugins: { legend: { labels: { color: chartTheme().tick, font: { size: 11, family: chartTheme().font }, boxWidth: 10 } } },
       scales: baseScales(),
     },
   });
@@ -456,14 +474,14 @@ function drawRadar(id, labels, data, color, prevData) {
   killChart(id);
   // ponytail: compare overlays the previous period dashed gray — current stays solid violet
   const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}55`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }];
-  if (prevData) sets.push({ label: 'Previous', data: prevData, backgroundColor: 'transparent', borderColor: '#8a94b8', borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
+  if (prevData) sets.push({ label: 'Previous', data: prevData, backgroundColor: 'transparent', borderColor: chartTheme().tick, borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
   charts[id] = new window.Chart(el, {
     type: 'radar',
     data: { labels, datasets: sets },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
-      scales: { r: { min: 0, ticks: { display: false }, grid: { color: '#2a305055' }, angleLines: { color: '#2a305055' }, pointLabels: { color: '#8a94b8', font: { size: 10 } } } },
+      scales: { r: { min: 0, ticks: { display: false }, grid: { color: chartTheme().gridStrong }, angleLines: { color: chartTheme().gridStrong }, pointLabels: { color: chartTheme().tick, font: { size: 10, family: chartTheme().font } } } },
     },
   });
 }
@@ -481,7 +499,7 @@ function flushDraws() {
         data: { labels: j.labels, datasets: j.datasets },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { labels: { color: '#8a94b8', font: { size: 10 }, boxWidth: 10 } } },
+          plugins: { legend: { labels: { color: chartTheme().tick, font: { size: 10, family: chartTheme().font }, boxWidth: 10 } } },
           scales: baseScales(),
         },
       });

@@ -1,0 +1,77 @@
+/* ── ZenFit · Skin: Neomorphism ────────────────────────────
+   Additive override only. Token-only (var(--*)); no hex literals.
+   Liquid Glass sliders stay live: blur → shadow softness,
+   alpha → shadow strength (via --glass-blur / --glass-alpha).
+   Wallpaper/particles/themes untouched (Layer-2 restyle only). */
+
+body[data-ui="neomorph"] .card,
+body[data-ui="neomorph"] .card-sm,
+body[data-ui="neomorph"] .card-raised,
+body[data-ui="neomorph"] .quest-card,
+body[data-ui="neomorph"] .stat-block,
+body[data-ui="neomorph"] .plan-card,
+body[data-ui="neomorph"] .bonus-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  box-shadow:
+    calc(6px + var(--glass-blur)) calc(6px + var(--glass-blur)) calc(18px + var(--glass-blur)) rgba(0, 0, 0, 0.45),
+    calc(-1 * (4px + var(--glass-blur) / 2)) calc(-1 * (4px + var(--glass-blur) / 2)) calc(14px + var(--glass-blur)) rgba(255, 255, 255, 0.07);
+}
+
+/* glass-mode on: keep translucency, soften with neo depth */
+body[data-ui="neomorph"].glass-mode .card,
+body[data-ui="neomorph"].glass-mode .card-sm,
+body[data-ui="neomorph"].glass-mode .card-raised,
+body[data-ui="neomorph"].glass-mode .quest-card,
+body[data-ui="neomorph"].glass-mode .stat-block {
+  background: rgba(var(--glass-bg-rgb), var(--glass-alpha));
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+body[data-ui="neomorph"] .btn {
+  border-radius: var(--radius-xl);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    4px 4px 10px rgba(0, 0, 0, 0.4),
+    -3px -3px 8px rgba(255, 255, 255, 0.06);
+}
+body[data-ui="neomorph"] .btn:active,
+body[data-ui="neomorph"] .quest-card.done {
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 0, 0, 0.45),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.05);
+  transform: none;
+}
+body[data-ui="neomorph"] .btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.45),
+    -2px -2px 6px rgba(255, 255, 255, 0.08);
+}
+
+body[data-ui="neomorph"] input[type="text"],
+body[data-ui="neomorph"] input[type="number"],
+body[data-ui="neomorph"] input[type="email"],
+body[data-ui="neomorph"] input[type="search"],
+body[data-ui="neomorph"] select,
+body[data-ui="neomorph"] textarea {
+  border-radius: var(--radius-xl);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 0, 0, 0.4),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.05);
+}
+
+body[data-ui="neomorph"] .bottom-nav,
+body[data-ui="neomorph"] .more-popover,
+body[data-ui="neomorph"] .overlay-box {
+  border-radius: var(--radius-xl);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui="neomorph"] * { transition: none; animation: none; }
+}

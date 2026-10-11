@@ -1,0 +1,132 @@
+/* ── ZenFit · Skin: Cyberpunk HUD ──────────────────────────
+   Additive override only. Uses var(--*) tokens throughout (no hex
+   literals) so it recolors with the user's theme; pair with the
+   "Neon Grid" default preset for the reference look.
+   HUD widgets, thin glowing borders, scanlines, XP glow. */
+
+body[data-ui="hud"] {
+  --font-display: 'Space Grotesk', 'Syne', sans-serif;
+  --font-ui: 'JetBrains Mono', 'Inter', monospace;
+}
+
+/* ambient scanlines — fixed, pointer-transparent, above bg below chrome */
+body[data-ui="hud"]::after {
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+}
+/* travelling scan bar */
+body[data-ui="hud"]::before {
+  content: ''; position: fixed; left: 0; right: 0; top: -10%; height: 90px; z-index: 1; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 12%, transparent), transparent);
+  animation: hud-scan 7s linear infinite;
+}
+@keyframes hud-scan { from { top: -12%; } to { top: 112%; } }
+
+body[data-ui="hud"] .card,
+body[data-ui="hud"] .card-sm,
+body[data-ui="hud"] .card-raised,
+body[data-ui="hud"] .quest-card,
+body[data-ui="hud"] .stat-block,
+body[data-ui="hud"] .plan-card,
+body[data-ui="hud"] .bonus-card {
+  position: relative;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  background: var(--bg-surface);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 14%, transparent), inset 0 0 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+/* glass-mode on: HUD stays flat-panel by genre */
+body[data-ui="hud"].glass-mode .card,
+body[data-ui="hud"].glass-mode .card-sm,
+body[data-ui="hud"].glass-mode .card-raised,
+body[data-ui="hud"].glass-mode .quest-card,
+body[data-ui="hud"].glass-mode .stat-block {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* section titles read as panel headers */
+body[data-ui="hud"] .section-title {
+  color: var(--primary);
+  letter-spacing: 2.5px;
+}
+body[data-ui="hud"] .section-title::before { content: '▸ '; }
+body[data-ui="hud"] .screen-header .sh-title { text-transform: uppercase; letter-spacing: 2px; }
+
+/* glowing status indicators */
+body[data-ui="hud"] .badge { border: 1px solid currentColor; border-radius: 2px; box-shadow: 0 0 8px color-mix(in srgb, currentColor 40%, transparent); }
+body[data-ui="hud"] .quest-card.done { border-color: var(--success); box-shadow: 0 0 12px color-mix(in srgb, var(--success) 35%, transparent); }
+body[data-ui="hud"] .task-check.done, body[data-ui="hud"] .quest-check.done {
+  box-shadow: 0 0 10px var(--success);
+}
+
+/* HUD XP / stat bars */
+body[data-ui="hud"] .xp-bar { box-shadow: 0 0 10px var(--primary); }
+body[data-ui="hud"] .xp-bar-wrap, body[data-ui="hud"] .stat-bar-wrap {
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* HUD buttons + inputs */
+body[data-ui="hud"] .btn {
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  background: var(--bg-raised);
+  text-transform: uppercase; letter-spacing: 1px; font-size: var(--text-xs);
+}
+body[data-ui="hud"] .btn-primary {
+  background: color-mix(in srgb, var(--primary) 22%, var(--bg-raised));
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 0 12px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+body[data-ui="hud"] input[type="text"],
+body[data-ui="hud"] input[type="number"],
+body[data-ui="hud"] input[type="email"],
+body[data-ui="hud"] input[type="search"],
+body[data-ui="hud"] select,
+body[data-ui="hud"] textarea {
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  font-family: var(--font-ui);
+}
+body[data-ui="hud"] input:focus, body[data-ui="hud"] select:focus, body[data-ui="hud"] textarea:focus {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+/* HUD chrome: nav + overlays + popover */
+body[data-ui="hud"] .bottom-nav,
+body[data-ui="hud"] .more-popover,
+body[data-ui="hud"] .overlay-box {
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  border-radius: 3px;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+/* system-activation flash (spawned by systemActivate() in core/ui.js) */
+.hud-activate {
+  position: fixed; inset: 0; z-index: 10000; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  animation: hud-flash 1.5s ease-out forwards;
+}
+@keyframes hud-flash { 0% { opacity: 0; } 12% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+.hud-activate-box { text-align: center; font-family: var(--font-ui); }
+.hud-activate-title {
+  font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800;
+  letter-spacing: 3px; color: var(--primary);
+  text-shadow: 0 0 18px var(--primary);
+}
+.hud-activate-sub { margin-top: 6px; font-size: var(--text-sm); color: var(--text-primary); letter-spacing: 1px; }
+.hud-activate-bar { margin: 12px auto 0; width: 220px; height: 4px; border: 1px solid var(--primary); }
+.hud-activate-bar span { display: block; height: 100%; width: 0; background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: hud-load 1.2s linear forwards; }
+@keyframes hud-load { to { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui="hud"]::before, .hud-activate, .hud-activate-bar span { animation: none; }
+  body[data-ui="hud"] * { transition: none; }
+}

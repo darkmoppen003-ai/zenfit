@@ -224,3 +224,10 @@ failing items get a "Log manually" switch, never silent drops.
 21.2. **Fix:** `__zfCssSig`/`__zfBgSig` guards (unchanged tabs = no-op); preload-via-`Image` swap (never blank first); same-src framing fast path (sliders go sync, no re-resolve); `resolveBgSrc` in-memory `wp:` URL reuse + revoke-on-replace.
 21.3. **Conservative pass:** bottom-nav flips `active` classes in place (`__navSig`, full rebuild only on membership/unread/opacity/dockmode change); particles cancel `rAF` when hidden, rebuild on visible; `destroyAnalyticsCharts()` exported + router destroys on leaving analytics. No visual-default changes.
 21.4. **Verified headless (Playwright):** preset wallpaper survives 6 tab switches, 0 blanked samples, 0 pageerrors; zoom-150 slider path paints `scale(1.5)` without blanking. Install-App button (profile) added then reverted per owner — do not re-add.
+
+## 22. Interface styles (2026-10-11, v8.9.3.5)
+
+22.1. **Global `S.uiStyle`** (`liquid`|`neomorph`|`brutalist`|`hud`, default `liquid`, DATA_VERSION 18). Skins are additive `css/skins/*.css` loaded via `#zf-ui-skin`, scoped to `body[data-ui]` — liquid loads no sheet (pixel-identical default).
+22.2. **Skins are token-only** (var(--*) + #000/#fff neutrals); never restyle the wallpaper/particle/theme pipelines. Style pick applies the skin instantly, then a dialog offers the style's default preset (`UI_STYLE_PRESETS`) or keep-my-colors.
+22.3. **Charts follow the style** via `chartTheme()` (chrome only — ticks/grid/legend/font; dataset colors are content). Task/quest completion fires `systemActivate()` (hud-only flash, reduced-motion escape).
+22.4. **Style tiles use `ICONS.*` line-art** (`styleLiquid/styleNeomorph/styleBrutalist/styleCyber`) — no emoji for style chrome.

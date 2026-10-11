@@ -57,6 +57,10 @@ export const ICONS = {
   fist: `<svg ${SW}><path d="M7 11V6a2 2 0 0 1 4 0v4"/><path d="M11 10V4.5a2 2 0 0 1 4 0V10"/><path d="M15 10V6.5a2 2 0 0 1 4 0V13"/><path d="M7 11l-1.5 1A2.5 2.5 0 0 0 9 16h7a4 4 0 0 0 4-4v-3a2 2 0 0 0-4 0"/></svg>`,
   cloche: `<svg ${SW}><path d="M4 17h16"/><path d="M12 7a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8z"/><line x1="12" y1="7" x2="12" y2="4"/><circle cx="12" cy="4" r="1"/></svg>`,
   inbox: `<svg ${SW}><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="12" y1="8" x2="12" y2="12"/><polyline points="9.5 10.5 12 12.5 14.5 10.5"/></svg>`,
+  styleLiquid: `<svg ${SW}><path d="M12 3C7 8 5 12 5 16a7 7 0 0 0 14 0C19 12 17 8 12 3z"/><path d="M9.5 14.5a3.5 3.5 0 0 0 2.5 3"/></svg>`,
+  styleNeomorph: `<svg ${SW}><rect x="7" y="7" width="13" height="13" rx="4"/><rect x="4" y="4" width="13" height="13" rx="4"/></svg>`,
+  styleBrutalist: `<svg ${SW}><rect x="4" y="6" width="11" height="11"/><path d="M8 17.5H19V8"/><line x1="16" y1="3.5" x2="20" y2="3.5"/><line x1="18" y1="1.5" x2="18" y2="5.5"/></svg>`,
+  styleCyber: `<svg ${SW}><rect x="6" y="6" width="12" height="12" rx="1"/><rect x="10" y="10" width="4" height="4"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>`,
 };
 
 /** Render an icon by name. Extra class hooks sizing. */

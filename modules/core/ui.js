@@ -4,7 +4,7 @@
 ────────────────────────────────────────────────────────────── */
 import { escapeHtml } from './sanitize.js';
 import { S, addXP, resolveBgSrc, update } from './store.js';
-import { PRESET_WALLPAPERS } from './themes.js';
+import { PRESET_WALLPAPERS, THEMES } from './themes.js';
 import { rankForLevel, xpForLevel } from './utils.js';
 
 export function el(id) { return document.getElementById(id); }
@@ -203,6 +203,64 @@ export function bgPosPercent() {
   const { x, y } = bgOffsets();
   return { x: 50 + x / 2, y: 50 + y / 2 };
 }
+/* Interface Style switcher (liquid / neomorphism / neo-brutalism / cyberpunk hud).
+   Liquid = current CSS (no extra sheet). Others load one additive
+   override sheet that only uses var(--*) tokens, so color themes,
+   wallpaper and accent pickers keep working untouched. */
+export const UI_STYLES = {
+  liquid: { name: 'Liquid Glass', css: '', icon: 'styleLiquid' },
+  neomorph: { name: 'Neomorphism', css: './css/skins/ui-neomorphism.css', icon: 'styleNeomorph' },
+  brutalist: { name: 'Neo-Brutalism', css: './css/skins/ui-brutalism.css', icon: 'styleBrutalist' },
+  hud: { name: 'Cyberpunk HUD', css: './css/skins/ui-hud.css', icon: 'styleCyber' },
+};
+/* Default color preset per interface style (theme-definition objects —
+   the rules §1.1 exception). Applied only when the user picks "Use default"
+   in the style-choice dialog; "Keep my colors" leaves tokens untouched. */
+export const UI_STYLE_PRESETS = {
+  liquid: { kind: 'builtin', id: 'midnight', label: 'Midnight Blue' },
+  neomorph: {
+    kind: 'theme', label: 'Porcelain',
+    theme: { ...THEMES.light, name: 'Porcelain', bgBase: '#d8dee9', bgSurface: '#e4e9f4', bgRaised: '#edf1f9', bgOverlay: '#f5f7fc', borderMid: '#bfc7da', primary: '#6c7bd6', textPrimary: '#232839', textSecondary: '#566074', textMuted: '#8b93ab', glow1: '#6c7bd6', glow2: '#00b6ff', glow3: '#b678f0', p_hue: '232', inputBg: '#edf1f9' },
+  },
+  brutalist: {
+    kind: 'theme', label: 'Pop',
+    theme: { ...THEMES.light, name: 'Pop', bgBase: '#fff3dc', bgSurface: '#ffffff', bgRaised: '#ffe9be', bgOverlay: '#ffd98f', borderMid: '#141414', primary: '#ff3d00', textPrimary: '#141414', textSecondary: '#3d3d3d', textMuted: '#7a7a7a', glow1: '#ff3d00', glow2: '#004dff', glow3: '#00a651', p_hue: '12', inputBg: '#ffffff' },
+  },
+  hud: {
+    kind: 'theme', label: 'Neon Grid',
+    theme: { name: 'Neon Grid', bgBase: '#060907', bgSurface: '#0a0f0c', bgRaised: '#0f1712', bgOverlay: '#142019', borderMid: '#1e4030', primary: '#39ff14', textPrimary: '#e9ffef', textSecondary: '#a4d8b6', textMuted: '#5f8a6e', glow1: '#39ff14', glow2: '#00b6ff', glow3: '#b6ff4a', p_hue: '120', inputBg: '#0a0f0c' },
+  },
+};
+/* System-activation flash on task/quest completion — HUD mode only.
+   Pointer-transparent + self-cleaning; reduced-motion skips it. */
+export function systemActivate(label = 'TASK COMPLETE') {
+  if ((S.uiStyle || 'liquid') !== 'hud') return;
+  try {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  } catch {}
+  const d = document.createElement('div');
+  d.className = 'hud-activate';
+  d.innerHTML = `<div class="hud-activate-box"><div class="hud-activate-title">[ SYSTEM ACTIVATION ]</div>`
+    + `<div class="hud-activate-sub">${escapeHtml(label)}</div>`
+    + `<div class="hud-activate-bar"><span></span></div></div>`;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1500);
+}
+export function applyUiMode() {
+  const mode = UI_STYLES[S.uiStyle] ? S.uiStyle : 'liquid';
+  try { document.body.dataset.ui = mode; } catch {}
+  let link = document.getElementById('zf-ui-skin');
+  const href = UI_STYLES[mode].css;
+  if (!href) { link?.remove(); return mode; }
+  if (!link) {
+    link = document.createElement('link');
+    link.id = 'zf-ui-skin'; link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+  link.disabled = false;
+  if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+  return mode;
+}
 /* Tab switches hit renderActive() → applyBackgroundConfig() every time.
    Without the guards below the wallpaper blanked + async-reloaded per tab
    (flash/glitch) and every slider tick re-resolved the image. */
@@ -211,9 +269,10 @@ export function applyBackgroundConfig(opts = {}) {
   const st = S;
   const force = opts === true || opts?.force === true;
   // Cheap CSS-var path — tab switches with no visual change are ~1ms no-ops.
-  const cssSig = [st.glassMode, st.glassBlur ?? 4, st.glassAlpha ?? 0.55, st.particleHue ?? '', st.accentColor || '', st.navOpacity, st.navOpacityVal ?? 100].join('|');
+  const cssSig = [st.uiStyle || 'liquid', st.glassMode, st.glassBlur ?? 4, st.glassAlpha ?? 0.55, st.particleHue ?? '', st.accentColor || '', st.navOpacity, st.navOpacityVal ?? 100].join('|');
   if (force || __zfCssSig !== cssSig) {
     __zfCssSig = cssSig;
+    applyUiMode();
     document.body.classList.toggle('glass-mode', !!st.glassMode);
     document.documentElement.style.setProperty('--glass-blur', `${st.glassBlur ?? 4}px`);
     document.documentElement.style.setProperty('--glass-alpha', `${st.glassAlpha ?? 0.55}`);

@@ -253,3 +253,9 @@ body.glass-mode .char-card-box, body.glass-mode .char-avatar-col, body.glass-mod
 body.glass-mode .char-evo-step { background: rgba(var(--glass-bg-rgb), calc(var(--glass-alpha) * 0.6)); }
 body.glass-mode .char-evo-step.evo-current { background: rgba(var(--glass-bg-rgb), var(--glass-alpha)); }
 body.glass-mode .char-stat-bar-wrap { background: rgba(255,255,255,0.08); }
+
+/* Interface-style switcher tile + header icons (ICONS.* line-art) */
+.uistyle-ic { display: inline-flex; align-items: center; justify-content: center; }
+.uistyle-ic svg { width: 24px; height: 24px; display: block; }
+.collapse-ic { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; }
+.collapse-ic svg { width: 18px; height: 18px; display: block; }

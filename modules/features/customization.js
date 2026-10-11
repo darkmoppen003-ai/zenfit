@@ -7,7 +7,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, idbPutImage, idbDeleteImage, idbGetImage, resolveBgSrc } from '../core/store.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
-import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles } from '../core/ui.js';
+import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles, applyUiMode, UI_STYLES, UI_STYLE_PRESETS, ICONS } from '../core/ui.js';
 import { toggleFullscreen, isFullscreen } from '../core/fullscreen.js';
 import { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme } from '../core/themes.js';
 export { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme };
@@ -24,6 +24,49 @@ const EFFECT_LABELS = {
   dust: '✨ Constellation', snow: '❄️ Snow', embers: '🔥 Embers',
   firefly: '✨ Firefly', matrix: '🌧️ Matrix Rain', cyber: '⚡ Cyber Spark',
 };
+
+/* Style-pick dialog: use the style's default color preset, or keep mine.
+   Skin is already applied underneath for a live preview. */
+function uiStyleDialog(id) {
+  const preset = UI_STYLE_PRESETS[id];
+  const styleName = UI_STYLES[id]?.name || id;
+  const presetName = preset?.label || 'Default';
+  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">${escapeHtml(styleName)}</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Use its default colors (<b>${escapeHtml(presetName)}</b>) or keep your current theme?</div>
+    <div class="theme-preview active" style="margin-bottom:12px"><div class="tp-bar" id="uisw-bar">
+      <div class="tp-dot" id="uisw-dot"></div><div style="font-size:12px" id="uisw-name">${escapeHtml(presetName)}</div></div>
+      <div class="tp-body" id="uisw-body"><div class="tp-chip" id="uisw-c0"></div><div class="tp-chip" id="uisw-c1"></div><div class="tp-chip" id="uisw-c2"></div></div></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn btn-primary" id="uisw-default">Use ${escapeHtml(presetName)} colors</button>
+    <button class="btn" id="uisw-keep">Keep my colors</button></div>`);
+  try {
+    const t = preset?.kind === 'builtin' ? THEMES[preset.id] : preset?.theme;
+    if (t) {
+      const q = (sid) => document.querySelector(sid);
+      if (q('#uisw-bar')) q('#uisw-bar').style.background = t.bgSurface;
+      if (q('#uisw-dot')) q('#uisw-dot').style.background = t.primary;
+      if (q('#uisw-body')) q('#uisw-body').style.background = t.bgBase;
+      if (q('#uisw-name')) { q('#uisw-name').textContent = presetName; q('#uisw-name').style.color = t.textPrimary; }
+      if (q('#uisw-c0')) q('#uisw-c0').style.background = t.primary;
+      if (q('#uisw-c1')) q('#uisw-c1').style.background = t.bgRaised;
+      if (q('#uisw-c2')) { q('#uisw-c2').style.background = t.bgSurface; q('#uisw-c2').style.border = `1px solid ${t.primary}`; }
+    }
+  } catch {}
+  document.querySelector('#uisw-default').onclick = () => {
+    try {
+      if (preset?.kind === 'builtin' && THEMES[preset.id]) applyTheme(preset.id);
+      else if (preset?.theme) applyThemeObject({ ...preset.theme }, S.theme);
+      showNotif(`Interface: ${styleName} + ${presetName}`, 'OK');
+    } catch { showNotif(`Interface: ${styleName}`, 'OK'); }
+    document.getElementById('zf-overlay')?.remove();
+    window.ZF.rerender();
+  };
+  document.querySelector('#uisw-keep').onclick = () => {
+    document.getElementById('zf-overlay')?.remove();
+    showNotif(`Interface: ${styleName} (your colors kept)`, 'OK');
+    window.ZF.rerender();
+  };
+}
 
 export function renderCustomization(host) {
   migrateLegacyThemes();
@@ -144,7 +187,7 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('glass-sliders', 'Liquid Glass', '🪟', 'Frosted blur effect on cards', 'default-collapsed')}
+    ${collapseHeader('glass-sliders', 'Liquid Glass', '🪟', 'Frosted blur on cards · shadow depth in other styles', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('glass-sliders') ? ' collapsed' : ''}" id="glass-sliders">
       <label class="flex-between mt8" style="font-size:13px">Glass mode
         <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
@@ -164,6 +207,21 @@ export function renderCustomization(host) {
           <div style="width:14px;height:14px;border-radius:50%;border:2px solid ${Math.round((S.glassAlpha ?? 0.55) * 100) === v ? 'var(--primary)' : 'var(--text-muted)'};background:${Math.round((S.glassAlpha ?? 0.55) * 100) === v ? 'var(--primary)' : 'transparent'}"></div>
           <span style="font-size:8px;color:var(--text-muted);line-height:1">${v}</span></div>`).join('')}
       </div>
+    </div>
+  </div>
+
+  <div class="section-title">Interface Style</div>
+  <div class="card mb8">
+    ${collapseHeader('ui-style', 'Interface Style', `<span class="collapse-ic">${ICONS.sliders}</span>`, 'Liquid · Neomorph · Brutalist · Cyberpunk', 'default-open')}
+    <div class="collapsible-body${S.collapsedSections?.['ui-style'] ? ' collapsed' : ''}" id="ui-style">
+      <div class="grid2 mt8" id="ui-style-grid">
+        ${Object.entries(UI_STYLES).map(([id, m]) => {
+          const active = (S.uiStyle || 'liquid') === id;
+          return `<button data-uistyle="${id}" style="padding:10px 8px;border-radius:10px;border:2px solid ${active ? 'var(--primary)' : 'var(--border-mid)'};background:${active ? 'var(--bg-raised)' : 'var(--bg-overlay)'};color:${active ? 'var(--primary)' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">`
+            + `<span class="uistyle-ic">${ICONS[m.icon] || ''}</span><span>${m.name}</span>${active ? '<span style="font-size:10px">Active</span>' : ''}</button>`;
+        }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Switches component styling + charts. Picking a style offers its default colors or keeps yours — wallpaper, particles & glass sliders stay live.</div>
     </div>
   </div>
 
@@ -231,6 +289,19 @@ export function renderCustomization(host) {
 
   host.querySelectorAll('[data-bgtype]').forEach((b) => {
     b.onclick = () => update((s) => { s.bgType = b.dataset.bgtype; });
+  });
+
+  /* interface style switcher — skin applies instantly, then a dialog
+     offers the style's default colors or keeping the user's theme */
+  host.querySelectorAll('[data-uistyle]').forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.uistyle;
+      if (!UI_STYLES[id]) return;
+      update((s) => { s.uiStyle = id; });
+      applyUiMode();
+      window.ZF.save();
+      uiStyleDialog(id);
+    };
   });
 
   /* gallery + upload + frame editor (V2 studio, V1 IDB storage) */

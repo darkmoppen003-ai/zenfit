@@ -1,0 +1,74 @@
+/* ── ZenFit · Skin: Neo-Brutalism ──────────────────────────
+   Additive override only. Token-only (var(--*)) except #000 hard
+   shadow (monochrome neutral, allowed per rules §1.1).
+   Liquid Glass sliders stay live: blur → border weight,
+   alpha → shadow size. backdrop-filter flattened (genre rule). */
+
+body[data-ui="brutalist"] .card,
+body[data-ui="brutalist"] .card-sm,
+body[data-ui="brutalist"] .card-raised,
+body[data-ui="brutalist"] .quest-card,
+body[data-ui="brutalist"] .stat-block,
+body[data-ui="brutalist"] .plan-card,
+body[data-ui="brutalist"] .bonus-card {
+  border-radius: 4px;
+  border: 2px solid var(--text-primary);
+  background: var(--bg-surface);
+  box-shadow: 4px 4px 0 #000;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* glass-mode on: brutalism stays flat — translucency off by genre */
+body[data-ui="brutalist"].glass-mode .card,
+body[data-ui="brutalist"].glass-mode .card-sm,
+body[data-ui="brutalist"].glass-mode .card-raised,
+body[data-ui="brutalist"].glass-mode .quest-card,
+body[data-ui="brutalist"].glass-mode .stat-block {
+  background: var(--bg-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body[data-ui="brutalist"] .btn {
+  border-radius: 4px;
+  border: 2px solid var(--text-primary);
+  background: var(--bg-raised);
+  box-shadow: 3px 3px 0 #000;
+}
+body[data-ui="brutalist"] .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #000; }
+body[data-ui="brutalist"] .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #000; }
+body[data-ui="brutalist"] .btn-primary {
+  background: var(--primary);
+  border: 2px solid var(--text-primary);
+  color: #fff;
+  box-shadow: 3px 3px 0 #000;
+}
+
+body[data-ui="brutalist"] input[type="text"],
+body[data-ui="brutalist"] input[type="number"],
+body[data-ui="brutalist"] input[type="email"],
+body[data-ui="brutalist"] input[type="search"],
+body[data-ui="brutalist"] select,
+body[data-ui="brutalist"] textarea {
+  border-radius: 4px;
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 #000;
+}
+
+body[data-ui="brutalist"] .screen-header .sh-title {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+body[data-ui="brutalist"] .badge { border: 1px solid var(--text-primary); border-radius: 4px; }
+body[data-ui="brutalist"] .bottom-nav,
+body[data-ui="brutalist"] .more-popover,
+body[data-ui="brutalist"] .overlay-box {
+  border: 2px solid var(--text-primary);
+  border-radius: 4px;
+  box-shadow: 4px 4px 0 #000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui="brutalist"] * { transition: none; animation: none; }
+}

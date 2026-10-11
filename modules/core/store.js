@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 17;
-export const APP_VERSION = "8.9.3";
+export const DATA_VERSION = 18;
+export const APP_VERSION = "8.9.3.5";
 
-export const APP_BUILD = "2026.10.10.44";
+export const APP_BUILD = "2026.10.11.48";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -51,6 +51,7 @@ const SCHEMA = {
   inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array', hiddenGlobals: 'array',
   customThemes: 'array', customDishes: 'array', notifSettings: 'object',
   navOpacityVal: 'number', streakScope: 'array', analyticsArchive: 'array',
+  uiStyle: 'string',
 };
 
 const DB_NAME = 'zenfit';
@@ -110,6 +111,7 @@ export function defaultState() {
     glassAlpha: 0.15,
     navOpacity: true,
     navOpacityVal: 100,
+    uiStyle: 'liquid',
     bgType: 'solid',
     bgImage: null,
     bgDim: 0,
@@ -297,6 +299,11 @@ export function migrateData(saved) {
     if (Array.isArray(saved.customFoods)) saved.customFoods.forEach((f) => { if (f && f.source === 'gemini') f.source = 'ai'; });
     saved.dataVersion = 17;
   }
+  if (version < 18) {
+    // ponytail: uiStyle global defaults to liquid; unknown values fall back (no blank UI)
+    if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(saved.uiStyle)) saved.uiStyle = 'liquid';
+    saved.dataVersion = 18;
+  }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
     saved.bgOffX = Math.round((saved.bgPosX - 50) * 2);
@@ -321,6 +328,8 @@ export function validateAndMergeData(saved, fresh) {
       else if (SCHEMA[key] === 'object') merged[key] = {};
     }
   }
+  // ponytail: unknown uiStyle (hand-edited saves) falls back to liquid, never blank
+  if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(merged.uiStyle)) merged.uiStyle = 'liquid';
   return merged;
 }
 

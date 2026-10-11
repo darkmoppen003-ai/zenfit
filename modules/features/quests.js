@@ -8,7 +8,7 @@ import { S, update, deductXP } from '../core/store.js';
 import { getTodayStr } from '../core/utils.js';
 import { isRestDay } from '../core/selectors.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, sfx, openOverlay } from '../core/ui.js';
+import { showNotif, awardXP, sfx, openOverlay, systemActivate } from '../core/ui.js';
 import { todayWater, todayBurned } from '../core/selectors.js';
 import { checkAchievements } from '../core/achievements.js';
 
@@ -111,6 +111,7 @@ export function completeQuest(listKey, idx, onDone) {
       showNotif(`Auto-logged ${Math.round(remaining / 100) / 10}L water!`, '💧');
     } else showNotif('Water goal already met!', '💧');
     awardXP(q.xp, 'Quest: ' + q.title);
+    systemActivate('QUEST COMPLETE — ' + (q.title || '').slice(0, 40));
     checkAchievements();
     onDone?.();
     return;
@@ -149,6 +150,7 @@ function finishQ(q, listKey) {
   });
   sfx('quest');
   awardXP(q.xp, 'Quest: ' + q.title);
+  systemActivate('QUEST COMPLETE — ' + (q.title || '').slice(0, 40));
   checkAchievements();
 }
 

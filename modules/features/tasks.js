@@ -6,7 +6,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeEnum, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, onEnter } from '../core/ui.js';
+import { showNotif, awardXP, onEnter, systemActivate } from '../core/ui.js';
 import { tasksDueToday, today } from '../core/selectors.js';
 import { checkAchievements } from '../core/achievements.js';
 import { getTodayStr } from '../core/utils.js';
@@ -169,6 +169,7 @@ export function completeTask(taskId) {
   });
   updStat('discipline', overdue ? 1 : 3);
   awardXP(xp, 'Task: ' + (t.title || t.name));
+  systemActivate('TASK COMPLETE — ' + (t.title || t.name || '').slice(0, 40));
   if (overdue) showNotif(`[ TASK COMPLETE ] Late — +${xp} XP (half reward)`, '⚡');
   else showNotif(`[ TASK COMPLETE ] +${xp} XP — Discipline +3`, '⚔️');
   checkAchievements();
