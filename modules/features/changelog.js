@@ -6,7 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
-  ['v8.9.3.5', 'Interface Styles: Liquid / Neomorphism / Neo-Brutalism / Cyberpunk HUD skins + per-style default colors (or keep yours), style-aware charts, HUD task-completion activation flash'],
+  ['v8.9.3.5', 'Interface Styles: Liquid / Neomorphism / Neo-Brutalism / Cyberpunk HUD skins + per-style colors with solid/current-background choice (or keep yours), style-aware charts, HUD task-completion activation flash'],
   ['v8.9.3', 'Wallpaper no longer rebuilds per tab (guard + preload-swap), bottom-nav in-place active flip, particles pause when hidden, charts freed on leaving analytics'],
   ['v8.9.2.5.1', 'Privacy page + profile button, policy history purge'],
   ['v8.9.2.5', 'Unified streak card, inactivity XP rule, calendar swipe guard'],

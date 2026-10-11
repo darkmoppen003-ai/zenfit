@@ -25,20 +25,21 @@ const EFFECT_LABELS = {
   firefly: '✨ Firefly', matrix: '🌧️ Matrix Rain', cyber: '⚡ Cyber Spark',
 };
 
-/* Style-pick dialog: use the style's default color preset, or keep mine.
-   Skin is already applied underneath for a live preview. */
+/* Style-pick dialog: preset colors + solid bg, preset colors + current bg,
+   or keep my colors + bg. Skin is already applied underneath (live preview). */
 function uiStyleDialog(id) {
   const preset = UI_STYLE_PRESETS[id];
   const styleName = UI_STYLES[id]?.name || id;
   const presetName = preset?.label || 'Default';
   openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">${escapeHtml(styleName)}</div>
-    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Use its default colors (<b>${escapeHtml(presetName)}</b>) or keep your current theme?</div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px">Use <b>${escapeHtml(presetName)}</b> colors with a solid background, with your current background, or keep everything yours?</div>
     <div class="theme-preview active" style="margin-bottom:12px"><div class="tp-bar" id="uisw-bar">
       <div class="tp-dot" id="uisw-dot"></div><div style="font-size:12px" id="uisw-name">${escapeHtml(presetName)}</div></div>
       <div class="tp-body" id="uisw-body"><div class="tp-chip" id="uisw-c0"></div><div class="tp-chip" id="uisw-c1"></div><div class="tp-chip" id="uisw-c2"></div></div></div>
     <div style="display:flex;flex-direction:column;gap:8px">
-    <button class="btn btn-primary" id="uisw-default">Use ${escapeHtml(presetName)} colors</button>
-    <button class="btn" id="uisw-keep">Keep my colors</button></div>`);
+    <button class="btn btn-primary" id="uisw-solid">Use ${escapeHtml(presetName)} + solid background</button>
+    <button class="btn" id="uisw-default">Use ${escapeHtml(presetName)} + current background</button>
+    <button class="btn" id="uisw-keep">Keep my colors & background</button></div>`);
   try {
     const t = preset?.kind === 'builtin' ? THEMES[preset.id] : preset?.theme;
     if (t) {
@@ -52,10 +53,23 @@ function uiStyleDialog(id) {
       if (q('#uisw-c2')) { q('#uisw-c2').style.background = t.bgSurface; q('#uisw-c2').style.border = `1px solid ${t.primary}`; }
     }
   } catch {}
+  const applyPreset = () => {
+    if (preset?.kind === 'builtin' && THEMES[preset.id]) applyTheme(preset.id);
+    else if (preset?.theme) applyThemeObject({ ...preset.theme }, S.theme);
+  };
+  document.querySelector('#uisw-solid').onclick = () => {
+    try {
+      applyPreset();
+      update((s) => { s.bgImage = null; s.bgType = 'solid'; });
+      window.ZF.save(); window.ZF.applyBg();
+      showNotif(`Interface: ${styleName} + ${presetName} (solid)`, 'OK');
+    } catch { showNotif(`Interface: ${styleName}`, 'OK'); }
+    document.getElementById('zf-overlay')?.remove();
+    window.ZF.rerender();
+  };
   document.querySelector('#uisw-default').onclick = () => {
     try {
-      if (preset?.kind === 'builtin' && THEMES[preset.id]) applyTheme(preset.id);
-      else if (preset?.theme) applyThemeObject({ ...preset.theme }, S.theme);
+      applyPreset();
       showNotif(`Interface: ${styleName} + ${presetName}`, 'OK');
     } catch { showNotif(`Interface: ${styleName}`, 'OK'); }
     document.getElementById('zf-overlay')?.remove();
@@ -63,7 +77,7 @@ function uiStyleDialog(id) {
   };
   document.querySelector('#uisw-keep').onclick = () => {
     document.getElementById('zf-overlay')?.remove();
-    showNotif(`Interface: ${styleName} (your colors kept)`, 'OK');
+    showNotif(`Interface: ${styleName} (yours kept)`, 'OK');
     window.ZF.rerender();
   };
 }
