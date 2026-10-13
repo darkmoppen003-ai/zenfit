@@ -55,7 +55,7 @@ body[data-ui="hud"] .section-title {
   letter-spacing: 2.5px;
 }
 body[data-ui="hud"] .section-title::before { content: '▸ '; }
-body[data-ui="hud"] .screen-header .sh-title { text-transform: uppercase; letter-spacing: 2px; }
+body[data-ui="hud"] .screen-header .sh-title { text-transform: uppercase; letter-spacing: 1px; font-size: clamp(20px, 6vw, 24px); }
 
 /* glowing status indicators */
 body[data-ui="hud"] .badge { border: 1px solid currentColor; border-radius: 2px; box-shadow: 0 0 8px color-mix(in srgb, currentColor 40%, transparent); }

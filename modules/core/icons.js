@@ -61,6 +61,19 @@ export const ICONS = {
   styleNeomorph: `<svg ${SW}><rect x="7" y="7" width="13" height="13" rx="4"/><rect x="4" y="4" width="13" height="13" rx="4"/></svg>`,
   styleBrutalist: `<svg ${SW}><rect x="4" y="6" width="11" height="11"/><path d="M8 17.5H19V8"/><line x1="16" y1="3.5" x2="20" y2="3.5"/><line x1="18" y1="1.5" x2="18" y2="5.5"/></svg>`,
   styleCyber: `<svg ${SW}><rect x="6" y="6" width="12" height="12" rx="1"/><rect x="10" y="10" width="4" height="4"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>`,
+  palette: `<svg ${SW}><path d="M12 21a9 9 0 1 1 9-9c0 2-1.5 3-3 3h-2a2 2 0 0 0-1.5 3.3c.5.8.2 2.7-2.5 2.7z"/><circle cx="7.5" cy="11.5" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="15" cy="8" r="1"/></svg>`,
+  pencil: `<svg ${SW}><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>`,
+  calculator: `<svg ${SW}><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="16" y2="19"/></svg>`,
+  clipboard: `<svg ${SW}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>`,
+  bed: `<svg ${SW}><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>`,
+  snowflake: `<svg ${SW}><line x1="12" y1="2" x2="12" y2="22"/><path d="M4.9 4.9l14.2 14.2"/><path d="M19.1 4.9L4.9 19.1"/></svg>`,
+  rainCloud: `<svg ${SW}><path d="M7 15h10a4 4 0 0 0 0-8 6 6 0 0 0-11 2"/><line x1="8" y1="19" x2="7" y2="21"/><line x1="12" y1="19" x2="11" y2="21"/><line x1="16" y1="19" x2="15" y2="21"/></svg>`,
+  fullscreen: `<svg ${SW}><path d="M4 9V4h5"/><path d="M15 4h5v5"/><path d="M20 15v5h-5"/><path d="M9 20H4v-5"/></svg>`,
+  compass: `<svg ${SW}><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-4 1 2-5z"/></svg>`,
+  frostPane: `<svg ${SW}><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="12" y1="4" x2="12" y2="12"/><path d="M7 7l2.5 2.5"/></svg>`,
+  sparkle: `<svg ${SW}><path d="M12 2c.5 5 3 7.5 8 8-5 .5-7.5 3-8 8-.5-5-3-7.5-8-8 5-.5 7.5-3 8-8z"/></svg>`,
+  heart: `<svg ${SW}><path d="M12 21C7 16 3 12.5 3 8.8 3 6 5 4 7.5 4c1.8 0 3.4 1 4.5 2.6C13.1 5 14.7 4 16.5 4 19 4 21 6 21 8.8c0 3.7-4 7.2-9 12.2z"/></svg>`,
+  repeat: `<svg ${SW}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
 };
 
 /** Render an icon by name. Extra class hooks sizing. */

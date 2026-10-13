@@ -6,7 +6,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeEnum, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, onEnter, systemActivate } from '../core/ui.js';
+import { showNotif, awardXP, onEnter, systemActivate, ICONS } from '../core/ui.js';
 import { tasksDueToday, today } from '../core/selectors.js';
 import { checkAchievements } from '../core/achievements.js';
 import { getTodayStr } from '../core/utils.js';
@@ -56,15 +56,15 @@ export function renderTasks(host) {
   const timeLeft = (t) => {
     if (!t.deadlineTs) return '';
     const diff = t.deadlineTs - now;
-    if (diff <= 0) return '<span class="task-timer-badge task-timer-over">⏰ OVERDUE</span>';
+    if (diff <= 0) return '<span class="task-timer-badge task-timer-over"><span class="lbl-ic">' + ICONS.clock + '</span>OVERDUE</span>';
     const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000);
     const cls = diff < 3600000 ? 'task-timer-warn' : 'task-timer-ok';
-    return `<span class="task-timer-badge ${cls}">⏱ ${h > 0 ? `${h}h ` : ''}${m}m left</span>`;
+    return `<span class="task-timer-badge ${cls}"><span class="lbl-ic">${ICONS.clock}</span>${h > 0 ? `${h}h ` : ''}${m}m left</span>`;
   };
   const repeatBadge = (t) => {
     if (!t.repeat || t.repeat === 'once') return '';
     const labels = { daily: 'Daily', weekdays: 'Weekdays', altdays: 'Alt Days', mon_sat: 'Mon–Sat', custom: 'Custom' };
-    return `<span class="task-repeat-badge">🔁 ${labels[t.repeat] || t.repeat}</span>`;
+    return `<span class="task-repeat-badge"><span class="lbl-ic">${ICONS.repeat}</span>${labels[t.repeat] || t.repeat}</span>`;
   };
 
   host.innerHTML = `

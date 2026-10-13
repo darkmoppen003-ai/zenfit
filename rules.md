@@ -231,3 +231,12 @@ failing items get a "Log manually" switch, never silent drops.
 22.2. **Skins are token-only** (var(--*) + #000/#fff neutrals); never restyle the wallpaper/particle/theme pipelines. Style pick applies the skin instantly, then a dialog offers the style's default preset (`UI_STYLE_PRESETS`) or keep-my-colors.
 22.3. **Charts follow the style** via `chartTheme()` (chrome only — ticks/grid/legend/font; dataset colors are content). Task/quest completion fires `systemActivate()` (hud-only flash, reduced-motion escape).
 22.4. **Style tiles use `ICONS.*` line-art** (`styleLiquid/styleNeomorph/styleBrutalist/styleCyber`) — no emoji for style chrome.
+
+## 23. Style persistence, headers, transparency, charts, weight, icons (2026-10-13, v8.9.3.6)
+
+23.1. **Every style maps to a persistent built-in theme id** (`UI_STYLE_PRESETS` = builtin ids only). Never persist untracked token sets — a hard refresh must restore the exact theme (verified per style). New built-ins (`brutalist`, `cyberpunk`) ship full V1 extras when light; also deploy them via the coach pipeline (admin → global_assets) so they appear as Coach picks.
+23.2. **Headers never clip:** `.sh-title`/`.section-title` get `min-width:0` + `overflow-wrap:anywhere`; skins use fluid `clamp()` sizes (never fixed px that overflow 360px). Verify longest labels per skin at 360px width.
+23.3. **Transparency naming:** the block is "Transparency", the default style is "DEFAULT". State keys (`glassMode/glassBlur/glassAlpha`), CSS vars and `#fx-*` ids are frozen — labels-only renames. Opt-in `S.liquidLens` (DATA_VERSION 19) drives the static SVG-displacement lens (`#zf-lens` in index.html, `@supports`-free fallback by cascade); blur slider drives lens scale live. No WebGL/CDN effect deps without offline + mid-range perf proof.
+23.4. **Chart fills:** radar/line fills use alpha ≥0.5 — lower alphas vanish in the glass-card composite path (verified headless: buffer correct, composite empty). Every chart change needs seeded-data screenshot proof.
+23.5. **Weight navigation contract:** dashboard weight tap → `analytics/progress` only. History opens solely via shared `openWeightHistory()` (core/ui.js). Progress leads with TARGET (settable `profile.targetWeightKg`, editable inline) + CURRENT blocks; trend overlays the target as a dashed series.
+23.6. **SVG chrome:** tiles/headers/tabs/badges use `ICONS.*` (24-grid, 1.8 stroke). Emoji survive only for V1 content faces, food/celebration content, toast glyphs and user text. Dead icon data (unused `icon:` fields) gets deleted, not left.

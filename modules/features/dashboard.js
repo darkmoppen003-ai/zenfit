@@ -21,13 +21,13 @@ import { ACHIEVEMENTS, earnedIds, checkAchievements } from '../core/achievements
 const RANK_COLORS = { E: '#888', D: '#4cdb8a', C: '#4a9eff', B: '#c084fc', A: '#f5a623', S: '#ff5a5a' };
 const RANK_NAMES = { E: 'Novice Hunter', D: 'Awakened Hunter', C: 'Rising Warrior', B: 'Iron Sentinel', A: 'Apex Predator', S: 'Legendary Sovereign' };
 const RANK_LEVELS = { E: 1, D: 8, C: 16, B: 24, A: 32, S: 40 };
-const RANK_EMOJI = { S: '🥷', A: '⚔️', B: '🛡️', C: '🏹', D: '🗡️', E: '👤' };
+const RANK_CREST_ICON = { S: 'crown', A: 'zap', B: 'shieldRank', C: 'bow', D: 'dagger', E: 'fist' };
 const STAT_DEFS = [
-  { key: 'strength', icon: '⚔️', label: 'Strength', color: 'var(--danger)' },
-  { key: 'discipline', icon: '🧠', label: 'Discipline', color: 'var(--primary)' },
-  { key: 'health', icon: '❤️', label: 'Health', color: 'var(--success)' },
-  { key: 'endurance', icon: '🏃', label: 'Endurance', color: 'var(--info)' },
-  { key: 'wisdom', icon: '📚', label: 'Wisdom', color: 'var(--warning)' },
+  { key: 'strength', icon: 'swords', label: 'Strength', color: 'var(--danger)' },
+  { key: 'discipline', icon: 'mind', label: 'Discipline', color: 'var(--primary)' },
+  { key: 'health', icon: 'heart', label: 'Health', color: 'var(--success)' },
+  { key: 'endurance', icon: 'steps', label: 'Endurance', color: 'var(--info)' },
+  { key: 'wisdom', icon: 'book', label: 'Wisdom', color: 'var(--warning)' },
 ];
 
 function avatarSrc() {
@@ -61,13 +61,13 @@ export function renderDashboard(host) {
 
   /* ── Today's Progress goals (V1 dynamic set) ── */
   const goalDefs = [
-    { key: 'Water', v: water >= wGoal, color: 'var(--water)', icon: '💧', hide: false },
-    { key: 'Calories', v: nut.cal >= cGoal * 0.8, color: 'var(--warning)', icon: '🍽️', hide: false },
-    { key: 'Habits', v: totalH ? doneH > 0 : 'skip', color: 'var(--success)', icon: '✅', hide: !totalH },
-    { key: 'Tasks', v: (S.tasks || []).length ? doneT.length > 0 : 'skip', color: 'var(--danger)', icon: '⚔️', hide: !(S.tasks || []).length },
-    { key: 'Workout', v: (S.workouts || []).some((w) => w.date === t), color: 'var(--energy)', icon: '🏋️', hide: false },
-    { key: 'Quests', v: (S.quests.list || []).length ? (S.quests.list || []).every((q) => q.done) : 'skip', color: 'var(--primary)', icon: '⭐', hide: !(S.quests.list || []).length },
-    { key: 'Mind', v: studyMins >= 1 || zenMins >= 1, color: 'var(--primary)', icon: '🧘', hide: false },
+    { key: 'Water', v: water >= wGoal, color: 'var(--water)', hide: false },
+    { key: 'Calories', v: nut.cal >= cGoal * 0.8, color: 'var(--warning)', hide: false },
+    { key: 'Habits', v: totalH ? doneH > 0 : 'skip', color: 'var(--success)', hide: !totalH },
+    { key: 'Tasks', v: (S.tasks || []).length ? doneT.length > 0 : 'skip', color: 'var(--danger)', hide: !(S.tasks || []).length },
+    { key: 'Workout', v: (S.workouts || []).some((w) => w.date === t), color: 'var(--energy)', hide: false },
+    { key: 'Quests', v: (S.quests.list || []).length ? (S.quests.list || []).every((q) => q.done) : 'skip', color: 'var(--primary)', hide: !(S.quests.list || []).length },
+    { key: 'Mind', v: studyMins >= 1 || zenMins >= 1, color: 'var(--primary)', hide: false },
   ];
   const active = goalDefs.filter((g) => !g.hide);
   const goalCount = active.filter((g) => g.v === true).length;
@@ -89,7 +89,7 @@ export function renderDashboard(host) {
   host.innerHTML = `
   <!-- HERO -->
   <div class="card mb12" style="padding:16px">
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${greet} 👋</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${greet}</div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:22px;font-weight:700;font-family:var(--font-display)">${escapeHtml(name)}</div>
       <div id="dash-avatar" style="width:46px;height:46px;border-radius:50%;overflow:hidden;border:2px solid ${rc};cursor:pointer;flex-shrink:0">
@@ -99,7 +99,7 @@ export function renderDashboard(host) {
     </div>
     <div class="flex-between">
       <div><div style="font-size:11px;color:var(--text-muted)">STREAK</div>
-      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div>🔥</div><div>${streak}d</div></div></div>
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div><span class="lbl-ic" style="margin:0">${icon('flame')}</span></div><div>${streak}d</div></div></div>
       <div class="text-center"><div style="font-size:11px;color:var(--text-muted)">Level ${p.level}</div>
       <div id="dash-rank" title="Rank" style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${rc};cursor:pointer">RANK ${escapeHtml(p.rank)}</div>
       <div style="font-size:10px;color:var(--text-muted)">${RANK_NAMES[p.rank] || ''}</div></div>
@@ -114,7 +114,7 @@ export function renderDashboard(host) {
       <div style="font-size:11px;color:var(--text-muted)">${p.xp} / ${xpNeed} XP</div>
     </div>
     <div class="card-sm">
-      <div style="font-size:12px;font-weight:600">⚡ Today's Progress</div>
+      <div style="font-size:12px;font-weight:600"><span class="lbl-ic">${icon('zap')}</span>Today's Progress</div>
       <div style="font-size:34px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">${goalCount}<span style="font-size:16px;font-family:var(--font-display);color:var(--text-muted)">/${active.length}</span></div>
       <div class="xp-bar-wrap" style="height:8px"><div class="xp-bar" style="width:${Math.round(ringPct * 100)}%;background:linear-gradient(90deg,var(--primary),var(--success))"></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;font-size:11px">
@@ -149,19 +149,19 @@ export function renderDashboard(host) {
     </div>
     <div class="mood-grid" id="dash-moods"></div>
     <div style="text-align:center;margin-top:6px">
-      <button class="btn btn-sm" id="dash-moodan" style="font-size:10px;padding:4px 12px">📊 Mood Analytics</button>
+      <button class="btn btn-sm" id="dash-moodan" style="font-size:10px;padding:4px 12px"><span class="lbl-ic">${icon('chart')}</span>Mood Analytics</button>
     </div>
   </div>
 
   <!-- ACHIEVEMENTS + STEPS -->
   <div class="grid2 mb12">
     <div class="card-sm text-center" id="dash-ach" style="cursor:pointer">
-      <div style="font-size:20px;line-height:1;margin-bottom:6px">🏆</div>
+      <div style="font-size:20px;line-height:1;margin-bottom:6px"><span class="uistyle-ic">${icon('trophy')}</span></div>
       ${ring(84, `${earned.size}/${ACHIEVEMENTS.length}`, earned.size / ACHIEVEMENTS.length, 'var(--warning)', 28, 11)}
       <div style="font-size:11px;color:var(--text-muted)" class="mt8">${achPct}% complete</div>
     </div>
     <div class="card-sm text-center">
-      <div style="font-size:11px;color:var(--text-muted)">🚶 Steps Today</div>
+      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('steps')}</span>Steps Today</div>
       <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
       <div style="font-size:10px;color:var(--text-muted)">~${Math.round(steps * 0.04)} kcal burned</div>
       <div class="flex gap8 mt8"><input type="number" id="steps-input" placeholder="add steps" min="0" style="text-align:center;flex:1;min-width:0" aria-label="Add steps">
@@ -172,17 +172,17 @@ export function renderDashboard(host) {
   <!-- REST + WEIGHT -->
   <div class="grid2 mb12">
     <div class="card-sm text-center">
-      <div style="font-size:11px;color:var(--text-muted)">${rest ? '🛌 Resting Today' : '🛌 Rest Day'}</div>
+      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('bed')}</span>${rest ? 'Resting Today' : 'Rest Day'}</div>
       <div style="font-size:22px;font-weight:700;font-family:var(--font-display);">${rest ? 'Resting' : 'Active'}</div>
       <div style="font-size:10px;color:var(--text-muted)">${rest ? 'No XP deduction' : 'Max 3/week (Mon–Sat)'}</div>
       <button class="btn btn-sm ${rest ? 'btn-primary' : 'btn-ghost'} mt8" id="dash-rest">${rest ? '✓ Set' : 'Set Rest'}</button>
     </div>
     <div class="card-sm text-center">
-      <div style="font-size:11px;color:var(--text-muted)">⚖️ Log Today's Weight</div>
+      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('scale')}</span>Log Today's Weight</div>
       <div style="font-size:22px;font-weight:700;font-family:var(--font-display);" id="dash-weight-val">${wToday ? `${wToday.kg} kg` : '— kg'}</div>
       <div class="flex gap8 mt8"><input type="number" id="dw-input" placeholder="kg" min="20" max="400" step="0.1" style="text-align:center;flex:1;min-width:0" aria-label="Weight in kg">
       <button class="btn btn-primary btn-sm" id="dw-log">Log</button></div>
-      <div id="dash-wdetail" style="font-size:11px;color:var(--info);margin-top:6px;cursor:pointer">Tap for details →</div>
+      <div id="dash-wdetail" style="font-size:11px;color:var(--info);margin-top:6px;cursor:pointer">Open progress →</div>
     </div>
   </div>`;
 
@@ -219,7 +219,7 @@ export function renderDashboard(host) {
   const qb = host.querySelector('#dash-quests');
   const qkey = allQDone ? 'bonusTasks' : 'quests';
   if (!showQ.length) {
-    qb.innerHTML = '<div class="card-sm" style="text-align:center;padding:10px;color:var(--success);font-size:12px">🎉 All done!</div>';
+    qb.innerHTML = '<div class="card-sm" style="text-align:center;padding:10px;color:var(--success);font-size:12px"><span class="lbl-ic">' + icon('check') + '</span>All done!</div>';
   }
   showQ.forEach((q) => {
     const idx = (allQDone ? S.bonusTasks.list : S.quests.list).indexOf(q);
@@ -306,18 +306,8 @@ export function renderDashboard(host) {
   };
   host.querySelector('#dash-avatar').onclick = () => window.ZF.go('profile');
 
-  /* Weight details → history overlay */
-  host.querySelector('#dash-wdetail').onclick = () => {
-    const log = (S.weightLog || []).slice().reverse().slice(0, 14);
-    const vals = (S.weightLog || []).map((w) => w.kg);
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const delta = vals.length >= 2 ? (vals[vals.length - 1] - vals[0]).toFixed(1) : '—';
-    openOverlay(`<div style="text-align:left;max-height:70vh;overflow-y:auto">
-      <div style="font-size:15px;font-weight:700;margin-bottom:4px">⚖️ Weight History</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Range ${min}–${max} kg · change ${delta} kg</div>
-      ${log.map((w) => `<div class="flex-between mb8"><span style="font-size:13px">${escapeHtml(w.date)}</span><strong>${w.kg} kg</strong></div>`).join('') || '<div style="font-size:13px;color:var(--text-muted)">No entries yet.</div>'}
-      <button class="btn btn-ghost btn-full mt12" onclick="document.getElementById('zf-overlay')?.remove()">Close</button></div>`);
-  };
+  /* Weight details → analytics progress tab (history lives there now) */
+  host.querySelector('#dash-wdetail').onclick = () => window.ZF.go('analytics', 'progress');
 }
 
 function zenStreak() {
@@ -353,7 +343,7 @@ function paintChar(box, rc) {
   } catch { /* private mode — keep persisted state */ }
   box.innerHTML = `
     <div class="flex-between char-head" id="dash-char-head">
-      <div class="flex gap8"><span class="char-head-icon">👤</span>
+      <div class="flex gap8"><span class="char-head-icon"><span class="lbl-ic" style="margin:0">${icon('user')}</span></span>
       <span class="char-head-title">Character Card</span>
       <span class="badge char-rank-badge">Rank ${escapeHtml(p.rank)}</span></div>
       <span id="dash-char-chev" class="char-chev" style="${isCollapsed ? '' : 'transform:rotate(180deg)'}">▼</span>
@@ -364,7 +354,7 @@ function paintChar(box, rc) {
           <div class="char-avatar-col"><div class="char-avatar-frame">
             <img id="charAvatarImg" src="${avatarSrc()}" alt="character"
               onerror="this.style.display='none';document.getElementById('charAvatarFallback').style.display='flex'">
-            <div id="charAvatarFallback" class="char-fallback">${RANK_EMOJI[p.rank] || '👤'}</div>
+            <div id="charAvatarFallback" class="char-fallback">${icon(RANK_CREST_ICON[p.rank] || 'fist')}</div>
           </div></div>
           <div class="char-stats-col">
             <div class="char-section-label">PLAYER STATS</div>
@@ -373,7 +363,7 @@ function paintChar(box, rc) {
             ${STAT_DEFS.map((s) => {
               const v = stats[s.key] ?? 10;
               return `<div class="char-stat-block"><div class="char-stat-row">`
-                + `<span class="char-stat-name">${s.icon} ${s.label}</span>`
+                + `<span class="char-stat-name"><span class="lbl-ic">${icon(s.icon)}</span>${s.label}</span>`
                 + `<span class="char-stat-val" style="color:${s.color}">${v}</span></div>`
                 + `<div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" style="width:${Math.min(100, v)}%;background:${s.color}"></div></div></div>`;
             }).join('')}

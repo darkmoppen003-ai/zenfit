@@ -11,7 +11,7 @@ import {
   getTodayStr,
 } from '../core/utils.js';
 import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, openOverlay } from '../core/ui.js';
+import { showNotif, openOverlay, openWeightHistory } from '../core/ui.js';
 import { todayWater, todayNutrition, isRestDay, today } from '../core/selectors.js';
 import { checkAchievements, achievementsGridHTML } from '../core/achievements.js';
 import { MOODS } from './zen.js';
@@ -473,13 +473,17 @@ function drawRadar(id, labels, data, color, prevData) {
   if (!el) return;
   killChart(id);
   // ponytail: compare overlays the previous period dashed gray — current stays solid violet
-  const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}55`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }];
+  // ponytail: fill alpha 0.5 — lower alphas vanish in the glass-card composite path (verified headless)
+  const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}80`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }];
   if (prevData) sets.push({ label: 'Previous', data: prevData, backgroundColor: 'transparent', borderColor: chartTheme().tick, borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
   charts[id] = new window.Chart(el, {
     type: 'radar',
     data: { labels, datasets: sets },
     options: {
       responsive: true, maintainAspectRatio: false,
+      // ponytail: no entrance animation — instant paint (also avoids a headless-compositor
+      // artifact where the animated fill never composites while stroke/points do)
+      animation: false,
       plugins: { legend: { display: false } },
       scales: { r: { min: 0, ticks: { display: false }, grid: { color: chartTheme().gridStrong }, angleLines: { color: chartTheme().gridStrong }, pointLabels: { color: chartTheme().tick, font: { size: 10, family: chartTheme().font } } } },
     },
@@ -909,7 +913,25 @@ function renderAnProgress(body) {
   const prediction = wl.length >= 3 ? calcWeightPrediction(wl) : null;
   const t = getTodayStr();
   const twEntry = wl.find((e) => e.date === t);
+  const curKg = wl.length ? wl[wl.length - 1].kg : (pr.weightKg || null);
+  const tgtKg = typeof pr.targetWeightKg === 'number' ? pr.targetWeightKg : null;
+  const diffKg = curKg != null && tgtKg != null ? (curKg - tgtKg).toFixed(1) : null;
   body.innerHTML = `
+  <div class="grid2 mb12">
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TARGET WEIGHT</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${tgtKg != null ? `${tgtKg} <span style="font-size:13px;color:var(--text-muted)">kg</span>` : '—'}</div>
+      <div style="font-size:10px;color:var(--text-muted)">${diffKg != null ? `${diffKg >= 0 ? '+' : ''}${diffKg} kg to go` : 'not set'}</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">CURRENT WEIGHT</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${curKg != null ? `${curKg} <span style="font-size:13px;color:var(--text-muted)">kg</span>` : '—'}</div>
+      <div style="font-size:10px;color:var(--text-muted)">${wl.length ? `${wl.length} entries` : 'no logs yet'}</div></div>
+  </div>
+  <div class="card mb12">
+    <div class="section-title">Target Weight</div>
+    ${tgtKg != null
+      ? `<div class="flex-between"><span style="font-size:13px">Goal: <strong>${tgtKg} kg</strong></span><button class="btn btn-sm btn-ghost" id="wl-ttoggle">Edit</button></div>
+        <div id="wl-tedit" style="display:none" class="flex gap8 mt8"><input type="number" id="wl-tinput" placeholder="kg" min="30" max="300" step="0.1" value="${tgtKg}" style="flex:1;min-width:0" aria-label="Target weight in kg"><button class="btn btn-primary btn-sm" id="wl-tsave">Save</button></div>`
+      : `<div class="flex gap8"><input type="number" id="wl-tinput" placeholder="Set target kg (e.g. 68)" min="30" max="300" step="0.1" style="flex:1;min-width:0" aria-label="Target weight in kg"><button class="btn btn-primary btn-sm" id="wl-tsave">Set</button></div>`}
+  </div>
   <div class="card mb12">
     <div class="section-title">Log Today's Weight</div>
     ${twEntry ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0">
@@ -919,7 +941,8 @@ function renderAnProgress(body) {
       <button class="btn btn-primary" id="wl-log">Log</button></div>`}
   </div>
   <div class="section-title">Weight Trend (${wl.length} entries)</div>
-  <div class="card mb12">${wl.length < 2 ? '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Log your weight at least twice to see a trend line.</div>' : '<div style="position:relative;height:200px"><canvas id="c_weight"></canvas></div>'}</div>
+  <div class="card mb12">${wl.length < 2 ? '<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted)">Log your weight at least twice to see a trend line.</div>' : '<div style="position:relative;height:200px"><canvas id="c_weight"></canvas></div>'}
+  <div class="mt8"><button class="btn btn-ghost btn-sm btn-full" id="wl-history">View weight history</button></div></div>
   <div class="section-title">Body Stats</div>
   <div class="grid2 mb12">
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">BMI</div>
@@ -944,10 +967,31 @@ function renderAnProgress(body) {
       showNotif(`Weight logged: ${kg}kg · Profile updated ✓`, '⚖️');
     };
   }
+  const tSave = body.querySelector('#wl-tsave');
+  if (tSave) {
+    tSave.onclick = () => {
+      const kg = sanitizeNumber(body.querySelector('#wl-tinput').value, { min: 30, max: 300, fallback: NaN });
+      if (!Number.isFinite(kg)) { showNotif('Enter a valid target (30–300 kg)', '!'); return; }
+      update((s) => { s.profile.targetWeightKg = kg; });
+      showNotif(`Target weight: ${kg} kg`, 'OK');
+    };
+  }
+  const tToggle = body.querySelector('#wl-ttoggle');
+  if (tToggle) {
+    tToggle.onclick = () => {
+      const ed = body.querySelector('#wl-tedit');
+      if (ed) ed.style.display = ed.style.display === 'none' ? 'flex' : 'none';
+    };
+  }
+  const histBtn = body.querySelector('#wl-history');
+  if (histBtn) histBtn.onclick = () => openWeightHistory();
   if (wl.length >= 2) {
-    drawLine('c_weight', wl.map((w) => (w.date || '').slice(5)), [
+    const sets = [
       { label: 'kg', data: wl.map((w) => w.kg), borderColor: '#4a9eff', backgroundColor: '#4a9eff22', fill: true, tension: 0.35, pointRadius: 3 },
-    ]);
+    ];
+    // ponytail: target line reuses the compare-series pattern (dashed previous-period style)
+    if (tgtKg != null) sets.push({ label: 'target', data: wl.map(() => tgtKg), borderColor: '#4cdb8a', borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
+    drawLine('c_weight', wl.map((w) => (w.date || '').slice(5)), sets);
   }
 }
 

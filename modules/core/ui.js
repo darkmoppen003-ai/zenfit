@@ -4,7 +4,7 @@
 ────────────────────────────────────────────────────────────── */
 import { escapeHtml } from './sanitize.js';
 import { S, addXP, resolveBgSrc, update } from './store.js';
-import { PRESET_WALLPAPERS, THEMES } from './themes.js';
+import { PRESET_WALLPAPERS } from './themes.js';
 import { rankForLevel, xpForLevel } from './utils.js';
 
 export function el(id) { return document.getElementById(id); }
@@ -95,6 +95,20 @@ export function openOverlay(html) {
   return closeOverlay;
 }
 export function closeOverlay() { el('zf-overlay')?.remove(); }
+
+/* Shared weight-history overlay (dashboard + analytics progress).
+   Single home for the list — features never duplicate it. */
+export function openWeightHistory() {
+  const log = (S.weightLog || []).slice().reverse().slice(0, 14);
+  const vals = (S.weightLog || []).map((w) => w.kg);
+  const min = vals.length ? Math.min(...vals) : '—', max = vals.length ? Math.max(...vals) : '—';
+  const delta = vals.length >= 2 ? (vals[vals.length - 1] - vals[0]).toFixed(1) : '—';
+  openOverlay(`<div style="text-align:left;max-height:70vh;overflow-y:auto">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Weight History</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Range ${min}–${max} kg · change ${delta} kg</div>
+    ${log.map((w) => `<div class="flex-between mb8"><span style="font-size:13px">${escapeHtml(w.date)}</span><strong>${w.kg} kg</strong></div>`).join('') || '<div style="font-size:13px;color:var(--text-muted)">No entries yet — log your weight to start tracking.</div>'}
+    <button class="btn btn-ghost btn-full mt12" onclick="document.getElementById('zf-overlay')?.remove()">Close</button></div>`);
+}
 
 /* Level-up / rank-up overlay (character GIF + congrats + confetti on rank-up) */
 const RANK_COLORS = { E: '#888', D: '#4cdb8a', C: '#4a9eff', B: '#c084fc', A: '#f5a623', S: '#ff5a5a' };
@@ -208,7 +222,7 @@ export function bgPosPercent() {
    override sheet that only uses var(--*) tokens, so color themes,
    wallpaper and accent pickers keep working untouched. */
 export const UI_STYLES = {
-  liquid: { name: 'Liquid Glass', css: '', icon: 'styleLiquid' },
+  liquid: { name: 'DEFAULT', css: '', icon: 'styleLiquid' },
   neomorph: { name: 'Neomorphism', css: './css/skins/ui-neomorphism.css', icon: 'styleNeomorph' },
   brutalist: { name: 'Neo-Brutalism', css: './css/skins/ui-brutalism.css', icon: 'styleBrutalist' },
   hud: { name: 'Cyberpunk HUD', css: './css/skins/ui-hud.css', icon: 'styleCyber' },
@@ -218,18 +232,9 @@ export const UI_STYLES = {
    in the style-choice dialog; "Keep my colors" leaves tokens untouched. */
 export const UI_STYLE_PRESETS = {
   liquid: { kind: 'builtin', id: 'midnight', label: 'Midnight Blue' },
-  neomorph: {
-    kind: 'theme', label: 'Porcelain',
-    theme: { ...THEMES.light, name: 'Porcelain', bgBase: '#d8dee9', bgSurface: '#e4e9f4', bgRaised: '#edf1f9', bgOverlay: '#f5f7fc', borderMid: '#bfc7da', primary: '#6c7bd6', textPrimary: '#232839', textSecondary: '#566074', textMuted: '#8b93ab', glow1: '#6c7bd6', glow2: '#00b6ff', glow3: '#b678f0', p_hue: '232', inputBg: '#edf1f9' },
-  },
-  brutalist: {
-    kind: 'theme', label: 'Pop',
-    theme: { ...THEMES.light, name: 'Pop', bgBase: '#fff3dc', bgSurface: '#ffffff', bgRaised: '#ffe9be', bgOverlay: '#ffd98f', borderMid: '#141414', primary: '#ff3d00', textPrimary: '#141414', textSecondary: '#3d3d3d', textMuted: '#7a7a7a', glow1: '#ff3d00', glow2: '#004dff', glow3: '#00a651', p_hue: '12', inputBg: '#ffffff' },
-  },
-  hud: {
-    kind: 'theme', label: 'Neon Grid',
-    theme: { name: 'Neon Grid', bgBase: '#060907', bgSurface: '#0a0f0c', bgRaised: '#0f1712', bgOverlay: '#142019', borderMid: '#1e4030', primary: '#39ff14', textPrimary: '#e9ffef', textSecondary: '#a4d8b6', textMuted: '#5f8a6e', glow1: '#39ff14', glow2: '#00b6ff', glow3: '#b6ff4a', p_hue: '120', inputBg: '#0a0f0c' },
-  },
+  neomorph: { kind: 'builtin', id: 'light', label: 'Light' },
+  brutalist: { kind: 'builtin', id: 'brutalist', label: 'Pop' },
+  hud: { kind: 'builtin', id: 'cyberpunk', label: 'Neon Grid' },
 };
 /* System-activation flash on task/quest completion — HUD mode only.
    Pointer-transparent + self-cleaning; reduced-motion skips it. */
@@ -261,6 +266,16 @@ export function applyUiMode() {
   if (link.getAttribute('href') !== href) link.setAttribute('href', href);
   return mode;
 }
+/* Opt-in liquid lens: refraction strength follows the blur slider
+   (0 = flat frosted, deeper blur = stronger lens). Static SVG filter. */
+export function applyLensScale() {
+  try {
+    const m = document.getElementById('zf-lens-map');
+    if (!m) return;
+    const blur = Number(S.glassBlur ?? 4) || 0;
+    m.setAttribute('scale', String(Math.max(-32, -Math.round(blur * 2))));
+  } catch {}
+}
 /* Tab switches hit renderActive() → applyBackgroundConfig() every time.
    Without the guards below the wallpaper blanked + async-reloaded per tab
    (flash/glitch) and every slider tick re-resolved the image. */
@@ -269,11 +284,13 @@ export function applyBackgroundConfig(opts = {}) {
   const st = S;
   const force = opts === true || opts?.force === true;
   // Cheap CSS-var path — tab switches with no visual change are ~1ms no-ops.
-  const cssSig = [st.uiStyle || 'liquid', st.glassMode, st.glassBlur ?? 4, st.glassAlpha ?? 0.55, st.particleHue ?? '', st.accentColor || '', st.navOpacity, st.navOpacityVal ?? 100].join('|');
+  const cssSig = [st.uiStyle || 'liquid', st.glassMode, st.glassBlur ?? 4, st.glassAlpha ?? 0.55, st.liquidLens ? 1 : 0, st.particleHue ?? '', st.accentColor || '', st.navOpacity, st.navOpacityVal ?? 100].join('|');
   if (force || __zfCssSig !== cssSig) {
     __zfCssSig = cssSig;
     applyUiMode();
     document.body.classList.toggle('glass-mode', !!st.glassMode);
+    document.body.classList.toggle('lg-lens-on', !!st.liquidLens && !!st.glassMode);
+    applyLensScale();
     document.documentElement.style.setProperty('--glass-blur', `${st.glassBlur ?? 4}px`);
     document.documentElement.style.setProperty('--glass-alpha', `${st.glassAlpha ?? 0.55}`);
     if (st.particleHue != null) document.documentElement.style.setProperty('--particle-hue', String(st.particleHue));

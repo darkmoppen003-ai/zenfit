@@ -30,10 +30,10 @@ import { renderPrivacy } from '../features/privacy.js';
 export const SCREENS = [
   { id: 'dashboard', label: 'Dashboard', icon: '&#9783;', render: renderDashboard },
   { id: 'nutrition', label: 'Nutrition', icon: '&#127869;', render: renderNutrition },
-  { id: 'water', label: 'Water', icon: '&#128167;', render: renderWater },
-  { id: 'workout', label: 'Workout', icon: '&#127947;', render: renderWorkout },
+  { id: 'water', label: 'Water', icon: ICONS.drop, render: renderWater },
+  { id: 'workout', label: 'Workout', icon: ICONS.workout, render: renderWorkout },
   { id: 'habits', label: 'Habits', icon: '&#9745;', render: renderHabits },
-  { id: 'tasks', label: 'Tasks', icon: '&#128203;', render: renderTasks },
+  { id: 'tasks', label: 'Tasks', icon: ICONS.tasks, render: renderTasks },
   { id: 'mind', label: 'Mind', icon: '&#129496;', render: renderMind },
   { id: 'quests', label: 'Quests', icon: '&#11088;', render: renderQuests },
   { id: 'analytics', label: 'Analytics', icon: '&#128200;', render: renderAnalytics },

@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 18;
-export const APP_VERSION = "8.9.3.5";
+export const DATA_VERSION = 19;
+export const APP_VERSION = "8.9.3.6";
 
-export const APP_BUILD = "2026.10.11.49";
+export const APP_BUILD = "2026.10.14.50";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -38,7 +38,7 @@ const SCHEMA = {
   notificationsEnabled: 'boolean', globalLeaderboardOptIn: 'boolean',
   customFoods: 'array', customBottomNav: 'array', restDays: 'array',
   mood: 'object', glassMode: 'boolean', glassBlur: 'number',
-  glassAlpha: 'number', navOpacity: 'boolean', navLabels: 'boolean',
+  glassAlpha: 'number', liquidLens: 'boolean', navOpacity: 'boolean', navLabels: 'boolean',
   bgType: 'string', bgImage: 'string', bgDim: 'number',
   particlesEnabled: 'boolean', particleCount: 'number',
   particleEffect: 'string', particleHue: 'number', particleSpeed: 'number', cyberDirection: 'string', sparkDirection: 'string',
@@ -109,6 +109,7 @@ export function defaultState() {
     glassMode: true,
     glassBlur: 4,
     glassAlpha: 0.15,
+    liquidLens: false,
     navOpacity: true,
     navOpacityVal: 100,
     uiStyle: 'liquid',
@@ -303,6 +304,12 @@ export function migrateData(saved) {
     // ponytail: uiStyle global defaults to liquid; unknown values fall back (no blank UI)
     if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(saved.uiStyle)) saved.uiStyle = 'liquid';
     saved.dataVersion = 18;
+  }
+  if (version < 19) {
+    // ponytail: opt-in SVG lens + nullable target weight — backfill defaults, history untouched
+    if (typeof saved.liquidLens !== 'boolean') saved.liquidLens = false;
+    if (saved.profile && saved.profile.targetWeightKg == null) saved.profile.targetWeightKg = null;
+    saved.dataVersion = 19;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

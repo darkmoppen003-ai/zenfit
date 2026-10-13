@@ -58,7 +58,8 @@ body[data-ui="brutalist"] textarea {
 
 body[data-ui="brutalist"] .screen-header .sh-title {
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  font-size: clamp(20px, 6vw, 24px);
 }
 body[data-ui="brutalist"] .badge { border: 1px solid var(--text-primary); border-radius: 4px; }
 body[data-ui="brutalist"] .bottom-nav,

@@ -30,6 +30,19 @@ export const THEMES = {
     timerOkBg: 'rgba(74,158,255,0.1)', timerWarnBg: 'rgba(245,166,35,0.1)', timerOverBg: 'rgba(255,90,90,0.1)',
     overlayScrim: 'rgba(0,0,0,0.55)', changelogScrim: 'rgba(0,0,0,0.35)',
   },
+  brutalist: {
+    name: 'Pop', bgBase: '#fff3dc', bgSurface: '#ffffff', bgRaised: '#ffe9be', bgOverlay: '#ffd98f', borderMid: '#141414', primary: '#ff3d00', textPrimary: '#141414', textSecondary: '#3d3d3d', textMuted: '#7a7a7a', glow1: '#ff3d00', glow2: '#004dff', glow3: '#00a651', p_hue: '12', inputBg: '#ffffff',
+    calDeficit: '#e8f5e9', calDeficit2: '#f0faf0', calSurplus: '#fff3e0', calSurplus2: '#fffaf0', calBalanced: '#e3f2fd', calBalanced2: '#f0f8ff',
+    badgeBlueBg: '#dbeafe', badgeTealBg: '#ccfbf1', badgeEnergyBg: '#ffedd5', badgeGreenBg: '#d1fae5', badgeAmberBg: '#fef3c7', badgeRedBg: '#fee2e2',
+    gradeABg: '#d1fae5', gradeBBg: '#dbeafe', gradeCBg: '#fef3c7', gradeDBg: '#ffedd5', gradeEBg: '#fee2e2',
+    calDayDoneBg: '#d1fae5', calDayDoneBorder: '#6ee7b7',
+    swipeHintBg: 'rgba(0,0,0,0.06)', previewCardBg: 'rgba(255,255,255,0.95)', homeStatsBg: 'rgba(255,243,220,0.85)', statBadgeBg: 'rgba(0,0,0,0.03)', orbBg: 'rgba(255,255,255,0.85)',
+    hm1Bg: 'rgba(76,219,138,0.15)', hm1Border: 'rgba(76,219,138,0.25)', hm2Bg: 'rgba(76,219,138,0.35)', hm2Border: 'rgba(76,219,138,0.45)', hm3Bg: '#4cdb8a', hm3Border: '#4cdb8a',
+    achEarnedGlow: 'rgba(245,166,35,0.15)', taskOverdueBg: 'rgba(255,90,90,0.08)', taskCompletedBg: 'rgba(76,219,138,0.08)',
+    timerOkBg: 'rgba(74,158,255,0.1)', timerWarnBg: 'rgba(245,166,35,0.1)', timerOverBg: 'rgba(255,90,90,0.1)',
+    overlayScrim: 'rgba(0,0,0,0.55)', changelogScrim: 'rgba(0,0,0,0.35)',
+  },
+  cyberpunk: { name: 'Neon Grid', bgBase: '#060907', bgSurface: '#0a0f0c', bgRaised: '#0f1712', bgOverlay: '#142019', borderMid: '#1e4030', primary: '#39ff14', textPrimary: '#e9ffef', textSecondary: '#a4d8b6', textMuted: '#5f8a6e', glow1: '#39ff14', glow2: '#00b6ff', glow3: '#b6ff4a', p_hue: '120', inputBg: '#0a0f0c' },
 };
 
 export function hexToRgb(hex) {

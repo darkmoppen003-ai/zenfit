@@ -11,7 +11,7 @@
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { calcBurn, getTodayStr } from '../core/utils.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, celebrateFirst, onEnter } from '../core/ui.js';
+import { showNotif, awardXP, celebrateFirst, onEnter, ICONS } from '../core/ui.js';
 import { latestWeight, todayNutrition, today } from '../core/selectors.js';
 import { checkAutoQuests } from './quests.js';
 import { checkAchievements } from '../core/achievements.js';
@@ -114,9 +114,9 @@ export function renderWorkout(host, subTab) {
   if (subTab === 'log' || subTab === 'plans' || subTab === 'burn') sub = subTab;
   host.innerHTML = `
   <div class="chart-tab-bar" data-no-swipe>
-    <div class="chart-tab${sub === 'log' ? ' active' : ''}" data-wtab="log">🏋️ Log</div>
-    <div class="chart-tab${sub === 'plans' ? ' active' : ''}" data-wtab="plans">📋 Plans</div>
-    <div class="chart-tab${sub === 'burn' ? ' active' : ''}" data-wtab="burn">🔥 Burn</div>
+    <div class="chart-tab${sub === 'log' ? ' active' : ''}" data-wtab="log"><span class="lbl-ic">${ICONS.workout}</span>Log</div>
+    <div class="chart-tab${sub === 'plans' ? ' active' : ''}" data-wtab="plans"><span class="lbl-ic">${ICONS.clipboard}</span>Plans</div>
+    <div class="chart-tab${sub === 'burn' ? ' active' : ''}" data-wtab="burn"><span class="lbl-ic">${ICONS.flame}</span>Burn</div>
   </div>
   <div id="w-body"></div>`;
   host.querySelectorAll('[data-wtab]').forEach((t) => {
@@ -215,7 +215,7 @@ function renderLog(body) {
       <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary)">
         ${w.sets ? `<span>${w.sets} sets</span>` : ''}${w.reps ? `<span>× ${w.reps} reps</span>` : ''}
         ${w.weight ? `<span>@ ${w.weight}kg</span>` : ''}${w.duration ? `<span>${w.duration} min</span>` : ''}
-        ${cal ? `<span style="color:var(--danger)">🔥 ${cal} kcal</span>` : ''}
+        ${cal ? `<span style="color:var(--danger)"><span class="lbl-ic">${ICONS.flame}</span>${cal} kcal</span>` : ''}
         ${vol > 0 ? `<span style="color:var(--info)">${vol >= 1000 ? (vol / 1000).toFixed(1) + 'k' : vol} kg·vol</span>` : ''}
       </div>${w.notes ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${escapeHtml(w.notes)}</div>` : ''}`;
     row.querySelector('[data-wdel]').onclick = () => {
@@ -584,7 +584,7 @@ function renderBurn(body) {
     }
     box.innerHTML = `<div style="background:rgba(255,77,106,.09);border:1px solid rgba(255,77,106,.27);border-radius:8px;padding:12px">
       <div style="font-size:13px;font-weight:500;text-transform:capitalize;margin-bottom:6px">${escapeHtml(parsed.actName)} · ${parsed.duration} min · MET ${parsed.met}</div>
-      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);color:var(--danger)">🔥 ${cal} kcal</div></div>`;
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);color:var(--danger)"><span class="lbl-ic">${ICONS.flame}</span>${cal} kcal</div></div>`;
     btn.style.display = 'block';
   };
   body.querySelector('#log-act-btn').onclick = () => {
@@ -608,7 +608,7 @@ function renderBurn(body) {
   const lists = body.querySelector('#burn-lists');
   const row = (e, gi, fromW) => `
     <div class="card-sm mb8 flex gap12">
-      <div style="width:34px;height:34px;background:rgba(255,77,106,.09);border:1px solid rgba(255,77,106,.27);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${fromW ? '🏋️' : '🔥'}</div>
+      <div style="width:34px;height:34px;background:rgba(255,77,106,.09);border:1px solid rgba(255,77,106,.27);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="collapse-ic">${fromW ? ICONS.dumbbell : ICONS.flame}</span></div>
       <div style="flex:1"><div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(e.activity)}</div>
       <div style="font-size:11px;color:var(--text-secondary)">${e.duration}min · MET ${e.met?.toFixed ? e.met.toFixed(1) : e.met || '?'} · ${e.weightKg}kg${e.inclineDeg > 0 ? ` · ${e.inclineDeg}°` : ''}</div></div>
       <div style="text-align:right;flex-shrink:0"><div style="font-size:15px;font-weight:600;color:var(--danger)">-${e.calories}</div>
@@ -649,6 +649,6 @@ function burnCalcPreview(body) {
   }
   const cal = Math.round(calcBurn(met, dur, wt));
   box.innerHTML = `<div style="font-size:11px;color:var(--text-muted)">ESTIMATE</div>
-    <div style="font-size:24px;font-weight:800;font-family:var(--font-display);color:var(--danger)">🔥 ${cal} <span style="font-size:12px">kcal</span></div>
+    <div style="font-size:24px;font-weight:800;font-family:var(--font-display);color:var(--danger)"><span class="lbl-ic">${ICONS.flame}</span>${cal} <span style="font-size:12px">kcal</span></div>
     <div style="font-size:11px;color:var(--text-muted)">${escapeHtml(act)} · ${dur} min · MET ${met.toFixed(1)} · ${wt}kg</div>`;
 }

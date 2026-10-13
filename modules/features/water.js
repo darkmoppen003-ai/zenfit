@@ -4,7 +4,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, celebrateFirst, sfx, onEnter } from '../core/ui.js';
+import { showNotif, awardXP, celebrateFirst, sfx, onEnter, ICONS } from '../core/ui.js';
 import { todayWater, today } from '../core/selectors.js';
 import { checkAutoQuests } from './quests.js';
 import { checkAchievements } from '../core/achievements.js';
@@ -79,7 +79,7 @@ export function renderWater(host) {
     const gi = S.water.entries.indexOf(e);
     const row = document.createElement('div');
     row.className = 'card-sm mb8 flex-between';
-    row.innerHTML = `<span style="color:var(--water)">💧 ${e.ml}ml</span>`
+    row.innerHTML = `<span style="color:var(--water)"><span class="lbl-ic">${ICONS.drop}</span>${e.ml}ml</span>`
       + `<span style="font-size:11px;color:var(--text-muted)">${e.ts ? new Date(e.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>`
       + `<button class="btn btn-icon btn-sm" data-wdel="${gi}" style="color:var(--danger)">×</button>`;
     row.querySelector('[data-wdel]').onclick = () => {

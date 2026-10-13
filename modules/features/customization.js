@@ -7,7 +7,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, idbPutImage, idbDeleteImage, idbGetImage, resolveBgSrc } from '../core/store.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
-import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles, applyUiMode, UI_STYLES, UI_STYLE_PRESETS, ICONS } from '../core/ui.js';
+import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles, applyUiMode, applyLensScale, UI_STYLES, UI_STYLE_PRESETS, ICONS } from '../core/ui.js';
 import { toggleFullscreen, isFullscreen } from '../core/fullscreen.js';
 import { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme } from '../core/themes.js';
 export { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme };
@@ -21,8 +21,8 @@ function isCollapsed(key) {
 }
 
 const EFFECT_LABELS = {
-  dust: '✨ Constellation', snow: '❄️ Snow', embers: '🔥 Embers',
-  firefly: '✨ Firefly', matrix: '🌧️ Matrix Rain', cyber: '⚡ Cyber Spark',
+  dust: ['Constellation', 'star'], snow: ['Snow', 'snowflake'], embers: ['Embers', 'flame'],
+  firefly: ['Firefly', 'sparkle'], matrix: ['Matrix Rain', 'rainCloud'], cyber: ['Cyber Spark', 'zap'],
 };
 
 /* Style-pick dialog: preset colors + solid bg, preset colors + current bg,
@@ -41,7 +41,7 @@ function uiStyleDialog(id) {
     <button class="btn" id="uisw-default">Use ${escapeHtml(presetName)} + current background</button>
     <button class="btn" id="uisw-keep">Keep my colors & background</button></div>`);
   try {
-    const t = preset?.kind === 'builtin' ? THEMES[preset.id] : preset?.theme;
+    const t = preset && THEMES[preset.id];
     if (t) {
       const q = (sid) => document.querySelector(sid);
       if (q('#uisw-bar')) q('#uisw-bar').style.background = t.bgSurface;
@@ -53,10 +53,8 @@ function uiStyleDialog(id) {
       if (q('#uisw-c2')) { q('#uisw-c2').style.background = t.bgSurface; q('#uisw-c2').style.border = `1px solid ${t.primary}`; }
     }
   } catch {}
-  const applyPreset = () => {
-    if (preset?.kind === 'builtin' && THEMES[preset.id]) applyTheme(preset.id);
-    else if (preset?.theme) applyThemeObject({ ...preset.theme }, S.theme);
-  };
+  // ponytail: presets are built-in theme ids — applyTheme persists S.theme, so colors survive refresh
+  const applyPreset = () => { if (preset && THEMES[preset.id]) applyTheme(preset.id); };
   document.querySelector('#uisw-solid').onclick = () => {
     try {
       applyPreset();
@@ -88,18 +86,18 @@ export function renderCustomization(host) {
   host.innerHTML = `
   <div class="section-title">Background</div>
   <div class="card mb8">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🖼️ Background Type</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.image}</span>Background Type</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       ${['solid', 'image'].map((t) => {
         const active = S.bgType === t;
         return `<button data-bgtype="${t}" style="flex:1;min-width:70px;padding:10px 8px;border-radius:10px;border:2px solid ${active ? 'var(--primary)' : 'var(--border-mid)'};background:${active ? 'var(--bg-raised)' : 'var(--bg-overlay)'};color:${active ? 'var(--primary)' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">`
-          + `<span style="font-size:16px">${t === 'solid' ? '🎨' : '🖼️'}</span><span>${t === 'solid' ? '🎨 Solid' : '🖼️ Image'}</span></button>`;
+          + `<span class="collapse-ic">${ICONS[t === 'solid' ? 'palette' : 'image']}</span><span>${t === 'solid' ? 'Solid' : 'Image'}</span></button>`;
       }).join('')}
     </div>
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', '🖼️', 'Gallery, framing & dimming', 'default-collapsed')}
+    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', `<span class="collapse-ic">${ICONS.image}</span><span class="collapse-ic collapse-ic-xs">${ICONS.gear}</span>`, 'Gallery, framing & dimming', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('wallpaper-sliders') ? ' collapsed' : ''}" id="wallpaper-sliders">
       <div class="section-title mt12">Gallery</div>
       <div class="grid3" id="wp-gallery"></div>
@@ -109,7 +107,7 @@ export function renderCustomization(host) {
         <label class="btn btn-sm" style="cursor:pointer">Upload<input type="file" id="wp-upload" accept="image/*" style="display:none"></label>
         <button class="btn btn-sm btn-ghost" id="wp-clear">Remove wallpaper</button>
       </div>
-      ${collapseHeader('wp-frameed', 'Frame Editor', '🖼️', 'Crop, zoom, position & fit', 'default-collapsed')}
+      ${collapseHeader('wp-frameed', 'Frame Editor', `<span class="collapse-ic">${ICONS.fullscreen}</span>`, 'Crop, zoom, position & fit', 'default-collapsed')}
       <div class="collapsible-body${isCollapsed('wp-frameed') ? ' collapsed' : ''}" id="wp-frameed">
       <div class="section-title mt16">Frame editor — drag to move · pinch/scroll to zoom · 0 is centered</div>
       <div class="wp-frame" id="wp-frame">
@@ -126,7 +124,7 @@ export function renderCustomization(host) {
           <span class="wp-stepper"><button data-step="wp-y:-5">−</button><input type="range" class="slider" id="wp-y" min="-100" max="100" step="1" value="0"><button data-step="wp-y:+5">+</button></span></label>
         <label style="font-size:12px">Dim <span id="wp-dim-v">${S.bgDim ?? 40}%</span>
           <span class="wp-stepper"><button data-step="wp-dim:-5">−</button><input type="range" class="slider" id="wp-dim" min="0" max="85" step="1" value="${S.bgDim ?? 40}"><button data-step="wp-dim:+5">+</button></span></label>
-        <button class="btn btn-sm btn-ghost mt8" id="wp-center">⌖ Snap to center</button>
+        <button class="btn btn-sm btn-ghost mt8" id="wp-center"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.target}</span>Snap to center</button>
       </div>
       <div class="flex gap8 mt8">
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px">Fit</div>
@@ -140,10 +138,10 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('particle-fx', 'Particle Effects', '✨', 'Count, hue, speed & direction', 'default-collapsed')}
+    ${collapseHeader('particle-fx', 'Particle Effects', `<span class="collapse-ic">${ICONS.star}</span>`, 'Count, hue, speed & direction', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('particle-fx') ? ' collapsed' : ''}" id="particle-fx">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;margin-top:12px">
-          <div><div style="font-size:13px;font-weight:600">✨ Particles</div>
+          <div><div style="font-size:13px;font-weight:600"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.star}</span>Particles</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Floating particle effects</div></div>
           <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
             <input type="checkbox" id="fx-p" ${S.particlesEnabled ? 'checked' : ''} style="opacity:0;width:0;height:0">
@@ -176,7 +174,7 @@ export function renderCustomization(host) {
 
   <div class="section-title">Display</div>
   <div class="card mb8">
-    <div class="flex-between"><div><div style="font-size:13px;font-weight:600">📱 Fullscreen Mode</div>
+    <div class="flex-between"><div><div style="font-size:13px;font-weight:600"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.fullscreen}</span>Fullscreen Mode</div>
       <div style="font-size:11px;color:var(--text-muted)">Toggles fullscreen immediately, plus auto on splash for phones</div></div>
       <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
         <input type="checkbox" id="fs-auto" ${S.fullscreenAutoStart !== false ? 'checked' : ''} style="opacity:0;width:0;height:0">
@@ -186,7 +184,7 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('nav-opacity', 'Navigation Bar Opacity', '🧭', 'Bottom pill transparency', 'default-collapsed')}
+    ${collapseHeader('nav-opacity', 'Navigation Bar Opacity', `<span class="collapse-ic">${ICONS.compass}</span>`, 'Bottom pill transparency', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('nav-opacity') ? ' collapsed' : ''}" id="nav-opacity">
       <div class="flex-between mt8"><div><div style="font-size:13px;font-weight:600">Transparent nav bar</div>
       <div style="font-size:11px;color:var(--text-muted)">Applies the slider below to bottom bars</div></div>
@@ -201,13 +199,19 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('glass-sliders', 'Liquid Glass', '🪟', 'Frosted blur on cards · shadow depth in other styles', 'default-collapsed')}
+    ${collapseHeader('glass-sliders', 'Transparency', `<span class="collapse-ic">${ICONS.frostPane}</span>`, 'Frosted blur on cards · shadow depth in other styles', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('glass-sliders') ? ' collapsed' : ''}" id="glass-sliders">
-      <label class="flex-between mt8" style="font-size:13px">Glass mode
+      <label class="flex-between mt8" style="font-size:13px">Transparency
         <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
         <input type="checkbox" id="fx-glass" ${S.glassMode ? 'checked' : ''} style="opacity:0;width:0;height:0">
         <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${S.glassMode ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;border:1px solid var(--border-strong)">
         <span style="position:absolute;height:18px;width:18px;left:${S.glassMode ? '20px' : '3px'};bottom:2px;background:#fff;border-radius:50%"></span></span></span></label>
+      <label class="flex-between mt8" style="font-size:13px">Liquid lens <span style="font-size:10px;color:var(--text-muted)">experimental</span>
+        <span style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0">
+        <input type="checkbox" id="fx-lens" ${S.liquidLens ? 'checked' : ''} style="opacity:0;width:0;height:0">
+        <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${S.liquidLens ? 'var(--primary-dark)' : 'var(--bg-overlay)'};border-radius:24px;border:1px solid var(--border-strong)">
+        <span style="position:absolute;height:18px;width:18px;left:${S.liquidLens ? '20px' : '3px'};bottom:2px;background:#fff;border-radius:50%"></span></span></span></label>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Refracts the wallpaper through cards (Chromium). Blur drives lens strength; other browsers keep frosted glass.</div>
       <label style="font-size:12px">Blur <span id="fx-blur-v">${S.glassBlur ?? 4}px</span>
         <input type="range" class="slider" id="fx-blur" min="0" max="30" step="1" value="${S.glassBlur ?? 4}"></label>
       <div style="position:relative;height:24px;margin-bottom:8px">
@@ -226,7 +230,7 @@ export function renderCustomization(host) {
 
   <div class="section-title">Interface Style</div>
   <div class="card mb8">
-    ${collapseHeader('ui-style', 'Interface Style', `<span class="collapse-ic">${ICONS.sliders}</span>`, 'Liquid · Neomorph · Brutalist · Cyberpunk', 'default-open')}
+    ${collapseHeader('ui-style', 'Interface Style', `<span class="collapse-ic">${ICONS.sliders}</span>`, 'DEFAULT · Neomorph · Brutalist · Cyberpunk', 'default-open')}
     <div class="collapsible-body${S.collapsedSections?.['ui-style'] ? ' collapsed' : ''}" id="ui-style">
       <div class="grid2 mt8" id="ui-style-grid">
         ${Object.entries(UI_STYLES).map(([id, m]) => {
@@ -241,15 +245,15 @@ export function renderCustomization(host) {
 
   <div class="section-title">Themes</div>
   <div class="card mb8">
-    <div><div style="font-size:13px;font-weight:600">🎨 Themes</div>
+    <div><div style="font-size:13px;font-weight:600"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.palette}</span>Themes</div>
     <div style="font-size:11px;color:var(--text-muted)">Built-in & custom color schemes</div></div>
     <div id="themes-wrap">
       <div class="section-title mt12">Themes</div>
-      ${collapseHeader('themesBuiltin', 'Built-In Themes', '🎨', 'Four hand-tuned schemes', 'default-open')}
+      ${collapseHeader('themesBuiltin', 'Built-In Themes', `<span class="collapse-ic">${ICONS.palette}</span>`, 'Six hand-tuned schemes', 'default-open')}
       <div class="collapsible-body${S.collapsedSections?.['themesBuiltin'] ? ' collapsed' : ''}" id="themesBuiltin">
       <div class="grid2" id="theme-grid"></div>
       </div>
-      ${collapseHeader('themesCustom', 'Custom Themes', '🛠️', 'Yours + coach picks', 'default-open')}
+      ${collapseHeader('themesCustom', 'Custom Themes', `<span class="collapse-ic">${ICONS.gear}</span>`, 'Yours + coach picks', 'default-open')}
       <div class="collapsible-body${S.collapsedSections?.['themesCustom'] ? ' collapsed' : ''}" id="themesCustom">
       <div id="custom-themes-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
       </div>
@@ -263,7 +267,7 @@ export function renderCustomization(host) {
         <label style="font-size:12px">Name<input type="text" id="th-name" placeholder="Theme name" maxlength="30"></label>
         <label style="font-size:12px">Template<select id="th-tpl"></select></label>
         <label style="font-size:12px">Wallpaper<select id="th-wp"><option value="">— keep current —</option></select></label>
-        <label style="font-size:12px">Particles<select id="th-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="embers">🔥 Embers</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
+        <label style="font-size:12px">Particles<select id="th-fx"><option value="">— keep current —</option><option value="dust">Constellation</option><option value="snow">Snow</option><option value="embers">Embers</option><option value="firefly">Firefly</option><option value="matrix">Matrix Rain</option><option value="cyber">Cyber Spark</option></select></label>
       </div>
       <div class="section-title mt12">Surfaces</div>
       <div id="th-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -288,7 +292,7 @@ export function renderCustomization(host) {
     </div>
   </div>
   <div class="card mb8">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">🎨 Accent Color</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.palette}</span>Accent Color</div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="accent-row"></div>
       <div style="display:flex;align-items:center;gap:6px;width:100%">
@@ -535,9 +539,9 @@ export function renderCustomization(host) {
   /* particles */
   host.querySelector('#fx-p').onchange = (e) => update((s) => { s.particlesEnabled = e.target.checked; });
   const fxBox = host.querySelector('#fx-effects');
-  fxBox.innerHTML = Object.entries(EFFECT_LABELS).map(([ef, label]) => {
+  fxBox.innerHTML = Object.entries(EFFECT_LABELS).map(([ef, [label, ic]]) => {
     const active = (S.particleEffect || 'dust') === ef;
-    return `<button data-fx="${ef}" style="flex:1 1 calc(50% - 3px);min-width:110px;padding:8px;border-radius:10px;border:2px solid ${active ? 'var(--primary)' : 'var(--border-mid)'};background:${active ? 'var(--bg-raised)' : 'var(--bg-overlay)'};color:${active ? 'var(--primary)' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer">${label}</button>`;
+    return `<button data-fx="${ef}" style="flex:1 1 calc(50% - 3px);min-width:110px;padding:8px;border-radius:10px;border:2px solid ${active ? 'var(--primary)' : 'var(--border-mid)'};background:${active ? 'var(--bg-raised)' : 'var(--bg-overlay)'};color:${active ? 'var(--primary)' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS[ic] || ''}</span>${label}</button>`;
   }).join('');
   fxBox.querySelectorAll('[data-fx]').forEach((b) => {
     b.onclick = () => {
@@ -599,10 +603,16 @@ export function renderCustomization(host) {
 
   /* glass */
   host.querySelector('#fx-glass').onchange = (e) => update((s) => { s.glassMode = e.target.checked; });
+  host.querySelector('#fx-lens').onchange = (e) => {
+    update((s) => { s.liquidLens = e.target.checked; });
+    window.ZF.applyBg();
+    window.ZF.rerender();
+  };
   host.querySelector('#fx-blur').oninput = (e) => {
     host.querySelector('#fx-blur-v').textContent = `${e.target.value}px`;
     update((s) => { s.glassBlur = Number(e.target.value); }, { silent: true });
     document.documentElement.style.setProperty('--glass-blur', `${e.target.value}px`);
+    applyLensScale();
   };
   host.querySelector('#fx-blur').onchange = () => window.ZF.save();
   host.querySelector('#fx-alpha').oninput = (e) => {
@@ -629,6 +639,7 @@ export function renderCustomization(host) {
       host.querySelector('#fx-blur-v').textContent = `${v}px`;
       update((s) => { s.glassBlur = v; }, { silent: true });
       document.documentElement.style.setProperty('--glass-blur', `${v}px`);
+      applyLensScale();
       window.ZF.save();
       window.ZF.rerender();
     };
@@ -966,7 +977,7 @@ export function renderCustomization(host) {
 }
 
 function askSparkDirection() {
-  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">🔥 Embers direction</div>
+  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.flame}</span>Embers direction</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Straight rises vertically like embers. Diagonal slants with the wind.</div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="btn ${S.sparkDirection !== 'diagonal' ? 'btn-primary' : ''}" id="sp-straight">Straight</button>
@@ -981,7 +992,7 @@ function askSparkDirection() {
 }
 
 function askCyberDirection() {
-  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">⚡ Cyber Spark direction</div>
+  openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.zap}</span>Cyber Spark direction</div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Straight falls vertically (V1 neon rain). Diagonal drifts like before.</div>
     <div style="display:flex;gap:8px;justify-content:center">
       <button class="btn ${S.cyberDirection !== 'diagonal' ? 'btn-primary' : ''}" id="cy-straight">Straight</button>

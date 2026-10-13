@@ -8,7 +8,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, celebrateFirst, openOverlay } from '../core/ui.js';
+import { showNotif, awardXP, celebrateFirst, openOverlay, ICONS } from '../core/ui.js';
 import { todayNutrition } from '../core/selectors.js';
 import {
   parseFoodInput, gradeFood, gradeLabel, nn, recalcFood, FOOD_UNIT, SERVING_METRICS,
@@ -137,9 +137,9 @@ export function renderNutrition(host, subTab) {
 
   host.innerHTML = `
   <div class="chart-tab-bar" data-no-swipe>
-    <div class="chart-tab${tab === 'today' ? ' active' : ''}" data-ntab="today">📊 Today</div>
-    <div class="chart-tab${tab === 'calculator' ? ' active' : ''}" data-ntab="calculator">🔬 Calculator</div>
-    <div class="chart-tab${tab === 'mealplans' ? ' active' : ''}" data-ntab="mealplans">📋 Meal Plans</div>
+    <div class="chart-tab${tab === 'today' ? ' active' : ''}" data-ntab="today"><span class="lbl-ic">${ICONS.chart}</span>Today</div>
+    <div class="chart-tab${tab === 'calculator' ? ' active' : ''}" data-ntab="calculator"><span class="lbl-ic">${ICONS.calculator}</span>Calculator</div>
+    <div class="chart-tab${tab === 'mealplans' ? ' active' : ''}" data-ntab="mealplans"><span class="lbl-ic">${ICONS.clipboard}</span>Meal Plans</div>
   </div>
   <div id="nut-body"></div>`;
 
@@ -162,9 +162,9 @@ function renderToday(body, nut, g) {
     <div class="flex-between"><div class="section-title" style="margin:0">Log Food</div>
     <button class="btn btn-icon btn-sm" id="serv-info" title="Serving sizes guide" style="color:var(--info)">ⓘ</button></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="btn btn-sm${ft === 'text' ? ' btn-primary' : ''}" data-ft="text">📝 Text</button>
-      <button class="btn btn-sm${ft === 'barcode' ? ' btn-primary' : ''}" data-ft="barcode">📷 Barcode</button>
-      <button class="btn btn-sm${ft === 'manual' ? ' btn-primary' : ''}" data-ft="manual">✏️ Manual</button>
+      <button class="btn btn-sm${ft === 'text' ? ' btn-primary' : ''}" data-ft="text"><span class="lbl-ic">${ICONS.pencil}</span>Text</button>
+      <button class="btn btn-sm${ft === 'barcode' ? ' btn-primary' : ''}" data-ft="barcode"><span class="lbl-ic">${ICONS.camera}</span>Barcode</button>
+      <button class="btn btn-sm${ft === 'manual' ? ' btn-primary' : ''}" data-ft="manual"><span class="lbl-ic">${ICONS.pencil}</span>Manual</button>
     </div>
     <div id="ft-text" style="${ft === 'text' ? '' : 'display:none'}">
       <input type="text" id="food-input" placeholder="e.g. 2 chapati, 3 eggs, 200g rice, 250ml milk, 1 bowl dal..." style="margin-bottom:8px" maxlength="300">
@@ -183,7 +183,7 @@ function renderToday(body, nut, g) {
         <button id="bc-stop" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer">✕ Stop</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button class="btn btn-primary" id="bc-camera-btn">📷 Scan Barcode</button>
+        <button class="btn btn-primary" id="bc-camera-btn"><span class="lbl-ic">${ICONS.camera}</span>Scan Barcode</button>
         <input type="number" id="bc-input" placeholder="Or enter barcode..." style="flex:1">
         <button class="btn" id="bc-lookup">Lookup</button>
       </div>
@@ -330,7 +330,7 @@ function fallbackPrompt(body, parsed, failed) {
   parsedFood = parsed;
   box.innerHTML = '<div style="color:var(--danger);font-size:13px;margin-bottom:6px">Could not recognize some items. Log them manually:</div>'
     + failed.map((f) => `<div style="padding:6px 0;border-bottom:1px solid var(--border-mid)"><span>${escapeHtml(f)}</span> <span style="color:var(--danger);font-size:12px">— not recognized</span></div>`).join('')
-    + '<button class="btn btn-primary btn-sm" style="margin-top:8px" id="food-gomanual">✏️ Log manually</button>';
+    + '<button class="btn btn-primary btn-sm" style="margin-top:8px" id="food-gomanual"><span class="lbl-ic">' + ICONS.pencil + '</span>Log manually</button>';
   if (btn) btn.style.display = 'none';
   box.querySelector('#food-gomanual').onclick = () => { ft = 'manual'; window.ZF.rerender(); };
   if (parsed.length) { parsedFood = parsed; drawPreview(body); if (btn) btn.style.display = 'block'; }
