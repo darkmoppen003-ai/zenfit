@@ -256,3 +256,8 @@ failing items get a "Log manually" switch, never silent drops.
 25.4. **PNG export is zero-dependency DOM-snapshot** (SVG foreignObject → canvas → PNG → download / `navigator.share` files). No new runtime dep. Remote-`https:` wallpaper taint falls back to a toast + wallpaper-off retry.
 25.5. **Export paints, never snapshots.** The foreignObject serializer drops page CSS (export came out as bare text) — the exporter is a hand-drawn canvas painter (`paintCard`: theme tokens, avatar, XP bar, stat grid, wallpaper cover). Verified headless via a minimal in-Node PNG parser (IHDR + zlib IDAT unfilter → distinct-color count, 36–44 colors, 0 pageerrors).
 25.6. **Analytics feels alive (v8.9.5).** Shared `animateNumbers(root)` in `core/animations.js` (count-ups with suffix/decimals, `.xp-bar[data-w]` fills, `circle[data-ring]` sweeps, `.insight` rises; reduced-motion + no-anime = instant finals). Showcase refactored onto it (no duplication). Analytics calls it once per section render; ring track strokes use `var(--border-mid)` (never hardcoded `#2a3050`). Radar keeps `animation:false` (headless-compositor artifact).
+
+## 26. Push destination (standing — the `origin` remote does not exist)
+
+26.1. **Push V2 to the `zenfit` repo** (`v1-repo` remote, `darkmoppen003-ai/zenfit`, branch `main`) — it has served V2 since round-17, so this is a normal fast-forward, not an overwrite. Never push to `origin` (`zenfit-v2` does not exist); never force-push without an explicit owner order.
+26.2. **Before pushing:** `git fetch v1-repo main` + `git merge-base --is-ancestor v1-repo/main main` must print FAST-FORWARD SAFE. If not an ancestor, stop and ask — do not rebase/merge silently.
