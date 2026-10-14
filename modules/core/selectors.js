@@ -167,3 +167,28 @@ export function calorieBalance() {
   const diff = net - goal;
   return { eaten, burned, net, goal, diff, state: diff < -150 ? 'deficit' : diff > 150 ? 'surplus' : 'balanced' };
 }
+
+/* ── Showcase: one formula for the flex card (features never compute inline) ── */
+export function showcaseStats() {
+  const p = S.player || {};
+  const stats = p.stats || {};
+  let bestStreak = 0;
+  try {
+    bestStreak = (S.habits || []).reduce((a, h) => Math.max(a, h.streak || habitStreak(h) || 0), 0);
+  } catch { bestStreak = 0; }
+  return {
+    name: S.profile?.name || p.name || 'Hunter',
+    level: p.level || 1,
+    xp: p.xp || 0,
+    rank: p.rank || 'E',
+    streak: bestStreak,
+    strength: stats.strength ?? 10,
+    endurance: stats.endurance ?? 10,
+    discipline: stats.discipline ?? 10,
+    health: stats.health ?? 10,
+    wisdom: stats.wisdom ?? 10,
+    achCount: (S.achievements || []).length,
+    theme: S.theme || 'midnight',
+    uiStyle: S.uiStyle || 'liquid',
+  };
+}

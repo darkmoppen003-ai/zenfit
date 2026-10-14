@@ -22,6 +22,7 @@ import { renderAnalytics } from '../features/analytics.js';
 import { renderLeaderboard } from '../features/leaderboard.js';
 import { renderProfile } from '../features/profile.js';
 import { renderCustomization } from '../features/customization.js';
+import { renderShowcase } from '../features/showcase.js';
 import { renderAdmin } from '../features/admin.js';
 import { renderAchievements } from '../features/achievements-screen.js';
 import { renderInbox } from '../features/inbox.js';
@@ -40,6 +41,7 @@ export const SCREENS = [
   { id: 'leaderboard', label: 'Leaderboard', icon: ICONS.leaderboard, render: renderLeaderboard },
   { id: 'profile', label: 'Profile', icon: ICONS.user, render: renderProfile },
   { id: 'customization', label: 'Customization', icon: ICONS.customization, render: renderCustomization },
+  { id: 'showcase', label: 'Showcase', icon: ICONS.showcase, render: renderShowcase },
   // Admin + achievements + inbox + privacy are hidden: no nav entry.
   { id: 'admin', label: 'Admin', icon: ICONS.shieldCheck, render: renderAdmin, hidden: true },
   { id: 'achievements', label: 'Achievements', icon: ICONS.trophy, render: renderAchievements, hidden: true },
@@ -53,6 +55,7 @@ const DOCK_ICONS = {
   habits: ICONS.habits, analytics: ICONS.analytics, water: ICONS.water,
   quests: ICONS.quests, tasks: ICONS.tasks, mind: ICONS.mindCyber,
   leaderboard: ICONS.leaderboard, profile: ICONS.profile, customization: ICONS.customization,
+  showcase: ICONS.showcase,
   inbox: ICONS.inbox,
 };
 

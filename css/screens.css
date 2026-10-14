@@ -217,3 +217,20 @@
 .admin-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .admin-table th, .admin-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-mid); }
 .admin-table th { color: var(--text-muted); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 1px; }
+
+/* Showcase stage (flex site) */
+.sc-stage { min-height: 40vh; }
+.sc-export { border-radius: var(--radius-lg); }
+.sc-card.sc-default { border-color: var(--border-mid); }
+.sc-card.sc-cyber { border: 2px solid var(--primary); border-radius: 4px; background: linear-gradient(135deg, var(--bg-surface), var(--bg-raised)); box-shadow: 0 0 0 1px var(--primary-dim), 0 0 24px var(--primary-dim); clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px)); }
+.sc-card.sc-cyber .sc-name { font-family: var(--font-display); letter-spacing: 1px; text-transform: uppercase; }
+.sc-card.sc-cyber .sc-stat { border-radius: 4px; border-color: var(--primary-dim); }
+.sc-card.sc-cyber .xp-bar { background: linear-gradient(90deg, var(--primary), var(--glow2)); }
+.sc-pill { display: flex; gap: 6px; justify-content: center; align-items: center; background: var(--nav-bg); border: 1px solid var(--border-mid); border-radius: 999px; padding: 8px 14px; margin: 10px auto; max-width: 280px; }
+.sc-pill span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+.sc-pill span.on { background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+.sc-gear svg { width: 22px; height: 22px; }
+.sc-sheet { position: fixed; left: 12px; right: 12px; bottom: 164px; z-index: 9991; max-width: 440px; margin: 0 auto; }
+.sc-exporting { outline: 2px dashed var(--primary); }
+@media (min-width: 768px) { .sc-sheet { left: auto; right: 24px; width: 380px; } }
+@media (prefers-reduced-motion: reduce) { .sc-gear { transition: none; } }

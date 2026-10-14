@@ -14,6 +14,7 @@ import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, openOverlay, openWeightHistory } from '../core/ui.js';
 import { todayWater, todayNutrition, isRestDay, today, moodDate } from '../core/selectors.js';
 import { checkAchievements, achievementsGridHTML } from '../core/achievements.js';
+import { animateNumbers } from '../core/animations.js';
 import { MOODS } from './zen.js';
 import { getTDEEfromProfile } from './workout.js';
 
@@ -570,6 +571,8 @@ export function renderAnalytics(host, subTab) {
     progress: renderAnProgress, insights: renderAnInsights,
     gamification: renderAnGamification, mood: renderAnMood,
   })[section](body);
+  // Showcase-style number choreography: count-ups, bar fills, ring sweeps.
+  try { animateNumbers(body); } catch {}
   // Charts paint after the lazy library arrives (precached = offline-safe).
   // ponytail: generation guard — a slow load must not paint the previous tab's queued charts
   const gen = ++renderGen;
@@ -611,11 +614,11 @@ function renderAnOverview(body) {
   <div class="card mb12" style="display:flex;align-items:center;gap:16px;padding:16px">
     <div class="fs-ring-wrap">
       <svg width="120" height="120" viewBox="0 0 120 120">
-        <circle cx="60" cy="60" r="50" fill="none" stroke="#2a3050" stroke-width="10"/>
+        <circle cx="60" cy="60" r="50" fill="none" style="stroke:var(--border-mid)" stroke-width="10"/>
         <circle cx="60" cy="60" r="50" fill="none" stroke="${fitnessScore >= 80 ? '#4cdb8a' : fitnessScore >= 60 ? '#f5a623' : fitnessScore >= 40 ? '#4a9eff' : '#ff5a5a'}"
-          stroke-width="10" stroke-dasharray="${Math.round(fitnessScore * 3.14)} 314" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+          stroke-width="10" stroke-dasharray="0 314" data-ring="${Math.round(fitnessScore * 3.14)} 314" stroke-linecap="round" transform="rotate(-90 60 60)"/>
       </svg>
-      <span class="fs-score">${fitnessScore}</span>
+      <span class="fs-score" data-count="${fitnessScore}">0</span>
     </div>
     <div style="flex:1">
       <div style="font-size:15px;font-weight:700;margin-bottom:4px">${fitnessScore >= 80 ? 'Excellent' : fitnessScore >= 60 ? 'Good' : fitnessScore >= 40 ? 'Fair' : 'Building'}</div>
@@ -630,20 +633,20 @@ function renderAnOverview(body) {
   <div class="card mb12">
     <div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>⚡ Level ${p.level} XP</span><span style="color:var(--primary)">${p.xp} / ${xpNeeded}</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${xpPct}%"></div></div></div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:0%" data-w="${xpPct}"></div></div></div>
     <div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>💧 Daily Water</span><span style="color:var(--water)">${waterPct}%</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${waterPct}%;background:var(--water)"></div></div></div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:0%;background:var(--water)" data-w="${waterPct}"></div></div></div>
     <div>
       <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>🍽️ Daily Calories</span><span style="color:var(--warning)">${calPct}%</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${calPct}%;background:var(--warning)"></div></div></div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:0%;background:var(--warning)" data-w="${calPct}"></div></div></div>
   </div>
   <div class="section-title">Calorie Trends</div>
   <div class="grid2 mb12">
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG CAL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgCal}</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG BURNED</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${summary.avgBurned}</div></div>
-    <div class="card-sm text-center"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--info)">${(S.workouts || []).filter((w) => w.date === getTodayStr()).length}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG HABITS DONE</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${r1(data.reduce((a, d) => a + d.habits, 0))}</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG CAL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${summary.avgCal}">0</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG BURNED</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${summary.avgBurned}">0</div></div>
+    <div class="card-sm text-center"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);color:var(--info)" data-count="${(S.workouts || []).filter((w) => w.date === getTodayStr()).length}">0</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">TODAY WKT</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">AVG HABITS DONE</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${r1(data.reduce((a, d) => a + d.habits, 0))}">0</div></div>
   </div>
   <div class="card mb12"><div class="section-title">Calories vs Burned (TDEE ${tdee})</div>
   <div style="position:relative;height:200px"><canvas id="c_overview"></canvas></div></div>`;
@@ -657,8 +660,8 @@ function xpForLevelOf(l) {
   return Math.floor(100 * Math.pow(l, 1.5));
 }
 function compareSummary(label, cur, prev, unit) {
-  if (!compare) return `<div style="font-size:${unit === '%' ? '20px' : '16px'};font-weight:700">${cur}${unit}</div>`;
-  return `<div><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${cur}${unit}</div>`
+  if (!compare) return `<div style="font-size:${unit === '%' ? '20px' : '16px'};font-weight:700" data-count="${cur}" data-suffix="${unit}">0</div>`;
+  return `<div><div style="font-size:16px;font-weight:700;font-family:var(--font-display);" data-count="${cur}" data-suffix="${unit}">0</div>`
     + `<div style="font-size:10px;color:${cur >= prev ? 'var(--success)' : 'var(--danger)'}">${deltaPct(cur, prev)}</div></div>`;
 }
 
@@ -680,8 +683,8 @@ function renderAnHabits(body) {
         + `<div style="width:4px;height:32px;border-radius:2px;background:${habitColor(i)}"></div>`
         + `<div style="flex:1"><div style="font-size:13px;font-weight:600">${escapeHtml(h.name)}</div>`
         + `<div style="font-size:10px;color:var(--text-muted)">${pDone} completions this period</div></div>`
-        + `<div style="text-align:right"><div style="font-size:14px;font-weight:700">${h.streak || 0}</div><div style="font-size:9px;color:var(--text-muted)">day streak</div></div>`
-        + `<div style="text-align:right;margin-left:8px"><div style="font-size:14px;font-weight:700;color:${h.icon === '✅' ? 'var(--success)' : 'var(--primary)'}">${doneDates.length}</div><div style="font-size:9px;color:var(--text-muted)">total</div></div></div>`;
+        + `<div style="text-align:right"><div style="font-size:14px;font-weight:700" data-count="${h.streak || 0}">0</div><div style="font-size:9px;color:var(--text-muted)">day streak</div></div>`
+        + `<div style="text-align:right;margin-left:8px"><div style="font-size:14px;font-weight:700;color:${h.icon === '✅' ? 'var(--success)' : 'var(--primary)'}" data-count="${doneDates.length}">0</div><div style="font-size:9px;color:var(--text-muted)">total</div></div></div>`;
     }).join('') : '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px">No habits created yet. Add habits in the Habits tab.</div>'}</div>`;
   wirePeriodTabs(body);
   const ds = [{ label: 'Habits Done', data: data.map((d) => d.habits), backgroundColor: '#4cdb8a44', borderColor: '#4cdb8a', borderWidth: 1.5, borderRadius: 3, fill: true, tension: 0.3 }];
@@ -755,11 +758,11 @@ function renderAnNutrition(body) {
   <div class="card mb12" style="display:flex;align-items:center;gap:14px;padding:14px">
     <div style="position:relative;width:80px;height:80px;flex-shrink:0">
       <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="32" fill="none" stroke="#2a3050" stroke-width="8"/>
+        <circle cx="40" cy="40" r="32" fill="none" style="stroke:var(--border-mid)" stroke-width="8"/>
         <circle cx="40" cy="40" r="32" fill="none" stroke="${nutScore >= 80 ? '#4cdb8a' : nutScore >= 60 ? '#f5a623' : '#ff5a5a'}"
-          stroke-width="8" stroke-dasharray="${Math.round(nutScore * 2.01)} 201" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          stroke-width="8" stroke-dasharray="0 201" data-ring="${Math.round(nutScore * 2.01)} 201" stroke-linecap="round" transform="rotate(-90 40 40)"/>
       </svg>
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;font-family:var(--font-display)">${nutScore}</div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;font-family:var(--font-display)" data-count="${nutScore}">0</div>
     </div>
     <div style="flex:1">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px">${nutScore >= 80 ? 'Excellent nutrition habits' : nutScore >= 60 ? 'Good, keep improving' : 'Needs more consistency'}</div>
@@ -774,7 +777,7 @@ function renderAnNutrition(body) {
   <div class="card mb12">
     ${[['Protein', macros.protein, 'g', 'var(--danger)'], ['Carbs', macros.carbs, 'g', 'var(--info)'], ['Fat', macros.fat, 'g', 'var(--primary)'], ['Fiber', macros.fiber, 'g', 'var(--success)'], ['Sugar', macros.sugar, 'g', 'var(--energy)']].map(([l, v, u, c]) => `
       <div class="flex-between mb8"><span style="font-size:13px">${l}</span>
-      <span style="font-size:14px;font-weight:700;color:${c}">${v}${u}</span></div>`).join('')}
+      <span style="font-size:14px;font-weight:700;color:${c}" data-count="${v}" data-suffix="${u}">0</span></div>`).join('')}
   </div>
   <div class="section-title">Meal Timing</div>
   <div class="card mb12">${timing.map((s) => `
@@ -808,7 +811,7 @@ function renderAnTraining(body) {
     <div style="position:relative;width:100px;height:100px;flex-shrink:0"><canvas id="c_muscle"></canvas></div>
     <div style="flex:1">${muscleData.map((m) => `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
       <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:2px;background:${m.color}"></div>
-      <span style="font-size:12px">${escapeHtml(m.type)}</span></div><span style="font-size:12px;font-weight:700">${m.count}</span></div>`).join('') || '<div style="font-size:12px;color:var(--text-muted)">No workouts yet.</div>'}</div>
+      <span style="font-size:12px">${escapeHtml(m.type)}</span></div><span style="font-size:12px;font-weight:700" data-count="${m.count}">0</span></div>`).join('') || '<div style="font-size:12px;color:var(--text-muted)">No workouts yet.</div>'}</div>
   </div>
   <div class="section-title">Personal Records (${prs.length})</div>
   ${prs.slice(0, 10).map((r) => `<div class="quest-card"><div style="font-size:22px">🏆</div>
@@ -846,9 +849,9 @@ function renderAnHealth(body) {
   <div class="section-title">Recovery & Rest</div>
   <div class="card mb12">
     <div class="grid3" style="gap:8px;margin-bottom:12px">
-      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--success)">${recovery.restDays}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">REST DAYS</div></div>
-      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--info)">${recovery.avgRestBetween}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG REST BETWEEN</div></div>
-      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${recovery.score >= 70 ? 'var(--success)' : recovery.score >= 40 ? 'var(--warning)' : 'var(--danger)'}">${recovery.score}</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">RECOVERY</div></div>
+      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--success)" data-count="${recovery.restDays}">0</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">REST DAYS</div></div>
+      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:var(--info)" data-count="${recovery.avgRestBetween}">0</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">AVG REST BETWEEN</div></div>
+      <div class="card-sm" style="text-align:center"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${recovery.score >= 70 ? 'var(--success)' : recovery.score >= 40 ? 'var(--warning)' : 'var(--danger)'}" data-count="${recovery.score}">0</div><div style="font-size:9px;color:var(--text-muted);margin-top:2px">RECOVERY</div></div>
     </div>
     <div style="font-size:11px;color:var(--text-muted)">3–5 training days per week is the recovery sweet spot. Rest days taken: ${(S.restDays || []).length}.</div>
     <div style="font-size:12px;color:var(--text-secondary);margin-top:8px">${escapeHtml(recovery.tip)}</div>
@@ -880,24 +883,24 @@ function renderAnMind(body) {
   <div class="card mb12" style="display:flex;align-items:center;gap:14px;padding:14px">
     <div style="position:relative;width:80px;height:80px;flex-shrink:0">
       <svg width="80" height="80" viewBox="0 0 80 80">
-        <circle cx="40" cy="40" r="32" fill="none" stroke="#2a3050" stroke-width="8"/>
+        <circle cx="40" cy="40" r="32" fill="none" style="stroke:var(--border-mid)" stroke-width="8"/>
         <circle cx="40" cy="40" r="32" fill="none" stroke="var(--primary)" stroke-width="8"
-          stroke-dasharray="${Math.min(201, Math.round((sessionCount ? Math.min(sessionCount, 10) : 0) / 10 * 201))} 201" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          stroke-dasharray="0 201" data-ring="${Math.min(201, Math.round((sessionCount ? Math.min(sessionCount, 10) : 0) / 10 * 201))} 201" stroke-linecap="round" transform="rotate(-90 40 40)"/>
       </svg>
       <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;font-family:var(--font-display)">🧘</div>
     </div>
     <div style="flex:1">
       <div class="grid2" style="gap:6px">
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${recent.length}</div><div style="font-size:9px;color:var(--text-muted)">SESSIONS</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${avgSession}m</div><div style="font-size:9px;color:var(--text-muted)">AVG LENGTH</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${daysTracked}</div><div style="font-size:9px;color:var(--text-muted)">DAYS</div></div>
-        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${streak}</div><div style="font-size:9px;color:var(--text-muted)">STREAK</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);" data-count="${recent.length}">0</div><div style="font-size:9px;color:var(--text-muted)">SESSIONS</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);" data-count="${avgSession}" data-suffix="m">0</div><div style="font-size:9px;color:var(--text-muted)">AVG LENGTH</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);" data-count="${daysTracked}">0</div><div style="font-size:9px;color:var(--text-muted)">DAYS</div></div>
+        <div class="card-sm text-center" style="padding:6px"><div style="font-size:16px;font-weight:700;font-family:var(--font-display);" data-count="${streak}">0</div><div style="font-size:9px;color:var(--text-muted)">STREAK</div></div>
       </div>
     </div>
   </div>
   <div class="grid2 mb12">
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL MINDFUL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${totalMinutes}m</div></div>
-    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL STUDY</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${studyTotal}m</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL MINDFUL</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${totalMinutes}" data-suffix="m">0</div></div>
+    <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">TOTAL STUDY</div><div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${studyTotal}" data-suffix="m">0</div></div>
   </div>
   ${top5.length ? `<div class="section-title">Top Soundscapes</div><div class="card mb12">${top5.map(([s, n]) => `
     <div class="flex-between mb8"><span style="font-size:13px">${escapeHtml(s)}</span><span class="badge">${n}×</span></div>`).join('')}</div>` : ''}`;
@@ -947,10 +950,10 @@ function renderAnProgress(body) {
   <div class="section-title">Body Stats</div>
   <div class="grid2 mb12">
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">BMI</div>
-      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${bmiCat.color}">${bmi || '—'}</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${bmiCat.color}" data-count="${bmi || '—'}">0</div>
       <div style="font-size:10px;color:${bmiCat.color}">${bmiCat.label}</div></div>
     <div class="card-sm text-center"><div style="font-size:11px;color:var(--text-muted)">BODY FAT</div>
-      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);">${bf != null ? `${bf}%` : '—'}</div>
+      <div style="font-size:20px;font-weight:800;font-family:var(--font-display);" data-count="${bf != null ? bf : '—'}" data-suffix="${bf != null ? '%' : ''}">0</div>
       <div style="font-size:10px;color:var(--text-muted)">estimate</div></div>
   </div>
   ${prediction ? `<div class="insight">📉 Trend: ${prediction.perWeek >= 0 ? '+' : ''}${prediction.perWeek} kg/week → ~${prediction.in30} kg in 30 days.</div>` : ''}`;
@@ -1064,7 +1067,7 @@ function renderAnGamification(body) {
   <div class="section-title">Activity Streaks</div>
   <div class="card mb12" style="padding:16px">
     <div class="flex-between" style="align-items:center">
-      <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">🔥 ${prog}</div>
+      <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">🔥 <span data-count="${prog}">0</span></div>
       <button class="btn btn-icon" id="streak-gear" title="Choose tracked activities" aria-label="Choose which activities count toward the streak" aria-expanded="false" style="width:40px;height:40px;font-size:18px">⚙️</button>
     </div>
     <div style="font-size:11px;color:var(--text-muted);margin-top:4px">day${prog === 1 ? '' : 's'} — every selected activity complete</div>
@@ -1080,7 +1083,7 @@ function renderAnGamification(body) {
       return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
         <div style="width:36px;height:36px;border-radius:8px;background:${a.color}22;border:1px solid ${a.color}55;display:flex;align-items:center;justify-content:center;font-size:16px">${a.icon}</div>
         <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.label}</div></div>
-        <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${a.color}">${n}</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
+        <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${a.color}" data-count="${n}">0</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
     }).join('')}</div>
   </div>
   <div class="section-title">Activity Heatmap — Last 91 Days</div>
@@ -1168,16 +1171,16 @@ function renderAnMood(body) {
   <div class="card mb12"><div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
     ${MOODS.map((m) => `<div><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
       <span>${m.emoji} ${m.label}</span><span style="color:var(--text-muted)">${counts[m.key] || 0} (${pct(m.key)}%)</span></div>
-      <div class="xp-bar-wrap"><div class="xp-bar" style="width:${pct(m.key)}%;background:${m.color};height:8px"></div></div></div>`).join('')}
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:0%;background:${m.color};height:8px" data-w="${pct(m.key)}"></div></div></div>`).join('')}
   </div></div>
   <div class="section-title">Intensity & Energy</div>
   <div class="card mb12" style="padding:12px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
     <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Intensity</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${avgI || '—'}${avgI ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
+      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);" data-count="${avgI || '—'}" data-suffix="${avgI ? '/10' : ''}">0</div></div>
     <div style="text-align:center;padding:8px;border-radius:8px;background:var(--bg-overlay)">
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">Avg Energy</div>
-      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);">${avgE || '—'}${avgE ? '<span style="font-size:11px">/10</span>' : ''}</div></div>
+      <div style="font-size:22px;font-weight:800;font-family:var(--font-display);" data-count="${avgE || '—'}" data-suffix="${avgE ? '/10' : ''}">0</div></div>
   </div></div>
   <div class="section-title">Recent Check-ins</div>
   <div class="card mb12">${recent20.filter((d) => d.mood).map((d) => {

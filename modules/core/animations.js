@@ -125,3 +125,60 @@ export function countUp(elm, to, { duration = 600 } = {}) {
     update: () => { elm.textContent = Math.round(obj.v); },
   });
 }
+
+/** Showcase-style number choreography for any freshly rendered root.
+ * `[data-count]` count up (staggered, suffix/decimals aware),
+ * `.xp-bar[data-w]` fills, `circle[data-ring="t c"]` dash sweeps,
+ * `.insight` cards rise. One call per render; reduced-motion and
+ * no-anime fall back to final values instantly. */
+export function animateNumbers(root) {
+  if (!root || !root.querySelectorAll) return;
+  let reduce = false;
+  try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch {}
+  const counts = [...root.querySelectorAll('[data-count]')];
+  const bars = [...root.querySelectorAll('.xp-bar[data-w]')];
+  const rings = [...root.querySelectorAll('circle[data-ring]')];
+  const insights = [...root.querySelectorAll('.insight')];
+  const paintCount = (el) => {
+    const raw = el.dataset.count;
+    const to = Number(raw);
+    if (!Number.isFinite(to)) { el.textContent = `${raw}${el.dataset.suffix || ''}`; return null; }
+    return { to, dec: Math.min(1, (String(raw).split('.')[1] || '').length) };
+  };
+  if (reduce || !animeRef) {
+    counts.forEach((el) => {
+      const p = paintCount(el);
+      if (p) el.textContent = `${p.dec ? p.to.toFixed(p.dec) : Math.round(p.to)}${el.dataset.suffix || ''}`;
+    });
+    bars.forEach((el) => { el.style.width = `${el.dataset.w}%`; });
+    rings.forEach((el) => {
+      const [t, c] = String(el.dataset.ring).split(' ');
+      el.setAttribute('stroke-dasharray', `${t} ${c}`);
+    });
+    return;
+  }
+  counts.forEach((el, i) => {
+    const p = paintCount(el);
+    if (!p) return;
+    const o = { v: 0 };
+    animeRef({
+      targets: o, v: p.to, duration: 700, delay: 150 + i * 55, easing: 'easeOutCubic',
+      update: () => { el.textContent = `${p.dec ? o.v.toFixed(p.dec) : Math.round(o.v)}${el.dataset.suffix || ''}`; },
+    });
+  });
+  bars.forEach((el, i) => {
+    animeRef({ targets: el, width: `${el.dataset.w}%`, duration: 800, delay: 200 + i * 70, easing: 'easeOutCubic' });
+  });
+  rings.forEach((el) => {
+    const [t, c] = String(el.dataset.ring).split(' ').map(Number);
+    if (!Number.isFinite(t) || !Number.isFinite(c)) return;
+    const o = { v: 0 };
+    animeRef({
+      targets: o, v: t, duration: 900, delay: 150, easing: 'easeOutCubic',
+      update: () => { el.setAttribute('stroke-dasharray', `${Math.round(o.v)} ${c}`); },
+    });
+  });
+  if (insights.length) {
+    animeRef({ targets: insights, opacity: [0, 1], translateY: [14, 0], duration: 380, delay: animeRef.stagger(80, { start: 100 }), easing: 'easeOutCubic' });
+  }
+}

@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 19;
-export const APP_VERSION = "8.9.3.6";
+export const DATA_VERSION = 20;
+export const APP_VERSION = "8.9.5";
 
-export const APP_BUILD = "2026.10.14.58";
+export const APP_BUILD = "2026.10.14.60";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -51,7 +51,7 @@ const SCHEMA = {
   inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array', hiddenGlobals: 'array',
   customThemes: 'array', customDishes: 'array', notifSettings: 'object',
   navOpacityVal: 'number', streakScope: 'array', analyticsArchive: 'array',
-  uiStyle: 'string',
+  uiStyle: 'string', showcase: 'object',
 };
 
 const DB_NAME = 'zenfit';
@@ -154,6 +154,16 @@ export function defaultState() {
     streakScope: [],      // empty = all progress-streak activities count
     _analyticsSection: 'overview',
     _analyticsPeriod: '1w',
+    showcase: {
+      showHeader: true, showCard: true, variant: 'long',
+      showPill: true, showWallpaper: true, cardStyle: 'default',
+      cardBackdrop: 'wallpaper',
+      visible: {
+        streak: true, level: true, rank: true, globalRank: true, xp: true,
+        strength: true, endurance: true, discipline: true, health: true,
+        wisdom: true, achCount: true,
+      },
+    },
   };
 }
 
@@ -311,6 +321,14 @@ export function migrateData(saved) {
     if (saved.profile && saved.profile.targetWeightKg == null) saved.profile.targetWeightKg = null;
     saved.dataVersion = 19;
   }
+  if (version < 20) {
+    // ponytail: showcase UI prefs only — backfill defaults, earned data untouched
+    const d = defaultState().showcase;
+    saved.showcase = { ...d, ...(saved.showcase || {}), visible: { ...d.visible, ...((saved.showcase || {}).visible || {}) } };
+    if (!['long', 'short'].includes(saved.showcase.variant)) saved.showcase.variant = 'long';
+    if (!['default', 'cyber'].includes(saved.showcase.cardStyle)) saved.showcase.cardStyle = 'default';
+    saved.dataVersion = 20;
+  }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
     saved.bgOffX = Math.round((saved.bgPosX - 50) * 2);
@@ -337,6 +355,13 @@ export function validateAndMergeData(saved, fresh) {
   }
   // ponytail: unknown uiStyle (hand-edited saves) falls back to liquid, never blank
   if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(merged.uiStyle)) merged.uiStyle = 'liquid';
+  // ponytail: showcase prefs merge deep for visible flags — never blank, never drop
+  try {
+    const dv = fresh.showcase || {};
+    merged.showcase = { ...dv, ...(merged.showcase || {}), visible: { ...(dv.visible || {}), ...((merged.showcase || {}).visible || {}) } };
+    if (!['long', 'short'].includes(merged.showcase.variant)) merged.showcase.variant = 'long';
+    if (!['default', 'cyber'].includes(merged.showcase.cardStyle)) merged.showcase.cardStyle = 'default';
+  } catch {}
   // ponytail: mood must be {entries:[]} — array-shaped legacy history folds into entries,
   // anything else resets to empty (never blank-screen, never drop real check-ins silently)
   if (Array.isArray(merged.mood)) merged.mood = { entries: merged.mood };

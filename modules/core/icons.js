@@ -88,6 +88,8 @@ export const ICONS = {
   trendChart: `<svg ${SW}><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M15 8h4v4"/></svg>`,
   phone: `<svg ${SW}><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="19" x2="13" y2="19"/></svg>`,
   globe: `<svg ${SW}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>`,
+  showcase: `<svg ${SW}><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 18v3"/><path d="M7 9.5l1.2 1.2L12 7l3.8 3.7L17 9.5"/><path d="M7 13.5h10"/></svg>`,
+  share: `<svg ${SW}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/></svg>`,
 };
 
 /** Render an icon by name. Extra class hooks sizing. */
