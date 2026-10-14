@@ -71,6 +71,19 @@ body[data-ui="neomorph"] .more-popover,
 body[data-ui="neomorph"] .overlay-box {
   border-radius: var(--radius-xl);
 }
+/* dialogs carry the same soft extruded depth as cards in this style */
+body[data-ui="neomorph"] .overlay-box {
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    8px 8px 22px rgba(0, 0, 0, 0.5),
+    -4px -4px 12px rgba(255, 255, 255, 0.08);
+}
+body[data-ui="neomorph"].glass-mode .overlay-box {
+  box-shadow:
+    8px 8px 22px rgba(0, 0, 0, 0.5),
+    -4px -4px 12px rgba(255, 255, 255, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+}
 
 @media (prefers-reduced-motion: reduce) {
   body[data-ui="neomorph"] * { transition: none; animation: none; }

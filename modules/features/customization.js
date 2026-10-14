@@ -97,7 +97,7 @@ export function renderCustomization(host) {
   </div>
 
   <div class="card mb8">
-    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', `<span class="collapse-ic">${ICONS.image}</span><span class="collapse-ic collapse-ic-xs">${ICONS.gear}</span>`, 'Gallery, framing & dimming', 'default-collapsed')}
+    ${collapseHeader('wallpaper-sliders', 'Wallpaper Settings', `<span class="wallset-stack"><span class="collapse-ic">${ICONS.image}</span><span class="collapse-ic wallset-gear">${ICONS.gear}</span></span>`, 'Gallery, framing & dimming', 'default-collapsed')}
     <div class="collapsible-body${isCollapsed('wallpaper-sliders') ? ' collapsed' : ''}" id="wallpaper-sliders">
       <div class="section-title mt12">Gallery</div>
       <div class="grid3" id="wp-gallery"></div>
@@ -316,7 +316,9 @@ export function renderCustomization(host) {
     b.onclick = () => {
       const id = b.dataset.uistyle;
       if (!UI_STYLES[id]) return;
-      update((s) => { s.uiStyle = id; });
+      // ponytail: Transparency defaults off for the opaque-genre styles
+      // (brutalist/neomorph/hud) — liquid keeps glass. User toggle still wins after.
+      update((s) => { s.uiStyle = id; s.glassMode = (id === 'liquid'); });
       applyUiMode();
       window.ZF.save();
       uiStyleDialog(id);

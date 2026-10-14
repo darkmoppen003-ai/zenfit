@@ -6,10 +6,10 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, ICONS } from '../core/ui.js';
+import { showNotif, openOverlay, ICONS } from '../core/ui.js';
 import { checkAchievements } from '../core/achievements.js';
 import {
-  peerConnections, peerChatHistory, initPeerJS, peerStatus,
+  peerConnections, peerChatHistory, initPeerJS, peerStatus, peerConnecting, stopPeer,
   connectToPeer, sendConnectRequest, acceptRequest, rejectRequest,
   cancelSentRequest, removePartner, sendChat, requestDetail,
   sendHighFive, viewPartnerStats, getShareCode,
@@ -22,7 +22,7 @@ export function renderLeaderboard(host, subTab) {
   if (subTab) tab = subTab;
   host.innerHTML = `
   <div class="chart-tab-bar">
-    ${[['global', `<span class="lbl-ic">${ICONS.globe}</span>Global`], ['friends', `<span class="lbl-ic">${ICONS.user}</span>Friends`], ['challenges', `<span class="lbl-ic">${ICONS.swords}</span>Challenges`]].map(([t, label]) =>
+    ${[['global', `<span class="lbl-ic">${ICONS.globe}</span>Global`], ['friends', `<span class="lbl-ic">${ICONS.friends}</span>Friends`], ['challenges', `<span class="lbl-ic">${ICONS.swords}</span>Challenges`]].map(([t, label]) =>
       `<div class="chart-tab${tab === t ? ' active' : ''}" data-lb="${t}">${label}</div>`).join('')}
   </div>
   <div id="lb-body"></div>`;
@@ -107,12 +107,17 @@ function renderFriends(body) {
     .sort((a, b) => (b.xp || 0) - (a.xp || 0));
   const myPos = myCard.findIndex((u) => u.isMe) + 1;
   const status = peerStatus();
+  const busy = peerConnecting();
+  const online = status === 'online';
+  const statusBadge = online
+    ? '<span class="badge badge-green">● Online</span>'
+    : busy ? '<span class="badge badge-warning">● Connecting…</span>' : '<span class="badge">Offline</span>';
 
   body.innerHTML = `
   <div class="card mb12"><div class="flex-between">
-    <div><div style="font-size:13px;font-weight:600">P2P Status: ${status === 'online' ? '<span class="badge badge-green">● Online</span>' : '<span class="badge">Offline</span>'}</div>
+    <div><div style="font-size:13px;font-weight:600">P2P Status: ${statusBadge}</div>
     <div style="font-size:11px;color:var(--text-muted)" class="mt8">Your Peer ID:<br><strong style="color:var(--primary);font-size:12px">${escapeHtml(S.peerId || S.deviceId || '')}</strong></div></div>
-    <button class="btn btn-sm btn-primary" id="fr-start">${status === 'online' ? 'Reconnect' : 'Start P2P'}</button></div></div>
+    <button class="btn btn-sm ${online ? 'btn-ghost' : 'btn-primary'}" id="fr-start" ${busy ? 'disabled style="opacity:.6"' : ''}${online ? ' style="color:var(--danger);border-color:var(--danger)"' : ''}>${online ? 'Disconnect' : busy ? 'Connecting…' : 'Start P2P'}</button></div></div>
   ${pending.map((r, i) => `<div class="quest-card" style="border-color:var(--warning)"><div style="font-size:22px">🔔</div>
     <div style="flex:1"><div style="font-size:13px"><strong>${escapeHtml(r.name)}</strong> wants to connect</div>
     <div style="font-size:11px;color:var(--text-muted)">Lv ${r.level ?? '?'} · ${escapeHtml(r.rank || '')}</div></div>
@@ -121,14 +126,14 @@ function renderFriends(body) {
   ${sent.map((r, i) => `<div class="quest-card"><div style="font-size:22px">📨</div>
     <div style="flex:1"><div style="font-size:13px">Request to <strong>${escapeHtml(r.name)}</strong> pending…</div></div>
     <button class="btn btn-sm btn-ghost" data-frcancel="${i}">Cancel</button></div>`).join('')}
-  <div class="card mb12"><div class="section-title">Connect (share code or Peer ID)</div>
+  <div class="card mb12"><div class="section-title">Connect (QR, share code or Peer ID)</div>
+    <div class="flex gap8 mb8">
+      <button class="btn btn-sm btn-primary" id="fr-qr" style="flex:1">My QR</button>
+      <button class="btn btn-sm" id="fr-scan" style="flex:1">Scan QR</button></div>
     <div class="flex gap8 mb8"><input type="text" id="fr-code" placeholder="Paste partner share code…" style="flex:1">
     <button class="btn btn-sm btn-primary" id="fr-connect">Connect</button></div>
     <div class="flex gap8"><input type="text" id="fr-peer" placeholder="Or Peer ID (zenfit-user-…)" style="flex:1">
-    <button class="btn btn-sm" id="fr-peerbtn">Add live</button></div>
-    <div class="flex gap8 mt8"><button class="btn btn-sm btn-ghost" id="fr-mycode">My share code</button></div>
-    <div id="fr-codebox" style="display:none" class="mt8"><textarea id="fr-code-out" readonly style="font-size:10px;height:64px"></textarea>
-    <div style="font-size:10px;color:var(--text-muted)">Send this code to a friend — they paste it above.</div></div></div>
+    <button class="btn btn-sm" id="fr-peerbtn">Add live</button></div></div>
   <div class="section-title">Friends Leaderboard — you are #${myPos}</div>
   <div id="fr-list">${myCard.map((u) => {
     const idx = partners.indexOf(u);
@@ -143,20 +148,206 @@ function renderFriends(body) {
   }).join('')}</div>
   <div id="fr-chatbox"></div>`;
 
-  body.querySelector('#fr-start').onclick = () => initPeerJS();
+  body.querySelector('#fr-start').onclick = () => {
+    if (peerStatus() === 'online') stopPeer();
+    else initPeerJS();
+  };
   body.querySelector('#fr-connect').onclick = () => sendConnectRequest(body.querySelector('#fr-code').value);
   body.querySelector('#fr-peerbtn').onclick = () => connectToPeer(body.querySelector('#fr-peer').value);
-  body.querySelector('#fr-mycode').onclick = () => {
-    const box = body.querySelector('#fr-codebox');
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
-    body.querySelector('#fr-code-out').value = getShareCode();
-  };
+  body.querySelector('#fr-qr').onclick = () => openQrModal();
+  body.querySelector('#fr-scan').onclick = () => openScanModal();
   body.querySelectorAll('[data-fracc]').forEach((b) => { b.onclick = () => acceptRequest(Number(b.dataset.fracc)); });
   body.querySelectorAll('[data-frrej]').forEach((b) => { b.onclick = () => rejectRequest(Number(b.dataset.frrej)); });
   body.querySelectorAll('[data-frcancel]').forEach((b) => { b.onclick = () => cancelSentRequest(Number(b.dataset.frcancel)); });
   body.querySelectorAll('[data-frdel]').forEach((b) => { b.onclick = () => removePartner(Number(b.dataset.frdel)); });
   body.querySelectorAll('[data-frstats]').forEach((b) => { b.onclick = () => viewPartnerStats(Number(b.dataset.frstats)); });
   body.querySelectorAll('[data-frchat]').forEach((b) => { b.onclick = () => openChat(body, partners[Number(b.dataset.frchat)]); });
+}
+
+/* QR pairing: vendored qrcode.js (root, SW-precached) lazy-loads on first
+   use — no CDN at runtime. Payload = the same share-code string, so scan
+   reuses the sendConnectRequest handshake path. */
+function ensureQrLib() {
+  if (typeof window.qrcode !== 'undefined') return Promise.resolve();
+  return new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = './qrcode.js';
+    sc.onload = res;
+    sc.onerror = () => rej(new Error('offline'));
+    document.head.appendChild(sc);
+  });
+}
+function paintQr(code) {
+  const cv = document.getElementById('fr-qrcv');
+  if (!cv || typeof window.qrcode === 'undefined') return;
+  const g = cv.getContext('2d');
+  try {
+    const qr = window.qrcode(0, 'M');
+    qr.addData(code);
+    qr.make();
+    const n = qr.getModuleCount(), cell = cv.width / n;
+    g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = '#000';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+      if (qr.isDark(r, c)) g.fillRect(c * cell, r * cell, cell + 1, cell + 1);
+    }
+  } catch {
+    // ponytail: never leave a blank white block — paint the failure on-canvas
+    g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = '#000'; g.font = '13px sans-serif'; g.textAlign = 'center';
+    g.fillText('Code too long for QR.', cv.width / 2, cv.height / 2 - 8);
+    g.fillText('Use Copy code below.', cv.width / 2, cv.height / 2 + 10);
+    showNotif('Code too long for QR — copy the text instead', '!');
+  }
+}
+function openQrModal() {
+  const code = getShareCode();
+  openOverlay(`<div style="text-align:center">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Your connect QR</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Partner scans it for a direct connection — no typing.</div>
+    <div style="font-size:12px;color:var(--text-muted)" id="fr-qrloading">Drawing QR…</div>
+    <canvas id="fr-qrcv" width="220" height="220" style="width:200px;height:200px;border-radius:12px;background:#fff;padding:8px;display:none"></canvas>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:8px;overflow-wrap:anywhere">${escapeHtml(S.peerId || S.deviceId || '')}</div>
+    <div class="flex gap8 mt12" style="justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-sm" id="fr-qrcopy">Copy code</button>
+      <button class="btn btn-sm" id="fr-qrdl">Download</button>
+      <button class="btn btn-sm btn-primary" id="fr-qrshare">Share…</button>
+      <button class="btn btn-ghost btn-sm" id="fr-qrx">Close</button>
+    </div></div>`);
+  document.getElementById('fr-qrx').onclick = () => document.getElementById('zf-overlay')?.remove();
+  ensureQrLib().then(() => {
+    document.getElementById('fr-qrloading')?.remove();
+    const cv = document.getElementById('fr-qrcv');
+    if (cv) cv.style.display = '';
+    paintQr(code);
+  }).catch(() => {
+    const l = document.getElementById('fr-qrloading');
+    if (l) l.textContent = 'QR needs the offline library (missing?) — copy the code text instead.';
+  });
+  document.getElementById('fr-qrcopy').onclick = async () => {
+    try { await navigator.clipboard.writeText(code); showNotif('Share code copied', 'OK'); }
+    catch { showNotif('Copy blocked — long-press the Peer ID', '!'); }
+  };
+  document.getElementById('fr-qrdl').onclick = () => {
+    const cv = document.getElementById('fr-qrcv');
+    if (!cv || cv.style.display === 'none') { showNotif('QR not ready yet', '!'); return; }
+    const a = document.createElement('a');
+    a.href = cv.toDataURL('image/png');
+    a.download = 'zenfit-connect-qr.png';
+    a.click();
+  };
+  document.getElementById('fr-qrshare').onclick = async () => {
+    if (navigator.share) {
+      try { await navigator.share({ title: 'ZenFit connect', text: code }); } catch {}
+    } else {
+      try { await navigator.clipboard.writeText(code); showNotif('Share sheet missing — code copied', 'OK'); }
+      catch { showNotif('Share unavailable on this device', '!'); }
+    }
+  };
+}
+/* QR decode: native BarcodeDetector fast path, vendored jsqr.js fallback —
+   camera shows whenever getUserMedia exists so every device gets scanning. */
+function ensureScanLib() {
+  if (typeof window.jsQR !== 'undefined') return Promise.resolve();
+  return new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = './jsqr.js';
+    sc.onload = res;
+    sc.onerror = () => rej(new Error('offline'));
+    document.head.appendChild(sc);
+  });
+}
+async function decodePixels(canvas) {
+  const w = canvas.width, h = canvas.height;
+  if (!w || !h) return null;
+  try {
+    if (typeof window.BarcodeDetector !== 'undefined') {
+      const d = new window.BarcodeDetector({ formats: ['qr_code'] });
+      const codes = await d.detect(canvas);
+      if (codes?.length && codes[0].rawValue) return String(codes[0].rawValue);
+    }
+  } catch {}
+  try {
+    await ensureScanLib();
+    if (typeof window.jsQR === 'undefined') return null;
+    const g = canvas.getContext('2d', { willReadFrequently: true });
+    const found = window.jsQR(g.getImageData(0, 0, w, h).data, w, h);
+    if (found?.data) return String(found.data);
+  } catch {}
+  return null;
+}
+function openScanModal() {
+  const camOk = !!(navigator.mediaDevices?.getUserMedia);
+  openOverlay(`<div style="text-align:center">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Scan partner QR</div>
+    <video id="fr-scanvid" playsinline muted style="display:none;width:100%;border-radius:12px;background:#000"></video>
+    <canvas id="fr-scancv" width="480" height="360" style="display:none"></canvas>
+    <div id="fr-scanmsg" style="font-size:12px;color:var(--text-muted);margin:8px 0">${camOk ? 'Point the camera at a ZenFit QR, or upload a screenshot.' : 'This device has no camera API — upload a QR image instead.'}</div>
+    <div class="flex gap8 mt8" style="justify-content:center;flex-wrap:wrap">
+      ${camOk ? '<button class="btn btn-sm btn-primary" id="fr-camstart">Start camera</button>' : ''}
+      <label class="btn btn-sm" style="cursor:pointer">Upload<input type="file" id="fr-scanfile" accept="image/*" style="display:none"></label>
+      <button class="btn btn-ghost btn-sm" id="fr-scanx">Close</button>
+    </div></div>`);
+  let stream = null, timer = 0;
+  const stop = () => {
+    try { clearInterval(timer); } catch {}
+    try { stream?.getTracks().forEach((t) => t.stop()); } catch {}
+    stream = null;
+  };
+  document.getElementById('fr-scanx').onclick = () => { stop(); document.getElementById('zf-overlay')?.remove(); };
+  const got = (val) => {
+    stop();
+    document.getElementById('zf-overlay')?.remove();
+    sendConnectRequest(String(val || ''));
+  };
+  // ponytail: one frame pipeline — video and uploads both land on the hidden
+  // canvas, decoded by BarcodeDetector first, vendored jsQR second
+  const snapVideo = () => {
+    const v = document.getElementById('fr-scanvid');
+    const cv = document.getElementById('fr-scancv');
+    if (!v || !cv || !v.videoWidth) return null;
+    const scale = Math.min(1, 480 / v.videoWidth);
+    cv.width = Math.round(v.videoWidth * scale);
+    cv.height = Math.round(v.videoHeight * scale);
+    cv.getContext('2d').drawImage(v, 0, 0, cv.width, cv.height);
+    return cv;
+  };
+  if (camOk) {
+    document.getElementById('fr-camstart').onclick = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const v = document.getElementById('fr-scanvid');
+        if (!v) { stop(); return; }
+        v.srcObject = stream;
+        v.style.display = '';
+        await v.play().catch(() => {});
+        const msg = document.getElementById('fr-scanmsg');
+        if (msg) msg.textContent = 'Scanning… hold steady';
+        timer = setInterval(async () => {
+          if (!document.getElementById('fr-scanvid')) { stop(); return; }
+          const frame = snapVideo();
+          if (!frame) return;
+          const val = await decodePixels(frame);
+          if (val) { clearInterval(timer); got(val); }
+        }, 600);
+      } catch { showNotif('Camera blocked — upload a QR image instead', '!'); }
+    };
+  }
+  document.getElementById('fr-scanfile').onchange = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try {
+      const bmp = await createImageBitmap(f);
+      const cv = document.getElementById('fr-scancv');
+      const scale = Math.min(1, 640 / bmp.width);
+      cv.width = Math.round(bmp.width * scale);
+      cv.height = Math.round(bmp.height * scale);
+      cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+      const val = await decodePixels(cv);
+      if (val) got(val);
+      else showNotif('No QR found in that image', '!');
+    } catch { showNotif('Could not read that image', '!'); }
+  };
 }
 
 function openChat(body, p) {

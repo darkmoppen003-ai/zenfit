@@ -12,15 +12,19 @@ import { showNotif, openOverlay } from './ui.js';
 export const peerConnections = {};
 export const peerChatHistory = {};
 let peer = null;
+let connecting = false;
+export const peerConnecting = () => connecting;
 
 export function initPeerJS() {
+  connecting = true;
+  try { window.ZF?.rerender(); } catch {}
   if (typeof window.Peer !== 'undefined') { startPeer(); return; }
   const script = document.createElement('script');
   script.src = 'https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js';
   script.integrity = 'sha384-PMNj1TmCgXfW24/rfIyxYSAWwj2mffkMfguUWv08iNFcy0kTC0JN7E/tE+pJ7+fa';
   script.crossOrigin = 'anonymous';
   script.onload = () => startPeer();
-  script.onerror = () => showNotif('P2P library failed to load (offline?)', '!');
+  script.onerror = () => { connecting = false; showNotif('P2P library failed to load (offline?)', '!'); try { window.ZF?.rerender(); } catch {} };
   document.head.appendChild(script);
 }
 
@@ -34,19 +38,54 @@ export function startPeer() {
     peer = new window.Peer(pid, { debug: 0 });
   } catch { return; }
   peer.on('open', () => {
+    connecting = false;
     update((s) => { s.peerId = pid; }, { silent: true });
     save();
     showNotif('Connected! Your ID: ' + pid, 'OK');
     window.ZF.rerender();
+    broadcastCard();
   });
   peer.on('connection', (conn) => setupConn(conn));
-  peer.on('error', (err) => showNotif('P2P error: ' + (err.type || 'unknown'), '!'));
+  peer.on('error', (err) => { connecting = false; showNotif('P2P error: ' + (err.type || 'unknown'), '!'); try { window.ZF?.rerender(); } catch {} });
 }
 
 export function peerStatus() {
   if (typeof window.Peer === 'undefined') return 'offline';
   if (peer && !peer.destroyed) return 'online';
   return 'ready';
+}
+
+/* Go offline: close live channels, destroy the peer, keep identity + partners. */
+export function stopPeer() {
+  connecting = false;
+  try {
+    Object.keys(peerConnections).forEach((id) => {
+      try { peerConnections[id].close(); } catch {}
+      delete peerConnections[id];
+    });
+  } catch {}
+  try { peer?.destroy(); } catch {}
+  peer = null;
+  save();
+  showNotif('P2P disconnected', 'OK');
+  try { window.ZF?.rerender(); } catch {}
+}
+
+/* Change reflection: on (re)connect, push our live card to every known
+   partner peer so levels/XP/streaks converge without manual re-adds. */
+export function broadcastCard() {
+  if (!peer || peer.destroyed) return;
+  (S.partners || []).filter((p) => p.peerId).forEach((p) => {
+    try {
+      if (peerConnections[p.peerId]?.open) {
+        peerConnections[p.peerId].send(JSON.stringify({ type: 'card', data: getMyCard() }));
+        return;
+      }
+      const conn = peer.connect(p.peerId, { reliable: true });
+      conn.on('open', () => { try { conn.send(JSON.stringify({ type: 'card', data: getMyCard() })); } catch {} });
+      setupConn(conn);
+    } catch {}
+  });
 }
 
 function setupConn(conn) {
@@ -62,10 +101,11 @@ function setupConn(conn) {
         update((s) => { s.pendingRequests = s.pendingRequests || []; });
         const c = msg.data || {};
         c.peerId = conn.peer;
-        const dup = S.pendingRequests.findIndex((p) => p.name === c.name);
+        // ponytail: match by peerId first (names collide across devices)
+        const dup = S.pendingRequests.findIndex((p) => p.peerId === conn.peer || p.name === c.name);
         if (dup > -1) S.pendingRequests[dup] = { ...c, ts: Date.now() };
         else S.pendingRequests.push({ ...c, ts: Date.now() });
-        if ((S.partners || []).some((p) => p.name === c.name)) {
+        if ((S.partners || []).some((p) => p.peerId === conn.peer || p.name === c.name)) {
           const idx = S.pendingRequests.findIndex((p) => p.name === c.name);
           if (idx > -1) acceptRequest(idx);
         } else {
@@ -78,11 +118,11 @@ function setupConn(conn) {
         card.peerId = conn.peer;
         update((s) => {
           s.partners = s.partners || [];
-          const pIdx = s.partners.findIndex((p) => p.name === card.name);
+          const pIdx = s.partners.findIndex((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name);
           if (pIdx > -1) s.partners[pIdx] = card;
           else s.partners.push(card);
           if (s.sentRequests) {
-            const sIdx = s.sentRequests.findIndex((p) => p.name === card.name);
+            const sIdx = s.sentRequests.findIndex((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name);
             if (sIdx > -1) s.sentRequests.splice(sIdx, 1);
           }
         });
@@ -98,8 +138,23 @@ function setupConn(conn) {
         showNotif((msg.name || 'Request') + ' declined your connection', '!');
         window.ZF.rerender();
       } else if (msg.type === 'card') {
-        if ((S.partners || []).some((p) => p.peerId === conn.peer || p.name === (msg.data || {}).name)) {
-          importFromPeer(conn.peer, msg.data || {});
+        const d = msg.data || {};
+        if ((S.partners || []).some((p) => p.peerId === conn.peer || p.name === d.name)) {
+          importFromPeer(conn.peer, d);
+        } else if ((S.sentRequests || []).some((p) => p.peerId === conn.peer || p.name === d.name)) {
+          // ponytail: offline-accepted handshake completes on next live contact —
+          // they accepted while we were away; their card promotes us to partners
+          update((s) => {
+            s.partners = s.partners || [];
+            const card = { ...d, peerId: conn.peer };
+            const idx = s.partners.findIndex((p) => p.peerId === conn.peer || p.name === d.name);
+            if (idx > -1) s.partners[idx] = card;
+            else s.partners.push(card);
+            s.sentRequests = (s.sentRequests || []).filter((p) => p.peerId !== conn.peer && p.name !== d.name);
+          });
+          save();
+          showNotif((d.name || 'Partner') + ' is now in your leaderboard!', 'OK');
+          window.ZF.rerender();
         }
       } else if (msg.type === 'chat') {
         if (!peerChatHistory[conn.peer]) peerChatHistory[conn.peer] = [];
@@ -205,7 +260,9 @@ export function getDetailedCard() {
 }
 
 export function getShareCode() {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(getMyCard()))));
+  // ponytail: QR capacity — profile pics are base64 bloat, share the card without them
+  const card = { ...getMyCard(), avatar: null };
+  return btoa(unescape(encodeURIComponent(JSON.stringify(card))));
 }
 
 export function sendConnectRequest(code) {
@@ -213,8 +270,8 @@ export function sendConnectRequest(code) {
     if (!code?.trim()) { showNotif('Paste a share code first', '!'); return; }
     const card = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
     if (!card.name || card.level == null) { showNotif('Invalid share code', '!'); return; }
-    if ((S.partners || []).some((p) => p.name === card.name)) { showNotif(card.name + ' is already in your leaderboard', '!'); return; }
-    if ((S.sentRequests || []).some((p) => p.name === card.name)) { showNotif('Request to ' + card.name + ' is already pending', '!'); return; }
+    if ((S.partners || []).some((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name)) { showNotif(card.name + ' is already in your leaderboard', '!'); return; }
+    if ((S.sentRequests || []).some((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name)) { showNotif('Request to ' + card.name + ' is already pending', '!'); return; }
     const incomingIdx = (S.pendingRequests || []).findIndex((p) => p.name === card.name);
     if (incomingIdx > -1) { acceptRequest(incomingIdx); return; }
     let sentLive = false;
@@ -240,7 +297,7 @@ export function acceptRequest(i) {
   delete partnerCard.ts;
   update((s) => {
     s.partners = s.partners || [];
-    const existing = s.partners.findIndex((p) => p.name === req.name);
+    const existing = s.partners.findIndex((p) => (partnerCard.peerId && p.peerId === partnerCard.peerId) || p.name === req.name);
     if (existing > -1) s.partners[existing] = partnerCard;
     else s.partners.push(partnerCard);
     s.pendingRequests.splice(i, 1);

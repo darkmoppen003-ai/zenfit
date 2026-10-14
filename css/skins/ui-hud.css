@@ -43,7 +43,8 @@ body[data-ui="hud"].glass-mode .card,
 body[data-ui="hud"].glass-mode .card-sm,
 body[data-ui="hud"].glass-mode .card-raised,
 body[data-ui="hud"].glass-mode .quest-card,
-body[data-ui="hud"].glass-mode .stat-block {
+body[data-ui="hud"].glass-mode .stat-block,
+body[data-ui="hud"].glass-mode .overlay-box {
   background: var(--bg-surface);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -55,7 +56,7 @@ body[data-ui="hud"] .section-title {
   letter-spacing: 2.5px;
 }
 body[data-ui="hud"] .section-title::before { content: '▸ '; }
-body[data-ui="hud"] .screen-header .sh-title { text-transform: uppercase; letter-spacing: 1px; font-size: clamp(20px, 6vw, 24px); }
+body[data-ui="hud"] .screen-header .sh-title { text-transform: uppercase; letter-spacing: 1px; font-size: clamp(1.05rem, 5vw + 0.35rem, 1.35rem); text-wrap: balance; }
 
 /* glowing status indicators */
 body[data-ui="hud"] .badge { border: 1px solid currentColor; border-radius: 2px; box-shadow: 0 0 8px color-mix(in srgb, currentColor 40%, transparent); }

@@ -5,6 +5,9 @@
 ────────────────────────────────────────────────────────────── */
 
 const SW = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
+/* Fill variant: solid glyphs where stroke can't carry the shape
+   (trophy cups, footprints, medals). Same 24-grid + currentColor. */
+const FILL = 'viewBox="0 0 24 24" fill="currentColor" stroke="none"';
 
 export const ICONS = {
   dashboard: `<svg ${SW}><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>`,
@@ -18,7 +21,6 @@ export const ICONS = {
   habits: `<svg ${SW}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
   checkSquare: `<svg ${SW}><rect x="3" y="3" width="18" height="18" rx="4"/><polyline points="8.5 12.5 11 15 15.5 9.5"/></svg>`,
   tasks: `<svg ${SW}><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
-  mind: `<svg ${SW}><path d="M12 2a7 7 0 0 1 7 7c0 2.4-1 4-2.5 5.5A7 7 0 0 1 12 22"/><path d="M12 2a7 7 0 0 0-7 7c0 2.4 1 4 2.5 5.5A7 7 0 0 0 12 22"/><circle cx="12" cy="9" r="2"/></svg>`,
   lotus: `<svg ${SW}><path d="M12 20c-4 0-7-2-8.5-5C6 14 9 13 12 13s6 1 8.5 2c-1.5 3-4.5 5-8.5 5z"/><path d="M12 13c0-4 1-7 3-9 2 2 3 5 3 9"/><path d="M12 13c0-4-1-7-3-9-2 2-3 5-3 9"/></svg>`,
   quests: `<svg ${SW}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
   star: `<svg ${SW}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
@@ -34,7 +36,6 @@ export const ICONS = {
   menu: `<svg ${SW}><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`,
   shield: `<svg ${SW}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
   shieldCheck: `<svg ${SW}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11 13.5 15 9.5"/></svg>`,
-  steps: `<svg ${SW}><path d="M4 16v-2.4C4 11 6 9.5 9 9.5s5 1.5 5 4V16"/><path d="M4 16h5"/><path d="M15 8V5.6C15 3.4 17 2 20 2s5 1.4 5 3.6V8"/><path d="M15 8h5"/></svg>`,
   moon: `<svg ${SW}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
   scale: `<svg ${SW}><line x1="12" y1="2" x2="12" y2="16"/><path d="M5 5l7-3 7 3"/><path d="M3 13l2.5-6L8 8.5 5.5 13z"/><path d="M21 13l-2.5-6L16 8.5l2.5 4.5z"/><path d="M12 16l-2.2 2L12 20l2.2-2z"/></svg>`,
   plus: `<svg ${SW}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
@@ -50,7 +51,10 @@ export const ICONS = {
   x: `<svg ${SW}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   chevDown: `<svg ${SW}><polyline points="6 9 12 15 18 9"/></svg>`,
   crown: `<svg ${SW}><path d="M3 17l1.5-9L9 12l3-7 3 7 4.5-4L21 17z"/><path d="M4 21h16"/></svg>`,
-  swords: `<svg ${SW}><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="20" x2="20" y2="16"/><polyline points="9.5 6.5 18 3 21 3 21 6 17.5 14.5"/><line x1="5" y1="11" x2="11" y2="5"/><line x1="4" y1="8" x2="8" y2="4"/></svg>`,
+  swords: `<svg ${SW}><path d="M3.5 2.5 7.2 3.8 18.5 15.1l-1.8 1.8L5.4 5.6 3.5 2.5z"/><path d="M20.5 2.5 16.8 3.8 5.5 15.1l1.8 1.8 11.3-11.3 1.9-3.1z"/><path d="M13.8 16.2l3.4-3.4M10.2 16.2l-3.4-3.4"/><path d="M16.5 15.5 19 18M7.5 15.5 5 18"/><circle cx="19.8" cy="18.8" r="1.2"/><circle cx="4.2" cy="18.8" r="1.2"/></svg>`,
+  friends: `<svg ${SW}><circle cx="9" cy="7.5" r="3.5"/><path d="M2.5 20v-1a6.5 6.5 0 0 1 13 0v1"/><circle cx="17" cy="9" r="2.7"/><path d="M15.8 14.6a5.3 5.3 0 0 1 5.7 5.4h-3"/></svg>`,
+  meditation: `<svg ${SW}><path d="M12 12.8C9.2 10.6 8.7 7.4 12 3c3.3 4.4 2.8 7.6 0 9.8z"/><path d="M11.9 12.8C7.7 12 5.4 9.7 5.7 6.9c3.4.9 5.5 3.3 6.2 5.9z"/><path d="M12.1 12.8c4.2-.8 6.5-3.1 6.2-5.9-3.4.9-5.5 3.3-6.2 5.9z"/><path d="M11.8 12.9C8.6 13.3 6.1 12.1 4.3 10.3c3.4-.3 6 .9 7.5 2.6z"/><path d="M12.2 12.9c3.2.4 5.7-.8 7.5-2.6-3.4-.3-6 .9-7.5 2.6z"/></svg>`,
+  steps: `<svg ${SW}><rect x="3.5" y="2" width="8" height="11" rx="4"/><rect x="4" y="15" width="7" height="6.5" rx="2.5"/><rect x="12.5" y="4.5" width="8" height="11" rx="4"/><rect x="13" y="17.5" width="7" height="5" rx="2.2"/></svg>`,
   shieldRank: `<svg ${SW}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 15h.01"/></svg>`,
   bow: `<svg ${SW}><path d="M7 3c-3 4-3 14 0 18"/><path d="M7 3c4 1 7 5 7 9s-3 8-7 9"/><line x1="7" y1="12" x2="21" y2="12"/><polyline points="18 9 21 12 18 15"/></svg>`,
   dagger: `<svg ${SW}><path d="M4 20l2-2"/><path d="M6 18L18 6l-3-3L3 15l3 3z"/><path d="M15 5l4 4"/><path d="M3 21l3-3"/></svg>`,
@@ -66,7 +70,7 @@ export const ICONS = {
   calculator: `<svg ${SW}><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="16" y2="19"/></svg>`,
   clipboard: `<svg ${SW}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>`,
   bed: `<svg ${SW}><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></svg>`,
-  snowflake: `<svg ${SW}><line x1="12" y1="2" x2="12" y2="22"/><path d="M4.9 4.9l14.2 14.2"/><path d="M19.1 4.9L4.9 19.1"/></svg>`,
+  snowflake: `<svg ${SW}><path d="M12 2v20M3.3 7l17.4 10M20.7 7L3.3 17"/><circle cx="12" cy="12" r="1.2"/><path d="M10 5.5l2-2 2 2.5M10 18.5l2 2 2-2.5"/><path d="M10.2 8l1.8-1.6 1.8 1.6M10.2 16l1.8 1.6 1.8-1.6"/><path d="M14.7 8.3l1.7 1 0.4 2M14.7 15.7l1.7-1 0.4-2"/><path d="M9.3 8.3l-1.7 1-0.4 2M9.3 15.7l-1.7-1-0.4-2"/><path d="M18.7 8.1l1.7-.9.3 1.9M18.7 15.9l1.7.9.3-1.9"/><path d="M5.3 8.1l-1.7-.9-.3 1.9M5.3 15.9l-1.7.9-.3-1.9"/></svg>`,
   rainCloud: `<svg ${SW}><path d="M7 15h10a4 4 0 0 0 0-8 6 6 0 0 0-11 2"/><line x1="8" y1="19" x2="7" y2="21"/><line x1="12" y1="19" x2="11" y2="21"/><line x1="16" y1="19" x2="15" y2="21"/></svg>`,
   fullscreen: `<svg ${SW}><path d="M4 9V4h5"/><path d="M15 4h5v5"/><path d="M20 15v5h-5"/><path d="M9 20H4v-5"/></svg>`,
   compass: `<svg ${SW}><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 5-4 1 2-5z"/></svg>`,
@@ -74,11 +78,13 @@ export const ICONS = {
   sparkle: `<svg ${SW}><path d="M12 2c.5 5 3 7.5 8 8-5 .5-7.5 3-8 8-.5-5-3-7.5-8-8 5-.5 7.5-3 8-8z"/></svg>`,
   heart: `<svg ${SW}><path d="M12 21C7 16 3 12.5 3 8.8 3 6 5 4 7.5 4c1.8 0 3.4 1 4.5 2.6C13.1 5 14.7 4 16.5 4 19 4 21 6 21 8.8c0 3.7-4 7.2-9 12.2z"/></svg>`,
   repeat: `<svg ${SW}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
-  trophyDetail: `<svg ${SW}><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H4.5A3.5 3.5 0 0 0 8 10M16 5h3.5A3.5 3.5 0 0 1 16 10"/><path d="M12 6.2l.8 1.6 1.8.3-1.3 1.3.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.3 1.8-.3z"/><path d="M12 13v4"/><path d="M9 21h6"/><path d="M10 17h4"/></svg>`,
-  footprint: `<svg ${SW}><ellipse cx="11" cy="15.5" rx="5" ry="6"/><circle cx="6.5" cy="7" r="1.7"/><circle cx="10.5" cy="5.2" r="1.7"/><circle cx="14.5" cy="5.2" r="1.7"/><circle cx="18" cy="7.5" r="1.7"/></svg>`,
+  trophyFill: `<svg ${FILL}><rect x="4" y="2.6" width="16" height="1.8" rx="0.9"/><path fill-rule="evenodd" d="M5 5.2h14v2.3a7 7 0 0 1-14 0V5.2zm2.5.9c0-.5 2-1 4.5-1s4.5.5 4.5 1-2 1-4.5 1-4.5-.5-4.5-1z"/><path d="M5 6H3v3a8.5 8.5 0 0 0 4.8 7.7L9.2 15A6.6 6.6 0 0 1 5 10.4V6z"/><path d="M19 6h2v3a8.5 8.5 0 0 1-4.8 7.7l-1.4-1.7a6.6 6.6 0 0 0 4.6-4.6V6z"/><path d="M10.6 14.5h2.8l.7 2.6 3 1.2v1.5H6.9v-1.5l3-1.2.7-2.6z"/><ellipse cx="12" cy="21.5" rx="5.5" ry="1.7"/></svg>`,
+  footprintFill: `<svg ${FILL}><path d="M7.5 2C5 2 3.5 4 3.5 6.5V13c0 1 .8 1.8 1.8 1.8h4.4c1 0 1.8-.8 1.8-1.8V6.5C11.5 4 10 2 7.5 2z"/><rect x="4" y="16" width="7" height="5.5" rx="2"/><path d="M16.5 4.5c-2.5 0-4 2-4 4.5V15c0 1 .8 1.8 1.8 1.8h4.4c1 0 1.8-.8 1.8-1.8V9c0-2.5-1.5-4.5-4-4.5z"/><rect x="13" y="18.5" width="7" height="4" rx="1.8"/></svg>`,
+  stepsFill: `<svg ${FILL}><path d="M7.5 2C5 2 3.5 4 3.5 6.5V13c0 1 .8 1.8 1.8 1.8h4.4c1 0 1.8-.8 1.8-1.8V6.5C11.5 4 10 2 7.5 2z"/><rect x="4" y="16" width="7" height="5.5" rx="2"/><path d="M16.5 4.5c-2.5 0-4 2-4 4.5V15c0 1 .8 1.8 1.8 1.8h4.4c1 0 1.8-.8 1.8-1.8V9c0-2.5-1.5-4.5-4-4.5z"/><rect x="13" y="18.5" width="7" height="4" rx="1.8"/></svg>`,
+  bookStack: `<svg ${FILL}><path d="M2.5 15.5h19V19a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 19v-3.5z"/><rect x="4" y="16.9" width="16" height="1.1" rx="0.55" fill-opacity="0.4"/><rect x="4" y="10.5" width="16" height="4" rx="1"/><g transform="rotate(-7 12 7)"><rect x="5.5" y="4.8" width="13" height="4.6" rx="1"/><rect x="7.2" y="6.4" width="4.5" height="1.2" rx="0.6" fill-opacity="0.45"/></g></svg>`,
+  lock: `<svg ${FILL}><path fill-rule="evenodd" d="M6 10h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm6 3a1.5 1.5 0 0 0-.75 2.8V17a.75.75 0 0 0 1.5 0v-1.2A1.5 1.5 0 0 0 12 13zM7 10V7a5 5 0 0 1 10 0v3h-2.2V7a2.8 2.8 0 0 0-5.6 0v3H7z"/></svg>`,
   manualWrite: `<svg ${SW}><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M10.5 14.5l.8.8L16 10.6l-.8-.8z"/><line x1="9" y1="18" x2="15" y2="18"/></svg>`,
   mindCyber: `<svg ${SW}><path d="M12 4a3 3 0 0 0-5.5 1.7A3.5 3.5 0 0 0 4 12a3.5 3.5 0 0 0 2 6.3A3 3 0 0 0 12 20z"/><path d="M12 4a3 3 0 0 1 5.5 1.7A3.5 3.5 0 0 1 20 12a3.5 3.5 0 0 1-2 6.3A3 3 0 0 1 12 20z"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="14" r="1.2"/><path d="M7.8 10H6M16.2 14H18"/></svg>`,
-  lotusZen: `<svg ${SW}><path d="M12 4c2 3 2 7 0 10-2-3-2-7 0-10z"/><path d="M4 10c3 0 5 1 6 3-2 1-5 0-6-3z"/><path d="M20 10c-3 0-5 1-6 3 2 1 5 0 6-3z"/><path d="M3 16c3 2 6 3 9 3s6-1 9-3c-2 3-5.5 5-9 5s-7-2-9-5z"/><circle cx="12" cy="2.3" r="0.8"/></svg>`,
   trendChart: `<svg ${SW}><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M15 8h4v4"/></svg>`,
   phone: `<svg ${SW}><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="19" x2="13" y2="19"/></svg>`,
   globe: `<svg ${SW}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>`,

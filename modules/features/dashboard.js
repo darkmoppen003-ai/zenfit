@@ -24,7 +24,7 @@ const RANK_LEVELS = { E: 1, D: 8, C: 16, B: 24, A: 32, S: 40 };
 const RANK_CREST_ICON = { S: 'crown', A: 'zap', B: 'shieldRank', C: 'bow', D: 'dagger', E: 'fist' };
 const STAT_DEFS = [
   { key: 'strength', icon: 'swords', label: 'Strength', color: 'var(--danger)' },
-  { key: 'discipline', icon: 'mind', label: 'Discipline', color: 'var(--primary)' },
+  { key: 'discipline', icon: 'mindCyber', label: 'Discipline', color: 'var(--primary)' },
   { key: 'health', icon: 'heart', label: 'Health', color: 'var(--success)' },
   { key: 'endurance', icon: 'steps', label: 'Endurance', color: 'var(--info)' },
   { key: 'wisdom', icon: 'book', label: 'Wisdom', color: 'var(--warning)' },
@@ -156,12 +156,12 @@ export function renderDashboard(host) {
   <!-- ACHIEVEMENTS + STEPS -->
   <div class="grid2 mb12">
     <div class="card-sm text-center" id="dash-ach" style="cursor:pointer">
-      <div style="font-size:20px;line-height:1;margin-bottom:6px"><span class="uistyle-ic">${icon('trophyDetail')}</span></div>
+      <div style="font-size:20px;line-height:1;margin-bottom:6px"><span class="uistyle-ic">${icon('trophyFill')}</span></div>
       ${ring(84, `${earned.size}/${ACHIEVEMENTS.length}`, earned.size / ACHIEVEMENTS.length, 'var(--warning)', 28, 11)}
       <div style="font-size:11px;color:var(--text-muted)" class="mt8">${achPct}% complete</div>
     </div>
     <div class="card-sm text-center">
-      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('footprint')}</span>Steps Today</div>
+      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('footprintFill')}</span>Steps Today</div>
       <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
       <div style="font-size:10px;color:var(--text-muted)">~${Math.round(steps * 0.04)} kcal burned</div>
       <div class="flex gap8 mt8"><input type="number" id="steps-input" placeholder="add steps" min="0" style="text-align:center;flex:1;min-width:0" aria-label="Add steps">

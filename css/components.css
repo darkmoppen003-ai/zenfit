@@ -5,7 +5,7 @@
 .screen { display: none; padding: 12px 12px 96px; max-width: 100vw; overflow-x: hidden; min-height: 100vh; }
 .screen.active { display: block; backface-visibility: hidden; opacity: 1; }
 .screen-header { display: flex; align-items: center; gap: 10px; padding: 6px 2px 14px; margin-bottom: 6px; }
-.screen-header .sh-title { font-family: var(--font-display); font-size: 24px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.15; min-width: 0; overflow-wrap: anywhere; padding-right: 4px; }
+.screen-header .sh-title { font-family: var(--font-display); font-size: clamp(1.1rem, 4.2vw + 0.55rem, 1.5rem); font-weight: 800; letter-spacing: 0.5px; line-height: 1.1; min-width: 0; overflow-wrap: anywhere; text-wrap: balance; padding-right: 4px; }
 .screen-header .sh-icon { font-size: 20px; line-height: 1; display: inline-flex; align-items: center; }
 .screen-header .sh-icon svg { width: 22px; height: 22px; display: block; }
 .screen-header .sh-icon .nav-icon { width: 22px; height: 22px; display: inline-flex; }
@@ -254,6 +254,14 @@ body.glass-mode .char-evo-step { background: rgba(var(--glass-bg-rgb), calc(var(
 body.glass-mode .char-evo-step.evo-current { background: rgba(var(--glass-bg-rgb), var(--glass-alpha)); }
 body.glass-mode .char-stat-bar-wrap { background: rgba(255,255,255,0.08); }
 
+/* Glass-mode dialogs: same frosted treatment as cards, so every popup
+   (openOverlay, nav editor, confirms) follows Transparency + liquid lens. */
+body.glass-mode .overlay-box {
+  background: rgba(var(--glass-bg-rgb), var(--glass-alpha));
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+}
+
 /* Interface-style switcher tile + header icons (ICONS.* line-art) */
 .uistyle-ic { display: inline-flex; align-items: center; justify-content: center; }
 .uistyle-ic svg { width: 24px; height: 24px; display: block; }
@@ -261,6 +269,11 @@ body.glass-mode .char-stat-bar-wrap { background: rgba(255,255,255,0.08); }
 .collapse-ic svg { width: 18px; height: 18px; display: block; }
 .collapse-ic-xs { width: 13px; height: 13px; margin-left: -8px; align-self: flex-end; color: var(--text-primary); }
 .collapse-ic-xs svg { width: 13px; height: 13px; display: block; }
+/* wallset stack: gear occludes the image glyph's corner (solid chip bg,
+   like the reference) instead of floating beside it */
+.wallset-stack { display: inline-flex; align-items: center; }
+.wallset-gear { width: 15px; height: 15px; margin-left: -9px; align-self: flex-end; position: relative; z-index: 1; background: var(--bg-surface); border-radius: 50%; color: var(--text-primary); }
+.wallset-gear svg { width: 15px; height: 15px; display: block; }
 /* Inline label glyphs (dashboard/nutrition/workout/water/tasks chrome) */
 .lbl-ic { display: inline-flex; vertical-align: -2px; margin-right: 3px; }
 .lbl-ic svg { width: 14px; height: 14px; display: block; }
@@ -276,4 +289,8 @@ body.lg-lens-on.glass-mode .bonus-card {
   backdrop-filter: blur(var(--glass-blur)) saturate(160%) url(#zf-lens);
   border-color: rgba(255, 255, 255, 0.14);
   box-shadow: var(--shadow-md), inset 0 1px 1px rgba(255, 255, 255, 0.35), inset 0 -1px 1px rgba(255, 255, 255, 0.15);
+}
+body.lg-lens-on.glass-mode .overlay-box {
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%) url(#zf-lens);
+  border-color: rgba(255, 255, 255, 0.14);
 }

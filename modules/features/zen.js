@@ -198,8 +198,8 @@ export function renderMind(host, subTab) {
   }
   host.innerHTML = `
   <div class="chart-tab-bar" data-no-swipe style="display:flex;gap:2px;margin-bottom:14px;overflow-x:auto">
-    <div class="chart-tab${sub === 'zen' ? ' active' : ''}" data-mtab="zen"><span class="lbl-ic">${ICONS.lotusZen}</span>ZEN</div>
-    <div class="chart-tab${sub === 'study' ? ' active' : ''}" data-mtab="study"><span class="lbl-ic">${ICONS.book}</span>Study</div>
+    <div class="chart-tab${sub === 'zen' ? ' active' : ''}" data-mtab="zen"><span class="lbl-ic">${ICONS.meditation}</span>ZEN</div>
+    <div class="chart-tab${sub === 'study' ? ' active' : ''}" data-mtab="study"><span class="lbl-ic">${ICONS.bookStack}</span>Study</div>
     <div class="chart-tab${sub === 'screentime' ? ' active' : ''}" data-mtab="screentime"><span class="lbl-ic">${ICONS.phone}</span>Screen Time</div>
   </div>
   <div id="mind-body"></div>`;
@@ -717,7 +717,7 @@ function renderStudy(host) {
     const gi = S.study.sessions.indexOf(sess);
     const row = document.createElement('div');
     row.className = 'quest-card';
-    row.innerHTML = `<div style="font-size:20px">📚</div><div style="flex:1">`
+    row.innerHTML = `<div style="width:20px;height:20px;color:var(--info);flex-shrink:0;display:flex">${ICONS.bookStack}</div><div style="flex:1">`
       + `<div style="font-size:13px">${escapeHtml(sess.subject)}${sess.topic ? ` <span style="color:var(--text-muted)">· ${escapeHtml(sess.topic)}</span>` : ''}</div>`
       + `<div style="font-size:11px;color:var(--text-muted)">${sess.duration} min · ${escapeHtml(sess.difficulty || 'medium')} · +${sess.xp ?? calcStudyXP(sess.duration, sess.difficulty)} XP</div></div>`
       + `<button class="btn btn-icon btn-sm" data-sdel="${gi}" style="color:var(--danger)">×</button>`;

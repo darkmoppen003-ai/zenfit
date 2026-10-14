@@ -16,7 +16,7 @@
 @media (min-width: 768px) {
   .app { padding: 0 24px env(safe-area-inset-bottom, 0px); }
   .screen { padding: 20px 8px 96px; }
-  .screen-header .sh-title { font-size: 30px; }
+  .screen-header .sh-title { font-size: clamp(1.35rem, 1.8vw + 1rem, 1.9rem); }
   .bottom-nav { width: min(60%, 520px); }
   .zen-breath { width: 260px; height: 260px; }
   .zen-circle { width: 180px; height: 180px; }

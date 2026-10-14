@@ -1,6 +1,6 @@
 /* ── ZenFit V2 · core/router.js ────────────────────────────
    Registry-driven navigation. ADDING A SCREEN = 1 line:
-     { id:'sleep', label:'Sleep', icon:'😴', render: renderSleep }
+      { id:'sleep', label:'Sleep', icon:ICONS.moon, render: renderSleep }
    in the SCREENS array below (+ import). Dashboard opens first —
    the V1 orb/home screen is intentionally gone (Step 7).
    Hash routing (#/nutrition) → deep-linkable. In-app moves use
@@ -28,8 +28,8 @@ import { renderInbox } from '../features/inbox.js';
 import { renderPrivacy } from '../features/privacy.js';
 
 export const SCREENS = [
-  { id: 'dashboard', label: 'Dashboard', icon: '&#9783;', render: renderDashboard },
-  { id: 'nutrition', label: 'Nutrition', icon: '&#127869;', render: renderNutrition },
+  { id: 'dashboard', label: 'Dashboard', icon: ICONS.dashboard, render: renderDashboard },
+  { id: 'nutrition', label: 'Nutrition', icon: ICONS.nutrition, render: renderNutrition },
   { id: 'water', label: 'Water', icon: ICONS.drop, render: renderWater },
   { id: 'workout', label: 'Workout', icon: ICONS.workout, render: renderWorkout },
   { id: 'habits', label: 'Habits', icon: ICONS.habits, render: renderHabits },
@@ -39,19 +39,19 @@ export const SCREENS = [
   { id: 'analytics', label: 'Analytics', icon: ICONS.trendChart, render: renderAnalytics },
   { id: 'leaderboard', label: 'Leaderboard', icon: ICONS.leaderboard, render: renderLeaderboard },
   { id: 'profile', label: 'Profile', icon: ICONS.user, render: renderProfile },
-  { id: 'customization', label: 'Customization', icon: '&#9881;', render: renderCustomization },
+  { id: 'customization', label: 'Customization', icon: ICONS.customization, render: renderCustomization },
   // Admin + achievements + inbox + privacy are hidden: no nav entry.
-  { id: 'admin', label: 'Admin', icon: '&#128737;', render: renderAdmin, hidden: true },
-  { id: 'achievements', label: 'Achievements', icon: '&#127942;', render: renderAchievements, hidden: true },
+  { id: 'admin', label: 'Admin', icon: ICONS.shieldCheck, render: renderAdmin, hidden: true },
+  { id: 'achievements', label: 'Achievements', icon: ICONS.trophy, render: renderAchievements, hidden: true },
   { id: 'inbox', label: 'Inbox', icon: ICONS.inbox, render: renderInbox, hidden: true },
-  { id: 'privacy', label: 'Privacy', icon: '&#128274;', render: renderPrivacy, hidden: true },
+  { id: 'privacy', label: 'Privacy', icon: ICONS.lock, render: renderPrivacy, hidden: true },
 ];
 
 /* Bottom-dock icons stay SVG line-art (V1 bottom dock parity) */
 const DOCK_ICONS = {
   dashboard: ICONS.dashboard, nutrition: ICONS.nutrition, workout: ICONS.workout,
   habits: ICONS.habits, analytics: ICONS.analytics, water: ICONS.water,
-  quests: ICONS.quests, tasks: ICONS.tasks, mind: ICONS.mind,
+  quests: ICONS.quests, tasks: ICONS.tasks, mind: ICONS.mindCyber,
   leaderboard: ICONS.leaderboard, profile: ICONS.profile, customization: ICONS.customization,
   inbox: ICONS.inbox,
 };
@@ -104,14 +104,50 @@ export function renderActive(dir = 'up') {
     hdr.innerHTML = `<span class="sh-icon">${target.icon}</span><div class="sh-title">${target.label}</div>`;
     d.insertBefore(hdr, d.firstChild);
   }
+  fitHeader(d);
   renderBottomNav();
   animateScreenEnter(d, dir);
   // Keep wallpaper-per-screen in sync
   if (window.ZF?.applyBg) window.ZF.applyBg();
 }
 
-/* NOTE: V1 removed the top navigation bar — the bottom dock is the
-   only navigation. renderTopNav intentionally does not exist. */
+/* ── Header shrink-to-fit ──
+   Syne-800 caps ("CUSTOMIZATION") overflow 360px even at fluid-clamp minimums
+   and `overflow-wrap:anywhere` breaks the word mid-glyph. CSS clamp stays the
+   ceiling; JS only shrinks single-line titles that overflow, floor 12px. */
+export function fitHeader(scope) {
+  try {
+    const root = scope || document;
+    const t = root.querySelector?.(':scope > .screen-header .sh-title') || root.querySelector?.('.screen-header .sh-title');
+    if (!t) return;
+    t.style.whiteSpace = 'nowrap';
+    t.style.fontSize = '';
+    const avail = t.clientWidth;
+    if (!avail) return;
+    let fs = parseFloat(getComputedStyle(t).fontSize) || 20;
+    let guard = 14;
+    while (guard-- > 0 && t.scrollWidth > avail && fs > 12) {
+      fs -= 1;
+      t.style.fontSize = `${fs}px`;
+    }
+  } catch {}
+}
+
+/* Refit the live header when webfonts arrive late or the viewport changes
+   (rotate/resize) — one global listener, headers are single nodes. */
+let __fitWired = false;
+function wireHeaderFit() {
+  if (__fitWired) return;
+  __fitWired = true;
+  try { document.fonts?.ready.then(() => fitHeader(document)); } catch {}
+  try {
+    let rt = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => fitHeader(document), 120);
+    }, { passive: true });
+  } catch {}
+}
 
 function visibleTabs() {
   const ids = S.customBottomNav?.length ? S.customBottomNav : DEFAULT_DOCK;
@@ -302,8 +338,18 @@ export function openNavEditor() {
     };
   });
   ov.querySelector('#navedit-labels').onchange = (e) => {
-    window.ZF.update((s) => { s.navLabels = e.target.checked; }, { silent: true });
+    const on = e.target.checked;
+    window.ZF.update((s) => { s.navLabels = on; }, { silent: true });
     window.ZF.save();
+    // ponytail: knob/track spans carry inline styles painted once at open —
+    // repaint them here or the toggle looks dead behind the modal
+    const track = e.target.closest('label')?.querySelector('span');
+    if (track) {
+      track.style.background = on ? 'var(--primary-dark)' : 'var(--bg-overlay)';
+      const knob = track.querySelector('span');
+      if (knob) knob.style.left = on ? '20px' : '3px';
+    }
+    window.ZF.toast(`Labels ${on ? 'on' : 'off'}`, 'OK');
     window.ZF.rerender();
   };
   ov.querySelector('#navedit-save').onclick = () => {
@@ -373,8 +419,7 @@ export function initRouter() {
     const dockMQ = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
     dockMQ.addEventListener?.('change', () => { closeMorePopover(); renderActive(); });
   } catch {}
-  window.addEventListener('popstate', () => {
-    // back/forward to a different hash = navigate, not exit
+  window.addEventListener('popstate', () => {    // back/forward to a different hash = navigate, not exit
     try {
       const m = location.hash.match(/^#\/([a-z]+)/);
       const id = m ? screenById(m[1]).id : null;
@@ -418,5 +463,6 @@ export function initRouter() {
     switchScreen(order[i], null, forward ? 'left' : 'right');
   }, { passive: true });
 
+  wireHeaderFit();
   renderActive();
 }
