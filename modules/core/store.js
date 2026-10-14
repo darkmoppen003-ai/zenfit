@@ -20,7 +20,7 @@ export const STORAGE_KEYS = {
 export const DATA_VERSION = 19;
 export const APP_VERSION = "8.9.3.6";
 
-export const APP_BUILD = "2026.10.14.57";
+export const APP_BUILD = "2026.10.14.58";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
