@@ -99,7 +99,7 @@ export function renderDashboard(host) {
     </div>
     <div class="flex-between">
       <div><div style="font-size:11px;color:var(--text-muted)">STREAK</div>
-      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div><span class="lbl-ic" style="margin:0">${icon('flame')}</span></div><div>${streak}d</div></div></div>
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div>🔥</div><div>${streak}d</div></div></div>
       <div class="text-center"><div style="font-size:11px;color:var(--text-muted)">Level ${p.level}</div>
       <div id="dash-rank" title="Rank" style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${rc};cursor:pointer">RANK ${escapeHtml(p.rank)}</div>
       <div style="font-size:10px;color:var(--text-muted)">${RANK_NAMES[p.rank] || ''}</div></div>
@@ -156,12 +156,12 @@ export function renderDashboard(host) {
   <!-- ACHIEVEMENTS + STEPS -->
   <div class="grid2 mb12">
     <div class="card-sm text-center" id="dash-ach" style="cursor:pointer">
-      <div style="font-size:20px;line-height:1;margin-bottom:6px"><span class="uistyle-ic">${icon('trophy')}</span></div>
+      <div style="font-size:20px;line-height:1;margin-bottom:6px"><span class="uistyle-ic">${icon('trophyDetail')}</span></div>
       ${ring(84, `${earned.size}/${ACHIEVEMENTS.length}`, earned.size / ACHIEVEMENTS.length, 'var(--warning)', 28, 11)}
       <div style="font-size:11px;color:var(--text-muted)" class="mt8">${achPct}% complete</div>
     </div>
     <div class="card-sm text-center">
-      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('steps')}</span>Steps Today</div>
+      <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('footprint')}</span>Steps Today</div>
       <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
       <div style="font-size:10px;color:var(--text-muted)">~${Math.round(steps * 0.04)} kcal burned</div>
       <div class="flex gap8 mt8"><input type="number" id="steps-input" placeholder="add steps" min="0" style="text-align:center;flex:1;min-width:0" aria-label="Add steps">

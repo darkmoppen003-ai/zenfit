@@ -164,7 +164,7 @@ function renderToday(body, nut, g) {
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn btn-sm${ft === 'text' ? ' btn-primary' : ''}" data-ft="text"><span class="lbl-ic">${ICONS.pencil}</span>Text</button>
       <button class="btn btn-sm${ft === 'barcode' ? ' btn-primary' : ''}" data-ft="barcode"><span class="lbl-ic">${ICONS.camera}</span>Barcode</button>
-      <button class="btn btn-sm${ft === 'manual' ? ' btn-primary' : ''}" data-ft="manual"><span class="lbl-ic">${ICONS.pencil}</span>Manual</button>
+      <button class="btn btn-sm${ft === 'manual' ? ' btn-primary' : ''}" data-ft="manual"><span class="lbl-ic">${ICONS.manualWrite}</span>Manual</button>
     </div>
     <div id="ft-text" style="${ft === 'text' ? '' : 'display:none'}">
       <input type="text" id="food-input" placeholder="e.g. 2 chapati, 3 eggs, 200g rice, 250ml milk, 1 bowl dal..." style="margin-bottom:8px" maxlength="300">

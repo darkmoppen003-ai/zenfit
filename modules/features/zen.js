@@ -8,7 +8,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, awardXP, celebrateFirst, sfx } from '../core/ui.js';
+import { showNotif, awardXP, celebrateFirst, sfx, ICONS } from '../core/ui.js';
 import { today, isRestDay, moodDate } from '../core/selectors.js';
 import { checkAutoQuests } from './quests.js';
 import { checkAchievements } from '../core/achievements.js';
@@ -106,7 +106,7 @@ function unlockScreen() { document.body.classList.remove('screen-locked'); }
 function openIntensityPopup(m, t) {
   const mc = m.color;
   const ov = document.createElement('div');
-  ov.className = 'overlay'; ov.style.zIndex = '9999';
+  ov.className = 'overlay';
   lockScreen();
   ov.addEventListener('click', (e) => { if (e.target === ov) { unlockScreen(); ov.remove(); } });
   ov.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
@@ -115,7 +115,7 @@ function openIntensityPopup(m, t) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How intense was this feeling?</div>
     <div style="position:relative;padding:0 8px">
       <input type="range" min="1" max="10" value="5" step="1" id="mood-int-slider" class="mood-slider"
-        style="background:linear-gradient(to right,${mc} 44%,#333 44%)">
+        style="background:linear-gradient(to right,${mc} 44%,var(--bg-overlay) 44%)">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
         <span>Mild</span><span id="mood-int-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>Intense</span>
       </div></div>
@@ -129,7 +129,7 @@ function openIntensityPopup(m, t) {
   const sync = () => {
     const v = +sl.value;
     val.textContent = v;
-    sl.style.background = `linear-gradient(to right,${mc} ${((v - 1) / 9) * 100}%,#333 ${((v - 1) / 9) * 100}%)`;
+    sl.style.background = `linear-gradient(to right,${mc} ${((v - 1) / 9) * 100}%,var(--bg-overlay) ${((v - 1) / 9) * 100}%)`;
   };
   sl.addEventListener('input', sync);
   sync();
@@ -144,7 +144,7 @@ function openIntensityPopup(m, t) {
 function openEnergyPopup(m, t, intensity) {
   const mc = m.color;
   const ov = document.createElement('div');
-  ov.className = 'overlay'; ov.style.zIndex = '9999';
+  ov.className = 'overlay';
   ov.addEventListener('click', (e) => { if (e.target === ov) { unlockScreen(); ov.remove(); } });
   ov.innerHTML = `<div class="overlay-box" style="border-color:${mc};max-width:340px">
     <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${m.emoji}" style="width:48px;height:48px;display:block;margin:0 auto 4px" onerror="this.style.display='none'">
@@ -152,7 +152,7 @@ function openEnergyPopup(m, t, intensity) {
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">How's your energy level?</div>
     <div style="position:relative;padding:0 8px">
       <input type="range" min="1" max="10" value="5" step="1" id="mood-en-slider" class="mood-slider"
-        style="background:linear-gradient(to right,${mc} 44%,#333 44%)">
+        style="background:linear-gradient(to right,${mc} 44%,var(--bg-overlay) 44%)">
       <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:2px">
         <span>Low</span><span id="mood-en-val" style="font-size:28px;font-weight:700;font-family:var(--font-display);color:${mc}">5</span><span>High</span>
       </div></div>
@@ -166,7 +166,7 @@ function openEnergyPopup(m, t, intensity) {
   const sync = () => {
     const v = +sl.value;
     val.textContent = v;
-    sl.style.background = `linear-gradient(to right,${mc} ${((v - 1) / 9) * 100}%,#333 ${((v - 1) / 9) * 100}%)`;
+    sl.style.background = `linear-gradient(to right,${mc} ${((v - 1) / 9) * 100}%,var(--bg-overlay) ${((v - 1) / 9) * 100}%)`;
   };
   sl.addEventListener('input', sync);
   sync();
@@ -198,9 +198,9 @@ export function renderMind(host, subTab) {
   }
   host.innerHTML = `
   <div class="chart-tab-bar" data-no-swipe style="display:flex;gap:2px;margin-bottom:14px;overflow-x:auto">
-    <div class="chart-tab${sub === 'zen' ? ' active' : ''}" data-mtab="zen">🧘 ZEN</div>
-    <div class="chart-tab${sub === 'study' ? ' active' : ''}" data-mtab="study">📚 Study</div>
-    <div class="chart-tab${sub === 'screentime' ? ' active' : ''}" data-mtab="screentime">📱 Screen Time</div>
+    <div class="chart-tab${sub === 'zen' ? ' active' : ''}" data-mtab="zen"><span class="lbl-ic">${ICONS.lotusZen}</span>ZEN</div>
+    <div class="chart-tab${sub === 'study' ? ' active' : ''}" data-mtab="study"><span class="lbl-ic">${ICONS.book}</span>Study</div>
+    <div class="chart-tab${sub === 'screentime' ? ' active' : ''}" data-mtab="screentime"><span class="lbl-ic">${ICONS.phone}</span>Screen Time</div>
   </div>
   <div id="mind-body"></div>`;
   host.querySelectorAll('[data-mtab]').forEach((t) => {

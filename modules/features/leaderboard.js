@@ -6,7 +6,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif } from '../core/ui.js';
+import { showNotif, ICONS } from '../core/ui.js';
 import { checkAchievements } from '../core/achievements.js';
 import {
   peerConnections, peerChatHistory, initPeerJS, peerStatus,
@@ -22,7 +22,7 @@ export function renderLeaderboard(host, subTab) {
   if (subTab) tab = subTab;
   host.innerHTML = `
   <div class="chart-tab-bar">
-    ${[['global', '🌐 Global'], ['friends', 'Friends'], ['challenges', '⚔️ Challenges']].map(([t, label]) =>
+    ${[['global', `<span class="lbl-ic">${ICONS.globe}</span>Global`], ['friends', `<span class="lbl-ic">${ICONS.user}</span>Friends`], ['challenges', `<span class="lbl-ic">${ICONS.swords}</span>Challenges`]].map(([t, label]) =>
       `<div class="chart-tab${tab === t ? ' active' : ''}" data-lb="${t}">${label}</div>`).join('')}
   </div>
   <div id="lb-body"></div>`;

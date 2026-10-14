@@ -413,6 +413,7 @@ function openOverlaySafe(html) {
   const o = document.createElement('div');
   o.className = 'overlay'; o.id = 'zf-overlay';
   o.innerHTML = `<div class="overlay-box">${html}</div>`;
+  o.addEventListener('pointerdown', (e) => { if (e.target === o) o.remove(); });
   document.body.appendChild(o);
 }
 

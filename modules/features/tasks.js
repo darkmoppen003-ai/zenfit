@@ -95,9 +95,9 @@ export function renderTasks(host) {
     <button class="btn btn-primary btn-full" id="t-add">[ + ADD TASK ]</button>
   </div>
   <div class="section-title">Today's Tasks (${due.length})</div>
-  <div id="t-due"></div>
+  <div id="t-due">${due.length === 0 ? '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img loading="lazy" decoding="async" src="assets/mascot/tasks.png" style="width:128px;height:128px;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No tasks due today. Enjoy the calm!</div></div>' : ''}</div>
   <div class="section-title mt16">Completed Today (${doneToday.length})</div>
-  <div id="t-done">${doneToday.length === 0 ? '<div style="color:var(--text-muted);font-size:13px">No tasks completed yet today.</div>' : ''}</div>`;
+  <div id="t-done">${doneToday.length === 0 ? '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 0"><img loading="lazy" decoding="async" src="assets/mascot/tasks.png" style="width:128px;height:128px;object-fit:contain" alt=""><div style="color:var(--text-muted);font-size:13px">No tasks completed yet today.</div></div>' : ''}</div>`;
 
   host.querySelector('#task-repeat').onchange = (e) => {
     host.querySelector('#task-custom-days').style.display = e.target.value === 'custom' ? 'block' : 'none';

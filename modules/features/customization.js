@@ -225,6 +225,7 @@ export function renderCustomization(host) {
           <div style="width:14px;height:14px;border-radius:50%;border:2px solid ${Math.round((S.glassAlpha ?? 0.55) * 100) === v ? 'var(--primary)' : 'var(--text-muted)'};background:${Math.round((S.glassAlpha ?? 0.55) * 100) === v ? 'var(--primary)' : 'transparent'}"></div>
           <span style="font-size:8px;color:var(--text-muted);line-height:1">${v}</span></div>`).join('')}
       </div>
+      <button class="btn btn-sm btn-ghost btn-full mt8" id="fx-reset">Reset transparency defaults</button>
     </div>
   </div>
 
@@ -603,6 +604,11 @@ export function renderCustomization(host) {
 
   /* glass */
   host.querySelector('#fx-glass').onchange = (e) => update((s) => { s.glassMode = e.target.checked; });
+  host.querySelector('#fx-reset').onclick = () => {
+    update((s) => { s.glassMode = true; s.glassBlur = 4; s.glassAlpha = 0.15; s.liquidLens = false; });
+    showNotif('Transparency reset to defaults', 'OK');
+    window.ZF.rerender();
+  };
   host.querySelector('#fx-lens').onchange = (e) => {
     update((s) => { s.liquidLens = e.target.checked; });
     window.ZF.applyBg();

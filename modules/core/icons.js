@@ -36,7 +36,7 @@ export const ICONS = {
   shieldCheck: `<svg ${SW}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11.5 11 13.5 15 9.5"/></svg>`,
   steps: `<svg ${SW}><path d="M4 16v-2.4C4 11 6 9.5 9 9.5s5 1.5 5 4V16"/><path d="M4 16h5"/><path d="M15 8V5.6C15 3.4 17 2 20 2s5 1.4 5 3.6V8"/><path d="M15 8h5"/></svg>`,
   moon: `<svg ${SW}><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
-  scale: `<svg ${SW}><path d="M12 3v18"/><path d="M5 7l7-4 7 4"/><path d="M3 13l2-6 2 6a3.5 3.5 0 0 1-4 0z"/><path d="M17 13l2-6 2 6a3.5 3.5 0 0 1-4 0z"/></svg>`,
+  scale: `<svg ${SW}><line x1="12" y1="2" x2="12" y2="16"/><path d="M5 5l7-3 7 3"/><path d="M3 13l2.5-6L8 8.5 5.5 13z"/><path d="M21 13l-2.5-6L16 8.5l2.5 4.5z"/><path d="M12 16l-2.2 2L12 20l2.2-2z"/></svg>`,
   plus: `<svg ${SW}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
   check: `<svg ${SW}><polyline points="20 6 9 17 4 12"/></svg>`,
   bell: `<svg ${SW}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>`,
@@ -74,6 +74,14 @@ export const ICONS = {
   sparkle: `<svg ${SW}><path d="M12 2c.5 5 3 7.5 8 8-5 .5-7.5 3-8 8-.5-5-3-7.5-8-8 5-.5 7.5-3 8-8z"/></svg>`,
   heart: `<svg ${SW}><path d="M12 21C7 16 3 12.5 3 8.8 3 6 5 4 7.5 4c1.8 0 3.4 1 4.5 2.6C13.1 5 14.7 4 16.5 4 19 4 21 6 21 8.8c0 3.7-4 7.2-9 12.2z"/></svg>`,
   repeat: `<svg ${SW}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`,
+  trophyDetail: `<svg ${SW}><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H4.5A3.5 3.5 0 0 0 8 10M16 5h3.5A3.5 3.5 0 0 1 16 10"/><path d="M12 6.2l.8 1.6 1.8.3-1.3 1.3.3 1.8-1.6-.9-1.6.9.3-1.8-1.3-1.3 1.8-.3z"/><path d="M12 13v4"/><path d="M9 21h6"/><path d="M10 17h4"/></svg>`,
+  footprint: `<svg ${SW}><ellipse cx="11" cy="15.5" rx="5" ry="6"/><circle cx="6.5" cy="7" r="1.7"/><circle cx="10.5" cy="5.2" r="1.7"/><circle cx="14.5" cy="5.2" r="1.7"/><circle cx="18" cy="7.5" r="1.7"/></svg>`,
+  manualWrite: `<svg ${SW}><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4"/><path d="M10.5 14.5l.8.8L16 10.6l-.8-.8z"/><line x1="9" y1="18" x2="15" y2="18"/></svg>`,
+  mindCyber: `<svg ${SW}><path d="M12 4a3 3 0 0 0-5.5 1.7A3.5 3.5 0 0 0 4 12a3.5 3.5 0 0 0 2 6.3A3 3 0 0 0 12 20z"/><path d="M12 4a3 3 0 0 1 5.5 1.7A3.5 3.5 0 0 1 20 12a3.5 3.5 0 0 1-2 6.3A3 3 0 0 1 12 20z"/><line x1="12" y1="4" x2="12" y2="20"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="14" r="1.2"/><path d="M7.8 10H6M16.2 14H18"/></svg>`,
+  lotusZen: `<svg ${SW}><path d="M12 4c2 3 2 7 0 10-2-3-2-7 0-10z"/><path d="M4 10c3 0 5 1 6 3-2 1-5 0-6-3z"/><path d="M20 10c-3 0-5 1-6 3 2 1 5 0 6-3z"/><path d="M3 16c3 2 6 3 9 3s6-1 9-3c-2 3-5.5 5-9 5s-7-2-9-5z"/><circle cx="12" cy="2.3" r="0.8"/></svg>`,
+  trendChart: `<svg ${SW}><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/><path d="M15 8h4v4"/></svg>`,
+  phone: `<svg ${SW}><rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="19" x2="13" y2="19"/></svg>`,
+  globe: `<svg ${SW}><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>`,
 };
 
 /** Render an icon by name. Extra class hooks sizing. */

@@ -32,13 +32,13 @@ export const SCREENS = [
   { id: 'nutrition', label: 'Nutrition', icon: '&#127869;', render: renderNutrition },
   { id: 'water', label: 'Water', icon: ICONS.drop, render: renderWater },
   { id: 'workout', label: 'Workout', icon: ICONS.workout, render: renderWorkout },
-  { id: 'habits', label: 'Habits', icon: '&#9745;', render: renderHabits },
+  { id: 'habits', label: 'Habits', icon: ICONS.habits, render: renderHabits },
   { id: 'tasks', label: 'Tasks', icon: ICONS.tasks, render: renderTasks },
-  { id: 'mind', label: 'Mind', icon: '&#129496;', render: renderMind },
-  { id: 'quests', label: 'Quests', icon: '&#11088;', render: renderQuests },
-  { id: 'analytics', label: 'Analytics', icon: '&#128200;', render: renderAnalytics },
-  { id: 'leaderboard', label: 'Leaderboard', icon: '&#127942;', render: renderLeaderboard },
-  { id: 'profile', label: 'Profile', icon: '&#128100;', render: renderProfile },
+  { id: 'mind', label: 'Mind', icon: ICONS.mindCyber, render: renderMind },
+  { id: 'quests', label: 'Quests', icon: ICONS.quests, render: renderQuests },
+  { id: 'analytics', label: 'Analytics', icon: ICONS.trendChart, render: renderAnalytics },
+  { id: 'leaderboard', label: 'Leaderboard', icon: ICONS.leaderboard, render: renderLeaderboard },
+  { id: 'profile', label: 'Profile', icon: ICONS.user, render: renderProfile },
   { id: 'customization', label: 'Customization', icon: '&#9881;', render: renderCustomization },
   // Admin + achievements + inbox + privacy are hidden: no nav entry.
   { id: 'admin', label: 'Admin', icon: '&#128737;', render: renderAdmin, hidden: true },
@@ -279,6 +279,7 @@ export function openNavEditor() {
       <button class="btn btn-sm" style="color:var(--danger)" id="navedit-cancel">Cancel</button>
     </div></div>`;
   document.body.appendChild(ov);
+  ov.addEventListener('pointerdown', (e) => { if (e.target === ov) ov.remove(); });
   paint();
   ov.querySelectorAll('[data-navid]').forEach((elm) => {
     elm.onclick = () => {
