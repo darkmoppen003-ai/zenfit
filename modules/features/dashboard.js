@@ -12,7 +12,7 @@ import { icon } from '../core/icons.js';
 import {
   today, todayNutrition, todayWater, todayBurned, todayStudyMinutes,
   latestWeight, stepsToday, tasksDueToday, tasksDoneToday,
-  isRestDay, weekRestCount,
+  isRestDay, weekRestCount, moodDate,
 } from '../core/selectors.js';
 import { ensureDailyQuests, completeQuest, checkAutoQuests } from './quests.js';
 import { MOODS, logMoodDay, moodImgs } from './zen.js';
@@ -84,7 +84,7 @@ export function renderDashboard(host) {
   const steps = stepsToday();
   const wToday = (S.weightLog || []).filter((w) => w.date === t).pop();
   const rest = isRestDay(t);
-  const moodLogged = (S.mood.entries || []).some((e) => e.date === t);
+  const moodLogged = (S.mood.entries || []).some((e) => moodDate(e) === t);
 
   host.innerHTML = `
   <!-- HERO -->
@@ -132,8 +132,8 @@ export function renderDashboard(host) {
   <div class="card mb12" id="dash-char" style="padding:0;overflow:hidden"></div>
 
   <!-- TODAY BLOCKS -->
-  <div class="flex-between mb8"><div class="section-title" style="margin:0">Today</div>
-  <div style="font-size:11px;color:var(--text-muted)">tap a block →</div></div>
+  <div class="flex-between mb8" style="gap:8px"><div class="section-title" style="margin:0;flex-shrink:0">Today</div>
+  <div style="font-size:11px;color:var(--text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">tap a block →</div></div>
   <div class="stat-blocks mb12" id="dash-blocks"></div>
 
   <!-- QUESTS -->
@@ -237,7 +237,7 @@ export function renderDashboard(host) {
   host.querySelector('#dash-qs').onclick = () => window.ZF.go('quests');
 
   /* Mood — twemoji buttons, selected state */
-  const todayMood = (S.mood.entries || []).find((e) => e.date === t)?.mood;
+  const todayMood = (S.mood.entries || []).find((e) => moodDate(e) === t)?.mood;
   const mg = host.querySelector('#dash-moods');
   mg.innerHTML = MOODS.map((m) => {
     const sel = todayMood === m.key;

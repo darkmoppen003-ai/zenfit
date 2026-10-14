@@ -12,7 +12,7 @@ import {
 } from '../core/utils.js';
 import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, openOverlay, openWeightHistory } from '../core/ui.js';
-import { todayWater, todayNutrition, isRestDay, today } from '../core/selectors.js';
+import { todayWater, todayNutrition, isRestDay, today, moodDate } from '../core/selectors.js';
 import { checkAchievements, achievementsGridHTML } from '../core/achievements.js';
 import { MOODS } from './zen.js';
 import { getTDEEfromProfile } from './workout.js';
@@ -240,7 +240,7 @@ function calcCorrelations(data) {
   if (hiStudy >= 2) {
     out.push({ icon: '📚', label: `${hiStudy} deep-focus days (30+ min study)`, sub: `${taskDays} days with completed tasks` });
   }
-  const moodDays = new Set((S.mood.entries || []).map((e) => e.date)).size;
+  const moodDays = new Set((S.mood.entries || []).map((e) => moodDate(e))).size;
   const habitDays = data.filter((d) => d.habits > 0).length;
   if (moodDays >= 3 && habitDays) {
     out.push({ icon: '😊', label: `Mood logged ${moodDays} days · habits active ${habitDays} days`, sub: 'Consistent tracking compounds' });
@@ -342,7 +342,7 @@ function getAnalyticsMoodData(p, offsetDays) {
   for (let i = cfg.count - 1; i >= 0; i--) {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i - offset);
     const ds = localDs(d);
-    const dayEntries = (S.mood.entries || []).filter((e) => e.date === ds);
+    const dayEntries = (S.mood.entries || []).filter((e) => moodDate(e) === ds);
     const label = p === '1w' ? d.toLocaleDateString([], { weekday: 'short' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
     out.push({ label, ds, mood: dayEntries[0]?.mood || null, count: dayEntries.length });
   }
@@ -474,7 +474,8 @@ function drawRadar(id, labels, data, color, prevData) {
   killChart(id);
   // ponytail: compare overlays the previous period dashed gray — current stays solid violet
   // ponytail: fill alpha 0.5 — lower alphas vanish in the glass-card composite path (verified headless)
-  const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}80`, borderColor: color, borderWidth: 2, fill: true, pointRadius: 3, pointBackgroundColor: color }];
+  // ponytail: thick line + big points — sparse check-ins (1-2 moods) must read as a shape, not a hairline
+  const sets = [{ label: 'Check-ins', data, backgroundColor: `${color}80`, borderColor: color, borderWidth: 3, fill: true, pointRadius: 4.5, pointHoverRadius: 7, pointBackgroundColor: color, pointBorderWidth: 0 }];
   if (prevData) sets.push({ label: 'Previous', data: prevData, backgroundColor: 'transparent', borderColor: chartTheme().tick, borderWidth: 1.5, borderDash: [4, 3], fill: false, pointRadius: 0 });
   charts[id] = new window.Chart(el, {
     type: 'radar',
@@ -1185,7 +1186,7 @@ function renderAnMood(body) {
   }).join('') || '<div style="font-size:12px;color:var(--text-muted)">No check-ins in this period.</div>'}</div>
   <div class="section-title">Mood Radar</div>
   <div class="card mb12">${total ? `<div style="position:relative;height:260px"><canvas id="c_mood_radar"></canvas></div>
-  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods</div>`
+  <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:4px">Check-in shape across all ten moods${radarData.filter((v) => v > 0).length < 3 ? ' · log more moods to fill the shape' : ''}</div>`
     : '<div style="text-align:center;padding:22px 12px;font-size:12px;color:var(--text-muted)">🛰️ No check-ins yet — log moods daily and your radar fills in here.</div>'}</div>`;
   wirePeriodTabs(body);
   if (total) {

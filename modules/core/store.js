@@ -20,7 +20,7 @@ export const STORAGE_KEYS = {
 export const DATA_VERSION = 19;
 export const APP_VERSION = "8.9.3.6";
 
-export const APP_BUILD = "2026.10.14.50";
+export const APP_BUILD = "2026.10.14.51";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -337,6 +337,12 @@ export function validateAndMergeData(saved, fresh) {
   }
   // ponytail: unknown uiStyle (hand-edited saves) falls back to liquid, never blank
   if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(merged.uiStyle)) merged.uiStyle = 'liquid';
+  // ponytail: mood must be {entries:[]} — array-shaped legacy history folds into entries,
+  // anything else resets to empty (never blank-screen, never drop real check-ins silently)
+  if (Array.isArray(merged.mood)) merged.mood = { entries: merged.mood };
+  if (!merged.mood || typeof merged.mood !== 'object' || !Array.isArray(merged.mood.entries)) {
+    merged.mood = { entries: [] };
+  }
   return merged;
 }
 

@@ -7,7 +7,7 @@ import { S, save } from './store.js';
 import { getTodayStr } from './utils.js';
 import { escapeHtml } from './sanitize.js';
 import { awardXP } from './ui.js';
-import { todayBurned, habitStreak, entryNutrients } from './selectors.js';
+import { todayBurned, habitStreak, entryNutrients, moodDate } from './selectors.js';
 
 export const ACHIEVEMENTS = [
   { id: 'lvl5', icon: '⭐', name: 'Rising Star', desc: 'Reach Level 5', xp: 100, cat: 'Level' },
@@ -154,8 +154,8 @@ function testAchievement(id) {
     case 'chal1': return (S.challenges || []).filter((c) => c.status === 'completed' || c.done).length >= 1;
     case 'chal10': return (S.challenges || []).filter((c) => c.status === 'completed' || c.done).length >= 10;
     case 'mood1': return (S.mood.entries || []).length >= 1;
-    case 'mood7': return new Set((S.mood.entries || []).map((e) => e.date)).size >= 7;
-    case 'mood30': return new Set((S.mood.entries || []).map((e) => e.date)).size >= 30;
+    case 'mood7': return new Set((S.mood.entries || []).map((e) => moodDate(e))).size >= 7;
+    case 'mood30': return new Set((S.mood.entries || []).map((e) => moodDate(e))).size >= 30;
     case 'tasks50': return (S.tasks || []).filter((x) => x.completedAt).length >= 50;
     case 'tasks200': return (S.tasks || []).filter((x) => x.completedAt).length >= 200;
     default: return false;

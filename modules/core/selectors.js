@@ -10,6 +10,21 @@ import { getTodayStr } from './utils.js';
 
 export const today = () => getTodayStr();
 
+/* Mood entries are {mood: key, date: 'YYYY-MM-DD', ts, intensity, energy}.
+   Legacy/imported rows may lack `date` — derive it from `ts` so old
+   check-ins never go blank (read-side fallback, history untouched). */
+export function moodDate(e) {
+  if (!e) return '';
+  if (e.date) return e.date;
+  if (e.ts) {
+    try {
+      const d = new Date(Number(e.ts));
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    } catch { return ''; }
+  }
+  return e.day || '';
+}
+
 export function entriesToday(list, dateKey = 'date') {
   const t = today();
   return (list || []).filter((e) => (e[dateKey] || e.day || '') === t);

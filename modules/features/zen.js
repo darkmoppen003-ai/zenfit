@@ -9,7 +9,7 @@
 import { S, update, deductXP, updStat } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, celebrateFirst, sfx } from '../core/ui.js';
-import { today, isRestDay } from '../core/selectors.js';
+import { today, isRestDay, moodDate } from '../core/selectors.js';
 import { checkAutoQuests } from './quests.js';
 import { checkAchievements } from '../core/achievements.js';
 
@@ -90,7 +90,7 @@ export function moodImgs(m) {
 export function logMoodDay(key) {
   const t = today();
   if (!S.mood) update((s) => { s.mood = { entries: [] }; }, { silent: true });
-  if ((S.mood.entries || []).some((e) => e.date === t)) {
+  if ((S.mood.entries || []).some((e) => moodDate(e) === t)) {
     showNotif('Already logged your mood today! Tap Analytics → Mood to review.', '🙂');
     return false;
   }
