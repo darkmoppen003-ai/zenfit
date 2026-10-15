@@ -571,8 +571,9 @@ export function renderAnalytics(host, subTab) {
     progress: renderAnProgress, insights: renderAnInsights,
     gamification: renderAnGamification, mood: renderAnMood,
   })[section](body);
-  // Showcase-style number choreography: count-ups, bar fills, ring sweeps.
-  try { animateNumbers(body); } catch {}
+  // Showcase-style number choreography: count-ups, bar fills, ring sweeps —
+  // fresh navigation animates, state rerenders paint finals instantly.
+  try { animateNumbers(body, !body.closest('.screen')?.dataset.fresh); } catch {}
   // Charts paint after the lazy library arrives (precached = offline-safe).
   // ponytail: generation guard — a slow load must not paint the previous tab's queued charts
   const gen = ++renderGen;

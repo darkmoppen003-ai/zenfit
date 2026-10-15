@@ -15,6 +15,7 @@ import {
   isRestDay, weekRestCount, moodDate,
 } from '../core/selectors.js';
 import { ensureDailyQuests, completeQuest, checkAutoQuests } from './quests.js';
+import { animateNumbers } from '../core/animations.js';
 import { MOODS, logMoodDay, moodImgs } from './zen.js';
 import { ACHIEVEMENTS, earnedIds, checkAchievements } from '../core/achievements.js';
 
@@ -99,7 +100,7 @@ export function renderDashboard(host) {
     </div>
     <div class="flex-between">
       <div><div style="font-size:11px;color:var(--text-muted)">STREAK</div>
-      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div>🔥</div><div>${streak}d</div></div></div>
+      <div style="font-size:18px;font-weight:800;font-family:var(--font-display);"><div>🔥</div><div><span data-count="${streak}">0</span>d</div></div></div>
       <div class="text-center"><div style="font-size:11px;color:var(--text-muted)">Level ${p.level}</div>
       <div id="dash-rank" title="Rank" style="font-size:20px;font-weight:800;font-family:var(--font-display);color:${rc};cursor:pointer">RANK ${escapeHtml(p.rank)}</div>
       <div style="font-size:10px;color:var(--text-muted)">${RANK_NAMES[p.rank] || ''}</div></div>
@@ -115,8 +116,8 @@ export function renderDashboard(host) {
     </div>
     <div class="card-sm">
       <div style="font-size:12px;font-weight:600"><span class="lbl-ic">${icon('zap')}</span>Today's Progress</div>
-      <div style="font-size:34px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1">${goalCount}<span style="font-size:16px;font-family:var(--font-display);color:var(--text-muted)">/${active.length}</span></div>
-      <div class="xp-bar-wrap" style="height:8px"><div class="xp-bar" style="width:${Math.round(ringPct * 100)}%;background:linear-gradient(90deg,var(--primary),var(--success))"></div></div>
+      <div style="font-size:34px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1"><span data-count="${goalCount}">0</span><span style="font-size:16px;font-family:var(--font-display);color:var(--text-muted)">/${active.length}</span></div>
+      <div class="xp-bar-wrap" style="height:8px"><div class="xp-bar" data-w="${Math.round(ringPct * 100)}" style="width:0%;background:linear-gradient(90deg,var(--primary),var(--success))"></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;font-size:11px">
         ${active.map((g) => {
           const met = g.v === true;
@@ -162,7 +163,7 @@ export function renderDashboard(host) {
     </div>
     <div class="card-sm text-center">
       <div style="font-size:11px;color:var(--text-muted)"><span class="lbl-ic">${icon('footprintFill')}</span>Steps Today</div>
-      <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)">${steps}<span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
+      <div style="font-size:24px;font-weight:700;font-family:var(--font-display);color:var(--energy)"><span data-count="${steps}">0</span><span style="font-size:13px;color:var(--text-muted)"> steps</span></div>
       <div style="font-size:10px;color:var(--text-muted)">~${Math.round(steps * 0.04)} kcal burned</div>
       <div class="flex gap8 mt8"><input type="number" id="steps-input" placeholder="add steps" min="0" style="text-align:center;flex:1;min-width:0" aria-label="Add steps">
       <button class="btn btn-primary btn-sm" id="steps-add">+Add</button></div>
@@ -208,7 +209,7 @@ export function renderDashboard(host) {
     d.innerHTML = `<div class="sb-top"><span class="sb-icon" style="color:${b.color}">${b.icon}</span>`
       + `<span class="sb-label" style="color:${b.color}">${b.label}</span>`
       + `<span class="sb-value" style="color:${b.color}">${escapeHtml(String(b.value))}</span></div>`
-      + (b.bar != null ? `<div class="stat-bar-wrap"><div class="stat-bar" style="width:${b.bar}%;background:${b.color}"></div></div>` : '');
+      + (b.bar != null ? `<div class="stat-bar-wrap"><div class="stat-bar" data-w="${b.bar}" style="width:0%;background:${b.color}"></div></div>` : '');
     const go = () => (Array.isArray(b.go) ? window.ZF.go(b.go[0], b.go[1]) : window.ZF.go(b.go));
     d.onclick = go;
     d.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
@@ -308,6 +309,10 @@ export function renderDashboard(host) {
 
   /* Weight details → analytics progress tab (history lives there now) */
   host.querySelector('#dash-wdetail').onclick = () => window.ZF.go('analytics', 'progress');
+
+  /* Showcase-style choreography: count-ups, bar fills, ring sweeps —
+     fresh navigation animates, state rerenders paint finals instantly. */
+  try { animateNumbers(host, !host.dataset.fresh); } catch {}
 }
 
 function zenStreak() {
@@ -316,11 +321,12 @@ function zenStreak() {
 
 function ring(size, center, frac, color, rr = 26, fs = 15) {
   const r = rr, c = 2 * Math.PI * r;
+  const f = Math.min(1, Math.max(0, frac));
   return `<div style="position:relative;width:${size}px;height:${size}px;margin:0 auto">`
     + `<svg width="${size}" height="${size}" viewBox="0 0 64 64" style="transform:rotate(-90deg);display:block">`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="var(--bg-overlay)" stroke-width="7"/>`
     + `<circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="7" stroke-linecap="round"`
-    + ` stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - Math.min(1, Math.max(0, frac)))}"/></svg>`
+    + ` stroke-dasharray="0 ${c.toFixed(1)}" data-ring="${(c * f).toFixed(1)} ${c.toFixed(1)}"/></svg>`
     + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:${fs}px;font-weight:800;font-family:var(--font-display);white-space:nowrap">${escapeHtml(String(center))}</div></div>`;
 }
 
@@ -359,13 +365,13 @@ function paintChar(box, rc) {
           <div class="char-stats-col">
             <div class="char-section-label">PLAYER STATS</div>
             <div style="margin-bottom:10px"><div class="flex-between char-xp-row"><span class="char-xp-label">XP</span><span class="char-xp-val">${p.xp}/${xpNeed}</span></div>
-            <div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" style="width:${xpPct}%;background:var(--primary)"></div></div></div>
+            <div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" data-w="${xpPct}" style="width:0%;background:var(--primary)"></div></div></div>
             ${STAT_DEFS.map((s) => {
               const v = stats[s.key] ?? 10;
               return `<div class="char-stat-block"><div class="char-stat-row">`
                 + `<span class="char-stat-name"><span class="lbl-ic">${icon(s.icon)}</span>${s.label}</span>`
                 + `<span class="char-stat-val" style="color:${s.color}">${v}</span></div>`
-                + `<div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" style="width:${Math.min(100, v)}%;background:${s.color}"></div></div></div>`;
+                + `<div class="char-stat-bar-wrap"><div class="char-stat-bar-fill" data-w="${Math.min(100, v)}" style="width:0%;background:${s.color}"></div></div></div>`;
             }).join('')}
           </div>
         </div>

@@ -6,7 +6,7 @@
 
 const SW = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"';
 /* Fill variant: solid glyphs where stroke can't carry the shape
-   (trophy cups, footprints, medals). Same 24-grid + currentColor. */
+   (footprints, medals, seals). Same 24-grid + currentColor. */
 const FILL = 'viewBox="0 0 24 24" fill="currentColor" stroke="none"';
 
 export const ICONS = {
@@ -27,7 +27,6 @@ export const ICONS = {
   analytics: `<svg ${SW}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
   chart: `<svg ${SW}><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`,
   leaderboard: `<svg ${SW}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 9 7 9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 9 17 9"/><path d="M4 22h16"/><path d="M10 22V8h4v14"/></svg>`,
-  trophy: `<svg ${SW}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7 9 7 9"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C17 4 17 9 17 9"/><path d="M4 22h16"/><path d="M10 22V8h4v14"/></svg>`,
   profile: `<svg ${SW}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   user: `<svg ${SW}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
   customization: `<svg ${SW}><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>`,
@@ -51,6 +50,7 @@ export const ICONS = {
   x: `<svg ${SW}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
   chevDown: `<svg ${SW}><polyline points="6 9 12 15 18 9"/></svg>`,
   crown: `<svg ${SW}><path d="M3 17l1.5-9L9 12l3-7 3 7 4.5-4L21 17z"/><path d="M4 21h16"/></svg>`,
+  medal: `<svg ${SW}><circle cx="12" cy="9" r="5.5"/><circle cx="12" cy="9" r="1.6"/><path d="M9 13.5 7.5 21l4.5-2 4.5 2-1.5-7.5"/></svg>`,
   swords: `<svg ${SW}><path d="M3.5 2.5 7.2 3.8 18.5 15.1l-1.8 1.8L5.4 5.6 3.5 2.5z"/><path d="M20.5 2.5 16.8 3.8 5.5 15.1l1.8 1.8 11.3-11.3 1.9-3.1z"/><path d="M13.8 16.2l3.4-3.4M10.2 16.2l-3.4-3.4"/><path d="M16.5 15.5 19 18M7.5 15.5 5 18"/><circle cx="19.8" cy="18.8" r="1.2"/><circle cx="4.2" cy="18.8" r="1.2"/></svg>`,
   friends: `<svg ${SW}><circle cx="9" cy="7.5" r="3.5"/><path d="M2.5 20v-1a6.5 6.5 0 0 1 13 0v1"/><circle cx="17" cy="9" r="2.7"/><path d="M15.8 14.6a5.3 5.3 0 0 1 5.7 5.4h-3"/></svg>`,
   meditation: `<svg ${SW}><path d="M12 13.2C9.5 11 9 7.2 12 2.5c3 4.7 2.5 8.5 0 10.7z"/><path d="M11.8 13C7.4 12.2 4.9 9.7 5.2 6.6c3.6 1 5.9 3.6 6.6 6.4z"/><path d="M12.2 13c4.4-.8 6.9-3.3 6.6-6.4-3.6 1-5.9 3.6-6.6 6.4z"/><path d="M11.6 13.2C8.2 13.6 5.4 12.3 3.4 10.3c3.6-.4 6.5 1 8.2 2.9z"/><path d="M12.4 13.2c3.4.4 6.2-.9 8.2-2.9-3.6-.4-6.5 1-8.2 2.9z"/><path d="M2.8 13.6c2.6 2.4 5.8 3.6 9.2 3.6s6.6-1.2 9.2-3.6c-2.4 3.1-5.6 4.7-9.2 4.7s-6.8-1.6-9.2-4.7z"/></svg>`,

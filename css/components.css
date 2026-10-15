@@ -43,6 +43,9 @@ label.btn { display: inline-flex; align-items: center; justify-content: center; 
 
 .xp-bar-wrap { background: var(--bg-overlay); border-radius: 20px; height: 8px; overflow: hidden; margin: 4px 0; }
 .xp-bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--primary-dark), var(--primary)); transition: width 0.6s var(--ease-spring); }
+/* ponytail: data-w bars are driven per-frame by anime springs — a CSS
+   transition on top fights every tick and reads as lag/jerk */
+.xp-bar[data-w], .stat-bar[data-w], .char-stat-bar-fill[data-w] { transition: none; }
 .stat-bar-wrap { background: var(--bg-overlay); border-radius: 4px; height: 6px; overflow: hidden; }
 .stat-bar { height: 100%; border-radius: 4px; transition: width 0.5s; }
 

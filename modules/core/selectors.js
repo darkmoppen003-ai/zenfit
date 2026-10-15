@@ -190,5 +190,27 @@ export function showcaseStats() {
     achCount: (S.achievements || []).length,
     theme: S.theme || 'midnight',
     uiStyle: S.uiStyle || 'liquid',
+    workouts: (S.workouts || []).length,
+    steps: stepsToday(),
+    study: todayStudyMinutes(),
+    water: Math.round((todayWater() / Math.max(1, S.water?.dailyGoalMl || 3000)) * 100),
+    habitStreak: bestStreak,
+    habitsDone: (S.habits || []).filter((h) => ((h.completedDates || h.doneDates || []).includes(today()))).length,
+    habitsTotal: (S.habits || []).length,
+    consistency: habitConsistency(),
   };
+}
+
+/* Consistency: % of the last 7 days with ≥1 habit completion. */
+export function habitConsistency() {
+  const habits = S.habits || [];
+  if (!habits.length) return 0;
+  let hit = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (habits.some((h) => ((h.completedDates || h.doneDates || []).includes(key)))) hit++;
+  }
+  return Math.round((hit / 7) * 100);
 }

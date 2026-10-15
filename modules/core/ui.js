@@ -21,7 +21,8 @@ export function onEnter(input, action) {
 }
 
 import { ICONS, icon } from './icons.js';
-export { ICONS, icon };
+import { springIn } from './animations.js';
+export { ICONS, icon, springIn };
 
 /* Inbox message backgrounds (shared by inbox render + admin designer). */
 export const MSG_BGS = {
@@ -92,6 +93,7 @@ export function openOverlay(html) {
   o.innerHTML = `<div class="overlay-box">${html}</div>`;
   o.addEventListener('pointerdown', (e) => { if (e.target === o) closeOverlay(); });
   document.body.appendChild(o);
+  try { springIn(o.querySelector('.overlay-box')); } catch {}
   return closeOverlay;
 }
 export function closeOverlay() { el('zf-overlay')?.remove(); }

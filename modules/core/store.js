@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 20;
+export const DATA_VERSION = 21;
 export const APP_VERSION = "8.9.5";
 
-export const APP_BUILD = "2026.10.14.60";
+export const APP_BUILD = "2026.10.16.66";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -156,12 +156,14 @@ export function defaultState() {
     _analyticsPeriod: '1w',
     showcase: {
       showHeader: true, showCard: true, variant: 'long',
-      showPill: true, showWallpaper: true, cardStyle: 'default',
+      showWallpaper: true, cardStyle: 'default',
       cardBackdrop: 'wallpaper',
       visible: {
         streak: true, level: true, rank: true, globalRank: true, xp: true,
         strength: true, endurance: true, discipline: true, health: true,
-        wisdom: true, achCount: true,
+        wisdom: true, achCount: true, workouts: true, steps: true,
+        study: true, water: true, habits: true, habitStreak: true,
+        consistency: true,
       },
     },
   };
@@ -326,8 +328,21 @@ export function migrateData(saved) {
     const d = defaultState().showcase;
     saved.showcase = { ...d, ...(saved.showcase || {}), visible: { ...d.visible, ...((saved.showcase || {}).visible || {}) } };
     if (!['long', 'short'].includes(saved.showcase.variant)) saved.showcase.variant = 'long';
-    if (!['default', 'cyber'].includes(saved.showcase.cardStyle)) saved.showcase.cardStyle = 'default';
+    if (!['default', 'cyber', 'spotlight', 'idcard'].includes(saved.showcase.cardStyle)) saved.showcase.cardStyle = 'default';
     saved.dataVersion = 20;
+  }
+  if (version < 21) {
+    // ponytail: showcase cell style + new stat flags + cell order + bio only — backfill, earned data untouched
+    const d = defaultState().showcase;
+    saved.showcase = { ...d, ...(saved.showcase || {}), visible: { ...d.visible, ...((saved.showcase || {}).visible || {}) } };
+    if (!['number', 'bar', 'ring'].includes(saved.showcase.cellStyle)) saved.showcase.cellStyle = 'number';
+    if (typeof saved.showcase.bio !== 'string') saved.showcase.bio = '';
+    if (!Array.isArray(saved.showcase.templates)) saved.showcase.templates = [];
+    const base = ['streak', 'globalRank', 'achCount', 'strength', 'endurance', 'discipline', 'health', 'wisdom', 'workouts', 'steps', 'study', 'water', 'habits', 'habitStreak', 'consistency'];
+    const ord = Array.isArray(saved.showcase.order) ? saved.showcase.order.filter((x) => base.includes(x)) : [];
+    base.forEach((x) => { if (!ord.includes(x)) ord.push(x); });
+    saved.showcase.order = ord;
+    saved.dataVersion = 21;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
@@ -360,7 +375,8 @@ export function validateAndMergeData(saved, fresh) {
     const dv = fresh.showcase || {};
     merged.showcase = { ...dv, ...(merged.showcase || {}), visible: { ...(dv.visible || {}), ...((merged.showcase || {}).visible || {}) } };
     if (!['long', 'short'].includes(merged.showcase.variant)) merged.showcase.variant = 'long';
-    if (!['default', 'cyber'].includes(merged.showcase.cardStyle)) merged.showcase.cardStyle = 'default';
+    if (!['default', 'cyber', 'spotlight', 'idcard'].includes(merged.showcase.cardStyle)) merged.showcase.cardStyle = 'default';
+    if (!['number', 'bar', 'ring'].includes(merged.showcase.cellStyle)) merged.showcase.cellStyle = 'number';
   } catch {}
   // ponytail: mood must be {entries:[]} — array-shaped legacy history folds into entries,
   // anything else resets to empty (never blank-screen, never drop real check-ins silently)

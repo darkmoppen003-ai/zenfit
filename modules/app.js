@@ -25,6 +25,9 @@ window.ZF = {
   applyBg: () => applyBackgroundConfig(),
   get S() { return S; },
   get screen() { return getCurrent().screen; },
+  /* Back-press consumer: any feature may set a fn that closes its topmost
+     dialog and returns true. Router yields to it before exit handling. */
+  consumeBack: null,
 };
 
 let splashDone = false;

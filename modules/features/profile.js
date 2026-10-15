@@ -11,7 +11,7 @@ import {
 } from '../core/utils.js';
 import { COUNTRY_TZ_MAP } from '../core/countries.js';
 import { escapeHtml, sanitizeText, sanitizeNumber, sanitizeEnum } from '../core/sanitize.js';
-import { showNotif, sfx, collapseHeader, wireCollapsibles } from '../core/ui.js';
+import { showNotif, sfx, collapseHeader, wireCollapsibles, ICONS } from '../core/ui.js';
 import { latestWeight, todayNutrition, todayWater } from '../core/selectors.js';
 import { exportDataFile, importData, confirmReset } from '../core/backup.js';
 import { renderNotifSettings } from '../core/notify.js';
@@ -132,7 +132,7 @@ export function renderProfile(host) {
   </div>
 
   <div class="card mb16">
-    ${collapseHeader('ach glance', 'Achievements', '🏆', 'Your progress at a glance')}
+    ${collapseHeader('ach glance', 'Achievements', `<span class="collapse-ic">${ICONS.medal}</span>`, 'Your progress at a glance')}
     <div class="collapsible-body${isCollapsed('ach glance') ? ' collapsed' : ''}" id="ach glance">
       <div class="grid3 mt12">
         ${aB('🍽️', nut.count + '<br>Meals')} ${aB('🏋️', (S.workouts || []).length + '<br>Workouts')}

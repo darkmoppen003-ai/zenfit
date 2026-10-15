@@ -9,7 +9,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S } from './store.js';
 import { sfx, ICONS, showNotif } from './ui.js';
-import { animateScreenEnter } from './animations.js';
+import { animateScreenEnter, pop as popElm, observeScrollReveals } from './animations.js';
 import { renderDashboard } from '../features/dashboard.js';
 import { renderNutrition } from '../features/nutrition.js';
 import { renderWater } from '../features/water.js';
@@ -44,7 +44,7 @@ export const SCREENS = [
   { id: 'showcase', label: 'Showcase', icon: ICONS.showcase, render: renderShowcase },
   // Admin + achievements + inbox + privacy are hidden: no nav entry.
   { id: 'admin', label: 'Admin', icon: ICONS.shieldCheck, render: renderAdmin, hidden: true },
-  { id: 'achievements', label: 'Achievements', icon: ICONS.trophy, render: renderAchievements, hidden: true },
+  { id: 'achievements', label: 'Achievements', icon: ICONS.medal, render: renderAchievements, hidden: true },
   { id: 'inbox', label: 'Inbox', icon: ICONS.inbox, render: renderInbox, hidden: true },
   { id: 'privacy', label: 'Privacy', icon: ICONS.lock, render: renderPrivacy, hidden: true },
 ];
@@ -81,7 +81,7 @@ export function switchScreen(id, sub = null, dir = 'pop') {
 }
 
 /** Re-render current screen (called on state changes via store.subscribe). */
-export function renderActive(dir = 'up') {
+export function renderActive(dir = null) {
   const host = document.getElementById('screens');
   if (!host) return;
   // ponytail: leaving analytics orphans Chart.js instances (GPU + listeners
@@ -95,6 +95,9 @@ export function renderActive(dir = 'up') {
   const d = document.createElement('div');
   d.className = 'screen active';
   d.id = `screen-${target.id}`;
+  // ponytail: marks fresh navigation so features choreograph once —
+  // state-driven rerenders (dir null) never replay counts/entrances
+  d.dataset.fresh = dir ? '1' : '';
   host.appendChild(d);
   try { target.render(d, currentSub); } catch (e) {
     console.warn('[ZenFit] render failed:', target.id, e);
@@ -109,7 +112,10 @@ export function renderActive(dir = 'up') {
   }
   fitHeader(d);
   renderBottomNav();
-  animateScreenEnter(d, dir);
+  // ponytail: state-driven rerenders (dir null) must not replay the entrance —
+  // only real navigation animates; scroll reveals still arm either way
+  if (dir) animateScreenEnter(d, dir);
+  else { try { observeScrollReveals(d); } catch {} }
   // Keep wallpaper-per-screen in sync
   if (window.ZF?.applyBg) window.ZF.applyBg();
 }
@@ -198,6 +204,7 @@ function renderBottomNav() {
     b.onclick = (e) => {
       if (b.dataset.bnav === '__more') { e.stopPropagation(); toggleMorePopover(); return; }
       closeMorePopover();
+      try { popElm(b); } catch {}
       switchScreen(b.dataset.bnav);
     };
   });
@@ -220,6 +227,7 @@ function renderBottomNav() {
         if (b.dataset.bnav === '__more') { e.stopPropagation(); toggleMorePopover(); return; }
         if (b.dataset.bnav === '__navedit') { closeMorePopover(); openNavEditor(); return; }
         closeMorePopover();
+        try { popElm(b); } catch {}
         switchScreen(b.dataset.bnav);
       };
     });
@@ -274,6 +282,7 @@ function renderBottomNav() {
   pop.querySelectorAll('[data-mp]').forEach((m) => {
     m.onclick = () => {
       closeMorePopover();
+      try { popElm(m); } catch {}
       if (m.dataset.mp === '__navedit') openNavEditor();
       else switchScreen(m.dataset.mp);
     };
@@ -413,7 +422,7 @@ export function initRouter() {
     const id = m ? screenById(m[1]).id : null;
     if (id && id !== currentScreen) {
       currentScreen = id; currentSub = null;
-      renderActive();
+      renderActive('up');
     }
   });
   // ponytail: crossing the dock breakpoint (rotate/resize) re-renders nav —
@@ -422,14 +431,17 @@ export function initRouter() {
     const dockMQ = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
     dockMQ.addEventListener?.('change', () => { closeMorePopover(); renderActive(); });
   } catch {}
-  window.addEventListener('popstate', () => {    // back/forward to a different hash = navigate, not exit
+  window.addEventListener('popstate', () => {
+    // ponytail: an open dialog eats the back press (sheet/overlay closes, app stays)
+    try { if (window.ZF?.consumeBack && window.ZF.consumeBack()) return; } catch {}
+    // back/forward to a different hash = navigate, not exit
     try {
       const m = location.hash.match(/^#\/([a-z]+)/);
       const id = m ? screenById(m[1]).id : null;
       if (id && id !== currentScreen) {
         currentScreen = id; currentSub = null;
         try { history.pushState({ zfTrap: 1 }, ''); } catch {}
-        renderActive();
+        renderActive('up');
         return;
       }
     } catch {}
@@ -440,7 +452,7 @@ export function initRouter() {
       history.pushState({ zfTrap: 1 }, '');
       history.replaceState(null, '', `#/${currentScreen}`);
     } catch {}
-    renderActive();
+    renderActive('up');
   });
 
   let sx = null, sy = null;
@@ -467,5 +479,5 @@ export function initRouter() {
   }, { passive: true });
 
   wireHeaderFit();
-  renderActive();
+  renderActive('up');
 }

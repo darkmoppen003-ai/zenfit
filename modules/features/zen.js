@@ -82,8 +82,8 @@ export const MOODS = [
 
 export function moodImgs(m) {
   const fb = m.emoji;
-  return `<img class="mood-static" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.png" alt="${fb}" onerror="this.outerHTML='${fb}'">`
-    + `<img class="mood-anim" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${fb}" onerror="this.remove()">`;
+  return `<img class="mood-static" loading="lazy" decoding="async" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.png" alt="${fb}" onerror="this.outerHTML='${fb}'">`
+    + `<img class="mood-anim" loading="lazy" decoding="async" src="https://fonts.gstatic.com/s/e/notoemoji/latest/${m.cp}/512.webp" alt="${fb}" onerror="this.remove()">`;
 }
 
 /** V1 logMood: intensity slider → energy slider → save (once/day). */

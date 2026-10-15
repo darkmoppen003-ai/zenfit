@@ -7,6 +7,10 @@
 let animeRef = null;
 let loaded = false;
 
+/* Real spring physics (anime 3.2 spring easing). Falls back to the
+   --ease-spring overshoot curve in CSS when anime is offline. */
+export const SPRING = 'spring(1, 110, 13, 0)';
+
 export function loadAnime() {
   if (loaded) return Promise.resolve(animeRef);
   loaded = true;
@@ -32,7 +36,7 @@ export function animateScreenEnter(screenEl, dir = 'up') {
   scrollTabsIntoView(screenEl);
   if (animeRef) {
     if (dir === 'pop') {
-      animeRef({ targets: screenEl, opacity: [0, 1], scale: [0.97, 1], duration: 220, easing: 'easeOutCubic' });
+      animeRef({ targets: screenEl, opacity: [0, 1], scale: [0.96, 1], duration: 420, easing: SPRING });
     } else {
       const from = dir === 'left' ? [60, 0] : dir === 'right' ? [-60, 0] : [0, 0];
       const fromY = dir === 'up' ? [14, 0] : [0, 0];
@@ -44,8 +48,8 @@ export function animateScreenEnter(screenEl, dir = 'up') {
       const visible = [...cards].filter((el) => el.getBoundingClientRect().top <= innerHeight * 0.9);
       if (visible.length) {
         animeRef({
-          targets: visible, opacity: [0, 1], translateY: [10, 0],
-          duration: 300, delay: animeRef.stagger(35, { start: 60 }), easing: 'easeOutCubic',
+          targets: visible, opacity: [0, 1], translateY: [12, 0], scale: [0.97, 1],
+          duration: 520, delay: animeRef.stagger(35, { start: 60 }), easing: SPRING,
         });
       }
     }
@@ -70,7 +74,7 @@ export function observeScrollReveals(root) {
           if (animeRef) {
             animeRef({
               targets: el, opacity: [0.35, 1], translateY: [26, 0], scale: [0.96, 1],
-              duration: 480, easing: 'easeOutBack(1.4)',
+              duration: 560, easing: SPRING,
             });
           } else {
             el.classList.add('anim-fadein');
@@ -106,10 +110,23 @@ export function scrollTabsIntoView(root) {
   } catch { /* non-scrollable bars */ }
 }
 
+/** Spring entrance for overlays, sheets and dialogs (showcase-style). */
+export function springIn(elm) {
+  if (!elm) return;
+  try {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch {}
+  if (animeRef) animeRef({ targets: elm, opacity: [0, 1], scale: [0.92, 1], duration: 480, easing: SPRING });
+  else { elm.classList.remove('anim-spring'); elm.getBoundingClientRect(); elm.classList.add('anim-spring'); }
+}
+
 /** Pop a single element (quest complete, XP gain…). */
 export function pop(elm) {
   if (!elm) return;
-  if (animeRef) animeRef({ targets: elm, scale: [1, 1.06, 1], duration: 240, easing: 'easeOutBack' });
+  try {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  } catch {}
+  if (animeRef) animeRef({ targets: elm, scale: [0.94, 1], duration: 450, easing: SPRING });
   else { elm.classList.remove('anim-pop'); elm.getBoundingClientRect(); elm.classList.add('anim-pop'); }
 }
 
@@ -130,13 +147,15 @@ export function countUp(elm, to, { duration = 600 } = {}) {
  * `[data-count]` count up (staggered, suffix/decimals aware),
  * `.xp-bar[data-w]` fills, `circle[data-ring="t c"]` dash sweeps,
  * `.insight` cards rise. One call per render; reduced-motion and
- * no-anime fall back to final values instantly. */
-export function animateNumbers(root) {
+ * no-anime fall back to final values instantly. Pass instant=true on
+ * state-driven rerenders so zero-initialized nodes paint finals
+ * without replaying the choreography. */
+export function animateNumbers(root, instant = false) {
   if (!root || !root.querySelectorAll) return;
   let reduce = false;
   try { reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; } catch {}
   const counts = [...root.querySelectorAll('[data-count]')];
-  const bars = [...root.querySelectorAll('.xp-bar[data-w]')];
+  const bars = [...root.querySelectorAll('.xp-bar[data-w],.stat-bar[data-w],.char-stat-bar-fill[data-w]')];
   const rings = [...root.querySelectorAll('circle[data-ring]')];
   const insights = [...root.querySelectorAll('.insight')];
   const paintCount = (el) => {
@@ -145,7 +164,7 @@ export function animateNumbers(root) {
     if (!Number.isFinite(to)) { el.textContent = `${raw}${el.dataset.suffix || ''}`; return null; }
     return { to, dec: Math.min(1, (String(raw).split('.')[1] || '').length) };
   };
-  if (reduce || !animeRef) {
+  if (reduce || instant || !animeRef) {
     counts.forEach((el) => {
       const p = paintCount(el);
       if (p) el.textContent = `${p.dec ? p.to.toFixed(p.dec) : Math.round(p.to)}${el.dataset.suffix || ''}`;
@@ -167,7 +186,7 @@ export function animateNumbers(root) {
     });
   });
   bars.forEach((el, i) => {
-    animeRef({ targets: el, width: `${el.dataset.w}%`, duration: 800, delay: 200 + i * 70, easing: 'easeOutCubic' });
+    animeRef({ targets: el, width: `${el.dataset.w}%`, duration: 750, delay: 150 + i * 50, easing: SPRING });
   });
   rings.forEach((el) => {
     const [t, c] = String(el.dataset.ring).split(' ').map(Number);
