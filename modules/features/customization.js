@@ -7,7 +7,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, idbPutImage, idbDeleteImage, idbGetImage, resolveBgSrc } from '../core/store.js';
 import { escapeHtml, sanitizeText } from '../core/sanitize.js';
-import { showNotif, openOverlay, bgPosPercent, collapseHeader, wireCollapsibles, applyUiMode, applyLensScale, UI_STYLES, UI_STYLE_PRESETS, ICONS } from '../core/ui.js';
+import { showNotif, openOverlay, bgPosPercent, bgOrient, collapseHeader, wireCollapsibles, applyUiMode, applyLensScale, UI_STYLES, UI_STYLE_PRESETS, ICONS } from '../core/ui.js';
 import { toggleFullscreen, isFullscreen } from '../core/fullscreen.js';
 import { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme } from '../core/themes.js';
 export { THEMES, PRESET_WALLPAPERS, hexToRgb, hexToRgba, shadeColor, normalizeTheme, migrateLegacyThemes, getCustomThemes, applyThemeObject, applyTheme };
@@ -132,6 +132,14 @@ export function renderCustomization(host) {
           ${['cover', 'contain', 'fill'].map((f) => `<button class="btn btn-sm${(S.bgFit || 'cover') === f ? ' btn-primary' : ''}" data-fit="${f}">${f}</button>`).join('')}
         </div>
       </div>
+      <div class="flex gap8 mt8" style="align-items:center">
+        <div style="font-size:12px;color:var(--text-secondary)">Rotate / flip</div>
+        <div style="display:flex;gap:6px" id="wp-orient">
+          <button class="btn btn-sm" id="wp-rotate" title="Rotate 90°"><span class="collapse-ic" style="vertical-align:-3px;margin-right:4px">${ICONS.rotate}</span><span id="wp-rot-v">${((((S.bgRotate || 0) % 360) + 360) % 360)}°</span></button>
+          <button class="btn btn-sm${S.bgFlipH ? ' btn-primary' : ''}" id="wp-fliph" title="Flip horizontal"><span class="collapse-ic" style="vertical-align:-3px">${ICONS.flipH}</span></button>
+          <button class="btn btn-sm${S.bgFlipV ? ' btn-primary' : ''}" id="wp-flipv" title="Flip vertical"><span class="collapse-ic" style="vertical-align:-3px">${ICONS.flipV}</span></button>
+        </div>
+      </div>
       <div class="flex gap8 mt8" style="font-size:11px;color:var(--text-muted)">Wallpaper applies to all screens.</div>
       </div>
     </div>
@@ -231,7 +239,7 @@ export function renderCustomization(host) {
 
   <div class="section-title">Interface Style</div>
   <div class="card mb8">
-    ${collapseHeader('ui-style', 'Interface Style', `<span class="collapse-ic">${ICONS.sliders}</span>`, 'DEFAULT · Neomorph · Brutalist · Cyberpunk', 'default-open')}
+    ${collapseHeader('ui-style', 'Interface Style', `<span class="collapse-ic">${ICONS.sliders}</span>`, 'DEFAULT · Neomorph · Brutalist · Cyberpunk · System', 'default-open')}
     <div class="collapsible-body${S.collapsedSections?.['ui-style'] ? ' collapsed' : ''}" id="ui-style">
       <div class="grid2 mt8" id="ui-style-grid">
         ${Object.entries(UI_STYLES).map(([id, m]) => {
@@ -250,7 +258,7 @@ export function renderCustomization(host) {
     <div style="font-size:11px;color:var(--text-muted)">Built-in & custom color schemes</div></div>
     <div id="themes-wrap">
       <div class="section-title mt12">Themes</div>
-      ${collapseHeader('themesBuiltin', 'Built-In Themes', `<span class="collapse-ic">${ICONS.palette}</span>`, 'Six hand-tuned schemes', 'default-open')}
+      ${collapseHeader('themesBuiltin', 'Built-In Themes', `<span class="collapse-ic">${ICONS.palette}</span>`, 'Seven hand-tuned schemes', 'default-open')}
       <div class="collapsible-body${S.collapsedSections?.['themesBuiltin'] ? ' collapsed' : ''}" id="themesBuiltin">
       <div class="grid2" id="theme-grid"></div>
       </div>
@@ -281,6 +289,8 @@ export function renderCustomization(host) {
         <label style="font-size:12px">Particle speed (0.2–3)<input type="number" id="th-pspeed" min="0.2" max="3" step="0.1" value="1"></label>
         <label style="font-size:12px">Particle count<select id="th-pcount"><option value="">— theme default —</option><option value="30">Calm (30)</option><option value="80">Normal (80)</option><option value="150">Dense (150)</option></select></label>
         <label style="font-size:12px">Wallpaper fit<select id="th-pfit"><option value="">— keep current —</option><option value="cover">Cover</option><option value="contain">Contain</option><option value="fill">Fill</option></select></label>
+        <label style="font-size:12px">Wallpaper rotation<select id="th-prot"><option value="">— keep current —</option><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+        <label style="font-size:12px">Wallpaper flip<select id="th-pflip"><option value="">— keep current —</option><option value="none">None</option><option value="h">Horizontal</option><option value="v">Vertical</option><option value="both">Both</option></select></label>
         <label style="font-size:12px">Glass blur (0–30px)<input type="number" id="th-blur" min="0" max="30" value="4"></label>
         <label style="font-size:12px">Card opacity (10–95%)<input type="number" id="th-alpha" min="10" max="95" value="55"></label>
       </div>
@@ -460,8 +470,18 @@ export function renderCustomization(host) {
     img.style.maxWidth = 'none';
     img.style.objectFit = 'cover';
     img.style.objectPosition = `${pos.x}% ${pos.y}%`;
-    img.style.transform = `scale(${z})`;
-    img.style.transformOrigin = `${pos.x}% ${pos.y}%`;
+    // Orientation mirrors the live layer (bgOrient): rotate about the frame
+    // centre, scale about the focus point — rotate-about-focus would uncover.
+    const frameEl = host.querySelector('#wp-frame');
+    const o = bgOrient(frameEl?.clientWidth || 320, frameEl?.clientHeight || 320);
+    if (o.on) {
+      const ox = pos.x - 50, oy = pos.y - 50;
+      img.style.transformOrigin = '50% 50%';
+      img.style.transform = `translate(${ox}%,${oy}%) scale(${z * o.k}) translate(${-ox}%,${-oy}%) rotate(${o.r}deg) scaleX(${o.fh}) scaleY(${o.fv})`;
+    } else {
+      img.style.transformOrigin = `${pos.x}% ${pos.y}%`;
+      img.style.transform = `scale(${z})`;
+    }
     host.querySelector('#wp-zoom').value = S.bgZoom || 100;
     host.querySelector('#wp-x').value = offVal().x;
     host.querySelector('#wp-y').value = offVal().y;
@@ -470,6 +490,9 @@ export function renderCustomization(host) {
     host.querySelector('#wp-x-v').textContent = fmtOff(offVal().x);
     host.querySelector('#wp-y-v').textContent = fmtOff(offVal().y);
     host.querySelector('#wp-dim-v').textContent = `${S.bgDim ?? 40}%`;
+    host.querySelector('#wp-rot-v').textContent = `${(((S.bgRotate || 0) % 360) + 360) % 360}°`;
+    host.querySelector('#wp-fliph').classList.toggle('btn-primary', !!S.bgFlipH);
+    host.querySelector('#wp-flipv').classList.toggle('btn-primary', !!S.bgFlipV);
   };
   syncImg();
   const set = (patch) => update((s) => Object.assign(s, patch), { silent: true });
@@ -480,6 +503,12 @@ export function renderCustomization(host) {
   host.querySelectorAll('#wp-fit [data-fit]').forEach((b) => {
     b.onclick = () => { set({ bgFit: b.dataset.fit }); window.ZF.applyBg(); window.ZF.save(); window.ZF.rerender(); };
   });
+  host.querySelector('#wp-rotate').onclick = () => {
+    set({ bgRotate: ((((S.bgRotate || 0) + 90) % 360) + 360) % 360 });
+    syncImg(); window.ZF.applyBg(); window.ZF.save();
+  };
+  host.querySelector('#wp-fliph').onclick = () => { set({ bgFlipH: !S.bgFlipH }); syncImg(); window.ZF.applyBg(); window.ZF.save(); };
+  host.querySelector('#wp-flipv').onclick = () => { set({ bgFlipV: !S.bgFlipV }); syncImg(); window.ZF.applyBg(); window.ZF.save(); };
   host.querySelector('#wp-zoom').oninput = (e) => { set({ bgZoom: Math.min(200, Math.max(50, Number(e.target.value))) }); syncImg(); window.ZF.applyBg(); };
   host.querySelector('#wp-x').oninput = (e) => { setOff(Number(e.target.value), offVal().y); syncImg(); window.ZF.applyBg(); };
   host.querySelector('#wp-y').oninput = (e) => { setOff(offVal().x, Number(e.target.value)); syncImg(); window.ZF.applyBg(); };
@@ -496,11 +525,21 @@ export function renderCustomization(host) {
   });
   host.querySelector('#wp-center').onclick = () => {
     setOff(0, 0);
-    set({ bgZoom: 100 });
+    set({ bgZoom: 100, bgRotate: 0, bgFlipH: false, bgFlipV: false });
     syncImg(); window.ZF.applyBg(); window.ZF.save();
   };
 
   const frame = host.querySelector('#wp-frame');
+  // The rotated preview's cover factor needs the frame's real size, but the
+  // editor renders collapsed — re-fit whenever the frame gains/changes size.
+  if (frame && window.ResizeObserver) {
+    let ro = null;
+    ro = new ResizeObserver(() => {
+      if (!host.isConnected) { ro.disconnect(); return; }
+      syncImg();
+    });
+    ro.observe(frame);
+  }
   let drag = null, pinch = null;
   frame.addEventListener('pointerdown', (e) => {
     try { frame.setPointerCapture(e.pointerId); } catch {}
@@ -783,6 +822,8 @@ export function renderCustomization(host) {
     const base = kind === 'custom'
       ? normalizeTheme(getCustomThemes().find((x) => x.id === key) || THEMES.midnight)
       : THEMES[key] || THEMES.midnight;
+    const prot = document.querySelector('#th-prot')?.value ?? '';
+    const pflip = document.querySelector('#th-pflip')?.value ?? '';
     const draft = {
       ...base,
       name: document.querySelector('#th-name').value || 'Preview',
@@ -790,6 +831,10 @@ export function renderCustomization(host) {
       particleSpeed: Math.min(3, Math.max(0.2, Number(document.querySelector('#th-pspeed')?.value) || 1)),
       particleCount: [30, 80, 150].includes(Number(document.querySelector('#th-pcount')?.value)) ? Number(document.querySelector('#th-pcount').value) : null,
       bgFit: ['cover', 'contain', 'fill'].includes(document.querySelector('#th-pfit')?.value) ? document.querySelector('#th-pfit').value : null,
+      // null = "keep current" — applyTheme ignores null orientation keys
+      bgRotate: prot === '' ? null : Number(prot),
+      bgFlipH: pflip === '' ? null : pflip === 'h' || pflip === 'both',
+      bgFlipV: pflip === '' ? null : pflip === 'v' || pflip === 'both',
       glassBlur: Math.min(30, Math.max(0, Number(document.querySelector('#th-blur')?.value ?? 4))),
       glassAlpha: Math.min(0.95, Math.max(0.1, (Number(document.querySelector('#th-alpha')?.value ?? 55)) / 100)),
     };
@@ -832,6 +877,10 @@ export function renderCustomization(host) {
     if (pc) pc.value = [30, 80, 150].includes(Number(base.particleCount)) ? String(base.particleCount) : '';
     const pf = document.querySelector('#th-pfit');
     if (pf) pf.value = ['cover', 'contain', 'fill'].includes(base.bgFit) ? base.bgFit : '';
+    const pr = document.querySelector('#th-prot');
+    if (pr) pr.value = base.bgRotate != null && [0, 90, 180, 270].includes(Number(base.bgRotate)) ? String(Number(base.bgRotate)) : '';
+    const pfl = document.querySelector('#th-pflip');
+    if (pfl) pfl.value = base.bgFlipH == null && base.bgFlipV == null ? '' : base.bgFlipH && base.bgFlipV ? 'both' : base.bgFlipH ? 'h' : base.bgFlipV ? 'v' : 'none';
     live();
   };
   document.querySelector('#th-name').oninput = live;

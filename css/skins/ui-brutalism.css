@@ -45,6 +45,21 @@ body[data-ui="brutalist"] .btn-primary {
   color: #fff;
   box-shadow: 3px 3px 0 #000;
 }
+/* Tab strips carry the same hard-offset language as .btn (rules §1.4). */
+body[data-ui="brutalist"] .chart-tab-bar,
+body[data-ui="brutalist"] .an-sec-bar {
+  border-radius: 4px;
+  border: 2px solid var(--text-primary);
+  box-shadow: 3px 3px 0 #000;
+}
+body[data-ui="brutalist"] .chart-tab,
+body[data-ui="brutalist"] .an-sec-btn { border-radius: 4px; }
+body[data-ui="brutalist"] .chart-tab.active,
+body[data-ui="brutalist"] .an-sec-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 2px 2px 0 #000;
+}
 
 body[data-ui="brutalist"] input[type="text"],
 body[data-ui="brutalist"] input[type="number"],

@@ -43,6 +43,9 @@ export const THEMES = {
     overlayScrim: 'rgba(0,0,0,0.55)', changelogScrim: 'rgba(0,0,0,0.35)',
   },
   cyberpunk: { name: 'Neon Grid', bgBase: '#060907', bgSurface: '#0a0f0c', bgRaised: '#0f1712', bgOverlay: '#142019', borderMid: '#1e4030', primary: '#39ff14', textPrimary: '#e9ffef', textSecondary: '#a4d8b6', textMuted: '#5f8a6e', glow1: '#39ff14', glow2: '#00b6ff', glow3: '#b6ff4a', p_hue: '120', inputBg: '#0a0f0c' },
+  // Electric blue + white only — no green anywhere; done-states lean azure,
+  // warnings/errors keep their standard amber/red semantics.
+  system: { name: 'System Blue', bgBase: '#01050c', bgSurface: '#04101f', bgRaised: '#071727', bgOverlay: '#0a2036', borderMid: '#14405f', primary: '#2f9dff', textPrimary: '#eef5ff', textSecondary: '#a9c4de', textMuted: '#6f8bab', glow1: '#7fc9ff', glow2: '#0b74d9', glow3: '#cfe9ff', p_hue: '205', inputBg: '#071727', taskCompletedBg: 'rgba(47,157,255,0.10)', calDayDoneBg: '#0a2f52', calDayDoneBorder: '#2f9dff', hm1Bg: 'rgba(47,157,255,0.16)', hm1Border: 'rgba(47,157,255,0.26)', hm2Bg: 'rgba(47,157,255,0.40)', hm2Border: 'rgba(47,157,255,0.52)', hm3Bg: '#2f9dff', hm3Border: '#2f9dff' },
 };
 
 export function hexToRgb(hex) {
@@ -183,6 +186,9 @@ export function applyTheme(id) {
           if (t.particleSpeed != null) s.particleSpeed = Math.min(3, Math.max(0.2, Number(t.particleSpeed)));
           if (t.particleCount != null) s.particleCount = Math.min(150, Math.max(0, Number(t.particleCount)));
           if (t.bgFit) s.bgFit = t.bgFit;
+          // orientation travels with the theme when the builder set it
+          if (t.bgRotate != null) s.bgRotate = [0, 90, 180, 270].includes(Number(t.bgRotate)) ? Number(t.bgRotate) : 0;
+          if (t.bgFlipH != null || t.bgFlipV != null) { s.bgFlipH = !!t.bgFlipH; s.bgFlipV = !!t.bgFlipV; }
           if (t.glassBlur != null) s.glassBlur = Math.min(30, Math.max(0, Number(t.glassBlur)));
           if (t.glassAlpha != null) s.glassAlpha = Math.min(0.95, Math.max(0.1, Number(t.glassAlpha)));
         }, { silent: true });

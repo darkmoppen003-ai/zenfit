@@ -76,13 +76,12 @@ function boot() {
   try {
     import('./features/quests.js').then((m) => { try { m.ensureDailyQuests(); } catch {} }).catch(() => {});
   } catch {}
-  // Perf: state-driven re-renders are debounced — rapid successive
-  // updates (sliders, bursts of XP) coalesce into ONE render.
-  // Navigation calls renderActive() directly (immediate).
-  let renderTimer = null;
+  // Perf: state-driven re-renders coalesce to the NEXT FRAME — a single
+  // tap updates within one frame; bursts inside the same frame merge into
+  // ONE render. Navigation calls renderActive() directly (immediate).
+  let renderRaf = 0;
   subscribe(() => {
-    clearTimeout(renderTimer);
-    renderTimer = setTimeout(() => renderActive(), 80);
+    if (!renderRaf) renderRaf = requestAnimationFrame(() => { renderRaf = 0; renderActive(); });
     try { import('./core/missions.js').then((m) => { try { m.checkMissions(); } catch {} }).catch(() => {}); } catch {}
   });
   initPWA();

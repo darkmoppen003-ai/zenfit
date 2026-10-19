@@ -962,6 +962,8 @@ function renderContent(body) {
       <label style="font-size:12px">Particle speed (0.2–3)<input type="number" id="adth-pspeed" min="0.2" max="3" step="0.1" value="1"></label>
       <label style="font-size:12px">Particle count<select id="adth-pcount"><option value="">— theme default —</option><option value="30">Calm (30)</option><option value="80">Normal (80)</option><option value="150">Dense (150)</option></select></label>
       <label style="font-size:12px">Wallpaper fit<select id="adth-pfit"><option value="">— keep current —</option><option value="cover">Cover</option><option value="contain">Contain</option><option value="fill">Fill</option></select></label>
+      <label style="font-size:12px">Wallpaper rotation<select id="adth-prot"><option value="">— keep current —</option><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+      <label style="font-size:12px">Wallpaper flip<select id="adth-flip"><option value="">— keep current —</option><option value="none">None</option><option value="h">Horizontal</option><option value="v">Vertical</option><option value="both">Both</option></select></label>
       <label style="font-size:12px">Glass blur (0–30px)<input type="number" id="adth-blur" min="0" max="30" value="4"></label>
       <label style="font-size:12px">Card opacity (10–95%)<input type="number" id="adth-alpha" min="10" max="95" value="55"></label>
     </div>
@@ -1185,6 +1187,9 @@ function wireThemeStudio(body) {
     draft.particleSpeed = Math.min(3, Math.max(0.2, Number(q('#adth-pspeed')?.value) || 1));
     const pc = Number(q('#adth-pcount')?.value); if ([30, 80, 150].includes(pc)) draft.particleCount = pc;
     const pf = q('#adth-pfit')?.value; if (['cover', 'contain', 'fill'].includes(pf)) draft.bgFit = pf;
+    const pr = q('#adth-prot')?.value; if (['0', '90', '180', '270'].includes(pr)) draft.bgRotate = Number(pr);
+    const pfl = q('#adth-flip')?.value;
+    if (['none', 'h', 'v', 'both'].includes(pfl)) { draft.bgFlipH = pfl === 'h' || pfl === 'both'; draft.bgFlipV = pfl === 'v' || pfl === 'both'; }
     draft.glassBlur = Math.min(30, Math.max(0, Number(q('#adth-blur')?.value ?? 4)));
     draft.glassAlpha = Math.min(0.95, Math.max(0.1, (Number(q('#adth-alpha')?.value ?? 55)) / 100));
     const box = q('#adth-live');

@@ -149,7 +149,8 @@ export function isRestDay(dateStr) {
 export function weekRestCount(dateStr) {
   const d = new Date(`${dateStr || today()}T12:00:00`);
   const monday = new Date(d);
-  monday.setDate(monday.getDate() - (monday.getDay() || 7) - 1);
+  // Monday of the current Mon–Sat week (Sun belongs to the week that started the prior Mon)
+  monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
   const dates = [];
   for (let i = 0; i < 6; i++) {
     const dd = new Date(monday);

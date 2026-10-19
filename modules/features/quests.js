@@ -5,7 +5,7 @@
    (q1 auto-logs water, q2 logs a meal plan, q4 needs 2 habits).
 ────────────────────────────────────────────────────────────── */
 import { S, update, deductXP } from '../core/store.js';
-import { getTodayStr } from '../core/utils.js';
+import { getTodayStr, addDays } from '../core/utils.js';
 import { isRestDay } from '../core/selectors.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, sfx, openOverlay, systemActivate } from '../core/ui.js';
@@ -55,9 +55,11 @@ export function ensureDailyQuests() {
   generateQuests();
   generateBonusTasks();
 }
-/** Inactivity rule (no V1 precedent — new): on day rollover, a non-rest day
-    with 4 or fewer completed quests (daily + bonus) costs 100 XP. Runs once —
-    the lists it reads are replaced right after, so it can't double-charge. */
+/** Inactivity rule (no V1 precedent — new): each non-rest day between the
+    last quest list and today with 4 or fewer completed quests costs 100 XP.
+    The oldest stale day (the last day the app was open) is judged by its
+    real lists; days after it were never opened (0/11). Runs once — the
+    lists it reads are replaced right after, so it can't double-charge. */
 function chargeInactivity() {
   try {
     const t = getTodayStr();
@@ -65,10 +67,19 @@ function chargeInactivity() {
     const oldDate = oldQ.date || oldB.date;
     if (!oldDate || oldDate >= t) return;
     const done = [...(oldQ.list || []), ...(oldB.list || [])].filter((q) => q.done).length;
-    if (isRestDay(oldDate)) return;
-    if (done <= 4) {
-      deductXP(100, `Inactive ${oldDate} (${done}/11 quests)`);
+    const charged = [];
+    for (let d = oldDate; d < t; d = addDays(d, 1)) {
+      if (isRestDay(d)) continue;
+      if (d === oldDate && done > 4) continue;
+      charged.push(d);
+    }
+    if (!charged.length) return;
+    deductXP(charged.length * 100, `Inactive ${charged.join(', ')}`);
+    if (charged.length === 1 && charged[0] === oldDate) {
       showNotif(`[ INACTIVITY ] -100 XP — only ${done} quests done on ${oldDate}`, '⚠️');
+    } else {
+      const shown = charged.slice(0, 4).join(', ') + (charged.length > 4 ? '…' : '');
+      showNotif(`[ INACTIVITY ] -${charged.length * 100} XP — ${charged.length} inactive days: ${shown}`, '⚠️');
     }
   } catch {}
 }

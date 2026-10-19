@@ -179,13 +179,17 @@ body.nav-labels-off .bni-label { display: none; }
 .more-popover .mp-item.active-mp { color: var(--primary); }
 .more-popover .mp-item .mp-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
-.chart-tab-bar { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-raised); border-radius: 10px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
-.chart-tab-bar::-webkit-scrollbar { display: none; }
-.chart-tab { flex: 1 0 auto; text-align: center; padding: 7px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: all var(--dur-fast); white-space: nowrap; }
+/* Tab strips: one component family — .chart-tab-bar/.chart-tab is the base
+   (nutrition, zen, workout, admin, leaderboard, analytics periods); the
+   analytics section strip (.an-sec-bar/.an-sec-btn) shares the same grammar
+   so no screen carries its own tab styling (rules §1.4). */
+.chart-tab-bar, .an-sec-bar { display: flex; gap: 4px; margin-bottom: 12px; background: var(--bg-raised); border-radius: 10px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+.chart-tab-bar::-webkit-scrollbar, .an-sec-bar::-webkit-scrollbar { display: none; }
+.chart-tab, .an-sec-btn { flex: 1 0 auto; text-align: center; padding: 7px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; cursor: pointer; color: var(--text-muted); transition: all var(--dur-fast); white-space: nowrap; background: none; border: 0; font-family: var(--font-ui); }
 @media (max-width: 600px) {
-  .chart-tab { font-size: 11px; padding: 7px 8px; }
+  .chart-tab, .an-sec-btn { font-size: 11px; padding: 7px 8px; }
 }
-.chart-tab.active { background: var(--primary-dark); color: #fff; }
+.chart-tab.active, .an-sec-btn.active { background: var(--primary-dark); color: #fff; }
 
 .grade { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
 .grade-A { background: var(--grade-a-bg); color: var(--grade-a-fg); }
@@ -296,4 +300,29 @@ body.lg-lens-on.glass-mode .bonus-card {
 body.lg-lens-on.glass-mode .overlay-box {
   backdrop-filter: blur(var(--glass-blur)) saturate(160%) url(#zf-lens);
   border-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Touch tier: every visible glass card re-blurs its backdrop on every scroll
+   frame (measured ~4x frame time, the single biggest scroll cost). Coarse
+   pointers keep the translucent fill + borders, cards drop the blur pass; the
+   fixed nav pill and transient dialogs keep theirs (cheap, small area).
+   !important overrides skin-level blur rules (they load later). */
+@media (pointer: coarse) {
+  body.glass-mode .card, body.glass-mode .card-sm, body.glass-mode .card-raised,
+  body.glass-mode .quest-card, body.glass-mode .stat-block, body.glass-mode .plan-card,
+  body.glass-mode .bonus-card, body.glass-mode .char-card-box, body.glass-mode .char-avatar-col,
+  body.glass-mode .char-stats-col {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* Software-raster fallback, raised by the scroll-health watchdog (ui.js) when
+   the first scroll shows a drowning compositor — same blur-free tier as touch. */
+body.lg-perf-low.glass-mode .card, body.lg-perf-low.glass-mode .card-sm, body.lg-perf-low.glass-mode .card-raised,
+body.lg-perf-low.glass-mode .quest-card, body.lg-perf-low.glass-mode .stat-block, body.lg-perf-low.glass-mode .plan-card,
+body.lg-perf-low.glass-mode .bonus-card, body.lg-perf-low.glass-mode .char-card-box,
+body.lg-perf-low.glass-mode .char-avatar-col, body.lg-perf-low.glass-mode .char-stats-col {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

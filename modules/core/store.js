@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 21;
-export const APP_VERSION = "8.9.5";
+export const DATA_VERSION = 22;
+export const APP_VERSION = "8.9.6";
 
-export const APP_BUILD = "2026.10.16.66";
+export const APP_BUILD = "2026.10.19.67";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -44,6 +44,7 @@ const SCHEMA = {
   particleEffect: 'string', particleHue: 'number', particleSpeed: 'number', cyberDirection: 'string', sparkDirection: 'string',
   bgFit: 'string', bgPosX: 'number', bgPosY: 'number',
   bgOffX: 'number', bgOffY: 'number', bgZoom: 'number',
+  bgRotate: 'number', bgFlipH: 'boolean', bgFlipV: 'boolean',
   accentColor: 'string', bgImages: 'array', bgAllScreens: 'boolean',
   bgScreen: 'string', collapsedSections: 'object',
   fullscreenAutoStart: 'boolean', steps: 'array', onboarding: 'object',
@@ -129,6 +130,9 @@ export function defaultState() {
     bgPosY: 50,
     bgOffY: 0,
     bgZoom: 100,
+    bgRotate: 0,
+    bgFlipH: false,
+    bgFlipV: false,
     accentColor: '',
     bgImages: [],
     bgAllScreens: true,
@@ -158,6 +162,7 @@ export function defaultState() {
       showHeader: true, showCard: true, variant: 'long',
       showWallpaper: true, cardStyle: 'default',
       cardBackdrop: 'wallpaper',
+      posterDots: true,
       visible: {
         streak: true, level: true, rank: true, globalRank: true, xp: true,
         strength: true, endurance: true, discipline: true, health: true,
@@ -314,7 +319,7 @@ export function migrateData(saved) {
   }
   if (version < 18) {
     // ponytail: uiStyle global defaults to liquid; unknown values fall back (no blank UI)
-    if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(saved.uiStyle)) saved.uiStyle = 'liquid';
+    if (!['liquid', 'neomorph', 'brutalist', 'hud', 'system'].includes(saved.uiStyle)) saved.uiStyle = 'liquid';
     saved.dataVersion = 18;
   }
   if (version < 19) {
@@ -328,7 +333,7 @@ export function migrateData(saved) {
     const d = defaultState().showcase;
     saved.showcase = { ...d, ...(saved.showcase || {}), visible: { ...d.visible, ...((saved.showcase || {}).visible || {}) } };
     if (!['long', 'short'].includes(saved.showcase.variant)) saved.showcase.variant = 'long';
-    if (!['default', 'cyber', 'spotlight', 'idcard'].includes(saved.showcase.cardStyle)) saved.showcase.cardStyle = 'default';
+    if (!['default', 'spotlight', 'idcard', 'onisea', 'anime', 'poster', 'operator', 'system'].includes(saved.showcase.cardStyle)) saved.showcase.cardStyle = 'default';
     saved.dataVersion = 20;
   }
   if (version < 21) {
@@ -343,6 +348,13 @@ export function migrateData(saved) {
     base.forEach((x) => { if (!ord.includes(x)) ord.push(x); });
     saved.showcase.order = ord;
     saved.dataVersion = 21;
+  }
+  if (version < 22) {
+    // ponytail: wallpaper orientation (rotate/flip) — backfill neutral, history untouched
+    if (![0, 90, 180, 270].includes(saved.bgRotate)) saved.bgRotate = 0;
+    if (typeof saved.bgFlipH !== 'boolean') saved.bgFlipH = false;
+    if (typeof saved.bgFlipV !== 'boolean') saved.bgFlipV = false;
+    saved.dataVersion = 22;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {
@@ -369,13 +381,13 @@ export function validateAndMergeData(saved, fresh) {
     }
   }
   // ponytail: unknown uiStyle (hand-edited saves) falls back to liquid, never blank
-  if (!['liquid', 'neomorph', 'brutalist', 'hud'].includes(merged.uiStyle)) merged.uiStyle = 'liquid';
+  if (!['liquid', 'neomorph', 'brutalist', 'hud', 'system'].includes(merged.uiStyle)) merged.uiStyle = 'liquid';
   // ponytail: showcase prefs merge deep for visible flags — never blank, never drop
   try {
     const dv = fresh.showcase || {};
     merged.showcase = { ...dv, ...(merged.showcase || {}), visible: { ...(dv.visible || {}), ...((merged.showcase || {}).visible || {}) } };
     if (!['long', 'short'].includes(merged.showcase.variant)) merged.showcase.variant = 'long';
-    if (!['default', 'cyber', 'spotlight', 'idcard'].includes(merged.showcase.cardStyle)) merged.showcase.cardStyle = 'default';
+    if (!['default', 'spotlight', 'idcard', 'onisea', 'anime', 'poster', 'operator', 'system'].includes(merged.showcase.cardStyle)) merged.showcase.cardStyle = 'default';
     if (!['number', 'bar', 'ring'].includes(merged.showcase.cellStyle)) merged.showcase.cellStyle = 'number';
   } catch {}
   // ponytail: mood must be {entries:[]} — array-shaped legacy history folds into entries,

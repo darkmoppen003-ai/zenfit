@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.9.6', 'Frame editor can rotate the wallpaper in 90° steps and flip it horizontally/vertically (custom themes can carry the orientation too), the nutrition and analytics subtab strips now share one grammar in every interface style, and the SYSTEM style is blue glass with no green in chrome. Particle engine back to the original look'],
   ['v8.9.5', 'SHOWCASE flex stage (after Customization): live theme/wallpaper/style card, floating studio gear, short/long versions, Default + Cyberpunk card styles, true-PNG share export, per-stat visibility. Analytics feels alive: count-ups, bar fills, ring sweeps, insight rises across all 10 sections'],
   ['v8.9.3.6', 'Styles survive refresh (Pop + Neon Grid are real themes), Transparency + DEFAULT naming, opt-in liquid-lens refraction, header clipping guards, mood radar fill, weight target/current + progress history, SVG icon sweep'],
   ['v8.9.3.5', 'Interface Styles: Liquid / Neomorphism / Neo-Brutalism / Cyberpunk HUD skins + per-style colors with solid/current-background choice (or keep yours), style-aware charts, HUD task-completion activation flash'],

@@ -14,13 +14,15 @@ body[data-ui="hud"]::after {
   content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
 }
-/* travelling scan bar */
+/* Travelling scan bar — transform-only (a top() animation re-layouts the
+   fixed band every frame). */
 body[data-ui="hud"]::before {
-  content: ''; position: fixed; left: 0; right: 0; top: -10%; height: 90px; z-index: 1; pointer-events: none;
+  content: ''; position: fixed; left: 0; right: 0; top: 0; height: 90px; z-index: 1; pointer-events: none;
   background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 12%, transparent), transparent);
+  will-change: transform;
   animation: hud-scan 7s linear infinite;
 }
-@keyframes hud-scan { from { top: -12%; } to { top: 112%; } }
+@keyframes hud-scan { from { transform: translateY(-12vh); } to { transform: translateY(112vh); } }
 
 body[data-ui="hud"] .card,
 body[data-ui="hud"] .card-sm,
@@ -84,6 +86,23 @@ body[data-ui="hud"] .btn-primary {
   border-color: var(--primary);
   color: var(--primary);
   box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 0 12px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+/* Tab strips carry the same glow language as .btn (rules §1.4). */
+body[data-ui="hud"] .chart-tab-bar,
+body[data-ui="hud"] .an-sec-bar {
+  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+}
+body[data-ui="hud"] .chart-tab,
+body[data-ui="hud"] .an-sec-btn {
+  border-radius: 2px;
+  text-transform: uppercase; letter-spacing: 1px; font-size: var(--text-xs);
+}
+body[data-ui="hud"] .chart-tab.active,
+body[data-ui="hud"] .an-sec-btn.active {
+  background: color-mix(in srgb, var(--primary) 22%, var(--bg-raised));
+  color: var(--primary);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 0 10px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 body[data-ui="hud"] input[type="text"],
 body[data-ui="hud"] input[type="number"],

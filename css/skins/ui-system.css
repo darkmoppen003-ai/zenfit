@@ -1,0 +1,377 @@
+/* ── ZenFit · Skin: SYSTEM ─────────────────────────────────
+   Leveling-system window rebuilt after the reference (ref/solo.jpeg):
+   ONE chamfered double-line window frame hugging the app column (corner
+   bars, mid-edge plates, top gem, bottom chevron) — the only place edges
+   or corners are drawn, never on a block or header. Inside: translucent
+   blue-tinted glass (no opaque panes), viewport-pinned glass-scratch
+   hairlines (never CRT scanlines), headers shaped like the reference's
+   QUEST INFO plate (ice-white border, icon cell, glowing blue label),
+   flat shadowless buttons, blocks separated by a thin half-drawn rule.
+   Tokens only (pair with the "System Blue" theme); no third-party art,
+   fonts or logos. Palette is electric blue + white — done-states lean
+   azure, no green anywhere. */
+
+body[data-ui="system"] {
+  --font-display: 'JetBrains Mono', 'Space Grotesk', monospace;
+  --font-ui: 'JetBrains Mono', 'Inter', monospace;
+  --sys-cut: 12px;        /* window-frame corner chamfer */
+  --sys-cut-in: 8px;      /* inner line chamfer */
+  --sys-fp: 6px;          /* frame inset from the app column */
+  /* Frame width = the app column (centred, capped) minus twice the inset. */
+  --sys-col: min(100%, var(--app-max-width, 1100px));
+  --sys-line: color-mix(in srgb, var(--primary) 45%, transparent);
+  --sys-line-soft: color-mix(in srgb, var(--primary) 24%, transparent);
+  --sys-hot: color-mix(in srgb, var(--primary) 80%, #fff);
+  --sys-ice: color-mix(in srgb, #fff 72%, var(--primary));   /* plate edges */
+  --sys-glass: color-mix(in srgb, var(--bg-surface) 55%, transparent);
+  --sys-tint: color-mix(in srgb, var(--primary) 5%, transparent);
+  --sys-ink: color-mix(in srgb, #fff 92%, var(--primary));
+  --sys-mute: color-mix(in srgb, var(--text-muted) 74%, var(--primary));
+  /* electric blue + white only: done-states go azure, A-grade goes ice */
+  --success: #4fb3ff;
+  --grade-a-fg: #7fe3ff;
+  --grade-a-bg: #0a2f52;
+}
+
+/* ── The window: outer + inner chamfered lines, fixed to the app column ──
+   The main panel is the app window itself — one frame per screen, never one
+   per block. Rings are drawn with a padding-box xor mask (1px outline). */
+body[data-ui="system"] .app::before,
+body[data-ui="system"] #screens::before {
+  content: ''; position: fixed; pointer-events: none; z-index: 1;
+  padding: 1px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+body[data-ui="system"] .app::before {
+  top: var(--sys-fp); bottom: var(--sys-fp);
+  left: 0; right: 0; margin-inline: auto;
+  width: calc(var(--sys-col) - 2 * var(--sys-fp));
+  background: linear-gradient(180deg, var(--sys-hot), var(--sys-line) 45%, var(--sys-line));
+  clip-path: polygon(var(--sys-cut) 0, calc(100% - var(--sys-cut)) 0, 100% var(--sys-cut), 100% calc(100% - var(--sys-cut)), calc(100% - var(--sys-cut)) 100%, var(--sys-cut) 100%, 0 calc(100% - var(--sys-cut)), 0 var(--sys-cut));
+}
+body[data-ui="system"] #screens::before {
+  top: calc(var(--sys-fp) + 7px); bottom: calc(var(--sys-fp) + 7px);
+  left: 0; right: 0; margin-inline: auto;
+  width: calc(var(--sys-col) - 2 * (var(--sys-fp) + 7px));
+  background: linear-gradient(180deg, var(--sys-line), color-mix(in srgb, var(--primary) 26%, transparent));
+  clip-path: polygon(var(--sys-cut-in) 0, calc(100% - var(--sys-cut-in)) 0, 100% var(--sys-cut-in), 100% calc(100% - var(--sys-cut-in)), calc(100% - var(--sys-cut-in)) 100%, var(--sys-cut-in) 100%, 0 calc(100% - var(--sys-cut-in)), 0 var(--sys-cut-in));
+}
+/* Fittings on the outer line: corner bars, mid-edge plates, top gem,
+   bottom chevron (the reference's frame hardware). */
+body[data-ui="system"] .app::after {
+  content: ''; position: fixed; pointer-events: none; z-index: 1;
+  top: var(--sys-fp); bottom: var(--sys-fp);
+  left: 0; right: 0; margin-inline: auto;
+  width: calc(var(--sys-col) - 2 * var(--sys-fp));
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(var(--sys-hot), var(--sys-hot)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(var(--sys-hot), var(--sys-hot)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(var(--sys-hot), var(--sys-hot)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(var(--sys-hot), var(--sys-hot)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(var(--sys-line), var(--sys-line)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(var(--sys-line), var(--sys-line)), linear-gradient(var(--sys-hot), var(--sys-hot)),
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0),
+    linear-gradient(to bottom right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0),
+    linear-gradient(to bottom right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0),
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0),
+    linear-gradient(to bottom right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0),
+    linear-gradient(to top right, transparent calc(50% - 1px), var(--sys-hot) 0 calc(50% + 1px), transparent 0);
+  background-position:
+    left 0 top 0, left 0 top 0, right 0 top 0, right 0 top 0,
+    left 0 bottom 0, left 0 bottom 0, right 0 bottom 0, right 0 bottom 0,
+    left 0 center, left 0 center, right 0 center, right 0 center,
+    calc(50% - 2px) 0, calc(50% + 2px) 0, calc(50% - 2px) 4px, calc(50% + 2px) 4px,
+    calc(50% - 3px) bottom, calc(50% + 3px) bottom;
+  background-size:
+    18px 2px, 2px 18px, 18px 2px, 2px 18px,
+    18px 2px, 2px 18px, 18px 2px, 2px 18px,
+    7px 64px, 2px 34px, 7px 64px, 2px 34px,
+    4px 4px, 4px 4px, 4px 4px, 4px 4px, 6px 6px, 6px 6px;
+}
+
+/* ── Glass scratches: sparse hairline streaks on the window pane only,
+   fixed to the app column (never horizontal-dense — that would read as
+   CRT). Cards and blocks are translucent, so the scratches show through
+   them. ── */
+body[data-ui="system"] #screens::after {
+  content: ''; position: fixed; pointer-events: none; z-index: 0;
+  top: calc(var(--sys-fp) + 7px); bottom: calc(var(--sys-fp) + 7px);
+  left: 0; right: 0; margin-inline: auto;
+  width: calc(var(--sys-col) - 2 * (var(--sys-fp) + 7px));
+  background-image:
+    repeating-linear-gradient(124deg, transparent 0 61px, color-mix(in srgb, #cfe6ff 5%, transparent) 61px 62px, transparent 62px 137px, color-mix(in srgb, #cfe6ff 3%, transparent) 137px 138px, transparent 138px 269px),
+    repeating-linear-gradient(58deg, transparent 0 97px, color-mix(in srgb, #cfe6ff 4%, transparent) 97px 98px, transparent 98px 227px, color-mix(in srgb, #cfe6ff 2.5%, transparent) 227px 228px, transparent 228px 383px),
+    repeating-linear-gradient(158deg, transparent 0 43px, color-mix(in srgb, #cfe6ff 3%, transparent) 43px 44px, transparent 44px 167px);
+}
+
+/* ── Content panels: translucent blue-tinted glass, thin border, flat ── */
+body[data-ui="system"] .card,
+body[data-ui="system"] .card-raised {
+  position: relative;
+  border-radius: 3px;
+  border: 1px solid var(--sys-line-soft);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 3%, transparent) 55%, transparent), var(--sys-glass);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* glass-mode stays the same translucent pane — the window is glass either way */
+body[data-ui="system"].glass-mode .card,
+body[data-ui="system"].glass-mode .card-raised {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 10%, transparent), color-mix(in srgb, var(--primary) 3%, transparent) 55%, transparent), var(--sys-glass);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ── Blocks: no boxes, no corners — a translucent blue tint and a thin
+   half-drawn rule under each block ── */
+body[data-ui="system"] .card-sm,
+body[data-ui="system"] .ach-card,
+body[data-ui="system"] .quest-card,
+body[data-ui="system"] .stat-block,
+body[data-ui="system"] .plan-card,
+body[data-ui="system"] .task-card {
+  border: none;
+  border-radius: 0;
+  background-color: var(--sys-tint);
+  background-image: linear-gradient(90deg, var(--sys-line-soft) 0 50%, transparent 50%);
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 100% 1px;
+}
+body[data-ui="system"] .ach-card.earned {
+  background-image: linear-gradient(90deg, var(--warning) 0 50%, transparent 50%);
+}
+body[data-ui="system"] .stat-block:hover,
+body[data-ui="system"] .quest-card:hover {
+  background-image: linear-gradient(90deg, var(--sys-hot) 0 50%, transparent 50%);
+}
+body[data-ui="system"] .quest-card.done { opacity: .72; box-shadow: inset 2px 0 0 var(--success); }
+body[data-ui="system"] .task-card.task-overdue { background-color: color-mix(in srgb, var(--task-overdue-bg) 80%, var(--sys-tint)); }
+body[data-ui="system"] .task-card.task-completed { background-color: color-mix(in srgb, var(--task-completed-bg) 80%, var(--sys-tint)); opacity: .75; }
+/* Difficulty + bounty keep their semantic accents (state, not decoration). */
+body[data-ui="system"] .task-diff-easy { border-left: 3px solid var(--grade-a-fg); }
+body[data-ui="system"] .task-diff-medium { border-left: 3px solid var(--grade-c-fg); }
+body[data-ui="system"] .task-diff-hard { border-left: 3px solid var(--grade-e-fg); }
+body[data-ui="system"] .bonus-card {
+  border-radius: 0;
+  border-color: color-mix(in srgb, var(--warning) 55%, transparent);
+  background-color: color-mix(in srgb, var(--warning) 7%, transparent);
+}
+
+/* ── Dialogs: a plain translucent plate — no inner ring, no corners ── */
+body[data-ui="system"] .overlay-box {
+  position: relative;
+  border-radius: 3px;
+  border: 1px solid var(--sys-line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 9%, transparent), transparent 50%), color-mix(in srgb, var(--bg-base) 72%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+body[data-ui="system"].glass-mode .overlay-box {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 9%, transparent), transparent 50%), color-mix(in srgb, var(--bg-base) 72%, transparent);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ── Header = the reference's QUEST INFO plate: ice-white border, icon in
+   a bordered cell, glowing blue label — no brackets, no cut corners ── */
+body[data-ui="system"] .screen-header .sh-icon {
+  width: 32px; height: 32px; justify-content: center; flex: 0 0 auto;
+  border: 1px solid var(--sys-ice);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--primary) 7%, transparent);
+  color: var(--sys-hot);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+body[data-ui="system"] .screen-header .sh-title {
+  border: 1px solid var(--sys-ice);
+  border-radius: 5px;
+  padding: 3px 16px 4px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--sys-hot);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 13%, transparent), color-mix(in srgb, var(--primary) 3%, transparent)), color-mix(in srgb, var(--bg-base) 40%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--primary) 80%, transparent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+body[data-ui="system"] .screen-header .sh-sub { color: var(--sys-mute); }
+
+/* ── Headings: white, glowing, double-underlined (the ref's GOAL rule) ── */
+body[data-ui="system"] .section-title {
+  color: var(--sys-ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 2px;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 38%, transparent);
+  box-shadow: 0 3px 0 -2px color-mix(in srgb, var(--primary) 20%, transparent);
+  padding-bottom: 4px;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+body[data-ui="system"] .section-title::before { content: '[ '; color: var(--primary); }
+body[data-ui="system"] .section-title::after { content: ' ]'; color: var(--primary); }
+
+/* ── Controls: squared, letterspaced, flat — no glow bevel, no bump ── */
+body[data-ui="system"] .btn {
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+  background-image: none;
+  color: var(--sys-ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  text-shadow: none;
+  box-shadow: none;
+}
+body[data-ui="system"] .btn:hover {
+  border-color: color-mix(in srgb, var(--primary) 80%, transparent);
+  background-color: color-mix(in srgb, var(--primary) 16%, transparent);
+}
+body[data-ui="system"] .btn:active { transform: none; background-color: color-mix(in srgb, var(--primary) 24%, transparent); }
+body[data-ui="system"] .btn-primary {
+  border-color: color-mix(in srgb, var(--primary) 85%, #fff);
+  background-color: color-mix(in srgb, var(--primary) 26%, transparent);
+  color: #fff;
+  box-shadow: none;
+}
+body[data-ui="system"] .btn-primary:hover { background-color: color-mix(in srgb, var(--primary) 36%, transparent); }
+body[data-ui="system"] input[type="text"],
+body[data-ui="system"] input[type="number"],
+body[data-ui="system"] input[type="email"],
+body[data-ui="system"] input[type="search"],
+body[data-ui="system"] select,
+body[data-ui="system"] textarea {
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 62%, transparent);
+  color: var(--sys-ink);
+  font-family: var(--font-ui);
+  box-shadow: none;
+}
+body[data-ui="system"] input:focus, body[data-ui="system"] select:focus, body[data-ui="system"] textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 34%, transparent);
+}
+body[data-ui="system"] input[type="range"] { accent-color: var(--primary); }
+
+/* ── Chips, checks, bars: bracketed values, squared meters ── */
+body[data-ui="system"] .badge {
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  letter-spacing: 1px;
+  box-shadow: 0 0 8px color-mix(in srgb, currentColor 35%, transparent);
+}
+body[data-ui="system"] .badge::before { content: '['; margin-right: 3px; opacity: .75; }
+body[data-ui="system"] .badge::after { content: ']'; margin-left: 3px; opacity: .75; }
+body[data-ui="system"] .task-check.done, body[data-ui="system"] .quest-check.done {
+  border-radius: 1px;
+  box-shadow: 0 0 10px var(--success);
+}
+body[data-ui="system"] .xp-bar { box-shadow: 0 0 10px var(--primary); }
+body[data-ui="system"] .xp-bar-wrap, body[data-ui="system"] .stat-bar-wrap {
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 1px;
+  background: color-mix(in srgb, #000 72%, transparent);
+}
+body[data-ui="system"] .xp-bar-wrap {
+  background-image: repeating-linear-gradient(90deg, transparent 0 7px, color-mix(in srgb, #000 55%, transparent) 7px 8px);
+  background-color: color-mix(in srgb, #000 72%, transparent);
+}
+/* Square the remaining soft controls (tabs, mood faces, calendar chips). */
+body[data-ui="system"] .mood-btn,
+body[data-ui="system"] .cal-day,
+body[data-ui="system"] .chart-tab-bar,
+body[data-ui="system"] .an-sec-bar,
+body[data-ui="system"] .chart-tab,
+body[data-ui="system"] .theme-preview,
+body[data-ui="system"] .theme-preview .tp-chip,
+body[data-ui="system"] .an-sec-btn,
+body[data-ui="system"] .more-popover .mp-item,
+body[data-ui="system"] .btn-icon,
+body[data-ui="system"] .task-check,
+body[data-ui="system"] .grade,
+body[data-ui="system"] .food-detail-item,
+body[data-ui="system"] .food-detail-grade,
+body[data-ui="system"] .cal-balance-banner,
+body[data-ui="system"] .zen-sound-btn,
+body[data-ui="system"] .char-card-box,
+body[data-ui="system"] .insight { border-radius: 1px; }
+body[data-ui="system"] .mood-btn { border-width: 1px; }
+body[data-ui="system"] .theme-preview { border-width: 1px; }
+body[data-ui="system"] .char-card-box { border-color: var(--sys-line-soft); }
+body[data-ui="system"] .insight { border-radius: 0; }
+body[data-ui="system"] input[type="range"]::-webkit-slider-thumb { border-radius: 1px; }
+body[data-ui="system"] input[type="range"]::-moz-range-thumb { border-radius: 1px; }
+
+/* Tab strips: same translucent pane grammar as blocks (round-7 v4) so the
+   nutrition and analytics strips read as one component. */
+body[data-ui="system"] .chart-tab-bar,
+body[data-ui="system"] .an-sec-bar {
+  background: var(--sys-tint);
+  border: 1px solid var(--sys-line-soft);
+}
+body[data-ui="system"] .chart-tab.active,
+body[data-ui="system"] .an-sec-btn.active {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--sys-ice);
+}
+
+/* ── Chrome: nav pill + popover as squared system bars (flat, no bump) ── */
+body[data-ui="system"] .bottom-nav,
+body[data-ui="system"] .more-popover {
+  border: 1px solid var(--sys-line);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--bg-surface) 70%, transparent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+body[data-ui="system"] .bottom-nav-item.active,
+body[data-ui="system"] .bottom-nav-item.active .bni-icon,
+body[data-ui="system"] .bottom-nav-item.active .bni-label {
+  color: var(--primary);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+/* mono labels are wider than the UI font — keep every nav name un-truncated */
+body[data-ui="system"] .bni-label { font-size: 9px; letter-spacing: 0; }
+
+/* ── System-activation flash (systemActivate() in core/ui.js) ── */
+.hud-activate {
+  position: fixed; inset: 0; z-index: 10000; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(60% 40% at 50% 50%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 70%);
+  animation: system-flash 1.7s ease-out forwards;
+}
+@keyframes system-flash { 0% { opacity: 0; } 12% { opacity: 1; } 72% { opacity: 1; } 100% { opacity: 0; } }
+.hud-activate-box {
+  position: relative;
+  padding: 22px 40px;
+  border: 1px solid var(--sys-hot, var(--primary));
+  background: color-mix(in srgb, var(--bg-base, #000) 88%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 32%, transparent), inset 0 0 24px color-mix(in srgb, var(--primary) 12%, transparent);
+  text-align: center; font-family: var(--font-ui);
+}
+.hud-activate-box::before {
+  content: ''; position: absolute; inset: 4px; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.hud-activate-title {
+  font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800;
+  letter-spacing: 5px; color: var(--primary);
+  text-shadow: 0 0 18px var(--primary);
+}
+.hud-activate-sub { margin-top: 6px; font-size: var(--text-sm); color: var(--sys-ink, var(--text-primary)); letter-spacing: 1px; }
+.hud-activate-bar { margin: 12px auto 0; width: 220px; height: 4px; border: 1px solid var(--primary); }
+.hud-activate-bar span { display: block; height: 100%; width: 0; background: var(--primary); box-shadow: 0 0 10px var(--primary); animation: system-load 1.3s linear forwards; }
+@keyframes system-load { to { width: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-activate, .hud-activate-bar span { animation: none; }
+  body[data-ui="system"] * { transition: none; }
+}

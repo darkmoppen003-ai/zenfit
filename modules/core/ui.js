@@ -219,15 +219,35 @@ export function bgPosPercent() {
   const { x, y } = bgOffsets();
   return { x: 50 + x / 2, y: 50 + y / 2 };
 }
-/* Interface Style switcher (liquid / neomorphism / neo-brutalism / cyberpunk hud).
-   Liquid = current CSS (no extra sheet). Others load one additive
-   override sheet that only uses var(--*) tokens, so color themes,
+/* Wallpaper orientation: 90° steps + mirror (frame editor). Rotating a
+   cover-fit layer uncovers the corners, so 90/270 fold a long/short cover
+   factor into the scale. Order is flip → scale → rotate in image space;
+   the canvas paths (showcase) reproduce the same order. */
+export function bgOrient(cw, ch) {
+  // snap to the 90° grid: the cover factor below is only valid on it
+  const r = (Math.round(((((S.bgRotate || 0) % 360) + 360) % 360) / 90) * 90) % 360;
+  const fh = S.bgFlipH ? -1 : 1, fv = S.bgFlipV ? -1 : 1;
+  const k = (r === 90 || r === 270) ? Math.max(cw, ch) / Math.max(1, Math.min(cw, ch)) : 1;
+  return { r, fh, fv, k, on: !!(r || fh < 0 || fv < 0) };
+}
+function wpLayerTransform(z) {
+  const o = bgOrient(window.innerWidth || 1, window.innerHeight || 1);
+  if (!o.on) return z === 1 ? '' : `scale(${z})`;
+  return `rotate(${o.r}deg) scale(${z * o.k}) scaleX(${o.fh}) scaleY(${o.fv})`;
+}
+/* A 90° wallpaper's cover factor tracks the viewport aspect — device
+   rotation / resize must re-run the geometry (cheap no-op otherwise). */
+window.addEventListener('resize', () => { if (((S.bgRotate || 0) % 360)) applyBackgroundConfig(); });
+/* Interface Style switcher (liquid / neomorphism / neo-brutalism / cyberpunk
+   hud / system). Liquid = current CSS (no extra sheet). Others load one
+   additive override sheet that only uses var(--*) tokens, so color themes,
    wallpaper and accent pickers keep working untouched. */
 export const UI_STYLES = {
   liquid: { name: 'DEFAULT', css: '', icon: 'styleLiquid' },
   neomorph: { name: 'Neomorphism', css: './css/skins/ui-neomorphism.css', icon: 'styleNeomorph' },
   brutalist: { name: 'Neo-Brutalism', css: './css/skins/ui-brutalism.css', icon: 'styleBrutalist' },
   hud: { name: 'Cyberpunk HUD', css: './css/skins/ui-hud.css', icon: 'styleCyber' },
+  system: { name: 'SYSTEM', css: './css/skins/ui-system.css', icon: 'styleSystem' },
 };
 /* Default color preset per interface style (theme-definition objects —
    the rules §1.1 exception). Applied only when the user picks "Use default"
@@ -237,11 +257,12 @@ export const UI_STYLE_PRESETS = {
   neomorph: { kind: 'builtin', id: 'light', label: 'Light' },
   brutalist: { kind: 'builtin', id: 'brutalist', label: 'Pop' },
   hud: { kind: 'builtin', id: 'cyberpunk', label: 'Neon Grid' },
+  system: { kind: 'builtin', id: 'system', label: 'System Blue' },
 };
-/* System-activation flash on task/quest completion — HUD mode only.
+/* System-activation flash on task/quest completion — HUD + SYSTEM modes.
    Pointer-transparent + self-cleaning; reduced-motion skips it. */
 export function systemActivate(label = 'TASK COMPLETE') {
-  if ((S.uiStyle || 'liquid') !== 'hud') return;
+  if (!['hud', 'system'].includes(S.uiStyle || 'liquid')) return;
   try {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   } catch {}
@@ -319,7 +340,8 @@ export function applyBackgroundConfig(opts = {}) {
   }
   if (st.bgType === 'image' && st.bgImage) {
     const pos = bgPosPercent();
-    const imgSig = ['img', st.bgImage, S.bgFit || 'cover', pos.x, pos.y, S.bgZoom ?? 100, st.bgDim ?? 40].join('|');
+    const o = bgOrient(window.innerWidth || 1, window.innerHeight || 1);
+    const imgSig = ['img', st.bgImage, S.bgFit || 'cover', pos.x, pos.y, S.bgZoom ?? 100, st.bgDim ?? 40, o.on ? `${o.r}|${o.fh}|${o.fv}|${o.k.toFixed(3)}` : ''].join('|');
     if (!force && __zfBgSig === imgSig) { renderParticles(); return; } // unchanged → keep painted layer, no re-resolve
     // Same image, only framing changed (slider drag) → sync geometry, no async.
     if (!force && __zfBgPaintedSrc === st.bgImage && bg.style.backgroundImage && bg.style.backgroundImage !== 'none') {
@@ -327,7 +349,7 @@ export function applyBackgroundConfig(opts = {}) {
       bg.style.backgroundSize = S.bgFit || 'cover';
       bg.style.backgroundPosition = `${pos.x}% ${pos.y}%`;
       const z = (S.bgZoom ?? 100) / 100;
-      bg.style.transform = z === 1 ? '' : `scale(${z})`;
+      bg.style.transform = wpLayerTransform(z);
       if (dim) dim.style.opacity = String((st.bgDim ?? 40) / 100);
       return;
     }
@@ -346,7 +368,7 @@ export function applyBackgroundConfig(opts = {}) {
         const p = bgPosPercent();
         layer.style.backgroundPosition = `${p.x}% ${p.y}%`;
         const z = (S.bgZoom ?? 100) / 100;
-        layer.style.transform = z === 1 ? '' : `scale(${z})`;
+        layer.style.transform = wpLayerTransform(z);
         __zfBgPaintedSrc = wantSrc;
       };
       if (/^(data:|blob:)/i.test(url) || url.startsWith('./assets/bg/')) { paint(); return; }
@@ -365,15 +387,76 @@ export function applyBackgroundConfig(opts = {}) {
     __zfBgPaintedSrc = null;
     bg.style.backgroundImage = 'none';
     bg.style.background = 'var(--app-bg)';
+    bg.style.transform = ''; // no stale orientation on the solid layer
     if (dim) dim.style.opacity = '0';
   }
   renderParticles();
+  watchGlassHealth();
 }
 
 /** Nav + More popover share one opacity — applied synchronously so pop never lags behind slider. */
 export function applyNavOpacity() {
   const v = (S.navOpacity === false) ? '1' : String((S.navOpacityVal ?? 100) / 100);
   document.querySelectorAll('.bottom-nav, .more-popover').forEach((b) => { b.style.opacity = v; });
+}
+
+/* Adaptive glass (fine pointers): per-card backdrop-filter is cheap on a
+   GPU-composited browser and crushing under software raster (measured 6fps vs
+   50fps on a no-GPU box). Touch devices are already blur-free via the
+   components.css touch tier. Probes: an idle sample ~4s after boot (particles
+   animate behind the cards, forcing a re-blur every frame) plus the first
+   real scroll. A slow median drops the per-card blur for the session — sticky
+   via sessionStorage, never oscillates. Costs nothing when glass is off. */
+function watchGlassHealth() {
+  try {
+    if (window.__zfGlassWatch) return;
+    window.__zfGlassWatch = true;
+    if (!matchMedia('(pointer: fine)').matches) return;
+    if (document.body.classList.contains('lg-perf-low')) return;
+    if (sessionStorage.getItem('zfPerfLow')) { document.body.classList.add('lg-perf-low'); return; }
+  } catch { return; }
+  const deltas = [];
+  let done = false, sampling = false;
+  const judge = () => {
+    sampling = false;
+    if (done || deltas.length < 12) return; // too few frames for a median — stay armed
+    done = true;
+    window.removeEventListener('scroll', kick, true);
+    deltas.sort((a, b) => a - b);
+    const q = (f) => deltas[Math.min(deltas.length - 1, Math.floor(deltas.length * f))];
+    // Drowning compositor: most frames are slow, not one hiccup.
+    if (q(0.5) > 40 && q(0.25) > 25) {
+      document.body.classList.add('lg-perf-low');
+      try { sessionStorage.setItem('zfPerfLow', '1'); } catch {}
+      try { renderParticles(); } catch {} // rebuild at the low tier (DPR 1, half rate)
+    }
+  };
+  const collect = (durMs, maxFrames) => {
+    sampling = true;
+    let last = 0;
+    const t0 = performance.now();
+    const step = (t) => {
+      if (done) return;
+      if (last) deltas.push(t - last);
+      last = t;
+      if (deltas.length >= maxFrames || performance.now() - t0 > durMs) { judge(); return; }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  // Idle probe: with particles running behind glass cards the compositor
+  // re-blurs every frame even when nothing scrolls — cheapest honest signal.
+  setTimeout(() => {
+    if (done || sampling) return;
+    if (!S.glassMode || !S.particlesEnabled || document.visibilityState !== 'visible') return;
+    collect(3000, 45);
+  }, 4200);
+  // Scroll probe: covers the particles-off case (re-blur only while scrolling).
+  const kick = () => {
+    if (done || sampling || !S.glassMode || document.visibilityState !== 'visible') return;
+    collect(2600, 60);
+  };
+  window.addEventListener('scroll', kick, { passive: true, capture: true });
 }
 
 function renderParticles() {

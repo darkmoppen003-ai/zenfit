@@ -25,6 +25,14 @@ export function loadAnime() {
   });
 }
 
+/* anime.js leaves final inline styles behind. A residual transform on a
+   container turns it into the containing block for fixed descendants (the
+   Studio sheet anchors to the viewport, not a 900px-tall screen). Snap the
+   element back to its class-defined look once the entrance finishes. */
+function snapStyle(el) {
+  try { el.style.transform = ''; el.style.opacity = ''; } catch {}
+}
+
 /** Animate a freshly rendered screen + stagger its cards.
  * dir: 'up' (default fade-rise), 'left' / 'right' (swipe flow),
  * 'pop' (tab/dock taps: fade + scale). */
@@ -33,23 +41,26 @@ export function animateScreenEnter(screenEl, dir = 'up') {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce) return;
   const cards = screenEl.querySelectorAll('.card,.card-sm,.card-raised,.quest-card,.task-card,.stat-block');
+  // The Studio sheet is a fixed overlay: entrance transforms on it leave the
+  // sticky head offset and re-bounce on every option change. Skip it.
   scrollTabsIntoView(screenEl);
   if (animeRef) {
     if (dir === 'pop') {
-      animeRef({ targets: screenEl, opacity: [0, 1], scale: [0.96, 1], duration: 420, easing: SPRING });
+      animeRef({ targets: screenEl, opacity: [0, 1], scale: [0.96, 1], duration: 420, easing: SPRING, complete: () => snapStyle(screenEl) });
     } else {
       const from = dir === 'left' ? [60, 0] : dir === 'right' ? [-60, 0] : [0, 0];
       const fromY = dir === 'up' ? [14, 0] : [0, 0];
-      animeRef({ targets: screenEl, opacity: [0, 1], translateX: from, translateY: fromY, duration: 260, easing: 'easeOutCubic' });
+      animeRef({ targets: screenEl, opacity: [0, 1], translateX: from, translateY: fromY, duration: 260, easing: 'easeOutCubic', complete: () => snapStyle(screenEl) });
     }
     if (cards.length) {
       // Above-fold cards enter with the screen; below-fold ones wait
       // for the scroll observer (no double animation, no flash).
-      const visible = [...cards].filter((el) => el.getBoundingClientRect().top <= innerHeight * 0.9);
+      const visible = [...cards].filter((el) => !el.closest('#sc-sheet') && el.getBoundingClientRect().top <= innerHeight * 0.9);
       if (visible.length) {
         animeRef({
           targets: visible, opacity: [0, 1], translateY: [12, 0], scale: [0.97, 1],
           duration: 520, delay: animeRef.stagger(35, { start: 60 }), easing: SPRING,
+          complete: () => visible.forEach(snapStyle),
         });
       }
     }
@@ -75,6 +86,7 @@ export function observeScrollReveals(root) {
             animeRef({
               targets: el, opacity: [0.35, 1], translateY: [26, 0], scale: [0.96, 1],
               duration: 560, easing: SPRING,
+              complete: () => snapStyle(el),
             });
           } else {
             el.classList.add('anim-fadein');
@@ -83,6 +95,7 @@ export function observeScrollReveals(root) {
       }, { root: null, rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
     }
     (root || document).querySelectorAll('.card,.card-sm,.card-raised,.quest-card,.task-card,.stat-block,.plan-card,.bonus-card').forEach((el) => {
+      if (el.closest('#sc-sheet')) return; // fixed overlay — never scroll-revealed
       const r = el.getBoundingClientRect();
       // Only arm below-the-fold elements; above-fold already entered.
       if (r.top > innerHeight * 0.85) revealObserver.observe(el);
@@ -116,7 +129,7 @@ export function springIn(elm) {
   try {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   } catch {}
-  if (animeRef) animeRef({ targets: elm, opacity: [0, 1], scale: [0.92, 1], duration: 480, easing: SPRING });
+  if (animeRef) animeRef({ targets: elm, opacity: [0, 1], scale: [0.92, 1], duration: 480, easing: SPRING, complete: () => snapStyle(elm) });
   else { elm.classList.remove('anim-spring'); elm.getBoundingClientRect(); elm.classList.add('anim-spring'); }
 }
 

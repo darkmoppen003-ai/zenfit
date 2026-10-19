@@ -31,6 +31,8 @@
    Same tabs, badges, active pill and popover logic; layout + hover only. */
 @media (min-width: 1024px) and (pointer: fine) {
   .screen { padding-right: 104px; }
+  /* the studio sheet must clear the dock the same way screen content does */
+  .sc-sheet { right: 104px; }
   .bottom-nav {
     left: auto; right: 14px; top: 50%; bottom: auto; transform: translateY(-50%);
     flex-direction: column; width: 64px; padding: 10px 6px; border-radius: 22px;
