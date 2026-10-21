@@ -43,6 +43,13 @@ export const LeaderboardAPI = {
       return res.ok || res.status === 201 || res.status === 200;
     } catch { return false; }
   },
+  /** Opt out: delete the row outright.
+   *  Soft opt-out (flipping opted_in=false) is NOT possible here: an anon write may
+   *  not transition a row from visible to invisible, because public_select is
+   *  `USING (opted_in = true)` and the resulting row fails it (401 42501). Verified
+   *  across both keys and every Prefer header, with maximally permissive write
+   *  policies. Making SELECT `USING (true)` would work but would expose opted-out
+   *  users' rows to anyone holding the anon key, so deletion is the safer trade. */
   async optOut() {
     try {
       await fetch(`${URL}/rest/v1/${TABLE}?device_id=eq.${encodeURIComponent(S.deviceId || '')}`, {
@@ -111,42 +118,75 @@ function sbHdr() {
   const { key } = sbCfg();
   return { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` };
 }
-/** Owner delete for the admin outbox (requires the Anon-delete policies). */
-export async function sbDel(table, id) {
+
+/* ── Admin capability ──────────────────────────────────────────────────────────
+   Reads stay public (the `Public read` policies). Writes to the four content
+   tables are no longer granted to anon; they go through the SECURITY DEFINER
+   function public.zf_admin_write(), which requires a shared admin token.
+
+   The token is entered once per admin session (see setAdminToken) and held in
+   memory only — never localStorage, so it cannot be read back out of the device
+   and never ships in the bundle. It is NOT derivable from ADMIN_PASS_HASH: that
+   hash is a shipped constant, so anything computed from it would be public too.
+─────────────────────────────────────────────────────────────────────────────── */
+let ADMIN_TOKEN = '';
+
+/** Set the write token for this session. Empty string clears it. */
+export function setAdminToken(t) { ADMIN_TOKEN = typeof t === 'string' ? t.trim() : ''; }
+export function hasAdminToken() { return !!ADMIN_TOKEN; }
+
+/** Every privileged write goes to the built-in project, never the zf_supabase
+ *  override: that field is attacker-settable and would otherwise become a
+ *  token-phishing primitive (point the app at a hostile DB, capture the token). */
+async function zfWrite(table, op, rows = null, match = null) {
   try {
-    if (!/^[a-z_]+$/.test(table) || !id) return false;
-    const { url } = sbCfg();
-    const res = await fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHdr() });
+    if (!ADMIN_TOKEN) return false;
+    const res = await fetch(`${URL}/rest/v1/rpc/zf_admin_write`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${KEY}` },
+      body: JSON.stringify({ p_token: ADMIN_TOKEN, p_table: table, p_op: op, p_rows: rows, p_match: match }),
+    });
     return res.ok;
   } catch { return false; }
 }
-/** Owner edit for broadcasts/missions — PATCH by id, stamps updated_at so clients treat it as fresh unread. */
+
+/** Owner delete for the admin outbox (now token-gated server-side). */
+export async function sbDel(table, id) {
+  if (!/^[a-z_]+$/.test(table) || !id) return false;
+  return zfWrite(table, 'delete', null, { id });
+}
+/** Owner edit for broadcasts/missions — updates by id server-side, which stamps updated_at so clients treat it as fresh unread. */
 export async function sbUpdate(table, id, patch) {
-  try {
-    if (!/^[a-z_]+$/.test(table) || !id || !patch) return false;
-    const { url } = sbCfg();
-    const body = { ...patch, updated_at: new Date().toISOString() };
-    for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
-    if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
-    const res = await fetch(`${url}/rest/v1/${table}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHdr(), body: JSON.stringify(body) });
-    return res.ok;
-  } catch { return false; }
+  if (!/^[a-z_]+$/.test(table) || !id || !patch) return false;
+  const body = { ...patch };
+  for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
+  if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
+  return zfWrite(table, 'update', body, { id });
 }
 
 export const GlobalBoard = {
   async publish(table, row) {
     try {
-      const { url } = sbCfg();
-      const post = (body) => fetch(`${url}/rest/v1/${table}`, { method: 'POST', headers: { ...sbHdr(), Prefer: 'return=minimal' }, body: JSON.stringify(body) });
+      if (!ADMIN_TOKEN) return false;
+      const post = (body) => fetch(`${URL}/rest/v1/rpc/zf_admin_write`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${KEY}` },
+        body: JSON.stringify({ p_token: ADMIN_TOKEN, p_table: table, p_op: 'insert', p_rows: body }),
+      });
       let body = { ...row };
       // ponytail: remote-strict — global publish accepts https:// images only, drop anything else
       for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
       if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
       let res = await post(body);
-      for (const k of ['confetti', 'image', 'images', 'imgMeta', 'bg', 'bgImage', 'hl', 'rules', 'target']) {
-        if (!res.ok && k in body) {
-          delete body[k];
-          res = await post(body);
+      // Legacy fallback: strip optional keys only when the server rejects them as
+      // unknown columns (42703). Auth/allowlist errors must NOT be retried — they
+      // would just repeat the same failure nine times.
+      if (!res.ok) {
+        const text = await res.clone().text().catch(() => '');
+        if (/42703|column .* does not exist/i.test(text)) {
+          for (const k of ['confetti', 'image', 'images', 'imgMeta', 'bg', 'bgImage', 'hl', 'rules', 'target']) {
+            if (!res.ok && k in body) { delete body[k]; res = await post(body); }
+          }
         }
       }
       return res.ok;

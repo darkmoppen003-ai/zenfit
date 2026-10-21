@@ -13,6 +13,7 @@ import { showNotif, awardXP, MSG_BGS, openOverlay, closeOverlay } from '../core/
 import { MISSION_CATS, missionProgress } from '../core/missions.js';
 import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
+import { setAdminToken } from '../core/cloud.js';
 import { renderRichBody, msgBgStyle, bodyImg, cleanImgMeta } from './inbox.js';
 
 let unlocked = false;
@@ -29,7 +30,7 @@ export function renderAdmin(host) {
   <button class="btn btn-sm btn-ghost mt12" id="admin-lock">Lock console</button>`;
 
   host.querySelectorAll('[data-atab]').forEach((b) => { b.onclick = () => { tab = b.dataset.atab; window.ZF.rerender(); }; });
-  host.querySelector('#admin-lock').onclick = () => { unlocked = false; window.ZF.rerender(); };
+  host.querySelector('#admin-lock').onclick = () => { unlocked = false; setAdminToken(''); window.ZF.rerender(); };
   const body = host.querySelector('#admin-body');
   if (tab === 'overview') {
     body.innerHTML = `<div class="grid2">
@@ -60,10 +61,13 @@ function renderLock(host) {
   <div style="font-size:13px;font-weight:600;margin-bottom:4px">Restricted Console</div>
   <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Owner password required.</p>
   <input type="password" id="ad-pass" placeholder="Owner password" maxlength="64" autocomplete="off" style="max-width:240px;margin:0 auto">
+  <input type="password" id="ad-token" placeholder="Admin write token (optional)" maxlength="200" autocomplete="off" style="max-width:240px;margin:8px auto 0">
+  <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Token required to publish, edit or delete global content. Without it the console opens read-only.</div>
   <button class="btn btn-primary mt8" id="ad-unlock">Unlock</button>
   <div id="ad-err" style="font-size:12px;color:var(--danger);margin-top:8px;min-height:16px"></div></div>`;
   const go = async () => {
     const v = host.querySelector('#ad-pass').value || '';
+    const tok = host.querySelector('#ad-token').value || '';
     host.querySelector('#ad-err').textContent = 'Checking…';
     // Gentle rate limit: brief delay + attempt counter
     try {
@@ -73,9 +77,11 @@ function renderLock(host) {
     } catch {}
     if (await verifyAdminPassword(v)) {
       try { sessionStorage.removeItem('zf_admin_try'); } catch {}
+      setAdminToken(tok);
       host.querySelector('#ad-pass').value = '';
+      host.querySelector('#ad-token').value = '';
       unlocked = true;
-      showNotif('Admin console unlocked', 'OK');
+      showNotif(tok ? 'Admin console unlocked (write enabled)' : 'Admin console unlocked (read-only)', 'OK');
       window.ZF.rerender();
     } else {
       host.querySelector('#ad-err').textContent = 'Wrong password.';
