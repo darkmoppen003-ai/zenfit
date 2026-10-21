@@ -937,7 +937,8 @@ function renderContent(body) {
   const cfg = (() => { try { return JSON.parse(localStorage.getItem('zf_supabase') || '{}'); } catch { return {}; } })();
   body.innerHTML = `<div class="card mb12"><div class="section-title">Wallpapers (bundled + uploaded)</div>
     <div style="font-size:12px;color:var(--text-muted)">Add via Themes tab → Wallpaper studio, or drop a URL here:</div>
-    <div class="flex gap8 mt8"><input type="text" id="ad-wpurl" placeholder="https://…/image.jpg" maxlength="500">
+    <div class="flex gap8 mt8"><input type="text" id="ad-wpname" placeholder="Name (e.g. Mountain dusk)" maxlength="40" style="max-width:170px">
+    <input type="text" id="ad-wpurl" placeholder="https://…/image.jpg" maxlength="500">
     <button class="btn btn-sm btn-primary" id="ad-wpadd">Add</button></div>
     <div id="ad-wplist" class="mt8" style="display:flex;flex-direction:column;gap:6px"></div>
     <div style="font-size:12px" class="mt8">${(S.bgImages || []).length} uploaded · presets ship in assets/bg/</div></div>
@@ -987,8 +988,11 @@ function renderContent(body) {
     <div id="ad-sres" style="font-size:12px" class="mt8"></div></div>`;
   body.querySelector('#ad-wpadd').onclick = () => {
     const url = sanitizeText(body.querySelector('#ad-wpurl').value, 500);
+    const name = sanitizeText(body.querySelector('#ad-wpname').value, 40);
     if (!/^https?:\/\//i.test(url)) { showNotif('Paste a full https:// URL', '!'); return; }
-    update((s) => { s.bgImages = [...(s.bgImages || []), { id: uid('wp'), name: 'Remote', src: url }]; });
+    update((s) => { s.bgImages = [...(s.bgImages || []), { id: uid('wp'), name: name || 'Remote', src: url }]; });
+    body.querySelector('#ad-wpurl').value = '';
+    body.querySelector('#ad-wpname').value = '';
     showNotif('Wallpaper added', 'OK');
     paintWpList();
   };
@@ -1041,8 +1045,23 @@ function renderContent(body) {
         const x = ups[Number(b.dataset.wpdeploy)];
         b.disabled = true;
         const { GlobalBoard } = await import('../core/cloud.js');
-        const existing = ((await GlobalBoard.fetchAssets('wallpaper')) || []).some((r) => r.url === x.src);
-        if (existing) { showNotif('Already deployed — see list below', '!'); b.disabled = false; return; }
+        // global_assets is keyed by (kind, name): the write path upserts on it, so a
+        // second wallpaper reusing a name REPLACES the first one's url. Identity is the
+        // name, and the name is the user's label — so warn rather than silently clobber.
+        const rows = (await GlobalBoard.fetchAssets('wallpaper')) || [];
+        const sameName = rows.find((r) => (r.name || '') === x.name);
+        if (sameName && (sameName.url || '') !== x.src) {
+          const go = await new Promise((res) => {
+            openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:4px">“${escapeHtml(x.name)}” is already deployed</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Replacing it will change the image everywhere. Give this one a different name to keep both.</div>
+              <div style="display:flex;gap:8px;justify-content:center">
+              <button class="btn btn-sm btn-danger" id="wp-replace">Replace</button>
+              <button class="btn btn-sm" id="wp-cancel">Cancel</button></div>`);
+            document.getElementById('wp-replace').onclick = () => { document.getElementById('zf-overlay')?.remove(); res(true); };
+            document.getElementById('wp-cancel').onclick = () => { document.getElementById('zf-overlay')?.remove(); res(false); };
+          });
+          if (!go) { b.disabled = false; return; }
+        }
         const ok = await GlobalBoard.publishAsset('wallpaper', x.name, x.src);
         showNotif(ok ? `“${x.name}” live on all devices` : 'Deploy failed', ok ? 'OK' : '!');
         if (ok) announceAsset('wallpaper', x.name);

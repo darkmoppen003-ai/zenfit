@@ -36,6 +36,8 @@ export function renderLeaderboard(host, subTab) {
 
 let globalRows = null;
 let globalLoading = false;
+let globalFetchedAt = 0;
+const GLOBAL_TTL = 30000;
 
 function renderGlobal(body) {
   const optedIn = !!S.globalLeaderboardOptIn;
@@ -52,18 +54,31 @@ function renderGlobal(body) {
         <span style="position:absolute;height:20px;width:20px;left:${optedIn ? '22px' : '3px'};bottom:2px;background:#fff;border-radius:50%;transition:.3s"></span></span>
       </label></div></div>
     <div id="lb-global-list"></div>`;
-  body.querySelector('#lb-opt').onchange = (e) => toggleGlobalOptIn(e.target.checked);
+  body.querySelector('#lb-opt').onchange = (e) => {
+    if (e.target.checked) { globalRows = null; globalFetchedAt = 0; }
+    toggleGlobalOptIn(e.target.checked);
+  };
   const list = body.querySelector('#lb-global-list');
   if (globalLoading) {
     list.innerHTML = '<div class="card" style="text-align:center;padding:40px 16px"><div style="font-size:24px;margin-bottom:10px">⚡</div><div style="font-size:13px">Fetching global rankings…</div></div>';
     return;
   }
-  if (!globalRows) {
-    globalLoading = true;
-    LeaderboardAPI.fetch().then((rows) => { globalRows = rows || []; }).catch(() => { globalRows = []; })
-      .finally(() => { globalLoading = false; window.ZF.rerender(); });
-    list.innerHTML = '<div class="card" style="text-align:center;padding:40px 16px"><div style="font-size:24px;margin-bottom:10px">⚡</div><div style="font-size:13px">Fetching global rankings…</div></div>';
-    return;
+  // Refetch when the cache is stale, so returning to the tab (or re-rendering after
+  // an XP gain / publish) shows current standings instead of a frozen list. The rows
+  // currently on screen stay visible while the refresh runs.
+  const stale = Date.now() - globalFetchedAt > GLOBAL_TTL;
+  if (!globalRows || stale) {
+    if (!globalLoading) {
+      globalLoading = true;
+      LeaderboardAPI.fetch()
+        .then((rows) => { globalRows = rows || []; globalFetchedAt = Date.now(); })
+        .catch(() => { if (!globalRows) { globalRows = []; globalFetchedAt = Date.now(); } })
+        .finally(() => { globalLoading = false; window.ZF.rerender(); });
+    }
+    if (!globalRows) {
+      list.innerHTML = '<div class="card" style="text-align:center;padding:40px 16px"><div style="font-size:24px;margin-bottom:10px">⚡</div><div style="font-size:13px">Fetching global rankings…</div></div>';
+      return;
+    }
   }
   const myName = (S.profile?.name || S.player?.name || '').trim().toLowerCase();
   const myIdx = (() => {

@@ -107,6 +107,13 @@ export function syncGlobalIfOptedIn() {
      20260927000000_global_update.sql (updated_at + anon update — required for edit)
    Config: Admin → Content stores custom URL/key in localStorage zf_supabase, else built-in leaderboard project is used.
 ────────────────────────────────────────────────────────────── */
+/** Shared media-URL allowlist for global content.
+ *  https:// for remote images; data:image/ for uploaded (base64) ones — the read
+ *  paths (customization, inbox, leaderboard) already accept data:image/, so rejecting
+ *  it on write silently produced empty-url rows ("only one wallpaper deploys").
+ *  Everything else (javascript:, arbitrary data:, blob:) is still dropped. */
+const OK_URL = /^(https:\/\/|data:image\/)/i;
+
 function sbCfg() {
   try {
     const c = JSON.parse(localStorage.getItem('zf_supabase') || '{}');
@@ -159,8 +166,8 @@ export async function sbDel(table, id) {
 export async function sbUpdate(table, id, patch) {
   if (!/^[a-z_]+$/.test(table) || !id || !patch) return false;
   const body = { ...patch };
-  for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
-  if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
+  for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !OK_URL.test(body[k])) delete body[k];
+  if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && OK_URL.test(u)); if (!body.images.length) delete body.images; }
   return zfWrite(table, 'update', body, { id });
 }
 
@@ -174,9 +181,9 @@ export const GlobalBoard = {
         body: JSON.stringify({ p_token: ADMIN_TOKEN, p_table: table, p_op: 'insert', p_rows: body }),
       });
       let body = { ...row };
-      // ponytail: remote-strict — global publish accepts https:// images only, drop anything else
-      for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !body[k].startsWith('https://')) delete body[k];
-      if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && u.startsWith('https://')); if (!body.images.length) delete body.images; }
+      // ponytail: remote-strict — https:// and data:image/ only, drop anything else
+      for (const k of ['image', 'url', 'bgImage']) if (typeof body[k] === 'string' && body[k] && !OK_URL.test(body[k])) delete body[k];
+      if (Array.isArray(body.images)) { body.images = body.images.filter((u) => typeof u === 'string' && OK_URL.test(u)); if (!body.images.length) delete body.images; }
       let res = await post(body);
       // Legacy fallback: strip optional keys only when the server rejects them as
       // unknown columns (42703). Auth/allowlist errors must NOT be retried — they

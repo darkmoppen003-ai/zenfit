@@ -390,7 +390,7 @@ export function renderCustomization(host) {
   import('../core/cloud.js').then(({ GlobalBoard }) => GlobalBoard.fetchAssets('wallpaper')).then((rows) => {
     const box = host.querySelector('#wp-coach');
     if (!box) return;
-    const items = (rows || []).filter((r) => /^https?:\/\//i.test(r.url || '')).slice(0, 12);
+    const items = (rows || []).filter((r) => /^(https?:\/\/|data:image\/)/i.test(r.url || '')).slice(0, 12);
     if (!items.length) { box.innerHTML = '<div style="font-size:11px;color:var(--text-muted)">No coach picks yet.</div>'; return; }
     box.innerHTML = items.map((w, i) => `
       <div class="theme-preview" data-coachwp="${i}" style="height:84px;background:var(--bg-overlay) center/cover;position:relative" title="${escapeHtml(w.name || 'Coach pick')}">
