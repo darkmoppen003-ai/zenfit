@@ -55,8 +55,12 @@ function renderGlobal(body) {
       </label></div></div>
     <div id="lb-global-list"></div>`;
   body.querySelector('#lb-opt').onchange = (e) => {
-    if (e.target.checked) { globalRows = null; globalFetchedAt = 0; }
-    toggleGlobalOptIn(e.target.checked);
+    // Invalidate before AND after: opting in/out changes whether *my* row is on the
+    // board, so the cached list is wrong for up to 30s either way. Resetting only on
+    // opt-in left opt-out showing me until a hard refresh. The second reset covers the
+    // fetch that toggleGlobalOptIn() kicks off in the meantime.
+    globalRows = null; globalFetchedAt = 0;
+    toggleGlobalOptIn(e.target.checked).finally(() => { globalRows = null; globalFetchedAt = 0; });
   };
   const list = body.querySelector('#lb-global-list');
   if (globalLoading) {

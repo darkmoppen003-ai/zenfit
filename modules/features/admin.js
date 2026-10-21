@@ -579,14 +579,19 @@ function ruleSummary(m) {
 
 /** Auto-announce shipped assets so users hear about them without opening anything.
     Fire-and-forget: ship toasts stay authoritative, announce failures stay silent. */
-async function announceAsset(kind, name, detail) {
+/** Broadcast a newly deployed asset. `image` lifts a wallpaper's own picture into the
+ *  announcement so the message previews what was shipped — the broadcast renderer
+ *  (inbox.js bodyImg/okImg) already accepts https:// and data:image/ URLs, and
+ *  announceAsset is also called from publish paths where the url is trusted. */
+async function announceAsset(kind, name, detail, image = '') {
   try {
     const { GlobalBoard } = await import('../core/cloud.js');
     const label = kind === 'wallpaper' ? '🖼️ New wallpaper' : kind === 'theme' ? '🎨 New theme' : '🎁 New addition';
+    const img = /^(https:\/\/|data:image\/)/i.test(image || '') ? image : '';
     await GlobalBoard.publish('global_broadcasts', {
       title: `${label}: ${name}`,
       body: detail || `Your coach added **${name}**. Open Customization to try it!`,
-      target: 'all', bg: 'none', hl: 'info', bgImage: '', image: '', images: [], confetti: false,
+      target: 'all', bg: 'none', hl: 'info', bgImage: '', image: img, images: [], confetti: false,
     });
   } catch {}
 }
@@ -1064,7 +1069,7 @@ function renderContent(body) {
         }
         const ok = await GlobalBoard.publishAsset('wallpaper', x.name, x.src);
         showNotif(ok ? `“${x.name}” live on all devices` : 'Deploy failed', ok ? 'OK' : '!');
-        if (ok) announceAsset('wallpaper', x.name);
+        if (ok) announceAsset('wallpaper', x.name, '', x.src);
         b.disabled = false;
         loadDeployedAssets();
       };
