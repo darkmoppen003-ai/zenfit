@@ -19,12 +19,26 @@ export function addWater(ml) {
     s.water.entries = [...(s.water.entries || []), { ml, date: today(), ts: Date.now(), xpAwarded: 5 }];
   });
   celebrateFirst('waterFirstGlass', '💧 First glass logged! Stay hydrated.');
-  awardXP(5, 'Hydrating!');
+  const idx = (S.water.entries || []).length - 1;
+  awardXP(5, 'Hydrating!', {
+    boost: true,
+    // store the credited amount — a refund must deduct exactly this
+    onAward: (amt) => update((s) => {
+      const e = s.water.entries[idx];
+      if (e) e.xpAwarded = amt;
+    }, { silent: true }),
+  });
   updStat('health', 1);
   // ponytail: goal bonus once per day — tracked so delete/re-add can't re-farm it
   if (todayWater() >= (S.water.dailyGoalMl || 3000) && prev < (S.water.dailyGoalMl || 3000) && S.water.goalBonusDate !== today()) {
     update((s) => { s.water.goalBonusDate = today(); }, { silent: true });
-    awardXP(50, 'Water goal!');
+    awardXP(50, 'Water goal!', {
+      boost: true,
+      // per-date credit — the goal bonus recurs daily, one scalar is not enough
+      onAward: (amt) => update((s) => {
+        s.water.goalBonusXp = { ...(s.water.goalBonusXp || {}), [today()]: amt };
+      }, { silent: true }),
+    });
   }
   checkAutoQuests();
   checkAchievements();
@@ -90,7 +104,10 @@ export function renderWater(host) {
       update((s) => {
         if ((s.water.goalBonusDate === today()) && todayWater() < (s.water.dailyGoalMl || 3000)) {
           s.water.goalBonusDate = null;
-          deductXP(50, 'Water goal lost');
+          // refund exactly what was credited for this date; legacy saves (pre-boost) = flat 50
+          const amt = s.water.goalBonusXp?.[today()] ?? 50;
+          if (s.water.goalBonusXp) delete s.water.goalBonusXp[today()];
+          deductXP(amt, 'Water goal lost');
         }
       });
     };

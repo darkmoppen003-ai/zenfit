@@ -1,0 +1,416 @@
+/* ── ZenFit V2 · Hunter's Code ──────────────────────────────
+   First-entry rules screen: bundled artwork + damaged system
+   chrome + smoked-glass rules panel. One blocking startup
+   interface, mounted by modules/features/hunters-code.js.
+
+   Token-only (the black/white literals are the monochrome-neutral
+   exception of rules §1.1). No animation without a reduced-motion
+   escape (rules §7.3).
+─────────────────────────────────────────────────────────────── */
+
+.hc-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-hunters);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* ── Background layers (artwork → scrim → grain → scan) ───── */
+.hc-layer { position: absolute; inset: 0; pointer-events: none; }
+
+.hc-art { z-index: 0; }
+.hc-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the focal subject is placed from the artwork's own pixels at
+     runtime (modules/features/hunters-code.js) — this is only the
+     pre-paint fallback */
+  object-position: 50% 0%;
+  filter: saturate(.94) contrast(1.06) brightness(.88);
+}
+
+/* the scrim clears around wherever the subject actually landed */
+/* The scrim is masked, not stacked: the mask opens a soft window on
+   the subject wherever the artwork placed it, so the face always
+   reads through the damaged-system treatment. The window follows the
+   subject (--hc-sx/--hc-sy/--hc-mw/--hc-mh are computed from the
+   artwork's own pixels). */
+.hc-scrim {
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(0,0,0,.06) 0%, rgba(0,0,0,.14) 32%, rgba(0,0,0,.38) 64%, rgba(0,0,0,.68) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.24) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,.32) 76%, rgba(0,0,0,.70) 100%),
+    rgba(0,0,0,.26);
+  -webkit-mask-image: radial-gradient(var(--hc-mw, 320px) var(--hc-mh, 260px) at var(--hc-sx, 62%) var(--hc-sy, 24%), rgba(0,0,0,.30) 0%, rgba(0,0,0,.32) 62%, rgba(0,0,0,.86) 88%, #000 100%);
+  mask-image: radial-gradient(var(--hc-mw, 320px) var(--hc-mh, 260px) at var(--hc-sx, 62%) var(--hc-sy, 24%), rgba(0,0,0,.30) 0%, rgba(0,0,0,.32) 62%, rgba(0,0,0,.86) 88%, #000 100%);
+}
+.hc-scrim-deep {
+  background:
+    radial-gradient(120% 95% at 50% 30%, rgba(0,0,0,.2) 0%, rgba(0,0,0,.72) 60%, rgba(0,0,0,.94) 100%),
+    linear-gradient(180deg, rgba(0,0,0,.78) 0%, rgba(0,0,0,.86) 100%);
+}
+
+.hc-grain {
+  z-index: 2;
+  opacity: .08;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23g)' opacity='.65'/%3E%3C/svg%3E");
+}
+
+.hc-scan {
+  z-index: 3;
+  opacity: .5;
+  background: repeating-linear-gradient(180deg, rgba(255,255,255,.032) 0 1px, rgba(0,0,0,0) 1px 3px);
+}
+
+/* slow system sweep — the only looping motion on the screen */
+.hc-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 24%;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(var(--primary-rgb),.07) 62%, rgba(var(--primary-rgb),.13) 96%, rgba(0,0,0,0) 100%);
+  animation: hc-beam 11s linear infinite;
+}
+@keyframes hc-beam {
+  0% { transform: translateY(-30%); }
+  100% { transform: translateY(430%); }
+}
+
+/* ── HUD chrome: broken brackets + diagnostic hairlines ───── */
+.hc-hud { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.hc-corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(var(--primary-rgb),.5);
+}
+.hc-tl { top: 16px; left: 16px; border-right: 0; border-bottom: 0; }
+.hc-tr { top: 16px; right: 16px; border-left: 0; border-bottom: 0; }
+.hc-bl { bottom: 16px; left: 16px; border-right: 0; border-top: 0; }
+.hc-br { bottom: 16px; right: 16px; border-left: 0; border-top: 0; }
+.hc-hair {
+  position: absolute;
+  top: 50%;
+  height: 1px;
+  width: 7vw;
+  background: linear-gradient(90deg, rgba(0,0,0,0), rgba(var(--primary-rgb),.32), rgba(0,0,0,0));
+}
+.hc-hair-l { left: 0; }
+.hc-hair-r { right: 0; }
+
+/* ── Content column ───────────────────────────────────────── */
+.hc-frame {
+  position: relative;
+  z-index: 5;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* the frame never scrolls — only the rule list inside it does */
+  overflow: hidden;
+  width: 100%;
+  /* the panel sits on the right; the artwork keeps the left half.
+     Narrow the column on small viewports so the art still has room. */
+  max-width: min(660px, 58vw);
+  margin-left: auto;
+  margin-right: 0;
+  padding: clamp(20px, 3vh, 40px) clamp(18px, 4vw, 52px) 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hc-frame-center { justify-content: center; }
+
+/* ── Hero ─────────────────────────────────────────────────── */
+.hc-hero { flex: 0 0 auto; }
+.hc-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .2em;
+  /* white, not --primary: this label can land on the lit part of the
+     artwork and the purple can only reach 4.9:1 on pure black */
+  color: var(--text-primary);
+  /* the label can land on the artwork — a dark halo keeps it readable */
+  text-shadow: 0 1px 2px rgba(0,0,0,.92), 0 0 10px rgba(0,0,0,.75);
+}
+.hc-kicker::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 26px;
+  height: 1px;
+  background: var(--primary);
+}
+
+.hc-title {
+  position: relative;
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(28px, 5.4vw, 44px);
+  line-height: .98;
+  letter-spacing: -.01em;
+  text-wrap: balance;
+  color: var(--text-primary);
+  text-shadow: 0 0 28px rgba(var(--primary-rgb),.32), 0 2px 0 rgba(0,0,0,.55);
+}
+.hc-title-sm { font-size: clamp(30px, 6vw, 52px); }
+/* split/fractured copies — a slight permanent offset, glitched on boot */
+.hc-title::before,
+.hc-title::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  pointer-events: none;
+  opacity: .16;
+}
+.hc-title::before { color: var(--info); clip-path: inset(0 0 62% 0); }
+.hc-title::after { color: var(--danger); clip-path: inset(58% 0 0 0); }
+.hc-booting .hc-title::before { animation: hc-glitch 170ms steps(2) 7; }
+.hc-booting .hc-title::after { animation: hc-glitch 170ms steps(2) 7 40ms; }
+@keyframes hc-glitch {
+  0%, 100% { transform: translate(0, 0); opacity: .16; }
+  25% { transform: translate(-3px, 1px); opacity: .8; }
+  50% { transform: translate(2px, -1px); opacity: .6; }
+  75% { transform: translate(-1px, 2px); opacity: .8; }
+}
+
+.hc-intro {
+  margin-top: 10px;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.hc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: .12em;
+  color: var(--text-muted);
+}
+.hc-meta b { color: var(--text-secondary); font-weight: 700; }
+.hc-warn { color: var(--warning); }
+
+/* ── Rules panel (transparent glass — the artwork reads through) ── */
+.hc-rules {
+  list-style: none;
+  margin: 0;
+  padding: 12px 18px 2px;
+  /* the list is the only scrollable part of the screen */
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: linear-gradient(180deg, rgba(8,10,16,.34), rgba(8,10,16,.16));
+  border: 1px solid rgba(var(--primary-rgb),.22);
+  backdrop-filter: blur(5px) saturate(125%);
+  -webkit-backdrop-filter: blur(5px) saturate(125%);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+}
+.hc-rule {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.hc-rule:last-child { border-bottom: 0; }
+.hc-num {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  line-height: 1.25;
+  color: var(--primary);
+  opacity: .85;
+}
+.hc-rule-code {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--text-primary);
+}
+.hc-rule-head {
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.hc-rule-text {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.hc-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Actions ──────────────────────────────────────────────── */
+.hc-actions {
+  position: relative;
+  z-index: 7;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px clamp(18px, 4vw, 52px) calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid rgba(255,255,255,.06);
+  background: linear-gradient(180deg, rgba(8,10,16,0), rgba(8,10,16,.7));
+}
+.hc-btn {
+  min-height: 46px;
+  padding: 0 22px;
+  border-radius: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .14em;
+}
+.hc-btn-go {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+.hc-btn-go:hover { background: var(--primary-dark); }
+.hc-btn-stop {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.18);
+  color: var(--text-secondary);
+}
+.hc-btn-stop:hover { background: rgba(255,255,255,.05); color: var(--text-primary); }
+.hc-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+/* ── Locked exit state ────────────────────────────────────── */
+.hc-exit {
+  max-width: 460px;
+  padding: 16px 20px;
+  border: 1px solid rgba(var(--primary-rgb),.24);
+  background: rgba(8,10,16,.68);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 22px 100%, 0 calc(100% - 22px));
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.hc-exit p + p { margin-top: 8px; color: var(--text-muted); }
+
+/* ── Motion (restrained) ──────────────────────────────────── */
+@keyframes hc-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hc-booting .hc-hero { animation: hc-in .5s ease both; }
+.hc-booting .hc-rule { animation: hc-in .45s ease both; }
+.hc-booting .hc-rule:nth-child(1) { animation-delay: .06s; }
+.hc-booting .hc-rule:nth-child(2) { animation-delay: .13s; }
+.hc-booting .hc-rule:nth-child(3) { animation-delay: .2s; }
+.hc-booting .hc-rule:nth-child(4) { animation-delay: .27s; }
+.hc-booting .hc-rule:nth-child(5) { animation-delay: .34s; }
+.hc-leaving { opacity: 0; transition: opacity .22s ease; }
+
+/* the app behind must not scroll while the rules are up — the root
+   element is the scroller here (the app sets body{overflow-x:hidden},
+   so locking the body alone would not stop it) */
+body.hc-locked, html.hc-locked { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-beam { display: none; }
+  .hc-booting .hc-hero,
+  .hc-booting .hc-rule { animation: none !important; opacity: 1 !important; }
+  .hc-booting .hc-title::before,
+  .hc-booting .hc-title::after { animation: none !important; opacity: .16 !important; }
+}
+
+/* ── Narrow screens (390 × 844 and friends) ───────────────── */
+@media (max-width: 899px) {
+  /* the art band: the artwork gets a real, unobstructed strip on top */
+  .hc-root { --hc-band: clamp(210px, 34vh, 360px); }
+  .hc-scrim {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.26) 0%, rgba(0,0,0,.06) 18%, rgba(0,0,0,.44) 32%, rgba(0,0,0,.72) 44%, rgba(0,0,0,.86) 58%, rgba(0,0,0,.92) 100%);
+  }
+  .hc-frame {
+    max-width: none;
+    /* art band on top — the subject stays visible instead of sitting
+       behind the title on a narrow screen */
+    padding: var(--hc-band) 16px 8px;
+    gap: 14px;
+  }
+  .hc-kicker { font-size: 9px; letter-spacing: .16em; }
+  /* the diagnostic strip would push the panel past the centre line */
+  .hc-meta { display: none; }
+  .hc-title { margin-top: 8px; }
+  .hc-intro { margin-top: 8px; }
+  .hc-rules {
+    padding: 12px 14px 2px;
+    /* the panel starts at the vertical centre of the screen */
+    margin-top: max(0px, calc(50vh - var(--hc-band) - var(--hc-hero-h, 0px) - 14px));
+  }
+  .hc-rule { grid-template-columns: 26px 1fr; gap: 9px; padding: 10px 0; }
+  .hc-rule-text { font-size: 12px; }
+  .hc-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+  .hc-btn { width: 100%; }
+  .hc-corner { width: 18px; height: 18px; }
+  .hc-tl, .hc-tr { top: 10px; }
+  .hc-bl, .hc-br { bottom: 10px; }
+  .hc-tl, .hc-bl { left: 10px; }
+  .hc-tr, .hc-br { right: 10px; }
+  .hc-hair { display: none; }
+}
+
+/* ── Landscape / short viewports (a rotated phone) ──────────── */
+@media (max-height: 560px) and (min-width: 600px) {
+  /* no art band — there is no room for one; the column goes back to
+     the right and the artwork takes the left */
+  .hc-frame {
+    max-width: min(660px, 46vw);
+    padding: 14px clamp(14px, 3vw, 34px) 6px;
+    gap: 10px;
+  }
+  .hc-rules { margin-top: 0; }
+  .hc-title { font-size: clamp(22px, 4.4vw, 34px); }
+  .hc-intro { font-size: 12px; }
+  .hc-rule-text { font-size: 11.5px; }
+  .hc-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 8px clamp(14px, 3vw, 34px) calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .hc-btn { width: auto; min-height: 40px; padding: 0 16px; }
+}

@@ -10,6 +10,7 @@ import { isRestDay } from '../core/selectors.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, sfx, openOverlay, systemActivate } from '../core/ui.js';
 import { todayWater, todayBurned } from '../core/selectors.js';
+import { splitBoostXp } from '../core/streak-boost.js';
 import { checkAchievements } from '../core/achievements.js';
 
 const BONUS_POOL = [
@@ -179,7 +180,15 @@ export function logMealPlan(i) {
     });
   });
   const n = (mp.items || []).length;
-  awardXP(30 * n, 'Meal logged!');
+  awardXP(30 * n, 'Meal logged!', {
+    boost: true,
+    // distribute the one credited total across the entries — refunds must sum to the credit
+    onAward: (amt) => update((s) => {
+      const list = s.nutrition.entries || [];
+      const start = Math.max(0, list.length - n);
+      splitBoostXp(amt, n).forEach((sh, i) => { if (list[start + i]) list[start + i].xpAwarded = sh; });
+    }, { silent: true }),
+  });
   checkAutoQuests();
   checkAchievements();
 }

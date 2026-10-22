@@ -13,6 +13,7 @@ import { initSplashFullscreen } from './core/fullscreen.js';
 import { applyTheme } from './features/customization.js';
 import { maybeOnboard } from './features/guide.js';
 import { maybeChangelog } from './features/changelog.js';
+import { maybeHuntersCode } from './features/hunters-code.js';
 import { checkAchievements } from './core/achievements.js';
 
 /* Global bridge for templates + legacy inline handlers */
@@ -136,8 +137,23 @@ function hideSplash() {
   if (window.anime && splash) {
     window.anime({ targets: splash, opacity: [1, 0], duration: 300, easing: 'easeOutCubic', complete: () => splash.remove() });
   } else splash?.remove();
-  maybeOnboard();
-  setTimeout(() => { try { maybeChangelog(); } catch {} }, 600);
+  startStartup();
+}
+
+/* ── Startup priority — ONE blocking interface at a time ────
+   1. Hunter's Code — mandatory rules, until accepted or rejected
+   2. Update acknowledgement — only when one is due
+   3. Guided tour — only when the existing onboarding logic says so
+   The dashboard renders behind the splash, but the rules screen
+   covers it until step 1 resolves, so nothing is ever interactable
+   underneath it. */
+async function startStartup() {
+  try {
+    const accepted = await maybeHuntersCode();
+    if (!accepted) return;          // declined → locked exit screen, no app
+    await maybeChangelog();         // resolves once acknowledged (or not due)
+    maybeOnboard();                 // existing tour logic — starts last
+  } catch (e) { console.warn('[ZenFit] startup sequence failed:', e); }
 }
 
 document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', boot) : boot();

@@ -12,7 +12,7 @@ import { icon } from '../core/icons.js';
 import {
   today, todayNutrition, todayWater, todayBurned, todayStudyMinutes,
   latestWeight, stepsToday, tasksDueToday, tasksDoneToday,
-  isRestDay, weekRestCount, moodDate,
+  isRestDay, weekRestCount, moodDate, boostStatus,
 } from '../core/selectors.js';
 import { ensureDailyQuests, completeQuest, checkAutoQuests } from './quests.js';
 import { animateNumbers } from '../core/animations.js';
@@ -86,6 +86,7 @@ export function renderDashboard(host) {
   const wToday = (S.weightLog || []).filter((w) => w.date === t).pop();
   const rest = isRestDay(t);
   const moodLogged = (S.mood.entries || []).some((e) => moodDate(e) === t);
+  const boost = boostStatus();
 
   host.innerHTML = `
   <!-- HERO -->
@@ -113,6 +114,7 @@ export function renderDashboard(host) {
       ${ring(64, p.level, Math.min(1, p.xp / xpNeed), 'var(--primary)')}
       <div style="font-size:13px;font-weight:700" class="mt8">Level ${p.level}</div>
       <div style="font-size:11px;color:var(--text-muted)">${p.xp} / ${xpNeed} XP</div>
+      <div style="font-size:10px;color:${boost.on ? 'var(--primary)' : 'var(--text-muted)'};margin-top:2px">${boost.on ? `<span class="lbl-ic">${icon('zap')}</span>×${boost.mult.toFixed(2)} · ${boost.days}d` : 'Boost off'}</div>
     </div>
     <div class="card-sm">
       <div style="font-size:12px;font-weight:600"><span class="lbl-ic">${icon('zap')}</span>Today's Progress</div>

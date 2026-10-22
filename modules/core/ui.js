@@ -6,6 +6,8 @@ import { escapeHtml } from './sanitize.js';
 import { S, addXP, resolveBgSrc, update } from './store.js';
 import { PRESET_WALLPAPERS } from './themes.js';
 import { rankForLevel, xpForLevel } from './utils.js';
+import { currentBoostMultiplier } from './selectors.js';
+import { boostedAmount } from './streak-boost.js';
 
 export function el(id) { return document.getElementById(id); }
 
@@ -72,17 +74,27 @@ export function celebrateFirst(key, msg) {
   update((s) => { s.featureFlags = { ...(s.featureFlags || {}), [key]: true }; });
   showNotif(msg, '★');
 }
-export function awardXP(amount, reason = '') {
+/**
+ * Grant XP. `opts.boost` applies the account streak multiplier once,
+ * here — the single XP choke point (one rounding, one place).
+ * `opts.onAward(finalAmount, mult)` runs BEFORE the XP lands so the
+ * caller can persist the exact credited amount on its record (refunds
+ * must deduct what was credited, not the base value).
+ */
+export function awardXP(amount, reason = '', opts = {}) {
   if (!amount || amount <= 0) return { leveled: false };
-  const r = addXP(amount, reason || 'Bonus');
-  showNotif(`+${amount} XP — ${reason}`, 'XP');
+  const mult = opts.boost ? currentBoostMultiplier() : 1;
+  const final = boostedAmount(amount, mult);
+  try { opts.onAward?.(final, mult); } catch {}
+  const r = addXP(final, reason || 'Bonus');
+  showNotif(`+${final} XP — ${reason}${mult > 1 ? ` ×${mult.toFixed(2)}` : ''}`, 'XP');
   if (r.leveled) showLevelUp(r.to);
   // V1 parity: challenge progress + throttled global sync on every gain
   try {
     import('./peer.js').then((m) => m.trackChallengeProgress()).catch(() => {});
     import('./cloud.js').then((m) => m.syncGlobalIfOptedIn()).catch(() => {});
   } catch {}
-  return r;
+  return { ...r, amount: final, mult };
 }
 
 /* Modal overlay. Returns close fn. */

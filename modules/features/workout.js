@@ -294,7 +294,14 @@ export function logWorkout(override = null) {
   celebrateFirst('workoutFirstLog', '💪 First workout logged! Let the gains begin.');
   updStat('strength', 5);
   updStat('endurance', 2);
-  awardXP(xpW, 'Exercise logged');
+  awardXP(xpW, 'Exercise logged', {
+    boost: true,
+    // store the credited amount — the delete refund deducts exactly this
+    onAward: (amt) => update((s) => {
+      const rec = (s.workouts || []).find((x) => x.ts === wTs);
+      if (rec) rec.xpAwarded = amt;
+    }, { silent: true }),
+  });
   checkAutoQuests();
   checkAchievements();
   return { name, caloriesBurned };
@@ -446,7 +453,8 @@ export function logPlan(i) {
     });
   });
   updStat('strength', (plan.exercises || []).length);
-  awardXP(Math.min(40, 10 + Math.floor(totalCal / 100)), 'Plan complete!');
+  // plan bonus has no per-record refund path (existing behaviour) — boost only
+  awardXP(Math.min(40, 10 + Math.floor(totalCal / 100)), 'Plan complete!', { boost: true });
   checkAutoQuests();
   checkAchievements();
   showNotif(`${plan.name}: ${totalCal} kcal`, '🔥');
@@ -591,17 +599,25 @@ function renderBurn(body) {
   body.querySelector('#log-act-btn').onclick = () => {
     if (!pendingActivity?.calories) return;
     const xpA = Math.max(10, Math.round(pendingActivity.calories / 5));
+    const bTs = Date.now();
     update((s) => {
       s.burned = [...(s.burned || []), {
         activity: pendingActivity.text || pendingActivity.actName, duration: pendingActivity.duration,
         met: pendingActivity.met, weightKg: pendingActivity.weightKg, calories: pendingActivity.calories,
-        date: t, ts: Date.now(), source: 'activity',
+        date: t, ts: bTs, source: 'activity',
         inclineDeg: pendingActivity.inclineDeg, speedKmh: pendingActivity.speedKmh, xpAwarded: xpA,
       }];
     });
     pendingActivity = null;
     updStat('endurance', 3);
-    awardXP(xpA, 'Activity burned!');
+    awardXP(xpA, 'Activity burned!', {
+      boost: true,
+      // store the credited amount — the delete refund deducts exactly this
+      onAward: (amt) => update((s) => {
+        const rec = (s.burned || []).find((x) => x.ts === bTs);
+        if (rec) rec.xpAwarded = amt;
+      }, { silent: true }),
+    });
     checkAutoQuests();
     checkAchievements();
   };

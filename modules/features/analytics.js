@@ -11,8 +11,9 @@ import {
   getTodayStr,
 } from '../core/utils.js';
 import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
-import { showNotif, openOverlay, openWeightHistory } from '../core/ui.js';
-import { todayWater, todayNutrition, isRestDay, today, moodDate } from '../core/selectors.js';
+import { showNotif, openOverlay, openWeightHistory, ICONS } from '../core/ui.js';
+import { todayWater, todayNutrition, isRestDay, today, moodDate, boostStatus } from '../core/selectors.js';
+import { BOOST_ACTS, activityDoneOn, BOOST_TIERS } from '../core/streak-boost.js';
 import { checkAchievements, achievementsGridHTML } from '../core/achievements.js';
 import { animateNumbers } from '../core/animations.js';
 import { MOODS } from './zen.js';
@@ -1023,44 +1024,124 @@ function renderAnInsights(body) {
 
 /* ── GAMIFICATION ── */
 /* ── Progress streak: consecutive days where every SELECTED activity is done ── */
-const STREAK_ACTS = [
-  { id: 'habits', label: 'Habits', icon: '✅', color: '#4cdb8a' },
-  { id: 'tasks', label: 'Tasks', icon: '📋', color: '#4a9eff' },
-  { id: 'water', label: 'Water goal', icon: '💧', color: '#00b6ff' },
-  { id: 'workout', label: 'Workout', icon: '🏋️', color: '#f5a623' },
-  { id: 'mind', label: 'Meditate', icon: '🧘', color: '#c084fc' },
-  { id: 'study', label: 'Study', icon: '📚', color: '#4a9eff' },
-  { id: 'nutrition', label: 'Nutrition goal', icon: '🍽️', color: '#ff7a1a' },
-];
+/* The 7 tracked activities live in core/streak-boost.js — the Activity
+   Streaks card and the Streak Boost card read ONE definition. */
 function streakScope() {
   const s = S.streakScope;
-  return Array.isArray(s) && s.length ? s : STREAK_ACTS.map((a) => a.id);
-}
-function streakDayDone(act, ds) {
-  if (act === 'habits') return (S.habits || []).some((h) => hDates(h).includes(ds));
-  if (act === 'tasks') return (S.tasks || []).some((t) => t.completedDate === ds);
-  if (act === 'water') return (S.water.entries || []).filter((e) => e.date === ds).reduce((a, e) => a + (e.ml || 0), 0) >= (S.water.dailyGoalMl || 3000);
-  if (act === 'workout') return (S.workouts || []).some((w) => w.date === ds);
-  if (act === 'mind') return (S.zen?.sessions || []).some((z) => z.date === ds) || (S.mood?.entries || []).some((e) => e.date === ds);
-  if (act === 'study') return (S.study?.sessions || []).some((s) => s.date === ds);
-  if (act === 'nutrition') return (S.nutrition?.entries || []).some((e) => e.date === ds);
-  return false;
+  return Array.isArray(s) && s.length ? s : BOOST_ACTS.map((a) => a.id);
 }
 function calcActStreak(act) {
   let n = 0;
   const d = new Date(); d.setHours(0, 0, 0, 0);
-  if (!streakDayDone(act, localDs(d))) d.setDate(d.getDate() - 1);
-  while (streakDayDone(act, localDs(d))) { n++; d.setDate(d.getDate() - 1); if (n > 3650) break; }
+  if (!activityDoneOn(S, act, localDs(d))) d.setDate(d.getDate() - 1);
+  while (activityDoneOn(S, act, localDs(d))) { n++; d.setDate(d.getDate() - 1); if (n > 3650) break; }
   return n;
 }
 function calcProgressStreak(scope) {
   let n = 0;
   const d = new Date(); d.setHours(0, 0, 0, 0);
-  const ok = (dd) => scope.every((a) => streakDayDone(a, localDs(dd)));
+  const ok = (dd) => scope.every((a) => activityDoneOn(S, a, localDs(dd)));
   if (!ok(d)) d.setDate(d.getDate() - 1);
   while (ok(d)) { n++; d.setDate(d.getDate() - 1); if (n > 3650) break; }
   return n;
 }
+
+/* ── Streak boost: account-wide XP multiplier ──
+   The picker is staged: chips edit a draft, Apply commits it. A scope
+   change restarts the streak (boostSince = the date it was applied). */
+let boostDraft = null;
+
+function boostCardHTML() {
+  const b = boostStatus();
+  const open = boostDraft !== null;
+  const draft = open ? boostDraft : b.scope;
+  return `
+  <div class="section-title">Streak Boost</div>
+  <div class="card mb12" style="padding:16px">
+    <div class="flex-between" style="align-items:center">
+      <div style="font-size:36px;font-weight:800;font-family:var(--font-display);color:var(--primary);line-height:1;display:flex;align-items:center;gap:8px">
+        <span style="width:30px;height:30px;color:var(--primary)">${ICONS.zap}</span>
+        <span data-count="${b.days}">0</span>
+      </div>
+      <button class="btn btn-icon" id="boost-gear" title="Choose boost activities" aria-label="Choose which activities keep the boost streak alive" aria-expanded="${open}" style="width:40px;height:40px"><span style="width:16px;height:16px;display:inline-flex">${ICONS.gear}</span></button>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${b.on ? `${b.days} day${b.days === 1 ? '' : 's'} — activity XP ×${b.mult.toFixed(2)}` : 'Boost off — pick the activities that keep it alive'}</div>
+    <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-top:12px;margin-bottom:6px">Tier map</div>
+    <div class="grid2" style="gap:8px">
+      ${BOOST_TIERS.map((t) => {
+        const active = b.on && b.mult === t.mult;
+        const range = t.max === Infinity ? `${t.min}+ days` : `${t.min}–${t.max} days`;
+        return `<div class="card-sm" style="padding:10px 12px;text-align:center;${active ? 'border-color:var(--success);background:var(--success-bg)' : ''}">
+          <div style="font-size:10px;color:${active ? 'var(--success)' : 'var(--text-muted)'}">${range}</div>
+          <div style="font-size:18px;font-weight:800;font-family:var(--font-display);color:${active ? 'var(--success)' : 'var(--text-primary)'};margin-top:2px">×${t.mult.toFixed(2)}</div>
+          ${active ? '<div style="font-size:9px;color:var(--success);margin-top:2px">ACTIVE</div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div id="boost-panel" style="display:${open ? 'block' : 'none'};margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+        ${BOOST_ACTS.map((a) => `<button class="btn btn-sm${draft.includes(a.id) ? ' btn-primary' : ''}" data-boost-cat="${a.id}" aria-pressed="${draft.includes(a.id)}">${a.icon} ${a.label}</button>`).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center">Any selected activity keeps the streak alive · rest days pause it</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-sm btn-primary" id="boost-apply" style="flex:1">Apply</button>
+        <button class="btn btn-sm btn-ghost" id="boost-cancel">Cancel</button>
+        <button class="btn btn-sm btn-ghost" id="boost-off">Turn off</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function applyBoostScope(next) {
+  update((s) => {
+    const prev = Array.isArray(s.boostScope) ? s.boostScope : [];
+    const same = prev.length === next.length && next.every((id) => prev.includes(id));
+    s.boostScope = next;
+    // a scope change restarts the streak — days before it never count
+    s.boostSince = next.length ? (same ? (typeof s.boostSince === 'string' && s.boostSince ? s.boostSince : today()) : today()) : '';
+  });
+  window.ZF.save();
+  window.ZF.rerender();
+}
+
+function wireBoostCard(body) {
+  const gear = body.querySelector('#boost-gear');
+  const panel = body.querySelector('#boost-panel');
+  if (gear && panel) {
+    gear.onclick = () => {
+      const open = panel.style.display !== 'none';
+      panel.style.display = open ? 'none' : 'block';
+      gear.setAttribute('aria-expanded', String(!open));
+      boostDraft = open ? null : boostStatus().scope.slice();
+    };
+  }
+  body.querySelectorAll('[data-boost-cat]').forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.boostCat;
+      const cur = (boostDraft || boostStatus().scope).slice();
+      boostDraft = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+      body.querySelectorAll('[data-boost-cat]').forEach((x) => {
+        const on = boostDraft.includes(x.dataset.boostCat);
+        x.classList.toggle('btn-primary', on);
+        x.setAttribute('aria-pressed', String(on));
+      });
+    };
+  });
+  body.querySelector('#boost-apply')?.addEventListener('click', () => {
+    const next = (boostDraft || []).slice();
+    boostDraft = null;
+    applyBoostScope(next);
+  });
+  body.querySelector('#boost-cancel')?.addEventListener('click', () => {
+    boostDraft = null;
+    window.ZF.rerender();
+  });
+  body.querySelector('#boost-off')?.addEventListener('click', () => {
+    boostDraft = null;
+    applyBoostScope([]);
+  });
+}
+
 function renderAnGamification(body) {
   const scope = streakScope();
   const prog = calcProgressStreak(scope);
@@ -1075,11 +1156,11 @@ function renderAnGamification(body) {
     <div style="font-size:11px;color:var(--warning);margin-top:6px">😴 Skip a day (4 or fewer quests, no rest day): −100 XP</div>
     <div id="scope-panel" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-mid)">
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
-        ${STREAK_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}" aria-pressed="${scope.includes(a.id)}">${a.icon} ${a.label}</button>`).join('')}
+        ${BOOST_ACTS.map((a) => `<button class="btn btn-sm${scope.includes(a.id) ? ' btn-primary' : ''}" data-scope="${a.id}" aria-pressed="${scope.includes(a.id)}">${a.icon} ${a.label}</button>`).join('')}
       </div>
       <div style="font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center">Tap to choose which streaks count</div>
     </div>
-    <div style="margin-top:12px">${STREAK_ACTS.filter((a) => scope.includes(a.id)).map((a) => {
+    <div style="margin-top:12px">${BOOST_ACTS.filter((a) => scope.includes(a.id)).map((a) => {
       const n = calcActStreak(a.id);
       return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-mid)">
         <div style="width:36px;height:36px;border-radius:8px;background:${a.color}22;border:1px solid ${a.color}55;display:flex;align-items:center;justify-content:center;font-size:16px">${a.icon}</div>
@@ -1087,6 +1168,7 @@ function renderAnGamification(body) {
         <div style="text-align:right"><div style="font-size:18px;font-weight:700;font-family:var(--font-display);color:${a.color}" data-count="${n}">0</div><div style="font-size:9px;color:var(--text-muted)">days</div></div></div>`;
     }).join('')}</div>
   </div>
+  ${boostCardHTML()}
   <div class="section-title">Activity Heatmap — Last 91 Days</div>
   <div class="card mb12">
     <div style="font-size:9px;color:var(--text-muted);margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -1113,7 +1195,7 @@ function renderAnGamification(body) {
     b.onclick = () => {
       const id = b.dataset.scope;
       update((s) => {
-        const cur = Array.isArray(s.streakScope) && s.streakScope.length ? [...s.streakScope] : STREAK_ACTS.map((a) => a.id);
+        const cur = Array.isArray(s.streakScope) && s.streakScope.length ? [...s.streakScope] : BOOST_ACTS.map((a) => a.id);
         s.streakScope = cur.includes(id) && cur.length > 1 ? cur.filter((x) => x !== id) : [...new Set([...cur, id])];
       });
       window.ZF.save();
@@ -1121,6 +1203,7 @@ function renderAnGamification(body) {
     };
   });
   const gridHost = body.querySelector('#an-ach-grid');
+  wireBoostCard(body);
   const tmp = document.createElement('div');
   tmp.innerHTML = achievementsGridHTML();
   tmp.querySelectorAll('.section-title').forEach((el) => {

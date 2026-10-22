@@ -17,10 +17,10 @@ export const STORAGE_KEYS = {
   CHAT_HISTORY: 'zenfit_chat_history_',
   THEMES: 'zenfit_themes_v1',
 };
-export const DATA_VERSION = 22;
-export const APP_VERSION = "8.9.6.1";
+export const DATA_VERSION = 24;
+export const APP_VERSION = "8.9.7";
 
-export const APP_BUILD = "2026.10.19.67";
+export const APP_BUILD = "2026.10.22.68";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
    load/import — identical to V1 behavior. */
 const SCHEMA = {
@@ -52,6 +52,8 @@ const SCHEMA = {
   inbox: 'array', events: 'array', adminRewards: 'array', claimedRewards: 'array', inboxUnread: 'number', inboxRead: 'array', hiddenGlobals: 'array',
   customThemes: 'array', customDishes: 'array', notifSettings: 'object',
   navOpacityVal: 'number', streakScope: 'array', analyticsArchive: 'array',
+  boostScope: 'array', boostSince: 'string',
+  hunterCodeAccepted: 'boolean', hunterCodeVersion: 'number',
   uiStyle: 'string', showcase: 'object',
 };
 
@@ -110,14 +112,14 @@ export function defaultState() {
     glassMode: true,
     glassBlur: 4,
     glassAlpha: 0.15,
-    liquidLens: false,
+    liquidLens: true,
     navOpacity: true,
     navOpacityVal: 100,
     uiStyle: 'liquid',
-    bgType: 'solid',
-    bgImage: null,
-    bgDim: 0,
-    particlesEnabled: true,
+    bgType: 'image',
+    bgImage: 'preset:violet evergarden.png',
+    bgDim: 45,
+    particlesEnabled: false,
     particleCount: 80,
     particleHue: 250,
     particleSpeed: 1,
@@ -131,7 +133,7 @@ export function defaultState() {
     bgOffY: 0,
     bgZoom: 100,
     bgRotate: 0,
-    bgFlipH: false,
+    bgFlipH: true,
     bgFlipV: false,
     accentColor: '',
     bgImages: [],
@@ -155,7 +157,11 @@ export function defaultState() {
     claimedRewards: [],   // global reward IDs already claimed (no double-XP)
     customThemes: [],     // user-created themes (besides THEMES key)
     customDishes: [],     // dish-builder saved dishes
+    hunterCodeAccepted: false,   // Hunter's Code acknowledged
+    hunterCodeVersion: 0,        // which rules version was accepted
     streakScope: [],      // empty = all progress-streak activities count
+    boostScope: [],       // empty = streak boost OFF (never "all")
+    boostSince: '',       // local date the boost scope was applied — earlier days never count
     _analyticsSection: 'overview',
     _analyticsPeriod: '1w',
     showcase: {
@@ -221,7 +227,8 @@ export function migrateData(saved) {
     saved.bgType = saved.bgType || 'solid';
     saved.bgImage = saved.bgImage || null;
     saved.bgDim = saved.bgDim || 0;
-    saved.particlesEnabled = saved.particlesEnabled !== false;
+    // Particles are off by default: a pre-v6 save only keeps them if it opted in.
+    saved.particlesEnabled = saved.particlesEnabled === true;
     saved.particleCount = saved.particleCount || 80;
     saved.accentColor = saved.accentColor || '';
     saved.bgImages = Array.isArray(saved.bgImages) ? saved.bgImages : [];
@@ -355,6 +362,20 @@ export function migrateData(saved) {
     if (typeof saved.bgFlipH !== 'boolean') saved.bgFlipH = false;
     if (typeof saved.bgFlipV !== 'boolean') saved.bgFlipV = false;
     saved.dataVersion = 22;
+  }
+  if (version < 23) {
+    // ponytail: streak boost scope + anchor — backfill defaults, earned data untouched
+    if (!Array.isArray(saved.boostScope)) saved.boostScope = [];
+    if (typeof saved.boostSince !== 'string') saved.boostSince = '';
+    saved.dataVersion = 23;
+  }
+  if (version < 24) {
+    // ponytail: Hunter's Code acceptance marker — backfill defaults, earned data untouched.
+    // Everyone who has not acknowledged the current rules revision meets the
+    // rules screen on next launch; accepted users keep their marker.
+    if (typeof saved.hunterCodeAccepted !== 'boolean') saved.hunterCodeAccepted = false;
+    if (typeof saved.hunterCodeVersion !== 'number') saved.hunterCodeVersion = 0;
+    saved.dataVersion = 24;
   }
   // V2: offset model replaces positional model (migrated lazily too)
   if (saved.bgOffX == null && typeof saved.bgPosX === 'number') {

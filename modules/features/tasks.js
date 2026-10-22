@@ -143,7 +143,7 @@ export function renderTasks(host) {
       + `<div style="flex:1"><div style="font-size:13px;font-weight:600;color:${isDone ? 'var(--text-muted)' : 'var(--text-primary)'}${isDone ? ';text-decoration:line-through' : ''}">${isDone ? '<span style="color:var(--success);margin-right:4px">✓</span>' : ''}${escapeHtml(t.title)}</div>`
       + `<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px">`
       + `<span class="badge" style="background:${dc}22;color:${dc};border:1px solid ${dc}44">${TASK_DIFF_LABELS[t.difficulty] || t.difficulty}</span>`
-      + (isDone ? `<span class="badge badge-green">+${TASK_XP[t.difficulty] || 70} XP</span>` : '')
+      + (isDone ? `<span class="badge badge-green">+${t.xpAwarded ?? (TASK_XP[t.difficulty] || 70)} XP</span>` : '')
       + timeLeft(t) + repeatBadge(t) + `</div></div></div>`
       + `<button class="btn btn-icon btn-sm" data-tdel="${t.id}" style="color:var(--danger)">×</button></div>`;
     if (!isDone) row.querySelector('[data-tcheck]').onclick = () => completeTask(t.id);
@@ -168,10 +168,17 @@ export function completeTask(taskId) {
     x.completedAt = now; x.completedDate = today(); x.xpAwarded = xp; x.overdueCharged = false;
   });
   updStat('discipline', overdue ? 1 : 3);
-  awardXP(xp, 'Task: ' + (t.title || t.name));
+  const r = awardXP(xp, 'Task: ' + (t.title || t.name), {
+    boost: true,
+    // store the credited amount — a refund must deduct exactly this
+    onAward: (amt) => update((s) => {
+      const x = s.tasks.find((y) => y.id === taskId);
+      if (x) x.xpAwarded = amt;
+    }, { silent: true }),
+  });
   systemActivate('TASK COMPLETE — ' + (t.title || t.name || '').slice(0, 40));
-  if (overdue) showNotif(`[ TASK COMPLETE ] Late — +${xp} XP (half reward)`, '⚡');
-  else showNotif(`[ TASK COMPLETE ] +${xp} XP — Discipline +3`, '⚔️');
+  if (overdue) showNotif(`[ TASK COMPLETE ] Late — +${r.amount} XP (half reward)`, '⚡');
+  else showNotif(`[ TASK COMPLETE ] +${r.amount} XP — Discipline +3`, '⚔️');
   checkAchievements();
   import('../core/notify.js').then((m) => { try { m.initNotifications(); } catch {} }).catch(() => {});
 }

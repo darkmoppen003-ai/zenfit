@@ -1,8 +1,8 @@
 // ZenFit V2 Service Worker — offline shell + updates.
 // Cache names derive from build → every deploy refreshes cleanly.
 
-const SW_BUILD = "2026.10.19.67";
-const SCHEMA_VERSION = 22;
+const SW_BUILD = "2026.10.22.68";
+const SCHEMA_VERSION = 24;
 
 const CACHE = `zenfit-${SW_BUILD}`;
 const STATIC_CACHE = `zenfit-static-${SW_BUILD}`;
@@ -29,6 +29,7 @@ const PRECACHE = [
   './css/screens.css',
   './css/animations.css',
   './css/responsive.css',
+  './css/hunters-code.css',
   './css/skins/ui-neomorphism.css',
   './css/skins/ui-brutalism.css',
   './css/skins/ui-hud.css',
@@ -43,6 +44,7 @@ const PRECACHE = [
   './modules/core/pwa.js',
   './modules/core/fullscreen.js',
   './modules/core/selectors.js',
+  './modules/core/streak-boost.js',
   './modules/core/nutrition-parse.js',
   './modules/core/backup.js',
   './modules/core/achievements.js',
@@ -67,6 +69,7 @@ const PRECACHE = [
   './modules/features/admin.js',
   './modules/features/guide.js',
   './modules/features/changelog.js',
+  './modules/features/hunters-code.js',
   './modules/features/achievements-screen.js',
   './modules/features/inbox.js',
   './modules/core/missions.js',
@@ -96,6 +99,7 @@ const STATIC_ASSETS = [
   './assets/bg/violet evergarden.png',
   './assets/bg/red-space.jpeg',
   './assets/bg/endure.jpeg',
+  './assets/intro/hunters-code.png',
 ];
 
 const NEVER_CACHE_HOSTS = ['anthropic.com', 'openfoodfacts', 'peerjs.com', 'exercisedb', 'supabase.co'];

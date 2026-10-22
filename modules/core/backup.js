@@ -23,7 +23,7 @@ function crc32(u8) {
   for (let i = 0; i < u8.length; i++) crc = crc32.table[(crc ^ u8[i]) & 0xFF] ^ (crc >>> 8);
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
-function makeZip(files) {
+export function makeZip(files) {
   const enc = new TextEncoder();
   const locals = [], centrals = [];
   let offset = 0;
@@ -43,7 +43,8 @@ function makeZip(files) {
     lh.setUint32(22, bytes.length, true);
     lh.setUint16(26, nameB.length, true);
     lh.setUint16(28, 0, true);
-    locals.push(new Uint8Array(lh.buffer), nameB, bytes);
+    const lhBytes = new Uint8Array(lh.buffer); lhBytes.set(nameB, 30);
+    locals.push(lhBytes, bytes);
     const ch = new DataView(new ArrayBuffer(46 + nameB.length));
     ch.setUint32(0, 0x02014b50, true);
     ch.setUint16(4, 20, true);
@@ -62,7 +63,8 @@ function makeZip(files) {
     ch.setUint16(36, 0, true);
     ch.setUint32(38, 0, true);
     ch.setUint32(42, offset, true);
-    centrals.push(new Uint8Array(ch.buffer), nameB);
+    const chBytes = new Uint8Array(ch.buffer); chBytes.set(nameB, 46);
+    centrals.push(chBytes);
     offset += 30 + nameB.length + bytes.length;
   }
   const cdSize = centrals.reduce((a, b) => a + b.length, 0);
@@ -80,7 +82,7 @@ function makeZip(files) {
   parts.forEach((p) => { out.set(p, o); o += p.length; });
   return out;
 }
-function parseZip(buf) {
+export function parseZip(buf) {
   try {
     const u8 = new Uint8Array(buf);
     const dv = new DataView(buf);
@@ -254,7 +256,9 @@ export function importData(file) {
       const clean = scrubStrings(data);
       clean.deviceId = S.deviceId;
       clean.peerId = S.peerId;
-      if (incomingThemes && !(S.customThemes || []).length) {
+      // Incoming themes are merged by name in chronologicalMerge — dropping them
+      // whenever this device already had one silently lost the archive's themes.
+      if (Array.isArray(incomingThemes) && incomingThemes.length) {
         try { clean.customThemes = incomingThemes; } catch {}
       }
       const merged = chronologicalMerge(S, clean);
@@ -362,13 +366,38 @@ export function chronologicalMerge(cur, inc) {
     const cfSeen = new Set(cfUnion.map((f) => (f.name || '').toLowerCase()));
     (inc.customFoods || []).forEach((f) => { if (!cfSeen.has((f.name || '').toLowerCase())) cfUnion.push(f); });
     out.customFoods = cfUnion;
+    // A restore must not empty this device's gallery: the incoming wallpaper
+    // list replaced the local one wholesale, so uploads made here vanished from
+    // the picker while their IndexedDB blobs stayed orphaned.
+    const wpUnion = [...(cur.bgImages || [])];
+    const wpSeen = new Set(wpUnion.map((w) => String(typeof w === 'string' ? w : (w?.id || w?.src || ''))));
+    (Array.isArray(inc.bgImages) ? inc.bgImages : []).forEach((w) => {
+      const id = String(typeof w === 'string' ? w : (w?.id || w?.src || ''));
+      if (id && !wpSeen.has(id)) { wpSeen.add(id); wpUnion.push(w); }
+    });
+    out.bgImages = wpUnion;
+    // Custom themes: union by name, the live device wins on a name clash.
+    const thUnion = [...(Array.isArray(cur.customThemes) ? cur.customThemes : [])];
+    const thSeen = new Set(thUnion.map((t) => String(t?.name || '').toLowerCase()));
+    (Array.isArray(inc.customThemes) ? inc.customThemes : []).forEach((t) => {
+      const name = String(t?.name || '').toLowerCase();
+      if (name && !thSeen.has(name)) { thSeen.add(name); thUnion.push(t); }
+    });
+    out.customThemes = thUnion;
   } catch { return { ...cur, ...inc }; }
   return out;
 }
 
-function scrubStrings(obj, depth = 0) {
+/* Media payloads must survive a restore byte-exact: sanitising would strip the
+   "data:" prefix and truncate the base64 past 5000 chars (a broken avatar). */
+const DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp|avif|bmp);base64,/i;
+const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
+export function scrubStrings(obj, depth = 0) {
   if (depth > 12) return obj;
-  if (typeof obj === 'string') return sanitizeText(obj, 5000);
+  if (typeof obj === 'string') {
+    if (DATA_URI_RE.test(obj)) return obj.length <= MAX_MEDIA_BYTES ? obj : obj.slice(0, MAX_MEDIA_BYTES);
+    return sanitizeText(obj, 5000);
+  }
   if (Array.isArray(obj)) return obj.map((v) => scrubStrings(v, depth + 1));
   if (obj && typeof obj === 'object') {
     const out = {};

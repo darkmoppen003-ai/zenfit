@@ -21,9 +21,14 @@ export function sanitizeText(value, maxLen = 500) {
   s = s.replace(/<script[\s\S]*?<\/script\s*>/gi, '')
        .replace(/<style[\s\S]*?<\/style\s*>/gi, '')
        .replace(/<[^>]*>/g, '');
-  // Kill javascript:/data:/vbscript: protocols and inline handlers
-  s = s.replace(/(javascript|data|vbscript)\s*:/gi, '')
-       .replace(/\bon\w+\s*=/gi, '');
+  // Kill javascript:/vbscript: protocols and inline handlers.
+  // `data:` is only dangerous for non-image payloads (data:text/html) — raster
+  // data URIs are user media and must survive intact, so they are kept.
+  // The handler strip needs the quoted form: after the tag strip above nothing
+  // is markup any more, so a bare `on…=` match is plain text ("Onions = 5g").
+  s = s.replace(/(javascript|vbscript)\s*:/gi, '')
+       .replace(/\bdata\s*:(?!\s*image\/)/gi, '')
+       .replace(/\bon\w+\s*=\s*(["'`])[^"']*\1/gi, '');
   s = s.trim().slice(0, maxLen);
   return s;
 }

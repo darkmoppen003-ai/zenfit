@@ -10,6 +10,7 @@ import { S, update, deductXP } from '../core/store.js';
 import { escapeHtml, sanitizeText, sanitizeNumber } from '../core/sanitize.js';
 import { showNotif, awardXP, celebrateFirst, openOverlay, ICONS } from '../core/ui.js';
 import { todayNutrition } from '../core/selectors.js';
+import { splitBoostXp } from '../core/streak-boost.js';
 import {
   parseFoodInput, gradeFood, gradeLabel, nn, recalcFood, FOOD_UNIT, SERVING_METRICS,
   fetchOFFBarcode, fetchAiFood,
@@ -396,10 +397,26 @@ function logParsedFood() {
   });
   celebrateFirst('nutritionFirstMeal', '🥗 First meal logged! Your nutrition journey begins.');
   update((s) => { s.player.stats = { ...(s.player.stats || {}), health: Math.min(100, (s.player.stats?.health || 10) + parsedFood.length) }; }, { silent: true });
-  awardXP(30 * parsedFood.length, 'Meals logged!');
+  const n = parsedFood.length;
+  awardXP(30 * n, 'Meals logged!', {
+    boost: true,
+    // distribute the one credited total across the entries — refunds must sum to the credit
+    onAward: (amt) => creditNutritionEntries(amt, n),
+  });
   parsedFood = null;
   checkAutoQuests();
   checkAchievements();
+}
+
+/* The credited amount lives on the entries — a delete refunds exactly
+   what was credited (boost included). The credit is split so the parts
+   add up to the single credited total. */
+function creditNutritionEntries(amt, count = 1) {
+  update((s) => {
+    const list = s.nutrition.entries || [];
+    const start = Math.max(0, list.length - count);
+    splitBoostXp(amt, count).forEach((sh, i) => { if (list[start + i]) list[start + i].xpAwarded = sh; });
+  }, { silent: true });
 }
 
 export function saveAiFoodToCustom(f) {
@@ -481,7 +498,7 @@ function logMF(body) {
     }, { silent: true });
   }
   update((s) => { s.player.stats = { ...(s.player.stats || {}), health: Math.min(100, (s.player.stats?.health || 10) + 1) }; }, { silent: true });
-  awardXP(30, 'Meal logged!');
+  awardXP(30, 'Meal logged!', { boost: true, onAward: (amt) => creditNutritionEntries(amt) });
   checkAutoQuests();
   checkAchievements();
 }
@@ -519,7 +536,7 @@ function showMyFoods() {
         s.nutrition.entries.push({ ...r, servings: 1, date: getTodayStr(), xpAwarded: 30 });
       });
       document.getElementById('zf-overlay')?.remove();
-      awardXP(30, 'Meal logged!');
+      awardXP(30, 'Meal logged!', { boost: true, onAward: (amt) => creditNutritionEntries(amt) });
       checkAutoQuests();
       checkAchievements();
     };
@@ -633,7 +650,7 @@ function showBCServingDialog(f, box) {
     });
     document.getElementById('zf-overlay')?.remove();
     celebrateFirst('nutritionFirstMeal', '🥗 First meal logged! Your nutrition journey begins.');
-    awardXP(30, 'Meal logged!');
+    awardXP(30, 'Meal logged!', { boost: true, onAward: (amt) => creditNutritionEntries(amt) });
     checkAutoQuests();
     checkAchievements();
     window.ZF.rerender();
@@ -738,7 +755,7 @@ function renderCalculator(body) {
       }
     });
     showNotif(`${dishName} logged — ${dn.cal} kcal`, 'OK');
-    awardXP(30, 'Meal logged!');
+    awardXP(30, 'Meal logged!', { boost: true, onAward: (amt) => creditNutritionEntries(amt) });
     dishIngredients = [];
     checkAutoQuests();
     checkAchievements();

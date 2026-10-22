@@ -131,8 +131,10 @@ export function renderHabits(host) {
       const h = (S.habits || [])[i];
       const t = today();
       const wasDone = (h?.completedDates || h?.doneDates || []).includes(t);
+      // refund exactly what was credited for THIS date (boost included); legacy = base
+      const awarded = h?.xpByDate?.[t] ?? (HABIT_XP[h?.difficulty] || 20);
       update((s) => { s.habits.splice(i, 1); });
-      if (wasDone && !isRestDay(t)) deductXP(HABIT_XP[h?.difficulty] || 20, 'Habit deleted: ' + (h?.name || ''));
+      if (wasDone && !isRestDay(t)) deductXP(awarded, 'Habit deleted: ' + (h?.name || ''));
     };
     row.querySelector('[data-hdone]').onclick = () => toggleHabit(i);
     list.appendChild(row);
@@ -146,14 +148,18 @@ export function toggleHabit(i) {
   if (!h) return;
   const dates = h.completedDates || h.doneDates || [];
   if (dates.includes(t)) {
+    // refund exactly what was credited for this date (boost included); legacy = base
+    const awarded = h.xpByDate?.[t] ?? (HABIT_XP[h.difficulty] || 20);
     update((s) => {
       const x = s.habits[i];
       x.completedDates = (x.completedDates || x.doneDates || []).filter((d) => d !== t);
       delete x.doneDates;
       x.streak = calcHabitStreak(x.completedDates);
+      if (x.xpByDate) delete x.xpByDate[t];
     });
-    if (!isRestDay(t)) deductXP(HABIT_XP[h.difficulty] || 20, 'Habit: ' + h.name);
+    if (!isRestDay(t)) deductXP(awarded, 'Habit: ' + h.name);
   } else {
+    const base = HABIT_XP[h.difficulty] || 20;
     update((s) => {
       const x = s.habits[i];
       x.completedDates = [...(x.completedDates || x.doneDates || [])];
@@ -163,8 +169,17 @@ export function toggleHabit(i) {
       x.bestStreak = Math.max(x.bestStreak || 0, x.streak);
     });
     // ponytail: rest-day checks skip the uncheck deduction — don't award what can't be taken back (XP farm)
-    if (!isRestDay(t)) awardXP(HABIT_XP[h.difficulty] || 20, 'Habit: ' + h.name);
-    else showNotif('Rest day — done, no XP either way', 'OK');
+    if (!isRestDay(t)) {
+      awardXP(base, 'Habit: ' + h.name, {
+        boost: true,
+        // per-date credit — a habit repeats, so one scalar is not enough
+        onAward: (amt) => update((s) => {
+          const x = s.habits[i];
+          if (!x) return;
+          x.xpByDate = { ...(x.xpByDate || {}), [t]: amt };
+        }, { silent: true }),
+      });
+    } else showNotif('Rest day — done, no XP either way', 'OK');
     updStat('discipline', 2);
   }
   checkAutoQuests();

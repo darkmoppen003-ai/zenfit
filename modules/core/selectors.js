@@ -7,6 +7,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S } from './store.js';
 import { getTodayStr } from './utils.js';
+import { boostMultiplierFor, boostScopeOf, boostStreakDays, restDayOn } from './streak-boost.js';
 
 export const today = () => getTodayStr();
 
@@ -141,9 +142,22 @@ export function tasksDoneToday() {
 /* ── Rest days (V1: Sundays always rest; manual days one-way,
    max 3 per Mon–Sat week) ── */
 export function isRestDay(dateStr) {
-  const d = new Date(`${dateStr || today()}T12:00:00`);
-  if (d.getDay() === 0) return true;
-  return (S.restDays || []).includes(dateStr || today());
+  return restDayOn(S, dateStr || today());
+}
+
+/* ── Streak boost: account-wide XP multiplier (owner-configured) ──
+   boostScope: [] = OFF (never "all"). boostSince = the local date the
+   scope was applied — days before it never count toward the streak. */
+export function boostStatus() {
+  const scope = boostScopeOf(S);
+  const on = scope.length > 0;
+  const since = typeof S.boostSince === 'string' ? S.boostSince : '';
+  const days = on ? boostStreakDays(S, scope, since, today()) : 0;
+  return { on, scope, since, days, mult: on ? boostMultiplierFor(days) : 1 };
+}
+export function currentBoostMultiplier() {
+  const st = boostStatus();
+  return st.on ? st.mult : 1;
 }
 
 export function weekRestCount(dateStr) {

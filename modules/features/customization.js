@@ -646,7 +646,7 @@ export function renderCustomization(host) {
   /* glass */
   host.querySelector('#fx-glass').onchange = (e) => update((s) => { s.glassMode = e.target.checked; });
   host.querySelector('#fx-reset').onclick = () => {
-    update((s) => { s.glassMode = true; s.glassBlur = 4; s.glassAlpha = 0.15; s.liquidLens = false; });
+    update((s) => { s.glassMode = true; s.glassBlur = 4; s.glassAlpha = 0.15; s.liquidLens = true; });
     showNotif('Transparency reset to defaults', 'OK');
     window.ZF.rerender();
   };

@@ -119,6 +119,7 @@
   /* Typography */
   --font-display: 'Syne', sans-serif;
   --font-ui: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-hero: 40px; --text-xxl: 30px; --text-xl: 24px;
   --text-lg: 20px; --text-md: 17px; --text-base: 15px;
   --text-sm: 13px; --text-xs: 11px;
@@ -134,4 +135,5 @@
   --bottomnav-width: min(92%, 380px);
   --z-nav: 9999; --z-popover: 10000; --z-notif: 9999;
   --z-overlay: 9998; --z-guide: 100002; --z-splash: 99999; --z-changelog: 100005;
+  --z-hunters: 100010;   /* Hunter's Code — startup priority 1, above everything */
 }

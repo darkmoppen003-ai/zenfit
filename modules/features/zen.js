@@ -179,7 +179,7 @@ function openEnergyPopup(m, t, intensity) {
       s.mood.entries.push({ mood: m.key, note: '', date: t, ts: Date.now(), intensity, energy });
     });
     celebrateFirst('moodFirstLog', '🎭 First mood logged! Self-awareness is key.');
-    awardXP(5, 'Mood Log');
+    awardXP(5, 'Mood Log', { boost: true });
     checkAchievements();
     showNotif(`Mood logged: ${m.label} (${intensity}/10 · ${energy}/10)`, m.emoji);
     window.ZF.rerender();
@@ -487,13 +487,14 @@ function completeZen() {
   const mins = Math.round(zenElapsed / 60) || 1;
   const xp = Math.round(mins * 5 + (zenCycle > 1 ? zenTotalCycles * 2 : 0));
   const t = today();
+  const zTs = Date.now();
   update((s) => {
     s.zen = s.zen || { totalSessions: 0, totalMinutes: 0, currentStreak: 0, bestStreak: 0, lastSessionDate: null, sessions: [], history: {} };
     s.zen.totalSessions++; s.zen.totalMinutes += mins;
     s.zen.history = s.zen.history || {};
     s.zen.history[t] = (s.zen.history[t] || 0) + mins;
     const modeLabel = ZEN_MODES[zenMode]?.label || 'Custom';
-    s.zen.sessions.push({ date: t, minutes: mins, mode: modeLabel, xp, ts: Date.now() });
+    s.zen.sessions.push({ date: t, minutes: mins, mode: modeLabel, xp, ts: zTs });
     const dates = Object.keys(s.zen.history).sort().reverse();
     let streak = 0;
     const cursor = new Date();
@@ -505,13 +506,20 @@ function completeZen() {
     s.zen.lastSessionDate = t;
   });
   celebrateFirst('zenFirstMeditation', '🧘 First meditation complete! Inner peace grows.');
-  awardXP(xp, 'Zen session complete!');
+  const zr = awardXP(xp, 'Zen session complete!', {
+    boost: true,
+    // keep the session record on the credited amount
+    onAward: (amt) => update((s) => {
+      const rec = (s.zen?.sessions || []).find((x) => x.ts === zTs);
+      if (rec) rec.xp = amt;
+    }, { silent: true }),
+  });
   updStat('wisdom', 2);
   checkAutoQuests();
   checkAchievements();
   zenPhase = 'idle'; zenTimer = null;
   document.getElementById('zen-overlay')?.remove();
-  showNotif(`🧘 Zen session complete! +${xp} XP`, 'OK');
+  showNotif(`🧘 Zen session complete! +${zr.amount} XP`, 'OK');
   window.ZF.rerender();
 }
 
@@ -521,16 +529,24 @@ function completeHoldTest() {
   const sec = zenElapsed;
   const xp = Math.round(sec * 0.5);
   const t = today();
+  const hTs = Date.now();
   update((s) => {
     s.zen = s.zen || { totalSessions: 0, totalMinutes: 0, currentStreak: 0, bestStreak: 0, lastSessionDate: null, sessions: [], history: {} };
     s.zen.totalSessions++;
-    s.zen.sessions.push({ date: t, minutes: 0, mode: 'Breath Hold Test', xp, holdSec: sec, ts: Date.now() });
+    s.zen.sessions.push({ date: t, minutes: 0, mode: 'Breath Hold Test', xp, holdSec: sec, ts: hTs });
   });
-  awardXP(xp, `Zen: Breath Hold (${sec}s)`);
+  const hr = awardXP(xp, `Zen: Breath Hold (${sec}s)`, {
+    boost: true,
+    // keep the session record on the credited amount
+    onAward: (amt) => update((s) => {
+      const rec = (s.zen?.sessions || []).find((x) => x.ts === hTs);
+      if (rec) rec.xp = amt;
+    }, { silent: true }),
+  });
   updStat('discipline', 3); updStat('wisdom', 2);
   zenPhase = 'idle'; zenTimer = null;
   document.getElementById('zen-overlay')?.remove();
-  showNotif(`🫁 Breath held for ${sec}s! +${xp} XP`, 'OK');
+  showNotif(`🫁 Breath held for ${sec}s! +${hr.amount} XP`, 'OK');
   window.ZF.rerender();
 }
 
@@ -687,16 +703,24 @@ function renderStudy(host) {
     if (dur <= 0) { showNotif('Enter duration', '!'); return; }
     const diff = host.querySelector('#s-diff').value || 'medium';
     const xp = calcStudyXP(dur, diff);
+    const sTs = Date.now();
     update((s) => {
       s.study.sessions = [...(s.study.sessions || []), {
         subject, topic: sanitizeText(host.querySelector('#s-topic').value, 80), duration: dur,
         difficulty: diff, notes: sanitizeText(host.querySelector('#s-notes').value, 200),
-        date: today(), ts: Date.now(), xp,
+        date: today(), ts: sTs, xp,
       }];
       if (!(s.study.subjects || []).includes(subject)) s.study.subjects = [...(s.study.subjects || []), subject];
     });
     updStat('discipline', 3);
-    awardXP(xp, 'Study session logged!');
+    awardXP(xp, 'Study session logged!', {
+      boost: true,
+      // store the credited amount — the delete refund deducts exactly this
+      onAward: (amt) => update((s) => {
+        const rec = (s.study.sessions || []).find((x) => x.ts === sTs);
+        if (rec) rec.xpAwarded = amt;
+      }, { silent: true }),
+    });
     checkAutoQuests();
     checkAchievements();
   };
@@ -719,7 +743,7 @@ function renderStudy(host) {
     row.className = 'quest-card';
     row.innerHTML = `<div style="width:20px;height:20px;color:var(--info);flex-shrink:0;display:flex">${ICONS.bookStack}</div><div style="flex:1">`
       + `<div style="font-size:13px">${escapeHtml(sess.subject)}${sess.topic ? ` <span style="color:var(--text-muted)">· ${escapeHtml(sess.topic)}</span>` : ''}</div>`
-      + `<div style="font-size:11px;color:var(--text-muted)">${sess.duration} min · ${escapeHtml(sess.difficulty || 'medium')} · +${sess.xp ?? calcStudyXP(sess.duration, sess.difficulty)} XP</div></div>`
+      + `<div style="font-size:11px;color:var(--text-muted)">${sess.duration} min · ${escapeHtml(sess.difficulty || 'medium')} · +${sess.xpAwarded ?? sess.xp ?? calcStudyXP(sess.duration, sess.difficulty)} XP</div></div>`
       + `<button class="btn btn-icon btn-sm" data-sdel="${gi}" style="color:var(--danger)">×</button>`;
     row.querySelector('[data-sdel]').onclick = () => {
       // ponytail: legacy entries carry xp, newer ones xpAwarded — refund whichever exists
@@ -783,21 +807,29 @@ function stopStudyTimer() {
   const dur = Math.max(1, Math.round(timerSeconds / 60));
   const subj = timerSubject || 'Study';
   const xp = calcStudyXP(dur, timerDiff);
+  const tTs = Date.now();
   update((s) => {
     s.study.sessions = [...(s.study.sessions || []), {
       subject: subj, topic: timerTopic, duration: dur, difficulty: timerDiff,
-      notes: 'Timer session', date: today(), ts: Date.now(), xp, timerBased: true,
+      notes: 'Timer session', date: today(), ts: tTs, xp, timerBased: true,
     }];
     if (!(s.study.subjects || []).includes(subj)) s.study.subjects = [...(s.study.subjects || []), subj];
   });
   updStat('discipline', 3);
   if (timerDiff === 'hard') updStat('discipline', 2);
-  awardXP(xp, `${subj} study session!`);
+  const tr = awardXP(xp, `${subj} study session!`, {
+    boost: true,
+    // store the credited amount — the delete refund deducts exactly this
+    onAward: (amt) => update((s) => {
+      const rec = (s.study.sessions || []).find((x) => x.ts === tTs);
+      if (rec) rec.xpAwarded = amt;
+    }, { silent: true }),
+  });
   checkAutoQuests();
   checkAchievements();
   timerSeconds = 0; timerBase = 0; timerAnchor = null; timerTicks = 0;
   timerSubject = ''; timerTopic = ''; timerDiff = 'medium';
-  showNotif(`Session saved: ${dur} min of ${subj} (+${xp} XP)`, '📚');
+  showNotif(`Session saved: ${dur} min of ${subj} (+${tr.amount} XP)`, '📚');
 }
 
 /* ═══════════ SCREEN TIME ═══════════ */
