@@ -162,7 +162,7 @@ failing items get a "Log manually" switch, never silent drops.
 
 ## 14. Session round-12 additions (2026-09-25, beta-prep)
 
-14.1. **Dialogs:** `.overlay` padded + scrollable, `.overlay-box` centered with `max-height: calc(100dvh-32px)` + inner scroll; desktop `440px`, `.overlay-wide` (theme builder) `560px`.
+14.1. **Dialogs:** `.overlay` padded + scrollable, `.overlay-box` centered with `max-height: calc(100dvh-32px)` + inner scroll; desktop `440px`, `.overlay-wide` (theme builder) `560px`. Theme builder restores on outside-tap; New/Edit modes reset state.
 14.2. **Matrix/cyber:** cyber speeds normalized (`s 0.5–1.6`, diagonal `×3/×1.5`, straight `×6+2` V1 rain); matrix columns rebuild on resize.
 14.3. **Onboarding:** dashboard tour → exploration offer → 5-leg auto-navigating tour → completion card; mascot in all popovers; per-screen spot tours for 12 screens; fixed wrong tour anchors.
 14.4. **Inbox unread:** `S.inboxUnread` + red dots on More + inbox entry; cleared on open; incremented on local send + new global broadcast.
@@ -178,7 +178,7 @@ failing items get a "Log manually" switch, never silent drops.
 15.2. **Dialogs vs nav:** `.overlay` now z `10001` (above pill `9999`) + `108px` bottom clearance, so boxes never hide behind/overlap the nav. Priority order documented in §9.1.
 15.3. **Particles:** snow + firefly fully hue-driven; matrix fixed columns with count→density (active fraction), gap 18; cyber diagonal respawns across full width/top+left edges (full-screen coverage both directions); matrix rebuilds on resize.
 15.4. **Onboarding:** conversational Mochi flow — greeting → name → age → weight → goal, one question per card with working Skip throughout, Enter-to-continue, bigger mascot; dashboard + exploration tours rewritten in Mochi's voice; tour anchors fixed; zero Admin hints in tutorial.
-15.5. **Inbox:** thread list (avatar, snippet, time, New/Reward/Surprise badges, per-row delete for read), search + All/Unread/Rewards filters, openable detail (styled hero, image, one-time claim, delete, back), mark-all-read, delete-all-read, stable message ids.
+15.5. **Inbox:** thread list (avatar, snippet, time, New/Reward/Surprise badges, per-row delete for read), search + All/Unread/Rewards/Live missions/Deliverables filters, openable detail (styled hero, image, one-time claim, delete, back), mark-all-read, delete-all-read, stable message ids; global rewards in Rewards tab; chronological newest-first.
 15.6. **Message designer:** background presets, highlight color, image URL (scheme-allowlisted), confetti toggle, live preview; global publish carries styling with graceful fallback; inbox renders styled cards + confetti shower on first open.
 15.7. **Missions redo:** 8 categories (WORKOUT with exercise/sets/reps, WATER, HABITS, STREAK, STEPS, ZEN, STUDY, SCREENTIME max) × consistency days; log-verified auto-rewards; legacy `{metric}` rules still evaluate; global missions trackable from inbox.
 15.8. **Themes:** particle speed + glass blur/opacity per custom theme (inputs, template prefill, applied on use).
@@ -191,7 +191,7 @@ failing items get a "Log manually" switch, never silent drops.
 16.3. **Particles:** own collapsible card (`particle-fx`), split from wallpaper settings.
 16.4. **Tutorial:** Mochi mascot 110px centered in all popovers; zero Admin hints.
 16.5. **Admin tabs:** `.chart-tab-bar` scrolls horizontally on small screens, no cutoff.
-16.6. **Inbox:** global broadcasts merged into thread list (same template + styled detail, Global badge, no delete); search/filters cover both.
+16.6. **Inbox:** global broadcasts merged into thread list (same template + styled detail, Global badge, no delete); search/filters cover both; Live missions and Deliverables sections.
 16.7. **Missions:** single big card per global mission with inner per-category cards (bullets: exercise/sets/reps or count + consistency); new-category track mapping.
 16.8. **Themes:** per-theme particle count (`particleCount`) + wallpaper fit (`bgFit`) + Edit/Duplicate actions.
 16.9. **Global delete:** `20260925000001_global_delete.sql` pushed; admin outbox lists broadcasts + missions with Delete (`sbDel`); local history per-row delete; confetti toggle with working knob + preview badge.

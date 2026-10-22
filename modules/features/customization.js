@@ -739,7 +739,7 @@ export function renderCustomization(host) {
       };
     });
     const nw = mine.querySelector('[data-ctnew]');
-    if (nw) nw.onclick = () => showThemeBuilder();
+    if (nw) nw.onclick = () => showThemeBuilder('new');
   };
   drawMine();
   import('../core/cloud.js').then(({ GlobalBoard }) => GlobalBoard.fetchAssets('theme')).then((rows) => {
@@ -752,7 +752,10 @@ export function renderCustomization(host) {
     wrap.style.cssText = 'grid-column:1/-1';
     wrap.innerHTML = `<div class="section-title mt8">Coach themes (tap to save + apply)</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">`
       + fresh.slice(0, 6).map((r, i) => {
-        const t = r.data;
+        // F2/N11: these tokens come straight from a shared global_assets row and are
+        // interpolated into style attributes — normalise (which sanitises the colours)
+        // before rendering, not only on click.
+        const t = normalizeTheme(r.data);
         return `<div data-gtheme="${i}" style="cursor:pointer;padding:10px 12px;border-radius:10px;border:2px dashed var(--primary);background:${t.bgSurface || '#111'}">
         <div style="display:flex;gap:6px;margin-bottom:6px">
           <div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase || '#000'}"></div>
@@ -954,7 +957,7 @@ export function renderCustomization(host) {
     document.getElementById('tha-edit').onclick = () => {
       document.getElementById('zf-overlay')?.remove();
       editingThemeId = id;
-      showThemeBuilder();
+      showThemeBuilder('edit');
       const src = getCustomThemes().find((x) => x.id === id) || {};
       document.querySelector('#th-name').value = src.name || '';
       document.querySelector('#th-tpl').value = `custom:${id}`;
@@ -984,9 +987,25 @@ export function renderCustomization(host) {
     };
   }
 
-  function showThemeBuilder() {
-    const creator = document.querySelector('#th-creator');
+  let themeBuilderEl = null;
+  const restoreThemeBuilder = () => {
+    const creatorEl = document.querySelector('#th-creator') || themeBuilderEl;
+    const home = document.querySelector('#th-creator-home');
+    if (creatorEl && home && creatorEl.parentElement !== home) {
+      home.appendChild(creatorEl);
+      creatorEl.style.display = 'none';
+    }
+    if (creatorEl && creatorEl.parentElement === home) {
+      themeBuilderEl = creatorEl;
+    }
+  };
+
+  function showThemeBuilder(mode = 'new') {
+    if (mode !== 'edit') editingThemeId = null;
+    restoreThemeBuilder();
+    const creator = document.querySelector('#th-creator') || themeBuilderEl;
     if (!creator) return;
+    themeBuilderEl = creator;
     const isEdit = !!editingThemeId;
     openOverlay(`<div style="font-size:15px;font-weight:700;margin-bottom:8px">${isEdit ? 'Edit Custom Theme' : 'Create Custom Theme'}</div><div id="th-dialog-slot"></div><button class="btn btn-ghost btn-sm mt8" id="th-dialog-close">Close</button>`);
     document.querySelector('#zf-overlay .overlay-box')?.classList.add('overlay-wide');
@@ -997,6 +1016,8 @@ export function renderCustomization(host) {
       const creatorEl = document.querySelector('#th-creator');
       const home = document.querySelector('#th-creator-home');
       if (creatorEl && home) { home.appendChild(creatorEl); creatorEl.style.display = 'none'; }
+      else if (creatorEl) { creatorEl.style.display = 'none'; }
+      themeBuilderEl = creatorEl || themeBuilderEl;
       document.getElementById('zf-overlay')?.remove();
     };
     setTimeout(() => document.querySelector('#th-name')?.focus(), 100);

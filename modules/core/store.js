@@ -650,6 +650,14 @@ function trimOldData() {
    first must not skip the mirror (the exact case that needs it). */
 function snapshotState() { return JSON.parse(JSON.stringify(S)); }
 let saveTimer = null;
+/** N9: local persistence failed (usually QuotaExceededError). Surface it once so a
+ *  silently-dropped save is visible; the IndexedDB mirror still runs regardless. */
+let quotaWarned = false;
+function notifyLocalSaveFailed() {
+  if (quotaWarned) return;
+  quotaWarned = true;
+  try { import('./ui.js').then((m) => m.showNotif('Local storage full — recent changes may not persist', '!')).catch(() => {}); } catch {}
+}
 export function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
@@ -658,7 +666,7 @@ export function save() {
       trimOldData();
     } catch (e) { console.warn('[ZenFit] trim error:', e); }
     try { localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S)); }
-    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); }
+    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); notifyLocalSaveFailed(); }
     try { idbSave(STORAGE_KEYS.STATE, snapshotState()); } catch {}
   }, 250);
 }
@@ -669,7 +677,7 @@ export function flushSave() {
     S.lastSaved = Date.now();
     try { trimOldData(); } catch {}
     try { localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(S)); }
-    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); }
+    catch (e) { console.warn('[ZenFit] save error (localStorage):', e); notifyLocalSaveFailed(); }
     try { idbSave(STORAGE_KEYS.STATE, snapshotState()); } catch {}
   } catch (e) { console.warn('[ZenFit] save error:', e); }
 }

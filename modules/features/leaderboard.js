@@ -46,7 +46,7 @@ function renderGlobal(body) {
     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
       <div><div style="font-size:13px;font-weight:600;margin-bottom:3px">${optedIn ? '🌐 Visible on Global Leaderboard' : '🌐 Join Global Leaderboard'}</div>
       <div style="font-size:11px;color:var(--text-muted)">${optedIn ? 'Your name, level, rank, streak & profile picture are visible to all users.' : 'Share your name, level, rank, streak & profile picture with all ZenFit users.'}</div>
-      <div style="font-size:11px;color:var(--primary);margin-top:4px">By joining the global leaderboard you will also be able to join and receive missions and get additional XP rewards.</div>
+      <div style="font-size:11px;color:var(--primary);margin-top:4px">By joining the global leaderboard you will also be able to join and receive missions and get additional XP rewards.{Opting in and out may take some time to reflect changes}</div>
       ${!profileOk ? '<div style="font-size:10px;color:var(--warning);margin-top:4px">⚠️ Complete your profile first</div>' : ''}</div>
       <label style="position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0">
         <input type="checkbox" id="lb-opt" ${optedIn ? 'checked' : ''} ${!profileOk ? 'disabled' : ''} style="opacity:0;width:0;height:0">
@@ -99,7 +99,7 @@ function renderGlobal(body) {
       <span style="font-size:12px;color:var(--text-muted);width:26px">#${i + 1}</span>
       <div><div style="font-size:13px;font-weight:600">${escapeHtml(u.name || 'Hunter')}${i === myIdx ? ' <span class="badge badge-purple">You</span>' : ''}</div>
       <div style="font-size:10px;color:var(--text-muted)">🔥 ${u.streak || 0} streak</div></div></div>
-      <span class="badge">Lv ${u.level} · ${escapeHtml(u.rank || '')}</span></div>`).join('') + `</div>`
+      <span class="badge">Lv ${sanitizeNumber(u.level, { max: 9999, fallback: 1, integer: true })} · ${escapeHtml(u.rank || '')}</span></div>`).join('') + `</div>`
     : '<div class="card text-center" style="color:var(--text-muted)">Board is empty — be the first.</div>';
   const myRow = myIdx >= 0 ? globalRows[myIdx] : null;
   const myAvatar = myRow?.avatar_b64 || S.profilePic || '';
@@ -113,7 +113,7 @@ function renderGlobal(body) {
       <div style="min-width:0"><div style="font-size:15px;font-weight:800;font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(myRow?.name || S.profile?.name || S.player?.name || 'Hunter')}</div>
       <div style="font-size:11px;color:var(--text-muted)">${myRow ? `Rank #${myIdx + 1} worldwide · 🔥 ${myRow.streak || 0} streak` : (optedIn ? 'Climbing — outside the top 50' : 'Join above to enter the ranks')}</div></div></div>
       <div style="text-align:right;flex-shrink:0"><div style="font-size:20px;font-weight:800;font-family:var(--font-display);color:var(--primary)">${myRow ? `#${myIdx + 1}` : `Lv ${S.player?.level || 1}`}</div>
-      <div style="font-size:11px;color:var(--text-muted)">${myRow ? `Lv ${myRow.level} · ${escapeHtml(myRow.rank || '')}` : `${S.player?.xp || 0} XP`}</div></div></div></div>`;
+      <div style="font-size:11px;color:var(--text-muted)">${myRow ? `Lv ${sanitizeNumber(myRow.level, { max: 9999, fallback: 1, integer: true })} · ${escapeHtml(myRow.rank || '')}` : `${S.player?.xp || 0} XP`}</div></div></div></div>`;
 }
 
 
@@ -139,7 +139,7 @@ function renderFriends(body) {
     <button class="btn btn-sm ${online ? 'btn-ghost' : 'btn-primary'}" id="fr-start" ${busy ? 'disabled style="opacity:.6"' : ''}${online ? ' style="color:var(--danger);border-color:var(--danger)"' : ''}>${online ? 'Disconnect' : busy ? 'Connecting…' : 'Start P2P'}</button></div></div>
   ${pending.map((r, i) => `<div class="quest-card" style="border-color:var(--warning)"><div style="font-size:22px">🔔</div>
     <div style="flex:1"><div style="font-size:13px"><strong>${escapeHtml(r.name)}</strong> wants to connect</div>
-    <div style="font-size:11px;color:var(--text-muted)">Lv ${r.level ?? '?'} · ${escapeHtml(r.rank || '')}</div></div>
+    <div style="font-size:11px;color:var(--text-muted)">Lv ${sanitizeNumber(r.level, { max: 9999, fallback: 1, integer: true })} · ${escapeHtml(r.rank || '')}</div></div>
     <button class="btn btn-sm btn-success" data-fracc="${i}">Accept</button>
     <button class="btn btn-sm btn-ghost" data-frrej="${i}">Decline</button></div>`).join('')}
   ${sent.map((r, i) => `<div class="quest-card"><div style="font-size:22px">📨</div>
@@ -160,7 +160,7 @@ function renderFriends(body) {
     return `<div class="quest-card${u.isMe ? ' done' : ''}" style="${u.isMe ? 'border-color:var(--primary)' : ''}">
       <div class="rank-badge" style="width:36px;height:36px;font-size:15px">${escapeHtml((u.name || '?')[0])}${live ? '<span style="color:var(--success);font-size:9px"> ●</span>' : ''}</div>
       <div style="flex:1"><div style="font-size:13px">${escapeHtml(u.name)}${u.isMe ? ' (you)' : ''}</div>
-      <div style="font-size:11px;color:var(--text-muted)">Lv ${u.level ?? 1} · ${u.xp ?? 0} XP · ${escapeHtml(u.rank || '')}</div></div>
+      <div style="font-size:11px;color:var(--text-muted)">Lv ${sanitizeNumber(u.level, { max: 9999, fallback: 1, integer: true })} · ${sanitizeNumber(u.xp, { max: 99999999, fallback: 0, integer: true })} XP · ${escapeHtml(u.rank || '')}</div></div>
       ${!u.isMe ? `<button class="btn btn-sm btn-ghost" data-frstats="${idx}">Stats</button>
       ${u.peerId ? `<button class="btn btn-sm" data-frchat="${idx}" style="border-color:var(--info);color:var(--info)">Chat</button>` : ''}
       <button class="btn btn-sm btn-ghost" data-frdel="${idx}">✕</button>` : '<span class="badge">YOU</span>'}</div>`;
@@ -451,8 +451,8 @@ function renderChallengesTab(body) {
       d.innerHTML = `<div class="flex-between mb8"><div style="font-size:14px;font-weight:600">${escapeHtml(c.title)}</div>
         <span class="badge ${c.status === 'active' ? 'badge-info' : 'badge-green'}">${c.status}</span></div>
         ${c.desc ? `<div style="font-size:12px;color:var(--text-muted)" class="mb8">${escapeHtml(c.desc)}</div>` : ''}
-        <div style="font-size:11px;color:var(--text-muted)" class="mb8">${escapeHtml(c.type)} · ${c.durationDays || '?'} days · ends ${escapeHtml(new Date(c.endsAt || Date.now()).toLocaleDateString())}</div>
-        ${(c.participants || []).map((p) => `<div class="flex-between mb8" style="font-size:12px"><span>${escapeHtml(p.name)}${p.peerId === S.deviceId ? ' (you)' : ''}</span><strong>${p.progress || 0}</strong></div>`).join('')}
+        <div style="font-size:11px;color:var(--text-muted)" class="mb8">${escapeHtml(c.type)} · ${sanitizeNumber(c.durationDays, { max: 3650, fallback: 0, integer: true }) || '?'} days · ends ${escapeHtml(new Date(c.endsAt || Date.now()).toLocaleDateString())}</div>
+        ${(c.participants || []).map((p) => `<div class="flex-between mb8" style="font-size:12px"><span>${escapeHtml(p.name)}${p.peerId === S.deviceId ? ' (you)' : ''}</span><strong>${sanitizeNumber(p.progress, { max: 1000000, fallback: 0, integer: true })}</strong></div>`).join('')}
         <div style="font-size:11px;color:var(--warning)" class="mb8">Leader: ${escapeHtml(lead?.name || '—')}</div>
         <div class="flex gap8">
           ${c.status === 'active' ? '<button class="btn btn-sm btn-success" data-chdone>Finish & declare winner</button>' : `<div style="font-size:12px">🏆 Winner: <strong>${escapeHtml((c.participants || []).find((p) => p.peerId === c.winnerId)?.name || '—')}</strong></div>`}

@@ -5,7 +5,7 @@
    claimed once (claimedRewards IDs) — no double-XP.
 ────────────────────────────────────────────────────────────── */
 import { S, update, save, deductXP } from '../core/store.js';
-import { escapeHtml } from '../core/sanitize.js';
+import { escapeHtml, sanitizeNumber } from '../core/sanitize.js';
 import { uid } from '../core/utils.js';
 import { showNotif, awardXP, celebrateBurst, MSG_BGS, MSG_HLS } from '../core/ui.js';
 
@@ -43,13 +43,24 @@ export function healUnreadCount() {
 }
 const gVers = () => { try { return JSON.parse(localStorage.getItem('zf_global_versions') || '{}'); } catch { return {}; } };
 // ponytail: edited globals carry updated_at — version change re-marks as unread (silent replace, fresh badge)
-const gVerOf = (r) => r?.updated_at || `${r?.created_at || ''}|${(r?.title || '').length}-${(r?.body || r?.descr || r?.desc || '').length}`;
+const gVerOf = (r) => String(r?.updated_at || `${r?.created_at || ''}|${(r?.title || '').length}-${(r?.body || r?.descr || r?.desc || '').length}`).slice(0, 64);
 const gNoteEdited = (gid, ver) => {
   try {
     const vs = gVers();
     const prev = vs[gid];
     vs[gid] = ver;
-    localStorage.setItem('zf_global_versions', JSON.stringify(vs));
+    // N9: this map is fed from every remote row a poll ever sees, with no bound, so it
+    // grew until the origin quota filled and the owner's own saves stopped persisting
+    // (store.js swallows QuotaExceededError). Cap it like the sibling zf_global_read:
+    // keep the newest N entries, which is all the unread badge needs.
+    const keys = Object.keys(vs);
+    if (keys.length > 100) {
+      const trimmed = {};
+      for (const k of keys.slice(-100)) trimmed[k] = vs[k];
+      localStorage.setItem('zf_global_versions', JSON.stringify(trimmed));
+    } else {
+      localStorage.setItem('zf_global_versions', JSON.stringify(vs));
+    }
     if (prev && prev !== ver) {
       const read = gReadIds().filter((id) => id !== gid);
       localStorage.setItem('zf_global_read', JSON.stringify(read.slice(-100)));
@@ -170,36 +181,144 @@ export function renderInbox(host) {
   <div class="flex gap8 mb8">
     <input type="text" id="inbox-q" placeholder="Search messages…" maxlength="60" style="flex:1">
   </div>
-  <div class="flex gap8 mb12" id="inbox-filters">
-    ${['all', 'unread', 'rewards'].map((f) => `<button class="btn btn-sm${f === 'all' ? ' btn-primary' : ''}" data-ifilter="${f}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('')}
+  <div class="flex gap8 mb12" id="inbox-filters" style="flex-wrap:wrap">
+    ${['all', 'unread', 'rewards', 'live missions', 'deliverables'].map((f) => `<button class="btn btn-sm${f === 'all' ? ' btn-primary' : ''}" data-ifilter="${f.replace(/\s+/g,'_')}">${f[0].toUpperCase() + f.slice(1)}</button>`).join('')}
   </div>
   <div id="inbox-threads"></div>
-  ${events.length ? `<div class="section-title mt12">Live missions & events (this device)</div>
-    ${events.map((e) => {
-      const ebg = msgBgStyle(e);
-      return `<div class="card mb8" style="${ebg.style}">${bodyImg(e.image, e.imgMeta, { h: 160, mb: '0 0 8px' })}<div style="font-size:13px;font-weight:700;${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Mission')}</div>
-      <div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(e.body || e.desc || '')}</div></div>`; }).join('')}` : ''}
+  <div id="inbox-live-section"></div>
+  <div id="inbox-deliv-section"></div>
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
   let filter = 'all';
+  let gDeliverables = [];
+  let gRewards = [];
+  let gMissions = [];
   const allRows = () => {
-    const local = msgs.map((m) => ({ m, mid: m.id, global: false, ts: m.ts || 0 }));
+    const local = msgs.map((m) => ({ m, mid: m.id, global: false, ts: m.ts || Date.now() }));
     const hidden = new Set(S.hiddenGlobals || []);
-    const remote = gThreads.filter((m) => !hidden.has('g-' + (m.id || m.title))).map((m) => ({ m, mid: 'g-' + (m.id || m.title), global: true, ts: Date.parse(m.created_at || '') || 0 }));
+    const remote = gThreads.filter((m) => !hidden.has('g-' + (m.id || m.title))).map((m) => ({ m, mid: 'g-' + (m.id || m.title), global: true, ts: Date.parse(m.updated_at || m.created_at || '') || Date.now() }));
     return [...local, ...remote].sort((a, b) => b.ts - a.ts);
   };
   const paint = () => {
     const q = (host.querySelector('#inbox-q').value || '').toLowerCase();
     const box = host.querySelector('#inbox-threads');
+    const liveBox = host.querySelector('#inbox-live-section');
+    const delivBox = host.querySelector('#inbox-deliv-section');
+    if (box) box.style.display = (filter === 'live_missions' || filter === 'deliverables') ? 'none' : '';
+    if (liveBox) {
+      liveBox.style.display = filter === 'live_missions' ? '' : 'none';
+      if (filter === 'live_missions') {
+        const hidden = new Set(S.hiddenGlobals || []);
+        const mine = [S.deviceId, S.profile?.name, S.player?.name].filter(Boolean).map(String);
+        const forMe = (r) => !r?.target || r.target === 'all' || mine.includes(String(r.target));
+        const localLive = (S.events || []).filter((e) => e.status === 'live').map((e) => ({ type: 'local', e, ts: e.ts || Date.now() }));
+        const globalLive = (gMissions || []).filter(forMe).filter((e) => !hidden.has('g-' + (e.id || e.code || e.title))).map((e) => ({ type: 'global', e, ts: Date.parse(e.updated_at || e.created_at || '') || Date.now() }));
+        const all = [...localLive, ...globalLive].sort((a,b)=>b.ts-a.ts);
+        liveBox.innerHTML = all.length ? all.map((item) => {
+          if (item.type === 'local') {
+            const e = item.e; const ebg = msgBgStyle(e);
+            return `<div class="card mb8" style="${ebg.style}">${bodyImg(e.image, e.imgMeta, { h: 160, mb: '0 0 8px' })}<div style="font-size:13px;font-weight:700;${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Mission')}</div><div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${escapeHtml(e.body || e.desc || '')}</div></div>`;
+          }
+          const e = item.e; const ebg = msgBgStyle(e); const gid = e.id || e.code || e.title; const tracked = (S.events || []).some((x) => x.globalId === gid);
+          const canTrack = Array.isArray(e.rules) && e.rules.length && !tracked;
+          const rules = Array.isArray(e.rules) ? e.rules : [];
+          return `<div class="card mb12" style="border-color:var(--primary);${ebg.style}"><div class="flex-between"><div style="font-size:14px;font-weight:800;font-family:var(--font-display);${ebg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(e.title || 'Event')}</div><span class="badge badge-purple">Mission</span></div>${bodyImg(e.image, e.imgMeta, { h: 180 })}<div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'};margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>${e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${sanitizeNumber(e.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP on completion</div>` : ''}${rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
+            const cat = r.cat || 'task'; const catLabel = cat[0].toUpperCase() + cat.slice(1); let lines = [];
+            if (cat === 'workout'){ if(r.exercise) lines.push(`Exercise: ${r.exercise}`); if(r.sets) lines.push(`Sets: ${r.sets}`); if(r.reps) lines.push(`Reps: ${r.reps}`); }
+            else if (cat === 'streak') lines.push(`Reach a ${r.target || '?'}-day streak`);
+            else { const unit = cat === 'water' ? 'ml' : (cat === 'study' || cat === 'zen' || cat === 'screentime') ? 'min' : 'count'; const verb = cat === 'screentime' ? 'at most' : 'at least'; lines.push(`${verb} ${r.target ?? '?'} ${unit} per day`); }
+            lines.push(`Consistency: ${r.days || 1} day${(r.days || 1) > 1 ? 's' : ''} in a row`);
+            return `<div class="card-sm" style="padding:10px"><div style="font-size:11px;font-weight:800;letter-spacing:1px;color:var(--primary);margin-bottom:4px">${escapeHtml(String(catLabel).toUpperCase())}</div>` + lines.map((l) => `<div style="font-size:12px;color:var(--text-secondary)">• ${escapeHtml(l)}</div>`).join('') + `</div>`;
+          }).join('') + `</div>` : ''}${canTrack ? `<button class="btn btn-sm btn-primary mt8" data-track-live="${escapeHtml(String(gid))}">Track this mission</button>` : tracked ? `<div style="font-size:11px;color:var(--success);margin-top:4px">Tracked ✓ your logs are auto-checked</div>` : ''}</div>`;
+        }).join('') : '<div class="card text-center" style="color:var(--text-muted)">No live missions.</div>';
+        liveBox.querySelectorAll('[data-track-live]').forEach((b) => {
+          b.onclick = () => {
+            const gid = b.dataset.trackLive; const e = (gMissions || []).find((x) => String(x.id || x.code || x.title) === gid);
+            if (!e || (S.events || []).some((x) => x.globalId === gid)) return;
+            update((s) => {
+              s.events = [...(s.events || []), {
+                id: `g-${Date.now()}`, globalId: gid, kind: 'mission', title: String(e.title || 'Mission').slice(0, 60), icon: '📯',
+                body: String(e.descr || e.desc || '').slice(0, 200),
+                image: /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.image || '') ? e.image : '',
+                bgImage: /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/.test(e.bgImage || '') ? e.bgImage : '',
+                xp: Math.min(500, Math.max(1, Number(e.xp) || 25)),
+                rules: (e.rules || []).slice(0, 5).map((r) => {
+                  if (r.cat === 'workout') return { cat: 'workout', exercise: String(r.exercise || '').slice(0, 40), sets: Number(r.sets) || 0, reps: Number(r.reps) || 0, days: Number(r.days) || 1 };
+                  if (r.cat === 'streak') return { cat: 'streak', target: Number(r.target) || 1, days: 1 };
+                  return { cat: String(r.cat || r.metric || 'water').slice(0, 20), target: Number(r.target) || 1, days: Number(r.days) || 1 };
+                }),
+                status: 'live', ts: Date.now(),
+              }];
+            });
+            showNotif('Mission tracked — logs auto-checked', 'OK');
+            import('../core/missions.js').then((m) => { try { m.checkMissions(); } catch {} }).catch(() => {});
+            window.ZF.rerender();
+          };
+        });
+      }
+    }
+    if (delivBox) {
+      delivBox.style.display = filter === 'deliverables' ? '' : 'none';
+      if (filter === 'deliverables') {
+        const items = (gDeliverables || []).slice().sort((a,b) => {
+          const ta = Date.parse(a.updated_at || a.created_at || '') || 0;
+          const tb = Date.parse(b.updated_at || b.created_at || '') || 0;
+          if (tb !== ta) return tb - ta; return 0;
+        });
+        delivBox.innerHTML = items.length ? items.map((r) => {
+          const isTheme = r.kind === 'theme';
+          const name = r.name || r.data?.name || 'Untitled';
+          if (isTheme) {
+            const t = r.data || {};
+            return `<div class="card mb8"><div class="flex-between"><div><div style="font-size:13px;font-weight:700">${escapeHtml(name)}</div><div style="font-size:11px;color:var(--text-muted)">Theme</div></div><span class="badge badge-info">Theme</span></div><div style="display:flex;gap:6px;margin-top:8px"><div style="width:14px;height:14px;border-radius:50%;background:${t.primary || '#7c6fff'}"></div><div style="width:14px;height:14px;border-radius:50%;background:${t.bgBase || '#000'}"></div><div style="width:14px;height:14px;border-radius:50%;background:${t.bgSurface || '#111'}"></div></div></div>`;
+          }
+          const src = r.url || r.data?.url || '';
+          if (!/^(https?:|data:image\/)/i.test(src)) return '';
+          return `<div class="card mb8"><div style="font-size:13px;font-weight:700;margin-bottom:6px">${escapeHtml(name)}</div><img src="${escapeHtml(src)}" alt="" style="width:100%;height:160px;object-fit:cover;border-radius:10px;display:block"><div style="font-size:11px;color:var(--text-muted);margin-top:4px">Wallpaper</div></div>`;
+        }).filter(Boolean).join('') : '<div class="card text-center" style="color:var(--text-muted)">No deliverables.</div>';
+      }
+    }
     if (!box) return;
     const rows = allRows();
     const shown = rows.filter(({ m, mid, global }) => {
       const unread = global ? !isGRead(m) : !isRead(mid);
       if (filter === 'unread' && !unread) return false;
-      if (filter === 'rewards' && !isRewardMsg(m)) return false;
+      if (filter === 'rewards') {
+        if (isRewardMsg(m)) return true;
+        return false;
+      }
       if (q && !((m.title || '') + ' ' + (m.body || '')).toLowerCase().includes(q)) return false;
       return true;
     });
+    if (filter === 'rewards') {
+      const hiddenR = new Set(S.hiddenGlobals || []);
+      const mine = [S.deviceId, S.profile?.name, S.player?.name].filter(Boolean).map(String);
+      const forMe = (r) => !r?.target || r.target === 'all' || mine.includes(String(r.target));
+      const claimed = new Set(S.claimedRewards || []);
+      const rewardItems = (gRewards || []).filter(forMe).filter((r) => !hiddenR.has('g-' + (r.id || r.code))).map((r) => {
+        const id = r.id || r.code || r.title; const done = claimed.has(id);
+        return `<div class="card mb8"><div class="flex-between"><div><div style="font-size:13px;font-weight:700">${escapeHtml(r.title || 'Reward')}</div><div style="font-size:11px;color:var(--warning)">${Number(r.xp) < 0 ? '' : '+'}${sanitizeNumber(r.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div><span style="display:flex;gap:4px"><button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim-r="${escapeHtml(id)}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button></span></div></div>`;
+      });
+      box.innerHTML = (shown.map(({ m, mid, global }) => {
+        const unread = global ? !isGRead(m) : !isRead(mid);
+        const claimedMsg = isRewardMsg(m) && (S.claimedRewards || []).includes(mid);
+        const init = escapeHtml(((m.title || 'Z')[0] || 'Z').toUpperCase());
+        return `<div class="quest-card" data-open="${escapeHtml(mid)}" data-global="${global ? 1 : ''}" style="cursor:pointer;${unread ? `border-color:var(--primary);background:var(--primary-dim);` : ''}"><span style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--font-display);background:${kindColor(m)}22;color:${kindColor(m)};border:1px solid ${kindColor(m)}">${init}</span><div style="flex:1;min-width:0"><div class="flex-between"><div style="font-size:13px;font-weight:${unread ? 800 : 600};font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'ZenFit')}</div><span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}</span></div><div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(stripTokens(m.body || ''))}</div><div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}<span class="badge ${claimedMsg ? 'badge-green' : 'badge-amber'}">${claimedMsg ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${sanitizeNumber(m.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP`}</span></div></div>${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : ''}</div>`;
+      }).join('') + rewardItems.join('')) || '<div class="card text-center" style="color:var(--text-muted)">No reward messages.</div>';
+      box.querySelectorAll('[data-open]').forEach((row) => { row.onclick = (e) => { if (e.target.closest('[data-delmsg]')) return; openDetail(host, row.dataset.open, row.dataset.global === '1'); }; });
+      box.querySelectorAll('[data-claim-r]').forEach((b) => {
+        b.onclick = () => {
+          const id = b.dataset.claimR; const r = (gRewards || []).find((x) => (x.id || x.code || x.title) === id);
+          if (!r || (S.claimedRewards || []).includes(id)) return;
+          const xp = Number(r.xp) || 0;
+          update((s) => { s.claimedRewards = [...(s.claimedRewards || []), id]; });
+          if (xp > 0) awardXP(xp, `Global reward: ${r.title || ''}`);
+          else if (xp < 0) { deductXP(Math.abs(xp), `Global penalty: ${r.title || ''}`); showNotif(`${xp} XP — ${r.title || 'Penalty'}`, '!'); }
+          window.ZF.rerender();
+        };
+      });
+      return;
+    }
     box.innerHTML = shown.map(({ m, mid, global }) => {
       const unread = global ? !isGRead(m) : !isRead(mid);
       const claimed = isRewardMsg(m) && (S.claimedRewards || []).includes(mid);
@@ -209,7 +328,7 @@ export function renderInbox(host) {
         + `<div style="flex:1;min-width:0"><div class="flex-between"><div style="font-size:13px;font-weight:${unread ? 800 : 600};font-family:var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(m.title || 'ZenFit')}</div>`
         + `<span style="font-size:10px;color:var(--text-muted);flex-shrink:0;margin-left:6px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}</span></div>`
         + `<div style="font-size:12px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(stripTokens(m.body || ''))}</div>`
-        + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
+        + `<div style="margin-top:2px">${unread ? '<span class="badge badge-purple">New</span> ' : ''}${global ? '<span class="badge badge-info">Global</span> ' : ''}${isRewardMsg(m) ? `<span class="badge ${claimed ? 'badge-green' : 'badge-amber'}">${claimed ? 'Claimed' : `${Number(m.xp) > 0 ? '+' : ''}${sanitizeNumber(m.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP`}</span>` : ''}${m.confetti ? ' <span class="badge badge-info">Surprise</span>' : ''}</div></div>`
         + `${unread ? '<span style="width:9px;height:9px;border-radius:50%;background:var(--danger);flex-shrink:0"></span>' : `<button class="btn btn-icon btn-sm" data-delmsg="${escapeHtml(mid)}" data-global="${global ? 1 : ''}" style="color:var(--danger);flex-shrink:0" title="${global ? 'Hide for me' : 'Delete'}">×</button>`}</div>`;
     }).join('') || '<div class="card text-center" style="color:var(--text-muted)">No messages match. Challenges and rewards from your coach appear here.</div>';
     box.querySelectorAll('[data-open]').forEach((row) => {
@@ -229,7 +348,7 @@ export function renderInbox(host) {
   const deleteMsg = (mid, isGlobalRow) => {
     if (isGlobalRow) {
       update((s) => { s.hiddenGlobals = [...new Set([...(s.hiddenGlobals || []), mid])]; });
-      showNotif('Hidden — you won\'t see this again', 'OK');
+      showNotif('Deleted — you won\'t see this again', 'OK');
       window.ZF.rerender();
       return;
     }
@@ -313,7 +432,7 @@ function openDetail(host, mid, isGlobal = false) {
     <div style=\"font-size:17px;font-weight:800;font-family:var(--font-display);${bgs.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}\">${escapeHtml(m.title || 'ZenFit')}</div>
     <div style="font-size:10px;${bgs.light ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">${escapeHtml(m.date || (m.created_at || '').slice(0, 10))}${isGlobal ? ' · Global' : ''}</div>
     <div style="font-size:13px;line-height:1.7;${bgs.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${renderRichBody(m.body, m.images, img, m.imgMeta)}</div>
-    ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${m.xp} XP`}</button>` : ''}
+    ${isReward ? `<button class="btn ${claimed ? '' : 'btn-primary'} mt12" id="inbox-dclaim" ${claimed ? 'disabled' : ''}>${claimed ? 'Claimed ✓' : `Claim ${Number(m.xp) > 0 ? '+' : ''}${sanitizeNumber(m.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP`}</button>` : ''}
   </div>
   ${isGlobal ? '' : '<button class="btn btn-sm btn-danger btn-full mt8" id="inbox-ddel">Delete message</button>'}`;
   if (wasUnread && m.confetti) setTimeout(() => { try { celebrateBurst(90); } catch {} }, 250);
@@ -368,6 +487,14 @@ async function syncGlobals(host) {
         showNotif(edited === 1 ? '📣 Updated broadcast — marked unread' : `📣 ${edited} updated — marked unread`, 'OK');
       }
     } catch {}
+    gRewards = (rewards || []).map((r) => ({ id: r.id || r.code || r.title, title: r.title || 'Reward', xp: r.xp, code: r.code, target: r.target, created_at: r.created_at }));
+    gMissions = (evts || []);
+    try {
+      import('../core/cloud.js').then(({ GlobalBoard }) => GlobalBoard.fetchAssets && GlobalBoard.fetchAssets().then((a) => {
+        gDeliverables = (a || []).filter((r) => r && (r.kind === 'theme' || r.kind === 'wallpaper'));
+        try { host._repaintInbox && host._repaintInbox(); } catch {}
+      }).catch(() => {}));
+    } catch {}
     try { host._repaintInbox && host._repaintInbox(); } catch {}
     if (myCasts?.length) {
       try {
@@ -397,7 +524,7 @@ async function syncGlobals(host) {
         + `<span style="display:flex;gap:4px;align-items:center"><span class="badge badge-purple">Mission</span><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + gid)}" style="color:var(--danger)" title="Hide for me">×</button></span></div>`
         + `${bodyImg(e.image, e.imgMeta, { h: 180 })}`
         + `<div style="font-size:12px;${ebg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'};margin:4px 0">${escapeHtml(e.descr || e.desc || '')}</div>`
-        + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${e.xp} XP on completion</div>` : '')
+        + (e.xp ? `<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:6px">Reward: +${sanitizeNumber(e.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP on completion</div>` : '')
         + (rules.length ? `<div style="display:flex;flex-direction:column;gap:6px;margin:6px 0">` + rules.map((r) => {
           const cat = r.cat || 'task';
           const catLabel = cat[0].toUpperCase() + cat.slice(1);
@@ -425,7 +552,7 @@ async function syncGlobals(host) {
       html += visRewards.length ? `<div class="section-title mt12">Claimable rewards</div>` + visRewards.slice(0, 5).map((r) => {
         const done = claimed.has(r.id || r.code);
         return `<div class="card mb8"><div class="flex-between"><div><div style="font-size:13px;font-weight:700">${escapeHtml(r.title || 'Reward')}</div>`
-          + `<div style="font-size:11px;color:var(--warning)">${Number(r.xp) < 0 ? '' : '+'}${r.xp || 0} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div>`
+          + `<div style="font-size:11px;color:var(--warning)">${Number(r.xp) < 0 ? '' : '+'}${sanitizeNumber(r.xp, { min: -100000, max: 100000, fallback: 0, integer: true })} XP${r.code ? ` · ${escapeHtml(r.code)}` : ''}</div></div>`
           + `<span style="display:flex;gap:4px"><button class="btn btn-sm ${done ? '' : 'btn-primary'}" data-claim="${escapeHtml(r.id || r.code || '')}" ${done ? 'disabled' : ''}>${done ? 'Claimed ✓' : 'Claim'}</button><button class="btn btn-icon btn-sm" data-ghide="${escapeHtml('g-' + (r.id || r.code))}" style="color:var(--danger)" title="Hide for me">×</button></span></div></div>`;
       }).join('') : '';
     }

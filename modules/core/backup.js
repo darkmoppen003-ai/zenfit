@@ -322,6 +322,15 @@ export function importZipFile(file) {
 export function chronologicalMerge(cur, inc) {
   const out = { ...cur, ...inc };
   try {
+    // N10: a backup must never carry a consent decision or a reward claim across
+    // devices. The archive's globalLeaderboardOptIn was adopted verbatim, so
+    // importing an old snapshot silently re-published the owner to the global
+    // leaderboard after they had opted out — with no opt-in action of their own.
+    // Consent stays with the live device; the owner can re-toggle it explicitly.
+    out.globalLeaderboardOptIn = cur.globalLeaderboardOptIn === true;
+    // N10: claimed rewards are a lifetime record. Overwriting it with an older
+    // archive wiped post-snapshot claims and let the same reward be claimed twice.
+    out.claimedRewards = [...new Set([...(cur.claimedRewards || []), ...(inc.claimedRewards || [])])];
     // Player: keep max XP/level
     if ((inc.player?.xp || 0) < (cur.player?.xp || 0)) out.player = { ...(inc.player || {}), ...(cur.player || {}) };
     const keyOf = (e) => (e.date || '') + '|' + (e.id || '') + '|' + (e.name || e.food || e.mood || e.activity || '');

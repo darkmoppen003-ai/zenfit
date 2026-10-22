@@ -68,17 +68,58 @@ export function shadeColor(hex, pct) {
   return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
+/** Theme colour fields are interpolated straight into CSS (style attributes and
+ *  CSS custom properties), so they are a trust boundary — a theme file is
+ *  owner-supplied data that can arrive from an import or a published asset.
+ *  Allow only real CSS colour syntax; anything else falls back to the base value.
+ *  This is the single choke point: guard here and every render site downstream
+ *  (drawMine, the coach grid, applyTheme) is safe. */
+const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*[\d.%,\s/]+\)|hsla?\(\s*[\d.%,\s/deg]+\)|[a-z]{3,20})$/i;
+const COLOR_KEYS = [
+  'bgBase', 'bgSurface', 'bgRaised', 'bgOverlay', 'borderMid', 'primary', 'inputBg',
+  'textPrimary', 'textSecondary', 'textMuted', 'glow1', 'glow2', 'glow3',
+  'taskCompletedBg', 'calDayDoneBg', 'calDayDoneBorder', 'hm1Bg', 'hm1Border',
+  'hm2Bg', 'hm2Border', 'hm3Bg', 'hm3Border',
+];
+/* Token names that only a full (V1) theme carries. `primary` is deliberately
+   excluded — the legacy minimal shape uses it too. */
+const FULL_KEYS = [
+  'bgBase', 'bgSurface', 'bgRaised', 'bgOverlay', 'borderMid', 'inputBg',
+  'textPrimary', 'textSecondary', 'textMuted', 'glow1', 'glow2', 'glow3',
+];
+function safeColor(v, fallback) {
+  const s = String(v ?? '').trim();
+  if (!s) return fallback;
+  // Reject anything that could break out of a CSS declaration or an attribute,
+  // or that carries a URL/scheme. Then require a recognised colour shape.
+  if (/[;"'<>\\]/.test(s) || /url\s*\(/i.test(s)) return fallback;
+  return COLOR_RE.test(s) ? s : fallback;
+}
+function safeTheme(t, base) {
+  const out = { ...t };
+  for (const k of COLOR_KEYS) if (k in out) out[k] = safeColor(out[k], base[k]);
+  return out;
+}
+
 /** Normalize legacy minimal themes to the V1-full shape. */
 export function normalizeTheme(t) {
   if (!t || typeof t !== 'object') return { ...THEMES.midnight };
-  if (t.bgBase) return t;
   const base = THEMES.midnight;
+  // A theme carrying the full token set was previously returned verbatim, which let
+  // imported/remote colour strings reach CSS unchecked. Sanitise it against the base
+  // palette instead, and bound the free-text fields that are rendered alongside it.
+  if (FULL_KEYS.some((k) => t[k])) {
+    const safe = safeTheme(t, base);
+    safe.name = String(safe.name || 'Custom').slice(0, 60);
+    safe.id = t.id;
+    return safe;
+  }
   return {
-    ...base, name: t.name || 'Custom',
-    primary: t.primary || base.primary,
-    bgBase: t.bg || base.bgBase, bgSurface: t.surface || base.bgSurface,
-    bgRaised: t.raised || base.bgRaised,
-    textPrimary: t.text || base.textPrimary,
+    ...base, name: String(t.name || 'Custom').slice(0, 60), id: t.id,
+    primary: safeColor(t.primary, base.primary),
+    bgBase: safeColor(t.bg, base.bgBase), bgSurface: safeColor(t.surface, base.bgSurface),
+    bgRaised: safeColor(t.raised, base.bgRaised),
+    textPrimary: safeColor(t.text, base.textPrimary),
   };
 }
 
@@ -100,7 +141,10 @@ export function getCustomThemes() {
 }
 
 /** V1 applyThemeObject — sets the full token set + meta color. */
-export function applyThemeObject(t, key) {
+export function applyThemeObject(rawT, key) {
+  // Trust boundary: every token below is written into a CSS custom property, so
+  // sanitise the colour values before they land there.
+  const t = normalizeTheme(rawT);
   update((s) => { s.theme = key; }, { silent: true });
   window.ZF.save();
   const r = document.documentElement.style;

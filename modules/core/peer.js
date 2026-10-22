@@ -6,7 +6,7 @@
 ────────────────────────────────────────────────────────────── */
 import { S, update, save } from './store.js';
 import { rankForLevel } from './utils.js';
-import { escapeHtml, sanitizeText } from './sanitize.js';
+import { escapeHtml, sanitizeText, sanitizeNumber } from './sanitize.js';
 import { showNotif, openOverlay } from './ui.js';
 
 export const peerConnections = {};
@@ -101,12 +101,14 @@ function setupConn(conn) {
         update((s) => { s.pendingRequests = s.pendingRequests || []; });
         const c = msg.data || {};
         c.peerId = conn.peer;
-        // ponytail: match by peerId first (names collide across devices)
-        const dup = S.pendingRequests.findIndex((p) => p.peerId === conn.peer || p.name === c.name);
+        c.name = sanitizeText(c.name, 60) || conn.peer;
+        // F3: bind on the channel. Matching by name let any peer overwrite a record
+        // (and its peerId) by guessing a display name.
+        const dup = S.pendingRequests.findIndex((p) => p.peerId === conn.peer);
         if (dup > -1) S.pendingRequests[dup] = { ...c, ts: Date.now() };
         else S.pendingRequests.push({ ...c, ts: Date.now() });
-        if ((S.partners || []).some((p) => p.peerId === conn.peer || p.name === c.name)) {
-          const idx = S.pendingRequests.findIndex((p) => p.name === c.name);
+        if ((S.partners || []).some((p) => p.peerId === conn.peer)) {
+          const idx = S.pendingRequests.findIndex((p) => p.peerId === conn.peer);
           if (idx > -1) acceptRequest(idx);
         } else {
           save();
@@ -116,41 +118,50 @@ function setupConn(conn) {
       } else if (msg.type === 'connect_accept') {
         const card = msg.data || {};
         card.peerId = conn.peer;
+        // F3: identity is the channel, never the body name. A name from the message
+        // must not select which record we overwrite, and an acceptance from a channel
+        // we never asked must not create a partner at all.
+        card.name = sanitizeText(card.name, 60) || conn.peer;
+        const known = (S.partners || []).some((p) => p.peerId === conn.peer)
+          || (S.sentRequests || []).some((p) => p.peerId === conn.peer);
+        if (!known) return; // unsolicited acceptance — ignore
         update((s) => {
           s.partners = s.partners || [];
-          const pIdx = s.partners.findIndex((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name);
+          const pIdx = s.partners.findIndex((p) => p.peerId === conn.peer);
           if (pIdx > -1) s.partners[pIdx] = card;
           else s.partners.push(card);
           if (s.sentRequests) {
-            const sIdx = s.sentRequests.findIndex((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name);
-            if (sIdx > -1) s.sentRequests.splice(sIdx, 1);
+            s.sentRequests = s.sentRequests.filter((p) => p.peerId !== conn.peer);
           }
         });
         showNotif(card.name + ' accepted your request!', 'OK');
         window.ZF.rerender();
       } else if (msg.type === 'connect_reject') {
+        // F3: a rejection is only ours to apply if it arrives on a channel we asked.
+        const rName = sanitizeText(msg.name, 60);
         update((s) => {
           if (s.sentRequests) {
-            const rIdx = s.sentRequests.findIndex((p) => p.name === msg.name);
+            const rIdx = s.sentRequests.findIndex((p) => p.peerId === conn.peer);
             if (rIdx > -1) s.sentRequests.splice(rIdx, 1);
           }
         });
-        showNotif((msg.name || 'Request') + ' declined your connection', '!');
+        showNotif((rName || 'Request') + ' declined your connection', '!');
         window.ZF.rerender();
       } else if (msg.type === 'card') {
         const d = msg.data || {};
-        if ((S.partners || []).some((p) => p.peerId === conn.peer || p.name === d.name)) {
+        d.name = sanitizeText(d.name, 60) || conn.peer;
+        if ((S.partners || []).some((p) => p.peerId === conn.peer)) {
           importFromPeer(conn.peer, d);
-        } else if ((S.sentRequests || []).some((p) => p.peerId === conn.peer || p.name === d.name)) {
+        } else if ((S.sentRequests || []).some((p) => p.peerId === conn.peer)) {
           // ponytail: offline-accepted handshake completes on next live contact —
           // they accepted while we were away; their card promotes us to partners
           update((s) => {
             s.partners = s.partners || [];
             const card = { ...d, peerId: conn.peer };
-            const idx = s.partners.findIndex((p) => p.peerId === conn.peer || p.name === d.name);
+            const idx = s.partners.findIndex((p) => p.peerId === conn.peer);
             if (idx > -1) s.partners[idx] = card;
             else s.partners.push(card);
-            s.sentRequests = (s.sentRequests || []).filter((p) => p.peerId !== conn.peer && p.name !== d.name);
+            s.sentRequests = (s.sentRequests || []).filter((p) => p.peerId !== conn.peer);
           });
           save();
           showNotif((d.name || 'Partner') + ' is now in your leaderboard!', 'OK');
@@ -170,28 +181,40 @@ function setupConn(conn) {
         });
         window.ZF.rerender();
       } else if (msg.type === 'challenge_invite') {
+        // F5: only a peer we actually know may push a challenge into our state.
+        // Any inbound P2P channel can send this frame, so gate on the channel.
+        if (!knownPeer(conn.peer)) return;
         const ci = msg.data || {};
+        // A connected peer chooses this whole frame. Coerce at ingest so no later
+        // render site has to re-validate: durationDays feeds a challenge template and
+        // a toast, and the text fields are rendered in the challenge list.
+        const cid = sanitizeText(String(ci.id || ''), 60) || `ch_${Date.now()}`;
+        const ctitle = sanitizeText(ci.title, 80) || 'Challenge';
+        const cdesc = sanitizeText(ci.desc, 200);
+        const cby = sanitizeText(ci.createdBy, 60) || 'Partner';
         update((s) => {
           s.challenges = s.challenges || [];
-          if (!s.challenges.some((c) => c.id === ci.id)) {
-            const days = ci.durationDays || 7;
+          if (!s.challenges.some((c) => c.id === cid)) {
+            const days = sanitizeNumber(ci.durationDays, { min: 1, max: 3650, fallback: 7, integer: true });
             const now = Date.now();
             s.challenges.push({
-              id: ci.id, type: 'workouts', title: ci.title, desc: ci.desc || '',
+              id: cid, type: 'workouts', title: ctitle, desc: cdesc,
               durationDays: days, startsAt: now, endsAt: now + days * 86400000,
-              createdBy: ci.createdBy || 'Partner', status: 'active',
+              createdBy: cby, status: 'active',
               participants: [{ peerId: S.deviceId, name: S.player.name, progress: 0 }],
               winnerId: null,
             });
           }
         });
-        showNotif(`⚔️ ${ci.createdBy} invited you to "${ci.title}" (${ci.durationDays || 7} days)!`, 'OK');
+        showNotif(`⚔️ ${cby} invited you to "${ctitle}" (${sanitizeNumber(ci.durationDays, { min: 1, max: 3650, fallback: 7, integer: true })} days)!`, 'OK');
         window.ZF.rerender();
       } else if (msg.type === 'challenge_progress') {
-        handleChallengeProgress(msg.data);
+        // F5: the participant is the channel, never a body-supplied deviceId.
+        handleChallengeProgress(msg.data, conn.peer);
       } else if (msg.type === 'request_detail' || msg.type === 'request_public_stats') {
-        const fromName = msg.from || '';
-        const allowed = (S.partners || []).some((p) => p.peerId === conn.peer || p.name === fromName);
+        // F3: authorisation binds to the channel. Matching on a caller-supplied
+        // display name let any peer read the detailed card by guessing a partner name.
+        const allowed = (S.partners || []).some((p) => p.peerId === conn.peer);
         try {
           conn.send(JSON.stringify({
             type: msg.type === 'request_detail' ? 'detail' : 'public_stats',
@@ -205,6 +228,16 @@ function setupConn(conn) {
     delete peerConnections[conn.peer];
     window.ZF.rerender();
   });
+}
+
+/** Do we know this peer? Any inbound P2P channel can send any frame, so anything
+ *  that mutates shared state is gated on the channel being someone we connected
+ *  with (a partner, or a handshake still in flight). */
+export function knownPeer(peerId) {
+  if (!peerId) return false;
+  return (S.partners || []).some((p) => p.peerId === peerId)
+    || (S.pendingRequests || []).some((p) => p.peerId === peerId)
+    || (S.sentRequests || []).some((p) => p.peerId === peerId);
 }
 
 export function connectToPeer(peerId) {
@@ -234,7 +267,8 @@ export function importFromPeer(peerId, card) {
   update((s) => {
     s.partners = s.partners || [];
     card.peerId = peerId;
-    const idx = s.partners.findIndex((p) => p.peerId === peerId || p.name === card.name);
+    card.name = sanitizeText(card.name, 60) || peerId;
+    const idx = s.partners.findIndex((p) => p.peerId === peerId);
     if (idx > -1) s.partners[idx] = card;
     else s.partners.push(card);
   });
@@ -270,9 +304,14 @@ export function sendConnectRequest(code) {
     if (!code?.trim()) { showNotif('Paste a share code first', '!'); return; }
     const card = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
     if (!card.name || card.level == null) { showNotif('Invalid share code', '!'); return; }
-    if ((S.partners || []).some((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name)) { showNotif(card.name + ' is already in your leaderboard', '!'); return; }
-    if ((S.sentRequests || []).some((p) => (card.peerId && p.peerId === card.peerId) || p.name === card.name)) { showNotif('Request to ' + card.name + ' is already pending', '!'); return; }
-    const incomingIdx = (S.pendingRequests || []).findIndex((p) => p.name === card.name);
+    // F4: dedupe on identity (peerId), not on a display name that anyone can choose.
+    if (card.peerId && (S.partners || []).some((p) => p.peerId === card.peerId)) { showNotif(card.name + ' is already in your leaderboard', '!'); return; }
+    if (card.peerId && (S.sentRequests || []).some((p) => p.peerId === card.peerId)) { showNotif('Request to ' + card.name + ' is already pending', '!'); return; }
+    // F4: promote only a pending entry whose channel matches the code we scanned.
+    // Matching by display name let a scanned code bind a friend's record to a
+    // different peer's channel — the list would show the friend, sends would go to
+    // the other peer. The code's own peerId is already trusted two lines above.
+    const incomingIdx = (S.pendingRequests || []).findIndex((p) => card.peerId && p.peerId === card.peerId);
     if (incomingIdx > -1) { acceptRequest(incomingIdx); return; }
     let sentLive = false;
     if (card.peerId && peer && !peer.destroyed) {
@@ -297,7 +336,7 @@ export function acceptRequest(i) {
   delete partnerCard.ts;
   update((s) => {
     s.partners = s.partners || [];
-    const existing = s.partners.findIndex((p) => (partnerCard.peerId && p.peerId === partnerCard.peerId) || p.name === req.name);
+    const existing = s.partners.findIndex((p) => p.peerId === partnerCard.peerId);
     if (existing > -1) s.partners[existing] = partnerCard;
     else s.partners.push(partnerCard);
     s.pendingRequests.splice(i, 1);
@@ -383,12 +422,12 @@ export function viewPartnerStats(i) {
   openOverlay(`<div style="text-align:left;max-height:70vh;overflow-y:auto">
     <div class="flex gap12 mb12"><div class="rank-badge">${escapeHtml((p.name || '?')[0])}</div>
     <div><div style="font-size:16px;font-weight:700;font-family:var(--font-display);">${escapeHtml(p.name)} ${p.peerId && peerConnections[p.peerId] ? '<span class="badge badge-green">● live</span>' : ''}</div>
-    <div style="font-size:12px;color:var(--text-muted)">Rank #${pos} among friends · Lv ${p.level} · ${escapeHtml(p.rank || '')}</div></div></div>
+    <div style="font-size:12px;color:var(--text-muted)">Rank #${pos} among friends · Lv ${sanitizeNumber(p.level, { max: 9999, fallback: 1, integer: true })} · ${escapeHtml(p.rank || '')}</div></div></div>
     <div class="grid2 gap8">
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.level ?? p.level}</div><div style="font-size:10px;color:var(--text-muted)">Level</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.xp ?? p.xp ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">XP</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.streak ?? p.streak ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Streak</div></div>
-      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${cached.workouts ?? p.workouts ?? 0}</div><div style="font-size:10px;color:var(--text-muted)">Workouts</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${sanitizeNumber(cached.level ?? p.level, { max: 9999, fallback: 1, integer: true })}</div><div style="font-size:10px;color:var(--text-muted)">Level</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${sanitizeNumber(cached.xp ?? p.xp, { max: 99999999, fallback: 0, integer: true })}</div><div style="font-size:10px;color:var(--text-muted)">XP</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${sanitizeNumber(cached.streak ?? p.streak, { max: 100000, fallback: 0, integer: true })}</div><div style="font-size:10px;color:var(--text-muted)">Streak</div></div>
+      <div class="card-sm text-center"><div style="font-size:18px;font-weight:800;font-family:var(--font-display);">${sanitizeNumber(cached.workouts ?? p.workouts, { max: 1000000, fallback: 0, integer: true })}</div><div style="font-size:10px;color:var(--text-muted)">Workouts</div></div>
     </div>
     <div class="flex gap8 mt12">
       ${p.peerId ? '<button class="btn btn-sm btn-primary" id="ps-chat">Chat</button>' : ''}
@@ -432,15 +471,24 @@ export function trackChallengeProgress() {
   if (changed) save();
 }
 
-export function handleChallengeProgress(data) {
+export function handleChallengeProgress(data, fromPeer) {
   if (!data?.challengeId || !S.challenges) return;
+  // F5: the participant is identified by the transport channel, not by a value the
+  // peer put in the body. The PeerJS peer id IS the device id, so the channel is a
+  // real identity here — a stranger could otherwise forge any participant's result
+  // (including ours) by naming their deviceId in the frame.
+  if (!fromPeer) return;
+  if (data.deviceId && data.deviceId !== fromPeer) return;
+  if (!knownPeer(fromPeer)) return;
   const c = S.challenges.find((ch) => ch.id === data.challengeId);
   if (!c) return;
   update((s) => {
     const ch = s.challenges.find((x) => x.id === data.challengeId);
-    const p = ch.participants.find((part) => part.peerId === data.deviceId);
-    if (p) p.progress = data.progress;
-    else ch.participants.push({ peerId: data.deviceId, name: data.name || 'Partner', progress: data.progress });
+    const p = ch.participants.find((part) => part.peerId === fromPeer);
+    // Remote-chosen progress: coerced on arrival, not at each render site.
+    const prog = sanitizeNumber(data.progress, { max: 1000000, fallback: 0, integer: true });
+    if (p) p.progress = prog;
+    else ch.participants.push({ peerId: fromPeer, name: sanitizeText(data.name || 'Partner', 60), progress: prog });
   });
 }
 

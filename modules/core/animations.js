@@ -18,6 +18,11 @@ export function loadAnime() {
     if (window.anime) { animeRef = window.anime; return resolve(animeRef); }
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js';
+    // SRI pin, matching the PeerJS include in core/peer.js. Without it a compromised
+    // CDN or a MITM injects script into every online boot. Update the hash together
+    // with the version above — a changed file fails closed (onerror → CSS fallback).
+    s.integrity = 'sha384-fXdIufVbE9aU7STmdk/DWK0imNOozId9fTwzM/gi0NfPjphEIC3gq0M760UnsKVy';
+    s.crossOrigin = 'anonymous';
     s.onload = () => { animeRef = window.anime || null; resolve(animeRef); };
     s.onerror = () => resolve(null); // offline → CSS fallback
     document.head.appendChild(s);

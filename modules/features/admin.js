@@ -169,7 +169,7 @@ async function loadGlobalUsers(body) {
     const rows = await LeaderboardAPI.fetch(50);
     if (!rows?.length) { box.innerHTML = '<div style="font-size:12px;color:var(--text-muted)">Board empty or offline.</div>'; return; }
     box.innerHTML = rows.map((r, i) => `<div class="flex-between mb8" data-gname="${escapeHtml((r.name || '').toLowerCase())}">
-      <span style="font-size:13px">${escapeHtml(r.name)} <span style="color:var(--text-muted)">Lv ${r.level} · ${escapeHtml(r.rank || '')}</span></span>
+      <span style="font-size:13px">${escapeHtml(r.name)} <span style="color:var(--text-muted)">Lv ${sanitizeNumber(r.level, { max: 9999, fallback: 1, integer: true })} · ${escapeHtml(r.rank || '')}</span></span>
       <span class="flex gap8"><button class="btn btn-sm" data-gmsg="${i}">Message</button><button class="btn btn-sm btn-success" data-grw="${i}">Reward</button><button class="btn btn-sm btn-danger" data-gpn="${i}">Punish</button></span></div>`).join('');
     const act = (idx, fn) => fn(rows[idx]);
     box.querySelectorAll('[data-gmsg]').forEach((b) => { b.onclick = () => act(Number(b.dataset.gmsg), (r) => {
@@ -588,9 +588,10 @@ async function announceAsset(kind, name, detail, image = '') {
     const { GlobalBoard } = await import('../core/cloud.js');
     const label = kind === 'wallpaper' ? '🖼️ New wallpaper' : kind === 'theme' ? '🎨 New theme' : '🎁 New addition';
     const img = /^(https:\/\/|data:image\/)/i.test(image || '') ? image : '';
+    const body = detail && detail.trim() ? detail : `Your coach added **${name}**. Open Customization to try it!`;
     await GlobalBoard.publish('global_broadcasts', {
       title: `${label}: ${name}`,
-      body: detail || `Your coach added **${name}**. Open Customization to try it!`,
+      body,
       target: 'all', bg: 'none', hl: 'info', bgImage: '', image: img, images: [], confetti: false,
     });
   } catch {}

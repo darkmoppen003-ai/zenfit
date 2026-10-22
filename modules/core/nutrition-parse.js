@@ -8,7 +8,7 @@
      Tier 3 — Cloudflare Worker AI proxy.
    gradeFood(nutrients) + gradeLabel + recalcFood + nn: V1 exact.
 ────────────────────────────────────────────────────────────── */
-import { sanitizeText } from './sanitize.js';
+import { sanitizeText, sanitizeNumber } from './sanitize.js';
 
 const WORKER_URL = 'https://zenfit-nutrition.dark-moppen003.workers.dev/';
 const OFF_PRODUCT = 'https://world.openfoodfacts.org/api/v2/product/';
@@ -322,7 +322,22 @@ export async function fetchAiFood(text, signal) {
     const j = await r.json();
     const items = Array.isArray(j) ? j : j.foods || j.items || [];
     return items.map((f) => {
-      if (f?.nutrients && typeof f.nutrients === 'object') return { ...f, source: 'ai', _edit: f._edit || null };
+      // The pass-through below used to copy the worker's object wholesale, so a
+      // remotely-chosen qty/unit reached the nutrition preview's value="" attribute
+      // raw (attribute break-out). Coerce every field the UI interpolates.
+      if (f?.nutrients && typeof f.nutrients === 'object') {
+        const n = f.nutrients;
+        const num = (v) => sanitizeNumber(v, { max: 10000000, fallback: 0 });
+        return {
+          ...f,
+          name: sanitizeText(f.name || 'Dish', 120),
+          qty: sanitizeNumber(f.quantity ?? f.qty, { max: 100000, fallback: 1 }),
+          unit: sanitizeText(String(f.unit || ''), 20),
+          nutrients: { cal: num(n.cal ?? n.calories), protein: num(n.protein), carbs: num(n.carbs), fat: num(n.fat), fiber: num(n.fiber), sugar: num(n.sugar) },
+          source: 'ai',
+          _edit: f._edit || null,
+        };
+      }
       return aiFoodToParsed(f, text);
     });
   } finally { clearTimeout(to); }

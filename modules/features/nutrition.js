@@ -351,7 +351,7 @@ function drawPreview(body) {
       + `<div style="font-size:13px;font-weight:500;text-transform:capitalize">${escapeHtml(f.name)}</div>`
       + `<button class="btn btn-icon btn-sm" data-prm="${i}" style="color:var(--danger);flex-shrink:0">×</button></div>`
       + `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">`
-      + `<input type="number" data-pqty="${i}" value="${f.qty || 1}" min="0.1" step="any" style="width:55px;text-align:center;padding:4px" aria-label="Quantity">`
+      + `<input type="number" data-pqty="${i}" value="${sanitizeNumber(f.qty, { max: 100000, fallback: 1 })}" min="0.1" step="any" style="width:55px;text-align:center;padding:4px" aria-label="Quantity">`
       + `<select data-punit="${i}" style="width:65px;padding:4px" aria-label="Unit">`
       + ['g', 'ml', 'kg', 'cup', 'tbsp', 'tsp', 'piece', 'bowl'].map((u) =>
         `<option value="${u}"${f.unit === u || (u === 'piece' && f.unit === 'pc') ? ' selected' : ''}>${u}</option>`).join('')
