@@ -14,7 +14,7 @@ import { MISSION_CATS, missionProgress } from '../core/missions.js';
 import { THEMES, PRESET_WALLPAPERS, normalizeTheme, getCustomThemes, applyTheme, applyThemeObject } from '../core/themes.js';
 import { verifyAdminPassword } from '../core/secrets.js';
 import { setAdminToken } from '../core/cloud.js';
-import { renderRichBody, msgBgStyle, bodyImg, cleanImgMeta } from './inbox.js';
+import { renderRichBody, msgBgStyle, bodyImg, cleanImgMeta, msgHero } from './inbox.js';
 
 let unlocked = false;
 let tab = 'overview';
@@ -790,12 +790,13 @@ function renderBroadcast(body) {
     const box = body.querySelector('#ad-npreview');
     if (!box) return;
     // ponytail: full-length user-card mirror — same DOM, sizes and type as the inbox detail view
+    const hero = msgHero(d);
     let rich = '';
-    try { rich = renderRichBody(d.body, d.images, d.image, d.imgMeta); } catch { rich = escapeHtml(d.body).slice(0, 120); }
+    try { rich = renderRichBody(d.body, d.images, hero, d.imgMeta); } catch { rich = escapeHtml(d.body).slice(0, 120); }
     const pbg = msgBgStyle(d);
     box.innerHTML = `<div class="section-title mt8">Preview — exactly as users see it</div>`
       + `<div class="card" style="${pbg.style}${d.hl !== 'none' ? `border-color:var(--${d.hl});box-shadow:0 0 18px var(--${d.hl})55;` : ''}">`
-      + bodyImg(d.image, (d.imgMeta || [])[0], { h: 220, mb: '0 0 10px' })
+      + bodyImg(hero, (d.imgMeta || [])[0], { h: 220, mb: '0 0 10px' })
       + `<div style="font-size:17px;font-weight:800;font-family:var(--font-display);${pbg.light ? 'color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);' : ''}">${escapeHtml(d.title) || 'Title'}${d.confetti ? ' 🎉' : ''}</div>`
       + `<div style="font-size:10px;${pbg.light ? 'color:rgba(255,255,255,.8)' : 'color:var(--text-muted)'};margin:2px 0 8px">just now · preview</div>`
       + `<div style="font-size:13px;line-height:1.7;${pbg.light ? 'color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.45);' : 'color:var(--text-secondary)'}">${rich || 'Preview…'}</div></div>`;
@@ -941,21 +942,21 @@ async function loadGlobalOutbox(body, fillForm = null, onEdit = null) {
 /* ── Content: wallpapers, themes, cloud stub ── */
 function renderContent(body) {
   const cfg = (() => { try { return JSON.parse(localStorage.getItem('zf_supabase') || '{}'); } catch { return {}; } })();
-  body.innerHTML = `<div class="card mb12"><div class="section-title">Wallpapers (bundled + uploaded)</div>
+  body.innerHTML = `<details class="card mb12 fold" open><summary class="section-title">Wallpapers (bundled + uploaded)</summary>
     <div style="font-size:12px;color:var(--text-muted)">Add via Themes tab → Wallpaper studio, or drop a URL here:</div>
     <div class="flex gap8 mt8"><input type="text" id="ad-wpname" placeholder="Name (e.g. Mountain dusk)" maxlength="40" style="max-width:170px">
     <input type="text" id="ad-wpurl" placeholder="https://…/image.jpg" maxlength="500">
     <button class="btn btn-sm btn-primary" id="ad-wpadd">Add</button></div>
     <div id="ad-wplist" class="mt8" style="display:flex;flex-direction:column;gap:6px"></div>
-    <div style="font-size:12px" class="mt8">${(S.bgImages || []).length} uploaded · presets ship in assets/bg/</div></div>
-  <div class="card mb12"><div class="section-title">Deployed assets (all devices, admin only)</div>
+    <div style="font-size:12px" class="mt8">${(S.bgImages || []).length} uploaded · presets ship in assets/bg/</div></details>
+  <details class="card mb12 fold" open><summary class="section-title">Deployed assets (all devices, admin only)</summary>
     <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Wallpapers + themes shipped globally. Removing deletes them for everyone.</div>
-    <div id="ad-assets"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div></div>
-  <div class="card mb12"><div class="section-title">Theme studio (same builder as Themes tab)</div>
-    <div class="section-title mt8">Built-in</div>
-    <div class="grid2 gap8" id="ad-theme-grid"></div>
-    <div class="section-title mt12">Custom</div>
-    <div id="ad-theme-mine" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    <div id="ad-assets"><div style="font-size:12px;color:var(--text-muted)">Loading…</div></div></details>
+  <details class="card mb12 fold" open><summary class="section-title">Theme studio (same builder as Themes tab)</summary>
+    <details class="fold" open><summary class="section-title mt8">Built-in</summary>
+      <div class="grid2 gap8" id="ad-theme-grid"></div></details>
+    <details class="fold" open><summary class="section-title mt12">Custom</summary>
+      <div id="ad-theme-mine" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div></details>
     <div class="section-title mt12">Creator</div>
     <div class="theme-preview active" id="adth-live"><div class="tp-bar" id="adth-live-bar">
       <div class="tp-dot" id="adth-live-dot"></div><div style="font-size:12px" id="adth-live-name">Preview</div></div>
@@ -967,9 +968,9 @@ function renderContent(body) {
       <label style="font-size:12px;grid-column:1/-1">Wallpaper image URL (https://… — overrides selection)<input type="text" id="adth-wpurl" placeholder="https://…/image.jpg" maxlength="500"></label>
       <label style="font-size:12px">Particles<select id="adth-fx"><option value="">— keep current —</option><option value="dust">✨ Constellation</option><option value="snow">❄️ Snow</option><option value="embers">🔥 Embers</option><option value="firefly">✨ Firefly</option><option value="matrix">🌧️ Matrix Rain</option><option value="cyber">⚡ Cyber Spark</option></select></label>
     </div>
-    <div class="section-title mt12">Surfaces</div><div id="adth-surfaces" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="section-title mt12">Text</div><div id="adth-texts" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div class="section-title mt12">Accent & glow</div><div id="adth-accents" style="display:flex;flex-direction:column;gap:8px"></div>
+    <details class="fold" open><summary class="section-title mt12">Surfaces</summary><div id="adth-surfaces" style="display:flex;flex-direction:column;gap:8px"></div></details>
+    <details class="fold" open><summary class="section-title mt12">Text</summary><div id="adth-texts" style="display:flex;flex-direction:column;gap:8px"></div></details>
+    <details class="fold" open><summary class="section-title mt12">Accent & glow</summary><div id="adth-accents" style="display:flex;flex-direction:column;gap:8px"></div></details>
     <div class="grid2 gap8 mt8">
       <label style="font-size:12px">Particle hue (0–360)<input type="number" id="adth-phue" min="0" max="360" value="250"></label>
       <label style="font-size:12px">Particle speed (0.2–3)<input type="number" id="adth-pspeed" min="0.2" max="3" step="0.1" value="1"></label>
@@ -984,14 +985,14 @@ function renderContent(body) {
       <button class="btn btn-primary btn-sm" id="adth-save">Save Custom Theme</button>
       <button class="btn btn-sm" id="adth-ship">Ship globally</button>
       <button class="btn btn-sm btn-ghost" id="adth-try">Try live</button>
-    </div></div>
-  <div class="card"><div class="section-title">Cloud sync (optional, Supabase)</div>
+    </div></details>
+  <details class="card fold"><summary class="section-title">Cloud sync (optional, Supabase)</summary>
     <div style="font-size:12px;color:var(--text-muted)" class="mb8">Local-first always works. Fill these to enable future multi-device sync — nothing breaks if empty.</div>
     <input type="text" id="ad-surl" placeholder="Supabase URL" value="${escapeHtml(cfg.url || '')}">
     <input type="text" id="ad-skey" placeholder="Anon key" value="${escapeHtml(cfg.key || '')}" class="mt8">
     <div class="flex gap8 mt8"><button class="btn btn-sm" id="ad-ssave">Save</button>
     <button class="btn btn-sm btn-ghost" id="ad-stest">Test connection</button></div>
-    <div id="ad-sres" style="font-size:12px" class="mt8"></div></div>`;
+    <div id="ad-sres" style="font-size:12px" class="mt8"></div></details>`;
   body.querySelector('#ad-wpadd').onclick = () => {
     const url = sanitizeText(body.querySelector('#ad-wpurl').value, 500);
     const name = sanitizeText(body.querySelector('#ad-wpname').value, 40);

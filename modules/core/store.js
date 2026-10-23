@@ -18,7 +18,7 @@ export const STORAGE_KEYS = {
   THEMES: 'zenfit_themes_v1',
 };
 export const DATA_VERSION = 24;
-export const APP_VERSION = "8.9.7";
+export const APP_VERSION = "8.9.8";
 
 export const APP_BUILD = "2026.10.22.68";
 /* V1 SCHEMA (types) + V2 additions. Unknown keys are dropped on
@@ -671,6 +671,9 @@ function trimOldData() {
    first must not skip the mirror (the exact case that needs it). */
 function snapshotState() { return JSON.parse(JSON.stringify(S)); }
 let saveTimer = null;
+/* Set by clearAllLocal: a reset reload must not write the live state back
+   (pagehide → flushSave would resurrect everything we just wiped). */
+let wiping = false;
 /** N9: local persistence failed (usually QuotaExceededError). Surface it once so a
  *  silently-dropped save is visible; the IndexedDB mirror still runs regardless. */
 let quotaWarned = false;
@@ -680,8 +683,10 @@ function notifyLocalSaveFailed() {
   try { import('./ui.js').then((m) => m.showNotif('Local storage full — recent changes may not persist', '!')).catch(() => {}); } catch {}
 }
 export function save() {
+  if (wiping) return;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
+    if (wiping) return;
     try {
       S.lastSaved = Date.now();
       trimOldData();
@@ -693,6 +698,7 @@ export function save() {
 }
 /** Synchronous write-through (page hide/close) — never debounced. */
 export function flushSave() {
+  if (wiping) return;
   try {
     clearTimeout(saveTimer);
     S.lastSaved = Date.now();
@@ -702,19 +708,29 @@ export function flushSave() {
     try { idbSave(STORAGE_KEYS.STATE, snapshotState()); } catch {}
   } catch (e) { console.warn('[ZenFit] save error:', e); }
 }
-/** Wipe ALL local data (reset flow): localStorage + IndexedDB. */
+/** Empty both IDB stores. deleteDatabase is blocked by the app's own open
+    connection, so the wipe is an explicit clear — deterministic, race-free. */
+function idbWipe() {
+  return openDB().then((db) => new Promise((res) => {
+    try {
+      const t = db.transaction([DB_STORE, 'zenfit-bg-images'], 'readwrite');
+      t.objectStore(DB_STORE).clear();
+      t.objectStore('zenfit-bg-images').clear();
+      t.oncomplete = () => { db.close(); res(); };
+      t.onerror = () => { db.close(); res(); };
+    } catch { try { db.close(); } catch {} res(); }
+  })).catch(() => {});
+}
+/** Wipe ALL local data (reset flow): localStorage + IndexedDB + wallpaper cache. */
 export function clearAllLocal() {
+  wiping = true;
   const dev = (() => { try { return localStorage.getItem(STORAGE_KEYS.DEVICE_ID); } catch { return null; } })();
   try { localStorage.clear(); } catch {}
   if (dev) { try { localStorage.setItem(STORAGE_KEYS.DEVICE_ID, dev); } catch {} }
-  try {
-    const req = indexedDB.deleteDatabase(DB_NAME);
-    req.onsuccess = () => location.reload();
-    req.onerror = () => location.reload();
-    setTimeout(() => location.reload(), 1500);
-  } catch {
-    location.reload();
-  }
+  try { caches.delete(WP_CACHE); } catch {}
+  const reload = () => { try { location.reload(); } catch { wiping = false; } };
+  const t = setTimeout(reload, 1500);
+  idbWipe().then(() => { clearTimeout(t); reload(); });
 }
 
 /**

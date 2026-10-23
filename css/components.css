@@ -326,3 +326,15 @@ body.lg-perf-low.glass-mode .char-avatar-col, body.lg-perf-low.glass-mode .char-
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* ── Collapsible blocks (native <details class="fold">) ──
+   Used by the admin console Content tab. Native disclosure: no JS, keyboard
+   and screen-reader accessible; the marker is replaced by a rotating chevron. */
+.fold > summary { cursor: pointer; list-style: none; user-select: none; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary::after {
+  content: '▸'; float: right; font-size: 10px; line-height: 1.7;
+  color: var(--text-muted); transition: transform .2s ease;
+}
+.fold[open] > summary::after { transform: rotate(90deg); }
+.fold:not([open]) > summary { margin-bottom: 0; }

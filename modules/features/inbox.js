@@ -12,8 +12,13 @@ import { showNotif, awardXP, celebrateBurst, MSG_BGS, MSG_HLS } from '../core/ui
 const isRead = (mid) => (S.inboxRead || []).includes(mid);
 const isRewardMsg = (m) => m.kind === 'reward' && Number.isFinite(Number(m.xp));
 
-/* Global broadcasts mirrored as threads (same template as device mail). */
+/* Global broadcasts mirrored as threads (same template as device mail).
+   These live at module scope because syncGlobals assigns them for renderInbox's
+   paint() — declaring them inside renderInbox made every sync a ReferenceError. */
 let gThreads = [];
+let gRewards = [];
+let gMissions = [];
+let gDeliverables = [];
 const gReadIds = () => {
   try { return JSON.parse(localStorage.getItem('zf_global_read') || '[]'); } catch { return []; }
 };
@@ -71,6 +76,9 @@ const gNoteEdited = (gid, ver) => {
 };
 const IMG_RE = /^((https?:|data:image\/|blob:)[^\s"'<>]*)$/;
 const okImg = (u) => IMG_RE.test(u || '') ? u : '';
+/** Top cover: only for messages with no image list. Messages that carry `images`
+ *  are laid out by their [img:N] tags — no auto top image, no duplicate. */
+export const msgHero = (m) => (Array.isArray(m?.images) && m.images.length) ? '' : okImg(m?.image || '');
 /** Card background: custom image (cover + scrim for legibility) wins, else gradient preset. */
 export function msgBgStyle(m) {
   const img = okImg(m?.bgImage);
@@ -190,9 +198,6 @@ export function renderInbox(host) {
   <div id="inbox-global"><div style="font-size:12px;color:var(--text-muted)">Syncing global…</div></div>
   ${msgs.some((m) => isRead(m.id)) ? '<button class="btn btn-sm btn-ghost btn-full mt8" id="inbox-delread">Delete all read messages</button>' : ''}`;
   let filter = 'all';
-  let gDeliverables = [];
-  let gRewards = [];
-  let gMissions = [];
   const allRows = () => {
     const local = msgs.map((m) => ({ m, mid: m.id, global: false, ts: m.ts || Date.now() }));
     const hidden = new Set(S.hiddenGlobals || []);
@@ -424,7 +429,7 @@ function openDetail(host, mid, isGlobal = false) {
   const claimed = (S.claimedRewards || []).includes(mid);
   const bgs = msgBgStyle(m);
   const hl = MSG_HLS[m.hl] || '';
-  const img = okImg(m.image || '');
+  const img = msgHero(m);
   host.innerHTML = `
   <button class="btn btn-sm btn-ghost mb12" id="inbox-back">← Back to inbox</button>
   <div class="card" style="${bgs.style}${hl ? `border-color:${hl};box-shadow:0 0 18px ${hl}55;` : ''}">
@@ -602,7 +607,8 @@ async function syncGlobals(host) {
       };
     });
     healUnreadCount();
-  } catch {
+  } catch (e) {
+    console.warn('[ZenFit] inbox global sync failed:', e);
     host.querySelector('#inbox-global') && (host.querySelector('#inbox-global').innerHTML = '');
   }
 }

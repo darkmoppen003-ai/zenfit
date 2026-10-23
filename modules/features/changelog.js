@@ -6,6 +6,7 @@ import { APP_VERSION, APP_BUILD } from '../core/store.js';
 import { escapeHtml } from '../core/sanitize.js';
 
 const NOTES = [
+  ['v8.9.8', 'Minor Bug Fixes-Inbox,Broadcast,Wipe Function'],
   ['v8.9.7', 'Streak Boost: pick the activities that keep your streak alive and multiply their XP (×1.05 → ×1.40 as the streak grows). Rest days pause the streak instead of breaking it. The card lives in Analytics → Gamification, the multiplier shows on the dashboard and in the XP toast'],
   ['v8.9.6', 'Frame editor can rotate the wallpaper in 90° steps and flip it horizontally/vertically (custom themes can carry the orientation too), the nutrition and analytics subtab strips now share one grammar in every interface style, and the SYSTEM style is blue glass with no green in chrome. Particle engine back to the original look'],
   ['v8.9.5', 'SHOWCASE flex stage (after Customization): live theme/wallpaper/style card, floating studio gear, short/long versions, Default + Cyberpunk card styles, true-PNG share export, per-stat visibility. Analytics feels alive: count-ups, bar fills, ring sweeps, insight rises across all 10 sections'],
